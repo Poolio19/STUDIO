@@ -19,15 +19,17 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { users } from '@/lib/data';
+import { users, currentStandings } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Icons, IconName } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import type { Metadata } from 'next';
 import { Star, TrendingUp, TrendingDown } from 'lucide-react';
 
+const currentWeek = currentStandings[0]?.gamesPlayed || 1;
+
 export const metadata: Metadata = {
-    title: 'Leaderboard | PremPred 2025-2026',
+    title: `Week ${currentWeek} - Standings | PremPred 2025-2026`,
     description: 'See who is at the top of the prediction game.',
 };
 
@@ -59,7 +61,7 @@ export default function LeaderboardPage() {
   return (
     <div className="flex flex-col gap-8">
       <header>
-          <h1 className="text-3xl font-bold tracking-tight">Leaderboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Week {currentWeek} - Standings</h1>
           <p className="text-muted-foreground">See who's winning the prediction game this week.</p>
       </header>
 
