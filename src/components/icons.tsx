@@ -1,0 +1,40 @@
+import {
+  Trophy,
+  PenSquare,
+  Calculator,
+  User,
+  Bell,
+  BrainCircuit,
+  LucideProps,
+  Atom,
+  Zap,
+  Rocket,
+  Orbit,
+  Anchor,
+  Waves,
+  Swords,
+  ChevronUp,
+  ChevronDown,
+  Minus,
+} from 'lucide-react';
+
+export const Icons = {
+  logo: BrainCircuit,
+  leaderboard: Trophy,
+  predict: PenSquare,
+  scoring: Calculator,
+  profile: User,
+  notifications: Bell,
+  atom: Atom,
+  zap: Zap,
+  rocket: Rocket,
+  orbit: Orbit,
+  anchor: Anchor,
+  waves: Waves,
+  match: Swords,
+  rankUp: (props: LucideProps) => <ChevronUp {...props} className="text-green-500" />,
+  rankDown: (props: LucideProps) => <ChevronDown {...props} className="text-red-500" />,
+  rankSame: (props: LucideProps) => <Minus {...props} className="text-gray-500" />,
+};
+
+export type IconName = keyof typeof Icons;
