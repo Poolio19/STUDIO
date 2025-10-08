@@ -18,6 +18,7 @@ import Link from 'next/link';
 const navItems = [
   { href: '/leaderboard', icon: 'leaderboard', label: 'Leaderboard' },
   { href: '/predict', icon: 'predict', label: 'Predict' },
+  { href: '/standings', icon: 'standings', label: 'Standings' },
   { href: '/scoring', icon: 'scoring', label: 'Scoring' },
   { href: '/profile', icon: 'profile', label: 'Profile' },
   { href: '/notifications', icon: 'notifications', label: 'Notifications' },

@@ -33,6 +33,17 @@ export type PreviousSeasonStanding = {
   goalDifference: number;
 };
 
+export type CurrentStanding = {
+    teamId: string;
+    rank: number;
+    points: number;
+    goalDifference: number;
+    gamesPlayed: number;
+    wins: number;
+    draws: number;
+    losses: number;
+}
+
 export const users: User[] = [
   { id: 'usr_1', name: 'Alex', avatar: '1', score: 1250, rank: 1, rankChange: 0 },
   { id: 'usr_2', name: 'Maria', avatar: '2', score: 1180, rank: 2, rankChange: 1 },
@@ -108,4 +119,27 @@ export const previousSeasonStandings: PreviousSeasonStanding[] = [
   { teamId: 'team_14', rank: 18, points: 29, goalDifference: -33 },
   { teamId: 'team_17', rank: 19, points: 27, goalDifference: -32 },
   { teamId: 'team_16', rank: 20, points: 26, goalDifference: -55 },
+];
+
+export const currentStandings: CurrentStanding[] = [
+    { teamId: 'team_1', rank: 1, points: 12, goalDifference: 8, gamesPlayed: 5, wins: 4, draws: 0, losses: 1 },
+    { teamId: 'team_2', rank: 2, points: 12, goalDifference: 7, gamesPlayed: 5, wins: 4, draws: 0, losses: 1 },
+    { teamId: 'team_8', rank: 3, points: 11, goalDifference: 5, gamesPlayed: 5, wins: 3, draws: 2, losses: 0 },
+    { teamId: 'team_3', rank: 4, points: 10, goalDifference: 4, gamesPlayed: 5, wins: 3, draws: 1, losses: 1 },
+    { teamId: 'team_15', rank: 5, points: 9, goalDifference: 2, gamesPlayed: 5, wins: 2, draws: 3, losses: 0 },
+    { teamId: 'team_9', rank: 6, points: 9, goalDifference: 1, gamesPlayed: 5, wins: 2, draws: 3, losses: 0 },
+    { teamId: 'team_5', rank: 7, points: 8, goalDifference: 2, gamesPlayed: 5, wins: 2, draws: 2, losses: 1 },
+    { teamId: 'team_11', rank: 8, points: 8, goalDifference: 0, gamesPlayed: 5, wins: 2, draws: 2, losses: 1 },
+    { teamId: 'team_12', rank: 9, points: 7, goalDifference: -1, gamesPlayed: 5, wins: 2, draws: 1, losses: 2 },
+    { teamId: 'team_18', rank: 10, points: 7, goalDifference: -2, gamesPlayed: 5, wins: 2, draws: 1, losses: 2 },
+    { teamId: 'team_6', rank: 11, points: 6, goalDifference: -1, gamesPlayed: 5, wins: 1, draws: 3, losses: 1 },
+    { teamId: 'team_20', rank: 12, points: 6, goalDifference: -3, gamesPlayed: 5, wins: 1, draws: 3, losses: 1 },
+    { teamId: 'team_7', rank: 13, points: 5, goalDifference: -2, gamesPlayed: 5, wins: 1, draws: 2, losses: 2 },
+    { teamId: 'team_19', rank: 14, points: 5, goalDifference: -4, gamesPlayed: 5, wins: 1, draws: 2, losses: 2 },
+    { teamId: 'team_4', rank: 15, points: 4, goalDifference: -5, gamesPlayed: 5, wins: 1, draws: 1, losses: 3 },
+    { teamId: 'team_13', rank: 16, points: 4, goalDifference: -6, gamesPlayed: 5, wins: 1, draws: 1, losses: 3 },
+    { teamId: 'team_10', rank: 17, points: 3, goalDifference: -7, gamesPlayed: 5, wins: 0, draws: 3, losses: 2 },
+    { teamId: 'team_17', rank: 18, points: 2, goalDifference: -8, gamesPlayed: 5, wins: 0, draws: 2, losses: 3 },
+    { teamId: 'team_14', rank: 19, points: 1, goalDifference: -9, gamesPlayed: 5, wins: 0, draws: 1, losses: 4 },
+    { teamId: 'team_16', rank: 20, points: 1, goalDifference: -10, gamesPlayed: 5, wins: 0, draws: 1, losses: 4 },
 ];
