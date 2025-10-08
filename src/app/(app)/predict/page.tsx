@@ -51,7 +51,7 @@ export default function PredictPage() {
     <div className="space-y-8">
       <header>
           <h1 className="text-3xl font-bold tracking-tight">Make Your Predictions</h1>
-          <p className="text-muted-foreground">Submit your scores for the upcoming games.</p>
+          <p className="text-muted-foreground">Predictions for the season must be made before the first game to avoid penalties.</p>
       </header>
 
       <Form {...form}>
