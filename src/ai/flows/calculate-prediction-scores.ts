@@ -40,12 +40,15 @@ const calculatePredictionScoresPrompt = ai.definePrompt({
   input: {schema: CalculatePredictionScoresInputSchema},
   output: {schema: CalculatePredictionScoresOutputSchema},
   prompt: `You are an expert in calculating scores for a football prediction game.
-  The game involves predicting the final league standings of all teams in a season.
+  The game involves predicting the final league standings of all 20 teams in a season.
 
-  Scoring works as follows:
-  - 5 points for each team placed in the correct final position.
-  - 2 points for each team placed one position away from their final position.
-  - 0 points otherwise.
+  Scoring works as follows for each of the 20 teams:
+  - A player receives 5 points for correctly predicting a team's exact final position.
+  - For each position the prediction is away from the actual final position, 1 point is subtracted from the 5 points.
+  - This means the formula for a single team is: points = 5 - abs(predicted_position - actual_position).
+  - For example, if a team's actual final position is 1st, and the user predicted 1st, they get 5 points. If they predicted 2nd, they get 4 points (5 - 1). If they predicted 6th, they get 0 points (5 - 5). If they predicted 10th, they get -4 points (5 - 9).
+
+  The total score for a user is the sum of the points for all 20 teams.
 
   Given the following actual final standings:
   {{actualFinalStandings}}
