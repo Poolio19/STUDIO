@@ -50,13 +50,13 @@ export type CurrentStanding = {
 }
 
 export const users: User[] = [
-  { id: 'usr_1', name: 'Alex', avatar: '1', score: 1250, maxScore: 100, minScore: -190, rank: 1, maxRank: 1, minRank: 5, rankChange: 0, scoreChange: 50 },
-  { id: 'usr_2', name: 'Maria', avatar: '2', score: 1180, maxScore: 100, minScore: -190, rank: 2, maxRank: 2, minRank: 8, rankChange: 1, scoreChange: 70 },
-  { id: 'usr_3', name: 'David', avatar: '3', score: 1175, maxScore: 100, minScore: -190, rank: 3, maxRank: 1, minRank: 10, rankChange: -1, scoreChange: -20 },
-  { id: 'usr_4', name: 'Sophia', avatar: '4', score: 1050, maxScore: 100, minScore: -190, rank: 4, maxRank: 4, minRank: 6, rankChange: 0, scoreChange: 10 },
-  { id: 'usr_5', name: 'Kenji', avatar: '5', score: 980, maxScore: 100, minScore: -190, rank: 5, maxRank: 5, minRank: 9, rankChange: 2, scoreChange: 80 },
-  { id: 'usr_6', name: 'Fatima', avatar: '6', score: 950, maxScore: 100, minScore: -190, rank: 6, maxRank: 3, minRank: 12, rankChange: -1, scoreChange: -30 },
-  { id: 'usr_7', name: 'Leo', avatar: '7', score: 890, maxScore: 100, minScore: -190, rank: 7, maxRank: 7, minRank: 15, rankChange: 0, scoreChange: 25 },
+    { id: 'usr_1', name: 'Alex', avatar: '1', score: 85, maxScore: 100, minScore: -190, rank: 1, maxRank: 1, minRank: 5, rankChange: 0, scoreChange: 15 },
+    { id: 'usr_2', name: 'Maria', avatar: '2', score: 72, maxScore: 100, minScore: -190, rank: 2, maxRank: 2, minRank: 8, rankChange: 1, scoreChange: 12 },
+    { id: 'usr_3', name: 'David', avatar: '3', score: 68, maxScore: 100, minScore: -190, rank: 3, maxRank: 1, minRank: 10, rankChange: -1, scoreChange: -5 },
+    { id: 'usr_4', name: 'Sophia', avatar: '4', score: 55, maxScore: 100, minScore: -190, rank: 4, maxRank: 4, minRank: 6, rankChange: 0, scoreChange: 8 },
+    { id: 'usr_5', name: 'Kenji', avatar: '5', score: 40, maxScore: 100, minScore: -190, rank: 5, maxRank: 5, minRank: 9, rankChange: 2, scoreChange: 20 },
+    { id: 'usr_6', name: 'Fatima', avatar: '6', score: 25, maxScore: 100, minScore: -190, rank: 6, maxRank: 3, minRank: 12, rankChange: -1, scoreChange: -10 },
+    { id: 'usr_7', name: 'Leo', avatar: '7', score: 10, maxScore: 100, minScore: -190, rank: 7, maxRank: 7, minRank: 15, rankChange: 0, scoreChange: 5 },
 ];
 
 export const teams: Team[] = [
@@ -148,3 +148,5 @@ export const currentStandings: CurrentStanding[] = [
     { teamId: 'team_14', rank: 19, points: 1, goalDifference: -9, gamesPlayed: 5, wins: 0, draws: 1, losses: 4 },
     { teamId: 'team_16', rank: 20, points: 1, goalDifference: -10, gamesPlayed: 5, wins: 0, draws: 1, losses: 4 },
 ];
+
+    
