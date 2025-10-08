@@ -24,7 +24,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Icons, IconName } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import type { Metadata } from 'next';
-import { Star } from 'lucide-react';
+import { Star, TrendingUp, TrendingDown } from 'lucide-react';
 
 export const metadata: Metadata = {
     title: 'Leaderboard | PremPred 2025-2026',
@@ -41,12 +41,17 @@ const getRankChangeIcon = (change: number) => {
   return 'rankSame';
 };
 
+const formatPointsChange = (change: number) => {
+    if (change > 0) return <span className="text-green-500">+{change}</span>;
+    if (change < 0) return <span className="text-red-500">{change}</span>;
+    return <span>{change}</span>;
+}
+
 export default function LeaderboardPage() {
   const sortedUsers = [...users].sort((a, b) => a.rank - b.rank);
   const topThree = sortedUsers.slice(0, 3);
   const rest = sortedUsers.slice(3);
 
-  // Find the most improved player for the month
   const mostImprovedPlayer = [...users].sort((a, b) => b.rankChange - a.rankChange)[0];
   const currentMonth = new Date().toLocaleString('default', { month: 'short' });
 
@@ -84,11 +89,6 @@ export default function LeaderboardPage() {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {topThree.map((user, index) => {
-            const RankIcon = (
-                <div className="absolute -top-3 -left-3 flex size-8 items-center justify-center rounded-full border-2 border-background bg-card text-lg font-bold">
-                    {user.rank}
-                </div>
-            );
             return (
               <Card key={user.id} className={cn("relative", 
                 index === 0 && "border-yellow-400 border-2 shadow-yellow-200/50 shadow-lg",
@@ -124,30 +124,50 @@ export default function LeaderboardPage() {
               <TableRow>
                 <TableHead className="w-[80px]">Rank</TableHead>
                 <TableHead>Player</TableHead>
+                <TableHead className="text-center">Pos. Change</TableHead>
+                <TableHead className="text-center">Points Change</TableHead>
+                <TableHead className="text-center">Max Pos.</TableHead>
+                <TableHead className="text-center">Min Pos.</TableHead>
+                <TableHead className="text-right">Max Pts.</TableHead>
+                <TableHead className="text-right">Min Pts.</TableHead>
                 <TableHead className="text-right">Score</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rest.map((user) => {
+              {sortedUsers.map((user) => {
                 const RankIcon = Icons[getRankChangeIcon(user.rankChange) as IconName];
                 return (
                     <TableRow key={user.id}>
-                        <TableCell className="font-medium">
-                            <div className="flex items-center gap-2">
-                               <span>{user.rank}</span>
+                        <TableCell className="font-medium">{user.rank}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                              <Avatar className="h-9 w-9">
+                              <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
+                              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <span>{user.name}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                            <div className="flex items-center justify-center gap-1">
                                <RankIcon className="size-4" />
+                               <span>{Math.abs(user.rankChange)}</span>
                             </div>
                         </TableCell>
-                        <TableCell>
-                        <div className="flex items-center gap-3">
-                            <Avatar className="h-9 w-9">
-                            <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
-                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <span>{user.name}</span>
-                        </div>
+                        <TableCell className="text-center font-medium">{formatPointsChange(user.scoreChange)}</TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <TrendingUp className="size-4 text-green-500"/>{user.maxRank}
+                          </div>
                         </TableCell>
-                        <TableCell className="text-right font-semibold">{user.score}</TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <TrendingDown className="size-4 text-red-500"/>{user.minRank}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">{user.maxScore}</TableCell>
+                        <TableCell className="text-right">{user.minScore}</TableCell>
+                        <TableCell className="text-right font-bold text-lg">{user.score}</TableCell>
                     </TableRow>
                 );
               })}

@@ -3,8 +3,13 @@ export type User = {
   name: string;
   avatar: string;
   score: number;
+  maxScore: number;
+  minScore: number;
   rank: number;
+  maxRank: number;
+  minRank: number;
   rankChange: number; // positive for up, negative for down, 0 for no change
+  scoreChange: number;
 };
 
 export type Team = {
@@ -45,13 +50,13 @@ export type CurrentStanding = {
 }
 
 export const users: User[] = [
-  { id: 'usr_1', name: 'Alex', avatar: '1', score: 1250, rank: 1, rankChange: 0 },
-  { id: 'usr_2', name: 'Maria', avatar: '2', score: 1180, rank: 2, rankChange: 1 },
-  { id: 'usr_3', name: 'David', avatar: '3', score: 1175, rank: 3, rankChange: -1 },
-  { id: 'usr_4', name: 'Sophia', avatar: '4', score: 1050, rank: 4, rankChange: 0 },
-  { id: 'usr_5', name: 'Kenji', avatar: '5', score: 980, rank: 5, rankChange: 2 },
-  { id: 'usr_6', name: 'Fatima', avatar: '6', score: 950, rank: 6, rankChange: -1 },
-  { id: 'usr_7', name: 'Leo', avatar: '7', score: 890, rank: 7, rankChange: 0 },
+  { id: 'usr_1', name: 'Alex', avatar: '1', score: 1250, maxScore: 100, minScore: -190, rank: 1, maxRank: 1, minRank: 5, rankChange: 0, scoreChange: 50 },
+  { id: 'usr_2', name: 'Maria', avatar: '2', score: 1180, maxScore: 100, minScore: -190, rank: 2, maxRank: 2, minRank: 8, rankChange: 1, scoreChange: 70 },
+  { id: 'usr_3', name: 'David', avatar: '3', score: 1175, maxScore: 100, minScore: -190, rank: 3, maxRank: 1, minRank: 10, rankChange: -1, scoreChange: -20 },
+  { id: 'usr_4', name: 'Sophia', avatar: '4', score: 1050, maxScore: 100, minScore: -190, rank: 4, maxRank: 4, minRank: 6, rankChange: 0, scoreChange: 10 },
+  { id: 'usr_5', name: 'Kenji', avatar: '5', score: 980, maxScore: 100, minScore: -190, rank: 5, maxRank: 5, minRank: 9, rankChange: 2, scoreChange: 80 },
+  { id: 'usr_6', name: 'Fatima', avatar: '6', score: 950, maxScore: 100, minScore: -190, rank: 6, maxRank: 3, minRank: 12, rankChange: -1, scoreChange: -30 },
+  { id: 'usr_7', name: 'Leo', avatar: '7', score: 890, maxScore: 100, minScore: -190, rank: 7, maxRank: 7, minRank: 15, rankChange: 0, scoreChange: 25 },
 ];
 
 export const teams: Team[] = [
