@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useActionState } from 'react';
+import { useState, useActionState, useEffect } from 'react';
 
 import {
   calculatePredictionScores,
@@ -50,25 +50,17 @@ async function handleAction(
 
 export default function ScoringPage() {
   const { toast } = useToast();
-  const [formState, formAction] = useActionState(handleAction, { result: null, error: null });
-  const [pending, setPending] = useState(false);
+  const [formState, formAction, isPending] = useActionState(handleAction, { result: null, error: null });
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setPending(true);
-    const formData = new FormData(event.currentTarget);
-    // @ts-ignore
-    await formAction(formData);
-    setPending(false);
-  };
-
-  if (formState.error) {
-    toast({
-      variant: 'destructive',
-      title: 'Scoring Error',
-      description: formState.error,
-    });
-  }
+  useEffect(() => {
+    if (formState.error) {
+      toast({
+        variant: 'destructive',
+        title: 'Scoring Error',
+        description: formState.error,
+      });
+    }
+  }, [formState.error, toast]);
 
   return (
     <div className="space-y-8">
@@ -83,7 +75,7 @@ export default function ScoringPage() {
           <CardDescription>Enter the final league standings and user predictions to calculate scores.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form action={formAction} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="actualResults">Actual Final Standings</Label>
@@ -108,9 +100,9 @@ export default function ScoringPage() {
                 />
               </div>
             </div>
-            <Button type="submit" disabled={pending}>
-              {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {pending ? 'Calculating...' : 'Calculate Scores'}
+            <Button type="submit" disabled={isPending}>
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isPending ? 'Calculating...' : 'Calculate Scores'}
             </Button>
           </form>
         </CardContent>
