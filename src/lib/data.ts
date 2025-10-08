@@ -7,21 +7,15 @@ export type User = {
   rankChange: number; // positive for up, negative for down, 0 for no change
 };
 
-export type Game = {
+export type Team = {
   id: string;
-  teamA: string;
-  teamB: string;
-  teamALogo: string;
-  teamBLogo: string;
-  date: string;
-  time: string;
+  name: string;
+  logo: string;
 };
 
 export type Prediction = {
   userId: string;
-  gameId: string;
-  scoreA: number | null;
-  scoreB: number | null;
+  rankings: string[]; // Array of team IDs in predicted order
 };
 
 export type UserPredictionHistory = {
@@ -42,46 +36,32 @@ export const users: User[] = [
   { id: 'usr_7', name: 'Leo', avatar: '7', score: 890, rank: 7, rankChange: 0 },
 ];
 
-export const games: Game[] = [
-    {
-        id: 'gm_1',
-        teamA: 'Quantum FC',
-        teamB: 'Photon United',
-        teamALogo: 'atom',
-        teamBLogo: 'zap',
-        date: '2024-07-28',
-        time: '18:00 UTC',
-    },
-    {
-        id: 'gm_2',
-        teamA: 'Celestial Rovers',
-        teamB: 'Meteor Strikers',
-        teamALogo: 'rocket',
-        teamBLogo: 'orbit',
-        date: '2024-07-29',
-        time: '20:00 UTC',
-    },
-    {
-        id: 'gm_3',
-        teamA: 'Abyssal Titans',
-        teamB: 'Tidal Waves',
-        teamALogo: 'anchor',
-        teamBLogo: 'waves',
-        date: '2024-07-30',
-        time: '19:00 UTC',
-    },
+export const teams: Team[] = [
+  { id: 'team_1', name: 'Quantum FC', logo: 'atom' },
+  { id: 'team_2', name: 'Photon United', logo: 'zap' },
+  { id: 'team_3', name: 'Celestial Rovers', logo: 'rocket' },
+  { id: 'team_4', name: 'Meteor Strikers', logo: 'orbit' },
+  { id: 'team_5', name: 'Abyssal Titans', logo: 'anchor' },
+  { id: 'team_6', name: 'Tidal Waves', logo: 'waves' },
+  { id: 'team_7', name: 'Emerald Dragons', logo: 'atom' },
+  { id: 'team_8', name: 'Crimson Warriors', logo: 'swords' },
+  { id: 'team_9', name: 'Golden Griffins', logo: 'zap' },
+  { id: 'team_10', name: 'Azure Phoenix', logo: 'rocket' },
+  { id: 'team_11', name: 'Obsidian Giants', logo: 'orbit' },
+  { id: 'team_12', name: 'Silver Serpents', logo: 'anchor' },
+  { id: 'team_13', name: 'Iron Golems', logo: 'waves' },
+  { id: 'team_14', name: 'Bronze Bulls', logo: 'atom' },
+  { id: 'team_15', name: 'Steel Stallions', logo: 'swords' },
+  { id: 'team_16', name: 'Void Vikings', logo: 'zap' },
+  { id: 'team_17', name: 'Arctic Foxes', logo: 'rocket' },
+  { id: 'team_18', name: 'Desert Scorpions', logo: 'orbit' },
+  { id: 'team_19', name: 'Jungle Jaguars', logo: 'anchor' },
+  { id: 'team_20', name: 'Mountain Lions', logo: 'waves' },
 ];
 
 export const predictions: Prediction[] = [
-    { userId: 'usr_1', gameId: 'gm_1', scoreA: 2, scoreB: 1 },
-    { userId: 'usr_2', gameId: 'gm_1', scoreA: 3, scoreB: 0 },
-    { userId: 'usr_3', gameId: 'gm_1', scoreA: 1, scoreB: 1 },
-    { userId: 'usr_4', gameId: 'gm_1', scoreA: 2, scoreB: 2 },
-    { userId: 'usr_5', gameId: 'gm_1', scoreA: 0, scoreB: 1 },
-    { userId: 'usr_6', gameId: 'gm_1', scoreA: 1, scoreB: 2 },
-    { userId: 'usr_7', gameId: 'gm_1', scoreA: 3, scoreB: 1 },
-    { userId: 'usr_1', gameId: 'gm_2', scoreA: 1, scoreB: 0 },
-    { userId: 'usr_2', gameId: 'gm_2', scoreA: 2, scoreB: 1 },
+    { userId: 'usr_1', rankings: ['team_1', 'team_3', 'team_2', 'team_4', 'team_5', 'team_6', 'team_7', 'team_8', 'team_9', 'team_10', 'team_11', 'team_12', 'team_13', 'team_14', 'team_15', 'team_16', 'team_17', 'team_18', 'team_19', 'team_20'] },
+    { userId: 'usr_2', rankings: ['team_2', 'team_1', 'team_3', 'team_4', 'team_5', 'team_6', 'team_7', 'team_8', 'team_9', 'team_10', 'team_11', 'team_12', 'team_13', 'team_14', 'team_15', 'team_16', 'team_17', 'team_18', 'team_19', 'team_20'] },
 ];
 
 export const userPredictionHistory: UserPredictionHistory[] = [

@@ -13,14 +13,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { predictions, users } from '@/lib/data';
+import { users, predictions } from '@/lib/data';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const initialUserPredictions = predictions.map(p => 
-    `User ${p.userId} predicted game ${p.gameId} score: ${p.scoreA}-${p.scoreB}`
+    `User ${p.userId} predicted standings: ${p.rankings.join(', ')}`
 ).join('\n');
 
-const initialActualResults = "Game gm_1 result: 2-0\nGame gm_2 result: 1-1";
+const initialActualResults = `Final Standings: team_1, team_2, team_3, team_4, team_5, team_6, team_7, team_8, team_9, team_10, team_11, team_12, team_13, team_14, team_15, team_16, team_17, team_18, team_19, team_20`;
 
 type State = {
   result: CalculatePredictionScoresOutput | null;
@@ -40,8 +40,8 @@ async function handleAction(
 
   try {
     const result = await calculatePredictionScores({
-      actualResults,
-      userPredictions,
+      actualFinalStandings: actualResults,
+      userRankings: userPredictions,
     });
     return { result, error: null };
   } catch (e: any) {
@@ -74,34 +74,34 @@ export default function ScoringPage() {
     <div className="space-y-8">
       <header>
         <h1 className="text-3xl font-bold tracking-tight">Automated Scoring</h1>
-        <p className="text-muted-foreground">Input actual results to let the AI calculate player scores.</p>
+        <p className="text-muted-foreground">Input final league standings to let the AI calculate player scores.</p>
       </header>
 
       <Card>
         <CardHeader>
           <CardTitle>Score Calculation</CardTitle>
-          <CardDescription>Enter the actual results and user predictions to calculate scores.</CardDescription>
+          <CardDescription>Enter the final league standings and user predictions to calculate scores.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="actualResults">Actual Results</Label>
+                <Label htmlFor="actualResults">Actual Final Standings</Label>
                 <Textarea
                   id="actualResults"
                   name="actualResults"
-                  placeholder="e.g., Game gm_1 result: 2-1"
+                  placeholder="e.g., Final Standings: team_1, team_2, team_3, ..."
                   rows={8}
                   defaultValue={initialActualResults}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="userPredictions">User Predictions</Label>
+                <Label htmlFor="userPredictions">User Predicted Rankings</Label>
                 <Textarea
                   id="userPredictions"
                   name="userPredictions"
-                  placeholder="e.g., User usr_1 predicted game gm_1 score: 2-1"
+                  placeholder="e.g., User usr_1 predicted standings: team_5, team_2, team_1, ..."
                   rows={8}
                   defaultValue={initialUserPredictions}
                   required
