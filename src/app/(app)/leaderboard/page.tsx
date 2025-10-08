@@ -26,7 +26,7 @@ import { cn } from '@/lib/utils';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Leaderboard | Predictatron',
+    title: 'Leaderboard | PremPred 2025-2026',
     description: 'See who is at the top of the prediction game.',
 };
 

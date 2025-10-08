@@ -31,7 +31,7 @@ import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Profile | Predictatron',
+    title: 'Profile | PremPred 2025-2026',
     description: 'Track your prediction history and performance.',
 };
 

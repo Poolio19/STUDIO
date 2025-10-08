@@ -16,7 +16,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         {!isMobile && (
           <header className="flex h-14 items-center gap-4 border-b bg-card px-6">
             <SidebarTrigger />
-            <h1 className="text-lg font-semibold">Predictatron</h1>
+            <h1 className="text-lg font-semibold">PremPred 2025-2026</h1>
           </header>
         )}
         <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">{children}</main>

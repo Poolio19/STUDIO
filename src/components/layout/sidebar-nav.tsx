@@ -31,7 +31,7 @@ export function SidebarNav() {
       <SidebarHeader className="border-b">
         <div className="flex items-center gap-2 p-2">
           <Icons.logo className="size-8 text-primary" />
-          <h1 className="text-xl font-semibold">Predictatron</h1>
+          <h1 className="text-xl font-semibold">PremPred 2025-2026</h1>
           <div className="ml-auto">
             <SidebarTrigger className="md:hidden" />
           </div>

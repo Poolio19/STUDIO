@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'Predictatron',
+  title: 'PremPred 2025-2026',
   description: 'A prediction game for you and your friends.',
 };
 

@@ -11,7 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Notifications | Predictatron',
+    title: 'Notifications | PremPred 2025-2026',
     description: 'Manage your notification settings.',
 };
 
@@ -20,7 +20,7 @@ export default function NotificationsPage() {
     <div className="space-y-8">
       <header>
           <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>
-          <p className="text-muted-foreground">Manage how you receive updates from Predictatron.</p>
+          <p className="text-muted-foreground">Manage how you receive updates from PremPred 2025-2026.</p>
       </header>
 
       <Card>
