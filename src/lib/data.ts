@@ -26,6 +26,13 @@ export type UserPredictionHistory = {
   date: string;
 };
 
+export type PreviousSeasonStanding = {
+  teamId: string;
+  rank: number;
+  points: number;
+  goalDifference: number;
+};
+
 export const users: User[] = [
   { id: 'usr_1', name: 'Alex', avatar: '1', score: 1250, rank: 1, rankChange: 0 },
   { id: 'usr_2', name: 'Maria', avatar: '2', score: 1180, rank: 2, rankChange: 1 },
@@ -78,4 +85,27 @@ export const weeklyPerformance = [
   { week: 'Week 3', score: 60 },
   { week: 'Week 4', score: 90 },
   { week: 'Week 5', score: 85 },
+];
+
+export const previousSeasonStandings: PreviousSeasonStanding[] = [
+  { teamId: 'team_3', rank: 1, points: 94, goalDifference: 62 },
+  { teamId: 'team_1', rank: 2, points: 92, goalDifference: 60 },
+  { teamId: 'team_8', rank: 3, points: 89, goalDifference: 45 },
+  { teamId: 'team_2', rank: 4, points: 75, goalDifference: 38 },
+  { teamId: 'team_9', rank: 5, points: 68, goalDifference: 13 },
+  { teamId: 'team_15', rank: 6, points: 62, goalDifference: 15 },
+  { teamId: 'team_5', rank: 7, points: 60, goalDifference: 10 },
+  { teamId: 'team_11', rank: 8, points: 55, goalDifference: 0 },
+  { teamId: 'team_18', rank: 9, points: 52, goalDifference: -1 },
+  { teamId: 'team_12', rank: 10, points: 50, goalDifference: 3 },
+  { teamId: 'team_6', rank: 11, points: 49, goalDifference: -4 },
+  { teamId: 'team_19', rank: 12, points: 48, goalDifference: -6 },
+  { teamId: 'team_13', rank: 13, points: 45, goalDifference: -6 },
+  { teamId: 'team_20', rank: 14, points: 43, goalDifference: -13 },
+  { teamId: 'team_7', rank: 15, points: 40, goalDifference: -10 },
+  { teamId: 'team_4', rank: 16, points: 39, goalDifference: -13 },
+  { teamId: 'team_10', rank: 17, points: 38, goalDifference: -21 },
+  { teamId: 'team_14', rank: 18, points: 29, goalDifference: -33 },
+  { teamId: 'team_17', rank: 19, points: 27, goalDifference: -32 },
+  { teamId: 'team_16', rank: 20, points: 26, goalDifference: -55 },
 ];
