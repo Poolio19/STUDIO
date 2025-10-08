@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { useFormState } from 'react-dom';
+import { useState, useActionState } from 'react';
 
 import {
   calculatePredictionScores,
@@ -51,13 +50,14 @@ async function handleAction(
 
 export default function ScoringPage() {
   const { toast } = useToast();
-  const [formState, formAction] = useFormState(handleAction, { result: null, error: null });
+  const [formState, formAction] = useActionState(handleAction, { result: null, error: null });
   const [pending, setPending] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setPending(true);
     const formData = new FormData(event.currentTarget);
+    // @ts-ignore
     await formAction(formData);
     setPending(false);
   };
@@ -152,6 +152,7 @@ export default function ScoringPage() {
                 </CardHeader>
                 <CardContent>
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">{formState.result.summary}</p>
+
                 </CardContent>
             </Card>
         </div>
