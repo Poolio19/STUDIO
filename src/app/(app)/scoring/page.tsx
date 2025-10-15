@@ -1,154 +1,97 @@
 'use client';
 
-import { useState, useActionState, useEffect } from 'react';
-
 import {
-  calculatePredictionScores,
-  CalculatePredictionScoresOutput,
-} from '@/ai/flows/calculate-prediction-scores';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
-import { users, predictions } from '@/lib/data';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ShieldAlert } from 'lucide-react';
+import type { Metadata } from 'next';
 
-const initialUserPredictions = predictions.map(p => 
-    `User ${p.userId} predicted standings: ${p.rankings.join(', ')}`
-).join('\n');
+// export const metadata: Metadata = {
+//     title: 'Rules and Scoring | PremPred 2025-2026',
+//     description: 'Understand how scores are calculated and the rules of the game.',
+// };
 
-const initialActualResults = `Final Standings: team_1, team_2, team_3, team_4, team_5, team_6, team_7, team_8, team_9, team_10, team_11, team_12, team_13, team_14, team_15, team_16, team_17, team_18, team_19, team_20`;
-
-type State = {
-  result: CalculatePredictionScoresOutput | null;
-  error: string | null;
-};
-
-async function handleAction(
-  prevState: State,
-  formData: FormData
-): Promise<State> {
-  const actualResults = formData.get('actualResults') as string;
-  const userPredictions = formData.get('userPredictions') as string;
-  
-  if (!actualResults || !userPredictions) {
-    return { result: null, error: 'Please fill in all fields.' };
-  }
-
-  try {
-    const result = await calculatePredictionScores({
-      actualFinalStandings: actualResults,
-      userRankings: userPredictions,
-    });
-    return { result, error: null };
-  } catch (e: any) {
-    return { result: null, error: e.message || 'An unknown error occurred.' };
-  }
-}
-
-export default function ScoringPage() {
-  const { toast } = useToast();
-  const [formState, formAction, isPending] = useActionState(handleAction, { result: null, error: null });
-
-  useEffect(() => {
-    if (formState.error) {
-      toast({
-        variant: 'destructive',
-        title: 'Scoring Error',
-        description: formState.error,
-      });
-    }
-  }, [formState.error, toast]);
-
+export default function RulesAndScoringPage() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Automated Scoring</h1>
-        <p className="text-muted-foreground">Input final league standings to let the AI calculate player scores.</p>
+        <h1 className="text-3xl font-bold tracking-tight">Rules and Scoring</h1>
+        <p className="text-muted-foreground">
+          Understand how scores are calculated and other important rules.
+        </p>
       </header>
 
       <Card>
         <CardHeader>
-          <CardTitle>Score Calculation</CardTitle>
-          <CardDescription>Enter the final league standings and user predictions to calculate scores.</CardDescription>
+          <CardTitle>Scoring System</CardTitle>
+          <CardDescription>
+            Points are awarded based on the accuracy of your predictions for each
+            of the 20 teams' final league positions.
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form action={formAction} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="actualResults">Actual Final Standings</Label>
-                <Textarea
-                  id="actualResults"
-                  name="actualResults"
-                  placeholder="e.g., Final Standings: team_1, team_2, team_3, ..."
-                  rows={8}
-                  defaultValue={initialActualResults}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="userPredictions">User Predicted Rankings</Label>
-                <Textarea
-                  id="userPredictions"
-                  name="userPredictions"
-                  placeholder="e.g., User usr_1 predicted standings: team_5, team_2, team_1, ..."
-                  rows={8}
-                  defaultValue={initialUserPredictions}
-                  required
-                />
-              </div>
-            </div>
-            <Button type="submit" disabled={isPending}>
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isPending ? 'Calculating...' : 'Calculate Scores'}
-            </Button>
-          </form>
+        <CardContent className="space-y-4">
+          <div className="rounded-lg border p-4">
+            <h3 className="font-semibold text-lg mb-2">
+              For Each Team Prediction:
+            </h3>
+            <ul className="list-disc space-y-2 pl-5 text-muted-foreground">
+              <li>
+                <span className="font-bold text-primary">5 points</span> are awarded for correctly predicting a team's exact
+                final position.
+              </li>
+              <li>
+                For each position your prediction is away from the actual
+                final position, <span className="font-bold text-destructive">1 point</span> is subtracted from the initial 5
+                points.
+              </li>
+              <li>
+                The formula for a single team's score is:{' '}
+                <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">
+                  5 - abs(predicted_position - actual_position)
+                </code>
+                .
+              </li>
+            </ul>
+          </div>
+          <div className="rounded-lg border p-4">
+            <h3 className="font-semibold text-lg mb-2">Example Calculation</h3>
+            <p className="text-muted-foreground mb-2">
+              Let's say a team finishes in 1st place:
+            </p>
+            <ul className="list-disc space-y-2 pl-5 text-muted-foreground">
+              <li>If you predicted 1st: you get 5 points.</li>
+              <li>If you predicted 2nd: you get 4 points (5 - 1).</li>
+              <li>If you predicted 6th: you get 0 points (5 - 5).</li>
+              <li>If you predicted 10th: you get -4 points (5 - 9).</li>
+            </ul>
+          </div>
+          <div className="rounded-lg border p-4">
+            <h3 className="font-semibold text-lg mb-2">Total Score</h3>
+            <p className="text-muted-foreground">
+              Your total score for the season is the sum of the points you've
+              earned for all 20 teams. This can be a positive or negative number.
+            </p>
+          </div>
         </CardContent>
       </Card>
 
-      {formState.result && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Calculated Scores</CardTitle>
-                    <CardDescription>The new scores calculated by the AI.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>User</TableHead>
-                                <TableHead className="text-right">Score</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {Object.entries(formState.result.scores).map(([userId, score]) => {
-                                const user = users.find(u => u.id === userId);
-                                return (
-                                    <TableRow key={userId}>
-                                        <TableCell>{user ? user.name : userId}</TableCell>
-                                        <TableCell className="text-right font-bold">{score}</TableCell>
-                                    </TableRow>
-                                )
-                            })}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Scoring Summary</CardTitle>
-                    <CardDescription>The AI's summary of the scoring process.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{formState.result.summary}</p>
-
-                </CardContent>
-            </Card>
-        </div>
-      )}
+      <Alert variant="destructive">
+        <ShieldAlert className="h-4 w-4" />
+        <AlertTitle>Important: Penalties</AlertTitle>
+        <AlertDescription>
+          <p>
+            Late entry into the prediction league or late payment of league fees
+            will result in penalties being applied to your total score. Please
+            ensure your predictions and payments are submitted on time to avoid
+            any deductions.
+          </p>
+        </AlertDescription>
+      </Alert>
     </div>
   );
 }

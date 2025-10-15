@@ -21,7 +21,7 @@ const navItems = [
   { href: '/most-improved', icon: 'award', label: 'Most Improved' },
   { href: '/predict', icon: 'predict', label: 'Predict' },
   { href: '/standings', icon: 'standings', label: 'Standings' },
-  { href: '/scoring', icon: 'scoring', label: 'Scoring' },
+  { href: '/scoring', icon: 'scoring', label: 'Rules & Scoring' },
   { href: '/profile', icon: 'profile', label: 'Profile' },
   { href: '/notifications', icon: 'notifications', label: 'Notifications' },
 ];
