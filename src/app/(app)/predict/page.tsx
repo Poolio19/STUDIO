@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -80,8 +81,8 @@ export default function PredictPage() {
     .sort((a, b) => a!.rank - b!.rank);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <div className="lg:col-span-2 space-y-8">
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+      <div className="lg:col-span-3 space-y-8">
         <header>
           <h1 className="text-3xl font-bold tracking-tight">
             Predict Final Standings
@@ -161,7 +162,7 @@ export default function PredictPage() {
           </form>
         </Form>
       </div>
-      <div className="lg:col-span-1 space-y-8">
+      <div className="lg:col-span-2 space-y-8">
         <Card>
           <CardHeader>
             <CardTitle>Previous Season</CardTitle>
