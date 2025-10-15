@@ -56,7 +56,7 @@ export default function PredictPage() {
     },
   });
 
-  const { fields, update } = useFieldArray({
+  const { fields, replace } = useFieldArray({
     control: form.control,
     name: 'predictions',
   });
@@ -97,11 +97,7 @@ export default function PredictPage() {
                 <Reorder.Group
                   axis="y"
                   values={fields}
-                  onReorder={(newOrder) => {
-                    newOrder.forEach((item, index) => {
-                      update(index, item);
-                    });
-                  }}
+                  onReorder={replace}
                 >
                   {fields.map((field, index) => {
                     const TeamIcon =
