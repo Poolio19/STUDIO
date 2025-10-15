@@ -20,7 +20,7 @@ const navItems = [
   { href: '/leaderboard', icon: 'leaderboard', label: 'Current PremPred Standings' },
   { href: '/most-improved', icon: 'award', label: 'MiMoM' },
   { href: '/predict', icon: 'predict', label: 'Predict' },
-  { href: '/standings', icon: 'standings', label: 'Standings' },
+  { href: '/standings', icon: 'standings', label: 'Premier League Standings' },
   { href: '/scoring', icon: 'scoring', label: 'Rules & Scoring' },
   { href: '/profile', icon: 'profile', label: 'Profile' },
   { href: '/notifications', icon: 'notifications', label: 'Notifications' },

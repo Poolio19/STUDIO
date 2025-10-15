@@ -18,7 +18,7 @@ import { Icons, IconName } from '@/components/icons';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Current Standings | PremPred 2025-2026',
+    title: 'Premier League Standings | PremPred 2025-2026',
     description: 'The current Premier League standings.',
 };
 
@@ -34,7 +34,7 @@ export default function StandingsPage() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Current Standings</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Premier League Standings</h1>
         <p className="text-muted-foreground">The official Premier League table as it stands.</p>
       </header>
       <Card>
