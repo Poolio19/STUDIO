@@ -25,7 +25,7 @@ import type { Metadata } from 'next';
 import { Award, Star } from 'lucide-react';
 
 export const metadata: Metadata = {
-    title: 'Most Improved | PremPred 2025-2026',
+    title: 'MiMoM | PremPred 2025-2026',
     description: 'See who is improving the most month on month.',
 };
 
@@ -60,7 +60,7 @@ export default function MostImprovedPage() {
   return (
     <div className="flex flex-col gap-8">
       <header>
-          <h1 className="text-3xl font-bold tracking-tight">Most Improved Managers</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Most Improved Manager of the Month (MiMoM)</h1>
           <p className="text-muted-foreground">Celebrating the sharpest climbers in the ranks.</p>
       </header>
 
