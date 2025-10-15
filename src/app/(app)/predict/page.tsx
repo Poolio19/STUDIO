@@ -33,14 +33,25 @@ const formSchema = z.object({
 export default function PredictPage() {
   const { toast } = useToast();
 
+  const sortedTeamsByPreviousRank = React.useMemo(() => {
+    const teamMap = new Map(teams.map(t => [t.id, t]));
+    return previousSeasonStandings
+      .slice() // Create a copy to avoid mutating original data
+      .sort((a, b) => a.rank - b.rank)
+      .map(standing => {
+        const team = teamMap.get(standing.teamId);
+        return {
+          teamId: standing.teamId,
+          teamName: team?.name || 'Unknown Team',
+          teamLogo: team?.logo || 'match',
+        };
+      });
+  }, []);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      predictions: teams.map(team => ({
-        teamId: team.id,
-        teamName: team.name,
-        teamLogo: team.logo,
-      })),
+      predictions: sortedTeamsByPreviousRank,
     },
   });
 
@@ -119,7 +130,7 @@ export default function PredictPage() {
                     <span className="w-16 text-right">GD</span>
                   </div>
                  </div>
-                    <Table className="rounded-lg border bg-card">
+                    <Table>
                       <TableBody>
                         {standingsWithTeamData.map(team => {
                           if (!team) return null;
