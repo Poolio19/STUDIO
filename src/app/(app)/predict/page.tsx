@@ -8,25 +8,11 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
 } from '@/components/ui/form';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card';
 import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
-  TableHeader,
   TableRow,
 } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
@@ -93,34 +79,17 @@ export default function PredictPage() {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
               <div className="lg:col-span-3">
-                <div className="font-medium pb-2">Your Prediction</div>
+                 <div className="font-medium pb-2 text-muted-foreground">Your Prediction (2025-2026)</div>
                 <Reorder.Group
                   axis="y"
                   values={fields}
-                  onReorder={newOrder => {
+                  onReorder={(newOrder) => {
                     const from = fields.findIndex(f => f.id === newOrder[0].id);
-                    const to = fields.findIndex(
-                      f => f.id === newOrder[newOrder.length - 1].id
-                    );
-
-                    const newFields = [...fields];
-                    const [moved] = newFields.splice(from, 1);
-                    newFields.splice(to, 0, moved);
-
-                    const fromIndex = fields.findIndex(
-                      field => field.id === newOrder[0].id
-                    );
-                    const toIndex =
-                      fields.length -
-                      1 -
-                      [...fields]
-                        .reverse()
-                        .findIndex(field => field.id === newOrder[0].id);
-                    if (fromIndex !== toIndex) {
-                      move(fromIndex, toIndex);
-                    }
+                    // This logic is simplified, Framer Motion's reorder can handle multiple items if selected
+                    const to = fields.findIndex(f => f.id === newOrder[newOrder.length-1].id);
+                    move(from, to);
                   }}
                   className="space-y-1"
                 >
@@ -144,33 +113,31 @@ export default function PredictPage() {
                 </Reorder.Group>
               </div>
               <div className="lg:col-span-2">
-                 <div className="font-medium pb-2">Previous Season (2024-2025)</div>
+                 <div className="font-medium pb-2 text-muted-foreground flex justify-between">
+                  <span>Previous Season (2024-2025)</span>
+                  <div className="flex">
+                    <span className="w-16 text-right">Pts</span>
+                    <span className="w-16 text-right">GD</span>
+                  </div>
+                 </div>
                     <Table className="rounded-lg border bg-card">
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-[30px]">#</TableHead>
-                          <TableHead>Team</TableHead>
-                          <TableHead className="text-right">Pts</TableHead>
-                          <TableHead className="text-right">GD</TableHead>
-                        </TableRow>
-                      </TableHeader>
                       <TableBody>
                         {standingsWithTeamData.map(team => {
                           if (!team) return null;
                           const TeamIcon = Icons[team.logo as IconName] || Icons.match;
                           return (
-                            <TableRow key={team.id}>
-                              <TableCell className="font-medium">{team.rank}</TableCell>
+                            <TableRow key={team.id} className="h-[53px]">
+                              <TableCell className="font-medium w-[50px]">{team.rank}</TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-2">
                                   <TeamIcon className="size-5" />
                                   <span className="truncate">{team.name}</span>
                                 </div>
                               </TableCell>
-                              <TableCell className="text-right font-semibold">
+                              <TableCell className="text-right font-semibold w-16">
                                 {team.points}
                               </TableCell>
-                              <TableCell className="text-right">
+                              <TableCell className="text-right w-16">
                                 {team.goalDifference}
                               </TableCell>
                             </TableRow>
