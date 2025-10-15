@@ -91,7 +91,6 @@ export default function PredictPage() {
                     const to = fields.findIndex(f => f.id === newOrder[newOrder.length-1].id);
                     move(from, to);
                   }}
-                  className="space-y-1"
                 >
                   {fields.map((field, index) => {
                     const TeamIcon =
