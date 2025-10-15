@@ -1,3 +1,4 @@
+
 import {
   Avatar,
   AvatarFallback,
@@ -49,10 +50,25 @@ const formatPointsChange = (change: number) => {
     return <span>{change}</span>;
 }
 
+const getRankColor = (rank: number) => {
+    switch (rank) {
+        case 1:
+            return 'bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-100/80 dark:hover:bg-yellow-900/40';
+        case 2:
+            return 'bg-slate-100 dark:bg-slate-800/30 hover:bg-slate-100/80 dark:hover:bg-slate-800/40';
+        case 3:
+            return 'bg-orange-100 dark:bg-orange-900/30 hover:bg-orange-100/80 dark:hover:bg-orange-900/40';
+        case 4:
+            return 'bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-100/80 dark:hover:bg-blue-900/40';
+        case 5:
+            return 'bg-green-100 dark:bg-green-900/30 hover:bg-green-100/80 dark:hover:bg-green-900/40';
+        default:
+            return '';
+    }
+}
+
 export default function LeaderboardPage() {
   const sortedUsers = [...users].sort((a, b) => a.rank - b.rank);
-  const topThree = sortedUsers.slice(0, 3);
-  const rest = sortedUsers.slice(3);
 
   return (
     <div className="flex flex-col gap-8">
@@ -60,32 +76,6 @@ export default function LeaderboardPage() {
           <h1 className="text-3xl font-bold tracking-tight">Week {currentWeek} - Standings</h1>
           <p className="text-muted-foreground">See who's winning the prediction game this week.</p>
       </header>
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        {topThree.map((user, index) => {
-            return (
-              <Card key={user.id} className={cn("relative", 
-                index === 0 && "border-yellow-400 border-2 shadow-yellow-200/50 shadow-lg",
-                index === 1 && "border-slate-400 border-2 shadow-slate-200/50 shadow-lg",
-                index === 2 && "border-orange-400 border-2 shadow-orange-200/50 shadow-lg"
-              )}>
-                {index === 0 && <Badge className="absolute top-2 right-2 bg-yellow-400 text-yellow-900 hover:bg-yellow-400">1st</Badge>}
-                {index === 1 && <Badge className="absolute top-2 right-2 bg-slate-400 text-slate-900 hover:bg-slate-400">2nd</Badge>}
-                {index === 2 && <Badge className="absolute top-2 right-2 bg-orange-400 text-orange-900 hover:bg-orange-400">3rd</Badge>}
-                <CardContent className="p-6 flex flex-col items-center gap-4">
-                  <Avatar className="h-20 w-20 border-2">
-                    <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person portrait" />
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="text-center">
-                    <h3 className="text-lg font-semibold">{user.name}</h3>
-                    <p className="text-3xl font-bold text-primary">{user.score} pts</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-        })}
-      </div>
 
       <Card>
         <CardHeader>
@@ -109,7 +99,7 @@ export default function LeaderboardPage() {
               {sortedUsers.map((user) => {
                 const RankIcon = Icons[getRankChangeIcon(user.rankChange) as IconName];
                 return (
-                    <TableRow key={user.id}>
+                    <TableRow key={user.id} className={cn(getRankColor(user.rank))}>
                         <TableCell className="font-medium">{user.rank}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
