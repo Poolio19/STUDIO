@@ -14,9 +14,11 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Icons } from '@/components/icons';
 import Link from 'next/link';
+import { Award } from 'lucide-react';
 
 const navItems = [
   { href: '/leaderboard', icon: 'leaderboard', label: 'Leaderboard' },
+  { href: '/most-improved', icon: 'award', label: 'Most Improved' },
   { href: '/predict', icon: 'predict', label: 'Predict' },
   { href: '/standings', icon: 'standings', label: 'Standings' },
   { href: '/scoring', icon: 'scoring', label: 'Scoring' },
@@ -41,7 +43,7 @@ export function SidebarNav() {
       <SidebarContent className="p-2">
         <SidebarMenu>
           {navItems.map((item) => {
-            const Icon = Icons[item.icon as keyof typeof Icons];
+            const Icon = Icons[item.icon as keyof typeof Icons] || Award;
             return (
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton

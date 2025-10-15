@@ -24,7 +24,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Icons, IconName } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import type { Metadata } from 'next';
-import { Star, TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 
 const currentWeek = currentStandings[0]?.gamesPlayed || 1;
 
@@ -54,40 +54,12 @@ export default function LeaderboardPage() {
   const topThree = sortedUsers.slice(0, 3);
   const rest = sortedUsers.slice(3);
 
-  const mostImprovedPlayer = [...users].sort((a, b) => b.rankChange - a.rankChange)[0];
-  const currentMonth = new Date().toLocaleString('default', { month: 'short' });
-
-
   return (
     <div className="flex flex-col gap-8">
       <header>
           <h1 className="text-3xl font-bold tracking-tight">Week {currentWeek} - Standings</h1>
           <p className="text-muted-foreground">See who's winning the prediction game this week.</p>
       </header>
-
-      <Card className="bg-primary/10 border-primary/50">
-        <CardHeader className="flex-row items-center gap-4">
-          <div className="p-3 rounded-full bg-primary/20">
-            <Star className="size-6 text-primary" />
-          </div>
-          <div>
-            <CardTitle>Most Improved Manager of the Month</CardTitle>
-            <CardDescription>MiMoM for {currentMonth}</CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16 border-2 border-primary">
-              <AvatarImage src={getAvatarUrl(mostImprovedPlayer.avatar)} alt={mostImprovedPlayer.name} data-ai-hint="person portrait" />
-              <AvatarFallback>{mostImprovedPlayer.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <div>
-              <h3 className="text-xl font-bold">{mostImprovedPlayer.name}</h3>
-              <p className="text-muted-foreground">Jumped <span className="font-bold text-green-600">{mostImprovedPlayer.rankChange}</span> spots this month!</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {topThree.map((user, index) => {

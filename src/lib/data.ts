@@ -47,7 +47,13 @@ export type CurrentStanding = {
     wins: number;
     draws: number;
     losses: number;
-}
+};
+
+export type MonthlyMimoM = {
+  month: string;
+  year: number;
+  userId: string;
+};
 
 export const users: User[] = [
     { id: 'usr_1', name: 'Alex', avatar: '1', score: 86, maxScore: 100, minScore: -190, rank: 1, maxRank: 1, minRank: 5, rankChange: 0, scoreChange: 16 },
@@ -75,11 +81,11 @@ export const users: User[] = [
     { id: 'usr_23', name: 'Daniel', avatar: '23', score: -80, maxScore: 100, minScore: -190, rank: 23, maxRank: 23, minRank: 30, rankChange: -3, scoreChange: -12 },
     { id: 'usr_24', name: 'Elizabeth', avatar: '24', score: -86, maxScore: 100, minScore: -190, rank: 24, maxRank: 24, minRank: 30, rankChange: 0, scoreChange: 4 },
     { id: 'usr_25', name: 'Michael', avatar: '25', score: -90, maxScore: 100, minScore: -190, rank: 25, maxRank: 25, minRank: 30, rankChange: 2, scoreChange: 10 },
-    { id: 'usr_26', name: 'Sofia', avatar: '26', score: -96, maxScore: 100, minScore: -190, rank: 26, maxRank: 26, minRank: 30, rankChange: -1, scoreChange: -4 },
-    { id: 'usr_27', name: 'Matthew', avatar: '27', score: -100, maxScore: 100, minScore: -190, rank: 27, maxRank: 27, minRank: 30, rankChange: 0, scoreChange: 0 },
+    { id: 'usr_26', name: 'Sofia', avatar: '26', score: -90, maxScore: 100, minScore: -190, rank: 25, maxRank: 26, minRank: 30, rankChange: -1, scoreChange: -4 },
+    { id: 'usr_27', name: 'Matthew', avatar: '27', score: -90, maxScore: 100, minScore: -190, rank: 25, maxRank: 27, minRank: 30, rankChange: 0, scoreChange: 0 },
     { id: 'usr_28', name: 'Avery', avatar: '28', score: -106, maxScore: 100, minScore: -190, rank: 28, maxRank: 28, minRank: 30, rankChange: 1, scoreChange: 6 },
     { id: 'usr_29', name: 'Joseph', avatar: '29', score: -110, maxScore: 100, minScore: -190, rank: 29, maxRank: 29, minRank: 30, rankChange: -1, scoreChange: -2 },
-    { id: 'usr_30', name: 'Scarlett', avatar: '30', score: -116, maxScore: 100, minScore: -190, rank: 30, maxRank: 30, minRank: 30, rankChange: 0, scoreChange: 2 },
+    { id: 'usr_30', name: 'Scarlett', avatar: '30', score: -110, maxScore: 100, minScore: -190, rank: 29, maxRank: 30, minRank: 30, rankChange: 0, scoreChange: 2 },
 ];
 
 export const teams: Team[] = [
@@ -172,5 +178,9 @@ export const currentStandings: CurrentStanding[] = [
     { teamId: 'team_16', rank: 20, points: 1, goalDifference: -10, gamesPlayed: 5, wins: 0, draws: 1, losses: 4 },
 ];
 
-    
-    
+export const monthlyMimoM: MonthlyMimoM[] = [
+    { month: 'January', year: 2025, userId: 'usr_22' },
+    { month: 'February', year: 2025, userId: 'usr_5' },
+    { month: 'March', year: 2025, userId: 'usr_18' },
+    { month: 'April', year: 2025, userId: 'usr_8' },
+];

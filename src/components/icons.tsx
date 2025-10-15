@@ -17,6 +17,7 @@ import {
   ChevronDown,
   Minus,
   ListOrdered,
+  Award,
 } from 'lucide-react';
 
 export const Icons = {
@@ -27,6 +28,7 @@ export const Icons = {
   standings: ListOrdered,
   profile: User,
   notifications: Bell,
+  award: Award,
   atom: Atom,
   zap: Zap,
   rocket: Rocket,
