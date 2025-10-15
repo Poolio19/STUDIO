@@ -126,12 +126,10 @@ export default function LeaderboardPage() {
               <TableRow>
                 <TableHead className="w-[80px]">Rank</TableHead>
                 <TableHead>Player</TableHead>
-                <TableHead className="text-center">Pos. Change</TableHead>
+                <TableHead className="text-center">Position Change</TableHead>
                 <TableHead className="text-center">Points Change</TableHead>
-                <TableHead className="text-center">Max Pos.</TableHead>
-                <TableHead className="text-center">Min Pos.</TableHead>
-                <TableHead className="text-right">Max Pts.</TableHead>
-                <TableHead className="text-right">Min Pts.</TableHead>
+                <TableHead className="text-center">Highest Rank</TableHead>
+                <TableHead className="text-center">Lowest Rank</TableHead>
                 <TableHead className="text-right">Score</TableHead>
               </TableRow>
             </TableHeader>
@@ -167,8 +165,6 @@ export default function LeaderboardPage() {
                             <TrendingDown className="size-4 text-red-500"/>{user.minRank}
                           </div>
                         </TableCell>
-                        <TableCell className="text-right">{user.maxScore}</TableCell>
-                        <TableCell className="text-right">{user.minScore}</TableCell>
                         <TableCell className="text-right font-bold text-lg">{user.score}</TableCell>
                     </TableRow>
                 );
