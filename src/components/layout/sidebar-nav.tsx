@@ -17,7 +17,7 @@ import Link from 'next/link';
 import { Award } from 'lucide-react';
 
 const navItems = [
-  { href: '/leaderboard', icon: 'leaderboard', label: 'Leaderboard' },
+  { href: '/leaderboard', icon: 'leaderboard', label: 'Current PremPred Standings' },
   { href: '/most-improved', icon: 'award', label: 'Most Improved' },
   { href: '/predict', icon: 'predict', label: 'Predict' },
   { href: '/standings', icon: 'standings', label: 'Standings' },
