@@ -117,8 +117,8 @@ export default function LeaderboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Full Standings</CardTitle>
-          <CardDescription>The current ranking of all players.</CardDescription>
+          <CardTitle>PremPred Current Standings</CardTitle>
+          <CardDescription>Week {currentWeek} of 38</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
