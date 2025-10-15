@@ -94,7 +94,8 @@ export default function PredictPage() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
-              <div className="lg:col-span-3 space-y-2">
+              <div className="lg:col-span-3">
+                <div className="font-medium pb-2">Your Prediction</div>
                 <Reorder.Group
                   axis="y"
                   values={fields}
@@ -143,13 +144,8 @@ export default function PredictPage() {
                 </Reorder.Group>
               </div>
               <div className="lg:col-span-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Previous Season</CardTitle>
-                    <CardDescription>Final standings from 2024-2025.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Table>
+                 <div className="font-medium pb-2">Previous Season (2024-2025)</div>
+                    <Table className="rounded-lg border bg-card">
                       <TableHeader>
                         <TableRow>
                           <TableHead className="w-[30px]">#</TableHead>
@@ -182,8 +178,6 @@ export default function PredictPage() {
                         })}
                       </TableBody>
                     </Table>
-                  </CardContent>
-                </Card>
               </div>
             </div>
             <Button type="submit">Submit Final Prediction</Button>
