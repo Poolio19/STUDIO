@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -31,17 +31,20 @@ const formSchema = z.object({
   predictions: z.array(predictionSchema),
 });
 
+type Prediction = z.infer<typeof predictionSchema>;
+
 export default function PredictPage() {
   const { toast } = useToast();
 
   const sortedTeamsByPreviousRank = React.useMemo(() => {
     const teamMap = new Map(teams.map(t => [t.id, t]));
     return previousSeasonStandings
-      .slice() // Create a copy to avoid mutating original data
+      .slice()
       .sort((a, b) => a.rank - b.rank)
       .map(standing => {
         const team = teamMap.get(standing.teamId);
         return {
+          id: standing.teamId, // framer-motion needs a unique id
           teamId: standing.teamId,
           teamName: team?.name || 'Unknown Team',
           teamLogo: team?.logo || 'match',
@@ -56,10 +59,12 @@ export default function PredictPage() {
     },
   });
 
-  const { fields, replace } = useFieldArray({
-    control: form.control,
-    name: 'predictions',
-  });
+  const [items, setItems] = React.useState<Prediction[]>(form.getValues().predictions);
+
+  React.useEffect(() => {
+    form.setValue('predictions', items);
+  }, [items, form]);
+
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
@@ -96,23 +101,23 @@ export default function PredictPage() {
                  <div className="font-medium pb-2 text-muted-foreground">Your Prediction (2025-2026)</div>
                 <Reorder.Group
                   axis="y"
-                  values={fields}
-                  onReorder={replace}
+                  values={items}
+                  onReorder={setItems}
                 >
-                  {fields.map((field, index) => {
+                  {items.map((item, index) => {
                     const TeamIcon =
-                      Icons[field.teamLogo as IconName] || Icons.match;
+                      Icons[item.teamLogo as IconName] || Icons.match;
                     return (
                       <Reorder.Item
-                        key={field.id}
-                        value={field}
+                        key={item.teamId}
+                        value={item}
                         className="flex items-center gap-4 h-[53px] px-4 rounded-md bg-card border cursor-grab active:cursor-grabbing shadow-sm"
                       >
                         <div className="text-base font-medium w-6 text-center text-muted-foreground">
                           {index + 1}
                         </div>
                         <TeamIcon className="size-5" />
-                        <span className="font-medium text-sm">{field.teamName}</span>
+                        <span className="font-medium text-sm">{item.teamName}</span>
                       </Reorder.Item>
                     );
                   })}
