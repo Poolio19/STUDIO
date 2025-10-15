@@ -56,7 +56,7 @@ export default function PredictPage() {
     },
   });
 
-  const { fields, move } = useFieldArray({
+  const { fields, update } = useFieldArray({
     control: form.control,
     name: 'predictions',
   });
@@ -98,10 +98,9 @@ export default function PredictPage() {
                   axis="y"
                   values={fields}
                   onReorder={(newOrder) => {
-                    const from = fields.findIndex(f => f.id === newOrder[0].id);
-                    // This logic is simplified, Framer Motion's reorder can handle multiple items if selected
-                    const to = fields.findIndex(f => f.id === newOrder[newOrder.length-1].id);
-                    move(from, to);
+                    newOrder.forEach((item, index) => {
+                      update(index, item);
+                    });
                   }}
                 >
                   {fields.map((field, index) => {
