@@ -113,7 +113,7 @@ export default function PredictPage() {
               </div>
               <div className="lg:col-span-2">
                  <div className="font-medium pb-2 text-muted-foreground flex justify-between">
-                  <span>Previous Season (2024-2025)</span>
+                  <span>Last Season (2024-25)</span>
                   <div className="flex">
                     <span className="w-16 text-right">Pts</span>
                     <span className="w-16 text-right">GD</span>
