@@ -87,7 +87,7 @@ export default function StatsPage() {
                                         (s) => s.userId === user.id && s.teamId === team.id
                                     )?.score ?? 0;
                                     return (
-                                        <TableCell key={`${user.id}-${team.id}`} className={cn("text-center font-medium w-[20px] p-2", getScoreColor(score))}>
+                                        <TableCell key={`${user.id}-${team.id}`} className={cn("text-center font-medium w-[20px] px-0", getScoreColor(score))}>
                                             {score}
                                         </TableCell>
                                     );
