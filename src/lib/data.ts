@@ -203,10 +203,12 @@ const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed:
   const teamIds = baseStandings.map(s => s.teamId);
   const newRankings = [...teamIds];
   
-  const numSwaps = Math.floor(random() * 8) + 5; 
+  // More swaps for more variability, but still biased
+  const numSwaps = Math.floor(random() * 15) + 8; 
   for (let i = 0; i < numSwaps; i++) {
     const idx1 = Math.floor(random() * newRankings.length);
-    const maxSwapDistance = 6;
+    // Bias swaps to be closer to the original position
+    const maxSwapDistance = Math.floor(random() * 8) + 2; // Can swap up to 10 positions away
     let offset = Math.floor(random() * (maxSwapDistance * 2 + 1)) - maxSwapDistance;
     let idx2 = idx1 + offset;
 
@@ -228,39 +230,36 @@ export const predictions: Prediction[] = usersData.map((user, index) => {
     };
 });
 
-const generateScoresForUser = (userId: string): PlayerTeamScore[] => {
+const generateScoresForUser = (userId: string, userPredictions: string[]): PlayerTeamScore[] => {
     const seed = parseInt(userId.replace('usr_', ''), 10);
     const random = mulberry32(seed);
+    const actualRanks = new Map<string, number>();
+    currentStandings.forEach(s => actualRanks.set(s.teamId, s.rank));
     
-    return teams.map(team => {
-        let score;
-        const rand = random();
-        if (rand < 0.1) score = 5;       // 10% chance of 5
-        else if (rand < 0.3) score = 4;  // 20% chance of 4
-        else if (rand < 0.6) score = 3;  // 30% chance of 3
-        else if (rand < 0.8) score = 2;  // 20% chance of 2
-        else if (rand < 0.9) score = 1;  // 10% chance of 1
-        else score = 0;                  // 10% chance of 0
-        
-        if (random() < 0.15) { // 15% chance of a negative score
-             score = -Math.floor(random() * 5); // -0 to -4
-        }
+    return userPredictions.map((teamId, index) => {
+        const predictedRank = index + 1;
+        const actualRank = actualRanks.get(teamId) || 0;
+        const score = 5 - Math.abs(predictedRank - actualRank);
         return {
             userId: userId,
-            teamId: team.id,
+            teamId: teamId,
             score: score,
         };
     });
 };
 
-export const playerTeamScores: PlayerTeamScore[] = usersData.flatMap(user => generateScoresForUser(user.id));
+export const playerTeamScores: PlayerTeamScore[] = usersData.flatMap(user => {
+    const userPrediction = predictions.find(p => p.userId === user.id);
+    return generateScoresForUser(user.id, userPrediction?.rankings || []);
+});
+
 
 const NUM_WEEKS = 5;
 
 // This represents the final player rankings from the previous season.
 const previousSeasonPlayerRanks: {[key: string]: number} = {};
-[...usersData].sort((a,b) => parseInt(a.id.replace('usr_','')) - parseInt(b.id.replace('usr_','')))
-  .reverse() 
+// A bit of deterministic shuffling for previous season ranks
+[...usersData].sort((a,b) => (parseInt(a.id.replace('usr_','')) % 5) - (parseInt(b.id.replace('usr_','')) % 5))
   .forEach((user, index) => {
     previousSeasonPlayerRanks[user.id] = index + 1;
   });
@@ -276,17 +275,21 @@ const userHistories: UserHistory[] = usersData.map(user => {
     const seed = parseInt(user.id.replace('usr_', ''), 10);
     const random = mulberry32(seed * 42); 
 
-    for (let week = 1; week <= NUM_WEEKS; week++) {
-        // The final week's score is the sum of all team scores
-        if (week === NUM_WEEKS) {
-            const finalScore = playerTeamScores
+    const finalScore = playerTeamScores
                 .filter(s => s.userId === user.id)
                 .reduce((sum, current) => sum + current.score, 0);
+
+    // Create a path to the final score
+    const weeklyIncrements = Array.from({length: NUM_WEEKS}, () => random());
+    const totalIncrements = weeklyIncrements.reduce((a, b) => a + b, 0);
+    const scaleFactor = (finalScore - 0) / totalIncrements;
+
+    for (let week = 1; week <= NUM_WEEKS; week++) {
+        if (week === NUM_WEEKS) {
             weeklyScores.push({ week, score: finalScore, rank: 0 }); // Rank to be calculated later
         } else {
-            // For intermediate weeks, simulate a score progression
-            const scoreChange = Math.floor(random() * 21) - 10;
-            const currentScore = lastScore + scoreChange;
+            const score_increment = weeklyIncrements[week-1] * scaleFactor;
+            const currentScore = Math.round(lastScore + score_increment);
             weeklyScores.push({ week, score: currentScore, rank: 0 }); // Rank to be calculated later
             lastScore = currentScore;
         }
@@ -305,7 +308,7 @@ for (let week = 1; week <= NUM_WEEKS; week++) {
 
     let currentRank = 1;
     for (let i = 0; i < weeklyStandings.length; i++) {
-        if (i > 0 && weeklyStandings[i].score < weeklyStandings[i - 1].score) {
+        if (i > 0 && weeklyStandings[i].score < weeklyStandings[i-1].score) {
             currentRank = i + 1;
         }
         const userHistory = userHistories.find(h => h.userId === weeklyStandings[i].userId)!;
@@ -320,11 +323,9 @@ const finalUsers: User[] = usersData.map(userStub => {
     
     const currentWeekData = history.weeklyScores.find(w => w.week === NUM_WEEKS)!;
     
-    // For Week 1, compare against Week 0 (previous season). Otherwise, compare to previous week.
-    const baselineWeekForChange = NUM_WEEKS === 1 
-      ? history.weeklyScores.find(w => w.week === 0)!
-      : history.weeklyScores.find(w => w.week === NUM_WEEKS - 1)!;
-
+    const previousWeekNumber = NUM_WEEKS > 1 ? NUM_WEEKS - 1 : 0;
+    const baselineWeekForChange = history.weeklyScores.find(w => w.week === previousWeekNumber)!;
+    
     const previousRank = baselineWeekForChange.rank;
     const previousScore = baselineWeekForChange.score;
 
