@@ -19,6 +19,7 @@ import {
   ListOrdered,
   Award,
   BarChart,
+  Users,
 } from 'lucide-react';
 
 export const Icons = {
@@ -28,6 +29,7 @@ export const Icons = {
   scoring: Calculator,
   standings: ListOrdered,
   stats: BarChart,
+  consensus: Users,
   profile: User,
   notifications: Bell,
   award: Award,
