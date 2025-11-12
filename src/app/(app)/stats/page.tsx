@@ -51,13 +51,10 @@ export default function StatsPage() {
                 <Table className="min-w-full border-collapse">
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="sticky left-0 z-10 bg-card whitespace-nowrap w-[200px]">Player</TableHead>
-                             <TableHead className="sticky left-[200px] z-10 bg-card w-[20px] text-center">
-                                <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 py-4 font-medium translate-y-2">TOTAL</div>
-                            </TableHead>
+                            <TableHead className="sticky left-0 z-10 bg-card whitespace-nowrap w-[250px]">Player</TableHead>
                             {sortedTeams.map((team) => {
                                 return (
-                                <TableHead key={team.id} className="w-[20px] text-center">
+                                <TableHead key={team.id} className="w-[20px] text-center p-0">
                                      <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 py-4 font-medium translate-y-2">{team.name}</div>
                                 </TableHead>
                             )})}
@@ -66,16 +63,18 @@ export default function StatsPage() {
                     <TableBody>
                         {sortedUsers.map((user) => (
                             <TableRow key={user.id}>
-                                <TableCell className="sticky left-0 z-10 bg-card whitespace-nowrap font-medium w-[200px]">
-                                    <div className="flex items-center gap-3">
-                                        <Avatar className="h-9 w-9">
-                                            <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
-                                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <span className="font-medium">{user.name}</span>
+                                <TableCell className="sticky left-0 z-10 bg-card whitespace-nowrap font-medium w-[250px]">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="flex items-center gap-3">
+                                            <Avatar className="h-9 w-9">
+                                                <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
+                                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <span className="font-medium">{user.name}</span>
+                                        </div>
+                                        <span className="font-bold text-lg pr-4">{user.score}</span>
                                     </div>
                                 </TableCell>
-                                <TableCell className="sticky left-[200px] z-10 bg-card text-center font-bold w-[20px] p-0 text-lg">{user.score}</TableCell>
                                 {sortedTeams.map((team) => {
                                     const score = playerTeamScores.find(
                                         (s) => s.userId === user.id && s.teamId === team.id
