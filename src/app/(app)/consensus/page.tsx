@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -16,7 +17,7 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
-import { teams, currentStandings, predictions } from '@/lib/data';
+import { teams, predictions, previousSeasonStandings } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
@@ -27,7 +28,7 @@ type ConsensusData = {
 
 export default function ConsensusPage() {
   const standingsWithTeamData = useMemo(() => {
-    return currentStandings
+    return previousSeasonStandings
       .map((standing) => {
         const team = teams.find((t) => t.id === standing.teamId);
         return team ? { ...standing, ...team } : null;
@@ -84,7 +85,7 @@ export default function ConsensusPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="sticky left-0 z-10 w-[50px] bg-card text-center">Pos</TableHead>
-                  <TableHead className="sticky left-[50px] z-10 w-[200px] bg-card">Team (Current Position)</TableHead>
+                  <TableHead className="sticky left-[50px] z-10 w-[200px] bg-card">Team</TableHead>
                   {positions.map((pos) => (
                     <TableHead key={pos} className="w-[60px] text-center">{pos}</TableHead>
                   ))}
