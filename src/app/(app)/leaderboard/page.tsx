@@ -106,6 +106,7 @@ export default function LeaderboardPage() {
             <TableBody>
               {sortedUsers.map((user) => {
                 const RankIcon = getRankChangeIcon(user.rankChange);
+                const ScoreIcon = getRankChangeIcon(user.scoreChange);
                 const lastWeekRank = user.rank - user.rankChange;
                 const lastWeekScore = user.score - user.scoreChange;
                 return (
@@ -133,6 +134,7 @@ export default function LeaderboardPage() {
                         <TableCell className={cn("font-bold text-center border-r", getRankChangeColor(user.scoreChange))}>
                             <div className="flex items-center justify-center gap-2">
                                 <span>{formatPointsChange(user.scoreChange)}</span>
+                                <ScoreIcon className="size-5" />
                             </div>
                         </TableCell>
                         <TableCell className="text-center">
