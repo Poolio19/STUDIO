@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -15,7 +14,6 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
-import { Icons, IconName } from '@/components/icons';
 
 const getAvatarUrl = (avatarId: string) => {
   return PlaceHolderImages.find((img) => img.id === avatarId)?.imageUrl || '';
@@ -54,7 +52,11 @@ export default function StatsPage() {
                     <TableHeader>
                         <TableRow>
                             <TableHead className="sticky left-0 z-10 bg-card whitespace-nowrap w-[200px]">Player</TableHead>
-                            <TableHead className="sticky left-[200px] z-10 bg-card text-center w-[120px]">TOTAL</TableHead>
+                             <TableHead className="sticky left-[200px] z-10 bg-card text-center w-[120px] h-[120px] p-0 align-bottom">
+                                <div className="flex items-end justify-center -rotate-90">
+                                   <span className="font-medium">TOTAL</span>
+                                </div>
+                            </TableHead>
                             {sortedTeams.map((team) => {
                                 return (
                                 <TableHead key={team.id} className="text-center whitespace-nowrap w-[20px] h-[120px] p-0 align-bottom">
