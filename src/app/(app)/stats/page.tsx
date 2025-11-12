@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -52,45 +53,47 @@ export default function StatsPage() {
                 <Table className="min-w-full">
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="sticky left-0 z-10 bg-card whitespace-nowrap w-[200px]">Team</TableHead>
-                            {sortedUsers.map((user) => (
-                                <TableHead key={user.id} className="text-center">
-                                    <div className="flex flex-col items-center gap-2">
+                            <TableHead className="sticky left-0 z-10 bg-card whitespace-nowrap w-[200px]">Player (Score)</TableHead>
+                            <TableHead className="text-center w-[120px]">TOTAL</TableHead>
+                            {sortedTeams.map((team) => {
+                                const TeamIcon = Icons[team.logo as IconName] || Icons.match;
+                                return (
+                                <TableHead key={team.id} className="text-center whitespace-nowrap w-[60px] h-[150px] p-0">
+                                    <div className="flex items-center justify-center -rotate-90">
+                                        <div className="flex items-center gap-3">
+                                            <TeamIcon className="size-5" />
+                                            <span className="font-medium">{team.name}</span>
+                                        </div>
+                                    </div>
+                                </TableHead>
+                            )})}
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {sortedUsers.map((user) => (
+                            <TableRow key={user.id}>
+                                <TableCell className="sticky left-0 z-10 bg-card whitespace-nowrap font-medium w-[200px]">
+                                    <div className="flex items-center gap-3">
                                         <Avatar className="h-9 w-9">
                                             <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
                                             <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                                         </Avatar>
                                         <span className="font-medium">{user.name}</span>
-                                        <span className="text-xs text-muted-foreground">({user.score})</span>
                                     </div>
-                                </TableHead>
-                            ))}
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {sortedTeams.map((team) => {
-                            const TeamIcon = Icons[team.logo as IconName] || Icons.match;
-                            return (
-                                <TableRow key={team.id}>
-                                    <TableCell className="sticky left-0 z-10 bg-card whitespace-nowrap font-medium w-[200px]">
-                                        <div className="flex items-center gap-3">
-                                            <TeamIcon className="size-5" />
-                                            <span>{team.name}</span>
-                                        </div>
-                                    </TableCell>
-                                    {sortedUsers.map((user) => {
-                                        const score = playerTeamScores.find(
-                                            (s) => s.userId === user.id && s.teamId === team.id
-                                        )?.score ?? 0;
-                                        return (
-                                            <TableCell key={`${user.id}-${team.id}`} className={cn("text-center font-medium w-[120px]", getScoreColor(score))}>
-                                                {score}
-                                            </TableCell>
-                                        );
-                                    })}
-                                </TableRow>
-                            );
-                        })}
+                                </TableCell>
+                                <TableCell className="text-center font-bold w-[120px]">{user.score}</TableCell>
+                                {sortedTeams.map((team) => {
+                                    const score = playerTeamScores.find(
+                                        (s) => s.userId === user.id && s.teamId === team.id
+                                    )?.score ?? 0;
+                                    return (
+                                        <TableCell key={`${user.id}-${team.id}`} className={cn("text-center font-medium w-[60px]", getScoreColor(score))}>
+                                            {score}
+                                        </TableCell>
+                                    );
+                                })}
+                            </TableRow>
+                        ))}
                     </TableBody>
                 </Table>
             </div>
