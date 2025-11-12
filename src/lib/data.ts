@@ -131,11 +131,11 @@ export const previousSeasonStandings: PreviousSeasonStanding[] = [
   { teamId: 'team_7', rank: 10, points: 49, goalDifference: -1 }, // Crystal Palace
   { teamId: 'team_5', rank: 11, points: 48, goalDifference: -7 }, // Brighton
   { teamId: 'team_3', rank: 12, points: 48, goalDifference: -13 }, // Bournemouth
-  { id: 'team_9', rank: 13, points: 47, goalDifference: -6 }, // Fulham
-  { id: 'team_20', rank: 14, points: 46, goalDifference: -15 }, // Wolves
-  { id: 'team_8', rank: 15, points: 40, goalDifference: -11 }, // Everton
-  { id: 'team_4', rank: 16, points: 39, goalDifference: -9 }, // Brentford
-  { id: 'team_16', rank: 17, points: 32, goalDifference: -18 }, // Nottingham Forest
+  { teamId: 'team_9', rank: 13, points: 47, goalDifference: -6 }, // Fulham
+  { teamId: 'team_20', rank: 14, points: 46, goalDifference: -15 }, // Wolves
+  { teamId: 'team_8', rank: 15, points: 40, goalDifference: -11 }, // Everton
+  { teamId: 'team_4', rank: 16, points: 39, goalDifference: -9 }, // Brentford
+  { teamId: 'team_16', rank: 17, points: 32, goalDifference: -18 }, // Nottingham Forest
   // Promoted teams, give them lower ranks from previous season for realism
   { teamId: 'team_11', rank: 18, points: 97, goalDifference: 48 }, // Leicester (from Champ)
   { teamId: 'team_10', rank: 19, points: 96, goalDifference: 35 }, // Ipswich (from Champ)
@@ -243,6 +243,8 @@ function generatePlayerTeamScores(): PlayerTeamScore[] {
 }
 
 export const playerTeamScores: PlayerTeamScore[] = generatePlayerTeamScores();
+
+    
 
     
 
