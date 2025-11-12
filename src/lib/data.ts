@@ -73,6 +73,8 @@ export type UserHistory = {
     weeklyScores: WeeklyScore[];
 };
 
+// --- STATIC DATA ---
+
 let usersData: Omit<User, 'score' | 'rank' | 'maxRank' | 'minRank' | 'maxScore' | 'minScore' | 'rankChange' | 'scoreChange'>[] = [
     { id: 'usr_1', name: 'Alex', avatar: '1' },
     { id: 'usr_2', name: 'Maria', avatar: '2' },
@@ -152,33 +154,6 @@ export const previousSeasonStandings: PreviousSeasonStanding[] = [
     { teamId: 'team_17', rank: 20, points: 25, goalDifference: -37 },
 ];
 
-const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[]): string[] => {
-  const teamIds = baseStandings.map(s => s.teamId);
-  const newRankings = [...teamIds];
-  const numSwaps = Math.floor(Math.random() * 5) + 3;
-  for (let i = 0; i < numSwaps; i++) {
-    const idx1 = Math.floor(Math.random() * newRankings.length);
-    let idx2 = Math.floor(Math.random() * newRankings.length);
-    const maxSwapDistance = 5;
-    if (Math.abs(idx1 - idx2) > maxSwapDistance) {
-      idx2 = (idx1 + Math.floor(Math.random() * maxSwapDistance) - 2) % newRankings.length;
-      if (idx2 < 0) idx2 += newRankings.length;
-    }
-    if (idx1 === idx2) {
-        idx2 = (idx1 + 1) % newRankings.length;
-    }
-    [newRankings[idx1], newRankings[idx2]] = [newRankings[idx2], newRankings[idx1]];
-  }
-  return newRankings;
-}
-
-export const predictions: Prediction[] = usersData.map(user => {
-    return {
-      userId: user.id,
-      rankings: generateBiasedPrediction(previousSeasonStandings),
-    };
-});
-
 export const currentStandings: CurrentStanding[] = [
     { teamId: 'team_13', rank: 1, points: 15, goalDifference: 10, gamesPlayed: 5, wins: 5, draws: 0, losses: 0 },
     { teamId: 'team_1', rank: 2, points: 13, goalDifference: 8, gamesPlayed: 5, wins: 4, draws: 1, losses: 0 },
@@ -209,60 +184,105 @@ export const monthlyMimoM: MonthlyMimoM[] = [
     { month: 'April', year: 2024, userId: 'usr_2' },
 ];
 
-const generateScores = (): PlayerTeamScore[] => {
+// --- DYNAMIC & DETERMINISTIC DATA GENERATION ---
+
+// Simple seeded random number generator for consistency
+const mulberry32 = (seed: number) => {
+  return () => {
+    let t = (seed += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+};
+
+const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed: number): string[] => {
+  const random = mulberry32(seed);
+  const teamIds = baseStandings.map(s => s.teamId);
+  const newRankings = [...teamIds];
+  
+  // More swaps for more variety, but still biased
+  const numSwaps = Math.floor(random() * 8) + 5; 
+  for (let i = 0; i < numSwaps; i++) {
+    const idx1 = Math.floor(random() * newRankings.length);
+    // Bias swaps to be close to the original position
+    const maxSwapDistance = 6;
+    let offset = Math.floor(random() * (maxSwapDistance * 2 + 1)) - maxSwapDistance;
+    let idx2 = idx1 + offset;
+
+    // Boundary checks
+    if (idx2 < 0) idx2 = 0;
+    if (idx2 >= newRankings.length) idx2 = newRankings.length - 1;
+    if (idx1 === idx2) {
+        idx2 = (idx1 + 1) % newRankings.length;
+    }
+    
+    [newRankings[idx1], newRankings[idx2]] = [newRankings[idx2], newRankings[idx1]];
+  }
+  return newRankings;
+};
+
+export const predictions: Prediction[] = usersData.map((user, index) => {
+    // Use user index as part of the seed for unique predictions
+    return {
+      userId: user.id,
+      rankings: generateBiasedPrediction(previousSeasonStandings, index + 1),
+    };
+});
+
+const generateScoresForUser = (userId: string): PlayerTeamScore[] => {
+    const seed = parseInt(userId.replace('usr_', ''), 10);
+    const random = mulberry32(seed);
+    
     return teams.map(team => {
         let score;
-        const rand = Math.random();
-        if (rand < 0.1) score = 5;
-        else if (rand < 0.3) score = 4;
-        else if (rand < 0.6) score = 3;
-        else if (rand < 0.8) score = 2;
-        else if (rand < 0.9) score = 1;
-        else score = 0;
-        if (Math.random() < 0.15) {
-             score = -Math.floor(Math.random() * 5);
+        const rand = random();
+        if (rand < 0.1) score = 5;       // 10% chance of 5
+        else if (rand < 0.3) score = 4;  // 20% chance of 4
+        else if (rand < 0.6) score = 3;  // 30% chance of 3
+        else if (rand < 0.8) score = 2;  // 20% chance of 2
+        else if (rand < 0.9) score = 1;  // 10% chance of 1
+        else score = 0;                  // 10% chance of 0
+        
+        if (random() < 0.15) { // 15% chance of a negative score
+             score = -Math.floor(random() * 5); // -0 to -4
         }
         return {
-            userId: '', // This will be set later
+            userId: userId,
             teamId: team.id,
-            score: score
+            score: score,
         };
     });
 };
 
-const allScores: PlayerTeamScore[] = usersData.flatMap(user => {
-    const userScores = generateScores();
-    return userScores.map(s => ({...s, userId: user.id}));
-});
+export const playerTeamScores: PlayerTeamScore[] = usersData.flatMap(user => generateScoresForUser(user.id));
 
-export const playerTeamScores: PlayerTeamScore[] = allScores;
-
-// --- DYNAMIC DATA GENERATION ---
 const NUM_WEEKS = 5;
 
-// 1. Simulate weekly score history for each user
+// Simulate weekly score history for each user
 const userHistories: UserHistory[] = usersData.map(user => {
     let weeklyScores: WeeklyScore[] = [];
     let lastScore = 0;
+    // Use user ID to seed the random generator for deterministic history
+    const seed = parseInt(user.id.replace('usr_', ''), 10);
+    const random = mulberry32(seed * 42); // Multiply by a number to get a different sequence from other generators
+
     for (let week = 1; week <= NUM_WEEKS; week++) {
-        // Simulate score change from the previous week.
-        const scoreChange = Math.floor(Math.random() * 21) - 10; // -10 to +10
+        const scoreChange = Math.floor(random() * 21) - 10; // -10 to +10
         const currentScore = lastScore + scoreChange;
-        weeklyScores.push({ week, score: currentScore, rank: 0 }); // Rank will be calculated later
+        weeklyScores.push({ week, score: currentScore, rank: 0 });
         lastScore = currentScore;
     }
     return { userId: user.id, weeklyScores };
 });
 
-// 2. Calculate ranks for each week
+// Calculate ranks for each week
 for (let week = 1; week <= NUM_WEEKS; week++) {
-    // Get all scores for the current week and sort them
     const weeklyStandings = userHistories.map(h => ({
         userId: h.userId,
         score: h.weeklyScores.find(w => w.week === week)!.score
     })).sort((a, b) => b.score - a.score);
 
-    // Assign ranks, handling ties
     let currentRank = 1;
     for (let i = 0; i < weeklyStandings.length; i++) {
         if (i > 0 && weeklyStandings[i].score < weeklyStandings[i - 1].score) {
@@ -274,35 +294,76 @@ for (let week = 1; week <= NUM_WEEKS; week++) {
     }
 }
 
-// 3. Create the final 'users' array with all dynamic data
+// Create the final 'users' array by combining static data, calculated scores, and historical data
 const finalUsers: User[] = usersData.map(userStub => {
-    const history = userHistories.find(h => h.userId === userStub.id)!;
+    // 1. Calculate total score from individual team scores
+    const totalScore = playerTeamScores
+        .filter(s => s.userId === userStub.id)
+        .reduce((sum, current) => sum + current.score, 0);
+        
+    // 2. Find the user's weekly history
+    const history = userHistories.find(h => h.userId === userStub.id);
+    if (!history) {
+        // Fallback in case history isn't found, though it should be.
+        return {
+            ...userStub,
+            score: totalScore,
+            rank: 0,
+            rankChange: 0,
+            scoreChange: 0,
+            maxScore: totalScore,
+            minScore: totalScore,
+            maxRank: 0,
+            minRank: 0,
+        };
+    }
+    
+    // We'll use the pre-calculated history but override the final week's score with the *actual* total
     const currentWeekData = history.weeklyScores[NUM_WEEKS - 1];
-    const previousWeekData = history.weeklyScores[NUM_WEEKS - 2];
-
+    currentWeekData.score = totalScore;
+    
+    // 3. Get historical highs and lows
     const allScores = history.weeklyScores.map(w => w.score);
     const allRanks = history.weeklyScores.map(w => w.rank);
+    
+    const maxScore = Math.max(...allScores);
+    const minScore = Math.min(...allScores);
+    const maxRank = Math.min(...allRanks); // Best rank is the smallest number
+    const minRank = Math.max(...allRanks); // Worst rank is the largest number
 
-    const scoreChange = currentWeekData.score - previousWeekData.score;
-    // Rank change is inverted: a lower rank number is better.
-    const rankChange = previousWeekData.rank - currentWeekData.rank;
-
+    // 4. Calculate change from the previous week (if applicable)
+    let rankChange = 0;
+    let scoreChange = 0;
+    if (NUM_WEEKS > 1) {
+        const previousWeekData = history.weeklyScores[NUM_WEEKS - 2];
+        // Rank change is inverted: a lower rank number is an improvement.
+        rankChange = previousWeekData.rank - currentWeekData.rank;
+        scoreChange = currentWeekData.score - previousWeekData.score;
+    }
+    
     return {
         ...userStub,
-        score: currentWeekData.score,
-        rank: currentWeekData.rank,
-        rankChange: rankChange,
-        scoreChange: scoreChange,
-        maxScore: Math.max(...allScores),
-        minScore: Math.min(...allScores),
-        maxRank: Math.min(...allRanks), // min rank number is the best rank
-        minRank: Math.max(...allRanks), // max rank number is the worst rank
+        score: totalScore,
+        rank: 0, // Rank will be calculated in the next step
+        rankChange,
+        scoreChange,
+        maxScore,
+        minScore,
+        maxRank,
+        minRank,
     };
 });
 
-// Sort final users by rank for export
-const sortedFinalUsers = finalUsers.sort((a, b) => a.rank - b.rank);
+// Final ranking based on the definitive total scores
+const sortedFinalUsers = finalUsers.sort((a, b) => b.score - a.score);
+
+// Assign final ranks
+let currentRank = 1;
+for (let i = 0; i < sortedFinalUsers.length; i++) {
+    if (i > 0 && sortedFinalUsers[i].score < sortedFinalUsers[i - 1].score) {
+        currentRank = i + 1;
+    }
+    sortedFinalUsers[i].rank = currentRank;
+}
 
 export const users: User[] = sortedFinalUsers;
-
-    
