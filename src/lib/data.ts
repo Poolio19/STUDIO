@@ -203,16 +203,13 @@ const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed:
   const teamIds = baseStandings.map(s => s.teamId);
   const newRankings = [...teamIds];
   
-  // More swaps for more variety, but still biased
   const numSwaps = Math.floor(random() * 8) + 5; 
   for (let i = 0; i < numSwaps; i++) {
     const idx1 = Math.floor(random() * newRankings.length);
-    // Bias swaps to be close to the original position
     const maxSwapDistance = 6;
     let offset = Math.floor(random() * (maxSwapDistance * 2 + 1)) - maxSwapDistance;
     let idx2 = idx1 + offset;
 
-    // Boundary checks
     if (idx2 < 0) idx2 = 0;
     if (idx2 >= newRankings.length) idx2 = newRankings.length - 1;
     if (idx1 === idx2) {
@@ -225,7 +222,6 @@ const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed:
 };
 
 export const predictions: Prediction[] = usersData.map((user, index) => {
-    // Use user index as part of the seed for unique predictions
     return {
       userId: user.id,
       rankings: generateBiasedPrediction(previousSeasonStandings, index + 1),
