@@ -100,30 +100,35 @@ export default function PredictPage() {
              <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-stretch">
               <div className="lg:col-span-3 flex flex-col">
                  <div className="font-medium pb-2 text-muted-foreground">Your Prediction (2025-2026)</div>
-                <Reorder.Group
-                  axis="y"
-                  values={items}
-                  onReorder={setItems}
-                  className="flex-1"
-                >
-                  {items.map((item, index) => {
-                    const TeamIcon =
-                      Icons[item.teamLogo as IconName] || Icons.match;
-                    return (
-                      <Reorder.Item
-                        key={item.teamId}
-                        value={item}
-                        className="flex items-center gap-4 h-[53px] px-4 rounded-md bg-card border cursor-grab active:cursor-grabbing shadow-sm"
-                      >
-                        <div className="text-base font-medium w-6 text-center text-muted-foreground">
-                          {index + 1}
-                        </div>
-                        <TeamIcon className="size-5" />
-                        <span className="font-medium text-sm">{item.teamName}</span>
-                      </Reorder.Item>
-                    );
-                  })}
-                </Reorder.Group>
+                <div className="border rounded-md">
+                  <Reorder.Group
+                    axis="y"
+                    values={items}
+                    onReorder={setItems}
+                    className="flex-1"
+                  >
+                    {items.map((item, index) => {
+                      const TeamIcon =
+                        Icons[item.teamLogo as IconName] || Icons.match;
+                      return (
+                        <Reorder.Item
+                          key={item.teamId}
+                          value={item}
+                          className={cn(
+                            "flex items-center gap-4 h-[53px] px-4 bg-card cursor-grab active:cursor-grabbing",
+                            index < items.length - 1 && "border-b"
+                          )}
+                        >
+                          <div className="text-base font-medium w-6 text-center text-muted-foreground">
+                            {index + 1}
+                          </div>
+                          <TeamIcon className="size-5" />
+                          <span className="font-medium text-sm">{item.teamName}</span>
+                        </Reorder.Item>
+                      );
+                    })}
+                  </Reorder.Group>
+                </div>
               </div>
               <div className="lg:col-span-2 flex flex-col">
                  <div className="font-medium pb-2 text-muted-foreground flex justify-between">
@@ -133,7 +138,7 @@ export default function PredictPage() {
                     <span className="w-16 text-right">GD</span>
                   </div>
                  </div>
-                    <div className="flex-1">
+                    <div className="flex-1 border rounded-md">
                       <Table className="h-full">
                         <TableBody>
                           {standingsWithTeamData.map(team => {
