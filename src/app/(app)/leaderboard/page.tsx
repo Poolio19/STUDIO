@@ -25,7 +25,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Icons, IconName } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import type { Metadata } from 'next';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, ArrowUp, ArrowDown, Minus } from 'lucide-react';
 
 const currentWeek = currentStandings[0]?.gamesPlayed || 1;
 
@@ -39,16 +39,17 @@ const getAvatarUrl = (avatarId: string) => {
 };
 
 const getRankChangeIcon = (change: number) => {
-  if (change > 0) return 'rankUp';
-  if (change < 0) return 'rankDown';
-  return 'rankSame';
+  if (change > 0) return ArrowUp;
+  if (change < 0) return ArrowDown;
+  return Minus;
 };
 
-const formatPointsChange = (change: number) => {
-    if (change > 0) return <span className="text-green-500">+{change}</span>;
-    if (change < 0) return <span className="text-red-500">{change}</span>;
-    return <span>{change}</span>;
+const getRankChangeColor = (change: number) => {
+    if (change > 0) return 'text-green-500';
+    if (change < 0) return 'text-red-500';
+    return 'text-gray-500';
 }
+
 
 const getRankColor = (rank: number) => {
     switch (rank) {
@@ -58,10 +59,6 @@ const getRankColor = (rank: number) => {
             return 'bg-slate-100 dark:bg-slate-800/30 hover:bg-slate-100/80 dark:hover:bg-slate-800/40';
         case 3:
             return 'bg-orange-100 dark:bg-orange-900/30 hover:bg-orange-100/80 dark:hover:bg-orange-900/40';
-        case 4:
-            return 'bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-100/80 dark:hover:bg-blue-900/40';
-        case 5:
-            return 'bg-green-100 dark:bg-green-900/30 hover:bg-green-100/80 dark:hover:bg-green-900/40';
         default:
             return '';
     }
@@ -73,34 +70,40 @@ export default function LeaderboardPage() {
   return (
     <div className="flex flex-col gap-8">
       <header>
-          <h1 className="text-3xl font-bold tracking-tight">Week {currentWeek} - Standings</h1>
-          <p className="text-muted-foreground">See who's winning the prediction game this week.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Leaderboard</h1>
+          <p className="text-muted-foreground">See who's winning the prediction game.</p>
       </header>
 
       <Card>
-        <CardHeader>
-          <CardTitle>PremPred Current Standings</CardTitle>
-          <CardDescription>Week {currentWeek} of 38</CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <Table>
             <TableHeader>
+              <TableRow className="border-b-0">
+                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground">Week {currentWeek}, Current Standings</TableHead>
+                <TableHead colSpan={1} className="text-center text-lg font-bold text-foreground">Position</TableHead>
+                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground">Move</TableHead>
+                <TableHead colSpan={1} className="text-center text-lg font-bold text-foreground">Highest</TableHead>
+                <TableHead colSpan={1} className="text-center text-lg font-bold text-foreground">Lowest</TableHead>
+              </TableRow>
               <TableRow>
-                <TableHead className="w-[80px]">Rank</TableHead>
+                <TableHead className="w-[80px]">Position</TableHead>
                 <TableHead>Player</TableHead>
-                <TableHead className="text-center">Position Change</TableHead>
-                <TableHead className="text-center">Points Change</TableHead>
-                <TableHead className="text-center">Highest Rank</TableHead>
-                <TableHead className="text-center">Lowest Rank</TableHead>
-                <TableHead className="text-right">Score</TableHead>
+                <TableHead className="text-center">Points</TableHead>
+                <TableHead className="text-center">Winnings</TableHead>
+                <TableHead className="text-center">Was</TableHead>
+                <TableHead className="w-[80px] text-center">+/-</TableHead>
+                <TableHead className="w-[50px] text-center">Rank</TableHead>
+                <TableHead className="text-center">Pos</TableHead>
+                <TableHead className="text-center">Pos</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {sortedUsers.map((user) => {
-                const RankIcon = Icons[getRankChangeIcon(user.rankChange) as IconName];
+                const RankIcon = getRankChangeIcon(user.rankChange);
+                const lastWeekRank = user.rank - user.rankChange;
                 return (
                     <TableRow key={user.id} className={cn(getRankColor(user.rank))}>
-                        <TableCell className="font-medium">{user.rank}</TableCell>
+                        <TableCell className="font-medium text-center">{user.rank}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                               <Avatar className="h-9 w-9">
@@ -110,13 +113,15 @@ export default function LeaderboardPage() {
                               <span>{user.name}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-center">
-                            <div className="flex items-center justify-center gap-1">
-                               <RankIcon className="size-4" />
-                               <span>{Math.abs(user.rankChange)}</span>
-                            </div>
+                        <TableCell className="text-center font-bold text-lg">{user.score}</TableCell>
+                        <TableCell className="text-center font-medium">£0.00</TableCell>
+                        <TableCell className="text-center font-medium">{lastWeekRank}</TableCell>
+                        <TableCell className={cn("font-bold text-center", getRankChangeColor(user.rankChange))}>
+                            {Math.abs(user.rankChange)}
                         </TableCell>
-                        <TableCell className="text-center font-medium">{formatPointsChange(user.scoreChange)}</TableCell>
+                        <TableCell className="text-center">
+                             <RankIcon className={cn("size-5 mx-auto", getRankChangeColor(user.rankChange))} />
+                        </TableCell>
                         <TableCell className="text-center">
                           <div className="flex items-center justify-center gap-1">
                             <TrendingUp className="size-4 text-green-500"/>{user.maxRank}
@@ -127,7 +132,6 @@ export default function LeaderboardPage() {
                             <TrendingDown className="size-4 text-red-500"/>{user.minRank}
                           </div>
                         </TableCell>
-                        <TableCell className="text-right font-bold text-lg">{user.score}</TableCell>
                     </TableRow>
                 );
               })}
