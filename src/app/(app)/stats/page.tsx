@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -52,10 +53,13 @@ export default function StatsPage() {
                     <TableHeader>
                         <TableRow className="h-40">
                             <TableHead className="sticky left-0 z-10 bg-card whitespace-nowrap w-[250px]">Player</TableHead>
+                             <TableHead className="text-center p-0 w-[40px]">
+                                <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-bold h-[140px] flex items-center justify-center">TOTAL</div>
+                            </TableHead>
                             {sortedTeams.map((team) => {
                                 return (
-                                <TableHead key={team.id} className="text-center p-0">
-                                     <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium">{team.name}</div>
+                                <TableHead key={team.id} className="text-center p-0 w-[40px]">
+                                     <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium h-[140px] flex items-center justify-center">{team.name}</div>
                                 </TableHead>
                             )})}
                         </TableRow>
@@ -72,8 +76,10 @@ export default function StatsPage() {
                                             </Avatar>
                                             <span className="font-medium">{user.name}</span>
                                         </div>
-                                        <span className="font-bold text-lg pr-4">{user.score}</span>
                                     </div>
+                                </TableCell>
+                                <TableCell className="text-center font-bold text-lg">
+                                    {user.score}
                                 </TableCell>
                                 {sortedTeams.map((team) => {
                                     const score = playerTeamScores.find(
