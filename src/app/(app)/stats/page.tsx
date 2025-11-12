@@ -53,12 +53,12 @@ export default function StatsPage() {
                         <TableRow>
                             <TableHead className="sticky left-0 z-10 bg-card whitespace-nowrap w-[200px]">Player</TableHead>
                              <TableHead className="sticky left-[200px] z-10 bg-card w-[20px] text-center">
-                                <div className="[writing-mode:vertical-rl] transform-gpu -rotate-180 py-4 font-medium translate-y-2">TOTAL</div>
+                                <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 py-4 font-medium translate-y-2">TOTAL</div>
                             </TableHead>
                             {sortedTeams.map((team) => {
                                 return (
                                 <TableHead key={team.id} className="w-[20px] text-center">
-                                     <div className="[writing-mode:vertical-rl] transform-gpu -rotate-180 py-4 font-medium translate-y-2">{team.name}</div>
+                                     <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 py-4 font-medium translate-y-2">{team.name}</div>
                                 </TableHead>
                             )})}
                         </TableRow>
