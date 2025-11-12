@@ -48,21 +48,17 @@ export default function StatsPage() {
         </CardHeader>
         <CardContent>
             <div className="overflow-x-auto">
-                <Table className="min-w-full">
+                <Table className="min-w-full border-collapse">
                     <TableHeader>
                         <TableRow>
                             <TableHead className="sticky left-0 z-10 bg-card whitespace-nowrap w-[200px]">Player</TableHead>
-                             <TableHead className="sticky left-[200px] z-10 bg-card text-center w-[120px] h-[120px] p-0 align-bottom">
-                                <div className="flex items-end justify-center -rotate-90">
-                                   <span className="font-medium">TOTAL</span>
-                                </div>
+                             <TableHead className="sticky left-[200px] z-10 bg-card w-[20px] text-center">
+                                <div className="[writing-mode:vertical-rl] transform-gpu -rotate-180 py-4 font-medium translate-y-2">TOTAL</div>
                             </TableHead>
                             {sortedTeams.map((team) => {
                                 return (
-                                <TableHead key={team.id} className="text-center whitespace-nowrap w-[20px] h-[120px] p-0 align-bottom">
-                                    <div className="flex items-end justify-center -rotate-90">
-                                       <span className="font-medium">{team.name}</span>
-                                    </div>
+                                <TableHead key={team.id} className="w-[20px] text-center">
+                                     <div className="[writing-mode:vertical-rl] transform-gpu -rotate-180 py-4 font-medium translate-y-2">{team.name}</div>
                                 </TableHead>
                             )})}
                         </TableRow>
@@ -79,7 +75,7 @@ export default function StatsPage() {
                                         <span className="font-medium">{user.name}</span>
                                     </div>
                                 </TableCell>
-                                <TableCell className="sticky left-[200px] z-10 bg-card text-center font-bold w-[120px] text-lg">{user.score}</TableCell>
+                                <TableCell className="sticky left-[200px] z-10 bg-card text-center font-bold w-[20px] p-0 text-lg">{user.score}</TableCell>
                                 {sortedTeams.map((team) => {
                                     const score = playerTeamScores.find(
                                         (s) => s.userId === user.id && s.teamId === team.id
