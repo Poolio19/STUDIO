@@ -88,7 +88,7 @@ let usersData: User[] = [
     { id: 'usr_23', name: 'Daniel', avatar: '23', score: 0, rank: 23, maxRank: 23, minRank: 30, maxScore: -65, minScore: -135, rankChange: 0, scoreChange: 0 },
     { id: 'usr_24', name: 'Elizabeth', avatar: '24', score: 0, rank: 24, maxRank: 24, minRank: 30, maxScore: -70, minScore: -140, rankChange: 0, scoreChange: 0 },
     { id: 'usr_25', name: 'Michael', avatar: '25', score: 0, rank: 25, maxRank: 25, minRank: 30, maxScore: -75, minScore: -145, rankChange: 0, scoreChange: 0 },
-    { id: 'usr_26', name: 'Sofia', avatar: '26', score: 0, rank: 26, maxRank: 26, minRank: 30, maxScore: -80, minScore: -150, rankChange: 0, scoreChange: 0 },
+    { id: 'usr_26', name: 'Sofia', avatar: '26', score: 0, rank: 26, minRank: 30, maxScore: -80, minScore: -150, rankChange: 0, scoreChange: 0 },
     { id: 'usr_27', name: 'Matthew', avatar: '27', score: 0, rank: 27, maxRank: 27, minRank: 30, maxScore: -85, minScore: -155, rankChange: 0, scoreChange: 0 },
     { id: 'usr_28', name: 'Avery', avatar: '28', score: 0, rank: 28, maxRank: 28, minRank: 30, maxScore: -90, minScore: -160, rankChange: 0, scoreChange: 0 },
     { id: 'usr_29', name: 'Joseph', avatar: '29', score: 0, rank: 29, maxRank: 29, minRank: 30, maxScore: -95, minScore: -165, rankChange: 0, scoreChange: 0 },
@@ -96,37 +96,27 @@ let usersData: User[] = [
 ];
 
 export const teams: Team[] = [
-  { id: 'team_1', name: 'Arsenal', logo: 'rocket' },
-  { id: 'team_2', name: 'Aston Villa', logo: 'orbit' },
-  { id: 'team_3', name: 'Bournemouth', logo: 'waves' },
-  { id: 'team_4', name: 'Brentford', logo: 'atom' },
-  { id: 'team_5', name: 'Brighton', logo: 'zap' },
-  { id: 'team_6', name: 'Chelsea', logo: 'anchor' },
-  { id: 'team_7', name: 'Crystal Palace', logo: 'atom' },
-  { id: 'team_8', name: 'Everton', logo: 'rocket' },
-  { id: 'team_9', name: 'Fulham', logo: 'orbit' },
-  { id: 'team_10', name: 'Ipswich Town', logo: 'waves' },
-  { id: 'team_11', name: 'Leicester City', logo: 'zap' },
-  { id: 'team_12', name: 'Liverpool', logo: 'anchor' },
-  { id: 'team_13', name: 'Man City', logo: 'atom' },
-  { id: 'team_14', name: 'Man Utd', logo: 'rocket' },
-  { id: 'team_15', name: 'Newcastle United', logo: 'orbit' },
-  { id: 'team_16', name: 'Notts Forest', logo: 'waves' },
-  { id: 'team_17', name: 'Southampton', logo: 'zap' },
-  { id: 'team_18', name: 'Tottenham', logo: 'anchor' },
-  { id: 'team_19', name: 'West Ham', logo: 'atom' },
-  { id: 'team_20', name: 'Wolves', logo: 'rocket' },
+    { id: 'team_1', name: 'Arsenal', logo: 'rocket' },
+    { id: 'team_2', name: 'Aston Villa', logo: 'orbit' },
+    { id: 'team_3', name: 'Bournemouth', logo: 'waves' },
+    { id: 'team_4', name: 'Brentford', logo: 'atom' },
+    { id: 'team_5', name: 'Brighton', logo: 'zap' },
+    { id: 'team_6', name: 'Chelsea', logo: 'anchor' },
+    { id: 'team_7', name: 'Crystal Palace', logo: 'atom' },
+    { id: 'team_8', name: 'Everton', logo: 'rocket' },
+    { id: 'team_9', name: 'Fulham', logo: 'orbit' },
+    { id: 'team_10', name: 'Ipswich Town', logo: 'waves' },
+    { id: 'team_11', name: 'Leicester City', logo: 'zap' },
+    { id: 'team_12', name: 'Liverpool', logo: 'anchor' },
+    { id: 'team_13', name: 'Man City', logo: 'atom' },
+    { id: 'team_14', name: 'Man Utd', logo: 'rocket' },
+    { id: 'team_15', name: 'Newcastle United', logo: 'orbit' },
+    { id: 'team_16', name: 'Notts Forest', logo: 'waves' },
+    { id: 'team_17', name: 'Southampton', logo: 'zap' },
+    { id: 'team_18', name: 'Tottenham', logo: 'anchor' },
+    { id: 'team_19', name: 'West Ham', logo: 'atom' },
+    { id: 'team_20', name: 'Wolves', logo: 'rocket' },
 ];
-
-export const predictions: Prediction[] = Array.from({ length: 30 }, (_, i) => {
-    const userId = `usr_${i + 1}`;
-    // Create a shuffled version of the teams array for each user
-    const shuffledTeams = [...teams].sort(() => Math.random() - 0.5);
-    return {
-      userId: userId,
-      rankings: shuffledTeams.map(team => team.id),
-    };
-});
 
 export const previousSeasonStandings: PreviousSeasonStanding[] = [
     { teamId: 'team_13', rank: 1, points: 91, goalDifference: 62 },
@@ -150,6 +140,48 @@ export const previousSeasonStandings: PreviousSeasonStanding[] = [
     { teamId: 'team_10', rank: 19, points: 26, goalDifference: -35 },
     { teamId: 'team_17', rank: 20, points: 25, goalDifference: -37 },
 ];
+
+/**
+ * Generates a slightly randomized version of the previous season's standings.
+ * It swaps a few teams around to create a plausible but not identical prediction.
+ * @param baseStandings The standings from the previous season.
+ * @returns A new array of team IDs in a slightly different order.
+ */
+const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[]): string[] => {
+  const teamIds = baseStandings.map(s => s.teamId);
+  const newRankings = [...teamIds];
+
+  // Perform a few swaps to introduce some variability
+  const numSwaps = Math.floor(Math.random() * 5) + 3; // 3 to 7 swaps
+
+  for (let i = 0; i < numSwaps; i++) {
+    const idx1 = Math.floor(Math.random() * newRankings.length);
+    let idx2 = Math.floor(Math.random() * newRankings.length);
+
+    // Ensure the swap is not with the same index and is somewhat close
+    const maxSwapDistance = 5;
+    if (Math.abs(idx1 - idx2) > maxSwapDistance) {
+      idx2 = (idx1 + Math.floor(Math.random() * maxSwapDistance) - 2) % newRankings.length;
+      if (idx2 < 0) idx2 += newRankings.length;
+    }
+    if (idx1 === idx2) {
+        idx2 = (idx1 + 1) % newRankings.length;
+    }
+
+
+    // Swap elements
+    [newRankings[idx1], newRankings[idx2]] = [newRankings[idx2], newRankings[idx1]];
+  }
+
+  return newRankings;
+}
+
+export const predictions: Prediction[] = usersData.map(user => {
+    return {
+      userId: user.id,
+      rankings: generateBiasedPrediction(previousSeasonStandings),
+    };
+});
 
 export const currentStandings: CurrentStanding[] = [
     { teamId: 'team_13', rank: 1, points: 12, goalDifference: 8, gamesPlayed: 4, wins: 4, draws: 0, losses: 0 },
@@ -218,17 +250,15 @@ usersData.forEach(user => {
 });
 
 // Sort users by score in descending order
-const sortedUsers = [...usersData].sort((a, b) => b.score - a.score);
+const sortedUsersData = [...usersData].sort((a, b) => b.score - a.score);
 
-// Assign ranks
+// Assign ranks, handling ties
 let currentRank = 1;
-for (let i = 0; i < sortedUsers.length; i++) {
-    if (i > 0 && sortedUsers[i].score < sortedUsers[i - 1].score) {
+for (let i = 0; i < sortedUsersData.length; i++) {
+    if (i > 0 && sortedUsersData[i].score < sortedUsersData[i - 1].score) {
         currentRank = i + 1;
     }
-    sortedUsers[i].rank = currentRank;
+    sortedUsersData[i].rank = currentRank;
 }
 
-export const users: User[] = sortedUsers;
-
-    
+export const users: User[] = sortedUsersData;
