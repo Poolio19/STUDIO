@@ -75,7 +75,7 @@ export default function ConsensusPage() {
           <CardTitle>Consensus Matrix</CardTitle>
           <CardDescription>
             The grid shows the number of players who have predicted each team to
-            finish in a specific position.
+            finish in a specific position. The total should equal the number of players.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -88,6 +88,7 @@ export default function ConsensusPage() {
                   {positions.map((pos) => (
                     <TableHead key={pos} className="w-[60px] text-center">{pos}</TableHead>
                   ))}
+                  <TableHead className="w-[60px] text-center">Total</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -96,6 +97,7 @@ export default function ConsensusPage() {
                   const TeamIcon = Icons[teamData.logo as IconName] || Icons.match;
                   const teamId = teamData.id;
                   const predictionCounts = consensusData[teamId];
+                  const totalPredictions = predictionCounts.reduce((sum, count) => sum + count, 0);
                   return (
                     <TableRow key={teamId}>
                       <TableCell className="sticky left-0 z-10 bg-card text-center font-medium">{index + 1}</TableCell>
@@ -113,6 +115,9 @@ export default function ConsensusPage() {
                           {count > 0 ? count : ''}
                         </TableCell>
                       ))}
+                      <TableCell className="text-center font-bold">
+                        {totalPredictions}
+                      </TableCell>
                     </TableRow>
                   );
                 })}
