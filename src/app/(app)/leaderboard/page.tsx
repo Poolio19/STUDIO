@@ -114,8 +114,7 @@ export default function LeaderboardPage() {
               {sortedUsers.map((user) => {
                 const RankIcon = getRankChangeIcon(user.rankChange);
                 const ScoreIcon = getRankChangeIcon(user.scoreChange);
-                const lastWeekRank = user.rank - user.rankChange;
-                const lastWeekScore = user.score - user.scoreChange;
+                
                 return (
                     <TableRow key={user.id} className={cn(getRankColor(user.rank))}>
                         <TableCell className="font-medium text-center">{user.rank}</TableCell>
@@ -130,14 +129,14 @@ export default function LeaderboardPage() {
                         </TableCell>
                         <TableCell className="text-center font-bold text-lg">{user.score}</TableCell>
                         <TableCell className="text-center font-medium border-r">£0.00</TableCell>
-                        <TableCell className="text-center font-medium">{lastWeekRank}</TableCell>
+                        <TableCell className="text-center font-medium">{user.previousRank}</TableCell>
                         <TableCell className={cn("font-bold text-center border-r", getRankChangeColor(user.rankChange))}>
                             <div className="flex items-center justify-center gap-2">
                                 <span>{Math.abs(user.rankChange)}</span>
                                 <RankIcon className="size-5" />
                             </div>
                         </TableCell>
-                        <TableCell className="text-center font-medium">{lastWeekScore}</TableCell>
+                        <TableCell className="text-center font-medium">{user.previousScore}</TableCell>
                         <TableCell className={cn("font-bold text-center border-r", getRankChangeColor(user.scoreChange))}>
                             <div className="flex items-center justify-center gap-2">
                                 <span>{formatPointsChange(user.scoreChange)}</span>
