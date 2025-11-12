@@ -83,7 +83,12 @@ export default function LeaderboardPage() {
         <CardContent className="pt-6">
           <Table>
             <TableHeader>
-              <TableRow className="border-b-0">
+               <TableRow>
+                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r">Prem Pred 2025-2026 League</TableHead>
+                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r">Changes in the past week</TableHead>
+                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground">Seasons Highs & Lows</TableHead>
+              </TableRow>
+              <TableRow>
                 <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r">Week {currentWeek}, Current Standings</TableHead>
                 <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r">Position</TableHead>
                 <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r">Points</TableHead>
