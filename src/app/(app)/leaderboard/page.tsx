@@ -80,7 +80,7 @@ export default function LeaderboardPage() {
             <TableHeader>
               <TableRow className="border-b-0">
                 <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r">Week {currentWeek}, Current Standings</TableHead>
-                <TableHead colSpan={3} className="text-center text-lg font-bold text-foreground border-r">Position</TableHead>
+                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r">Position</TableHead>
                 <TableHead colSpan={1} className="text-center text-lg font-bold text-foreground">Highest</TableHead>
                 <TableHead colSpan={1} className="text-center text-lg font-bold text-foreground">Lowest</TableHead>
               </TableRow>
@@ -90,8 +90,7 @@ export default function LeaderboardPage() {
                 <TableHead className="text-center">Points</TableHead>
                 <TableHead className="text-center border-r">Winnings</TableHead>
                 <TableHead className="text-center">Was</TableHead>
-                <TableHead className="w-[80px] text-center">+/-</TableHead>
-                <TableHead className="w-[50px] text-center border-r">Rank</TableHead>
+                <TableHead className="w-[130px] text-center border-r">Move</TableHead>
                 <TableHead className="text-center">Pos</TableHead>
                 <TableHead className="text-center">Pos</TableHead>
               </TableRow>
@@ -115,11 +114,11 @@ export default function LeaderboardPage() {
                         <TableCell className="text-center font-bold text-lg">{user.score}</TableCell>
                         <TableCell className="text-center font-medium border-r">£0.00</TableCell>
                         <TableCell className="text-center font-medium">{lastWeekRank}</TableCell>
-                        <TableCell className={cn("font-bold text-center", getRankChangeColor(user.rankChange))}>
-                            {Math.abs(user.rankChange)}
-                        </TableCell>
-                        <TableCell className="text-center border-r">
-                             <RankIcon className={cn("size-5 mx-auto", getRankChangeColor(user.rankChange))} />
+                        <TableCell className={cn("font-bold text-center border-r", getRankChangeColor(user.rankChange))}>
+                            <div className="flex items-center justify-center gap-2">
+                                <span>{Math.abs(user.rankChange)}</span>
+                                <RankIcon className="size-5" />
+                            </div>
                         </TableCell>
                         <TableCell className="text-center">
                           <div className="flex items-center justify-center gap-1">
