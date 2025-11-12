@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { teams, previousSeasonStandings } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
 import { Reorder } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 const predictionSchema = z.object({
   teamId: z.string(),
@@ -96,13 +97,14 @@ export default function PredictPage() {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-              <div className="lg:col-span-3">
+             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-stretch">
+              <div className="lg:col-span-3 flex flex-col">
                  <div className="font-medium pb-2 text-muted-foreground">Your Prediction (2025-2026)</div>
                 <Reorder.Group
                   axis="y"
                   values={items}
                   onReorder={setItems}
+                  className="flex-1"
                 >
                   {items.map((item, index) => {
                     const TeamIcon =
@@ -123,7 +125,7 @@ export default function PredictPage() {
                   })}
                 </Reorder.Group>
               </div>
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-2 flex flex-col">
                  <div className="font-medium pb-2 text-muted-foreground flex justify-between">
                   <span>Last Season (2024-25)</span>
                   <div className="flex">
@@ -131,31 +133,33 @@ export default function PredictPage() {
                     <span className="w-16 text-right">GD</span>
                   </div>
                  </div>
-                    <Table>
-                      <TableBody>
-                        {standingsWithTeamData.map(team => {
-                          if (!team) return null;
-                          const TeamIcon = Icons[team.logo as IconName] || Icons.match;
-                          return (
-                            <TableRow key={team.id} className="h-[53px]">
-                              <TableCell className="font-medium w-[50px]">{team.rank}</TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-2">
-                                  <TeamIcon className="size-5" />
-                                  <span className="truncate">{team.name}</span>
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-right font-semibold w-16">
-                                {team.points}
-                              </TableCell>
-                              <TableCell className="text-right w-16">
-                                {team.goalDifference}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
+                    <div className="flex-1">
+                      <Table className="h-full">
+                        <TableBody>
+                          {standingsWithTeamData.map(team => {
+                            if (!team) return null;
+                            const TeamIcon = Icons[team.logo as IconName] || Icons.match;
+                            return (
+                              <TableRow key={team.id} className="h-[53px]">
+                                <TableCell className="font-medium w-[50px]">{team.rank}</TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <TeamIcon className="size-5" />
+                                    <span className="truncate">{team.name}</span>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-right font-semibold w-16">
+                                  {team.points}
+                                </TableCell>
+                                <TableCell className="text-right w-16">
+                                  {team.goalDifference}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
               </div>
             </div>
             <Button type="submit">Submit Final Prediction</Button>
