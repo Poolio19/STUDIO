@@ -79,9 +79,8 @@ export default function LeaderboardPage() {
           <Table>
             <TableHeader>
               <TableRow className="border-b-0">
-                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground">Week {currentWeek}, Current Standings</TableHead>
-                <TableHead colSpan={1} className="text-center text-lg font-bold text-foreground">Position</TableHead>
-                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground">Move</TableHead>
+                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r">Week {currentWeek}, Current Standings</TableHead>
+                <TableHead colSpan={3} className="text-center text-lg font-bold text-foreground border-r">Position</TableHead>
                 <TableHead colSpan={1} className="text-center text-lg font-bold text-foreground">Highest</TableHead>
                 <TableHead colSpan={1} className="text-center text-lg font-bold text-foreground">Lowest</TableHead>
               </TableRow>
@@ -89,10 +88,10 @@ export default function LeaderboardPage() {
                 <TableHead className="w-[80px]">Position</TableHead>
                 <TableHead>Player</TableHead>
                 <TableHead className="text-center">Points</TableHead>
-                <TableHead className="text-center">Winnings</TableHead>
+                <TableHead className="text-center border-r">Winnings</TableHead>
                 <TableHead className="text-center">Was</TableHead>
                 <TableHead className="w-[80px] text-center">+/-</TableHead>
-                <TableHead className="w-[50px] text-center">Rank</TableHead>
+                <TableHead className="w-[50px] text-center border-r">Rank</TableHead>
                 <TableHead className="text-center">Pos</TableHead>
                 <TableHead className="text-center">Pos</TableHead>
               </TableRow>
@@ -114,12 +113,12 @@ export default function LeaderboardPage() {
                           </div>
                         </TableCell>
                         <TableCell className="text-center font-bold text-lg">{user.score}</TableCell>
-                        <TableCell className="text-center font-medium">£0.00</TableCell>
+                        <TableCell className="text-center font-medium border-r">£0.00</TableCell>
                         <TableCell className="text-center font-medium">{lastWeekRank}</TableCell>
                         <TableCell className={cn("font-bold text-center", getRankChangeColor(user.rankChange))}>
                             {Math.abs(user.rankChange)}
                         </TableCell>
-                        <TableCell className="text-center">
+                        <TableCell className="text-center border-r">
                              <RankIcon className={cn("size-5 mx-auto", getRankChangeColor(user.rankChange))} />
                         </TableCell>
                         <TableCell className="text-center">
