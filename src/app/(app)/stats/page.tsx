@@ -50,12 +50,12 @@ export default function StatsPage() {
             <div className="overflow-x-auto">
                 <Table className="min-w-full border-collapse">
                     <TableHeader>
-                        <TableRow>
+                        <TableRow className="h-40">
                             <TableHead className="sticky left-0 z-10 bg-card whitespace-nowrap w-[250px]">Player</TableHead>
                             {sortedTeams.map((team) => {
                                 return (
-                                <TableHead key={team.id} className="w-[20px] text-center p-0">
-                                     <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 py-4 font-medium translate-y-2">{team.name}</div>
+                                <TableHead key={team.id} className="text-center p-0">
+                                     <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium">{team.name}</div>
                                 </TableHead>
                             )})}
                         </TableRow>
@@ -80,7 +80,7 @@ export default function StatsPage() {
                                         (s) => s.userId === user.id && s.teamId === team.id
                                     )?.score ?? 0;
                                     return (
-                                        <TableCell key={`${user.id}-${team.id}`} className={cn("text-center font-medium w-[20px] p-0", getScoreColor(score))}>
+                                        <TableCell key={`${user.id}-${team.id}`} className={cn("text-center font-medium p-0", getScoreColor(score))}>
                                             {score}
                                         </TableCell>
                                     );
