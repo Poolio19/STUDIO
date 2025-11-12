@@ -56,14 +56,10 @@ export default function StatsPage() {
                             <TableHead className="sticky left-0 z-10 bg-card whitespace-nowrap w-[200px]">Player</TableHead>
                             <TableHead className="sticky left-[200px] z-10 bg-card text-center w-[120px]">TOTAL</TableHead>
                             {sortedTeams.map((team) => {
-                                const TeamIcon = Icons[team.logo as IconName] || Icons.match;
                                 return (
-                                <TableHead key={team.id} className="text-center whitespace-nowrap w-[20px] h-[150px] p-0">
-                                    <div className="flex items-center justify-center -rotate-90">
-                                        <div className="flex items-center gap-3">
-                                            <TeamIcon className="size-5" />
-                                            <span className="font-medium">{team.name}</span>
-                                        </div>
+                                <TableHead key={team.id} className="text-center whitespace-nowrap w-[20px] h-[120px] p-0 align-bottom">
+                                    <div className="flex items-end justify-center -rotate-90">
+                                       <span className="font-medium">{team.name}</span>
                                     </div>
                                 </TableHead>
                             )})}
@@ -87,7 +83,7 @@ export default function StatsPage() {
                                         (s) => s.userId === user.id && s.teamId === team.id
                                     )?.score ?? 0;
                                     return (
-                                        <TableCell key={`${user.id}-${team.id}`} className={cn("text-center font-medium w-[20px] px-0", getScoreColor(score))}>
+                                        <TableCell key={`${user.id}-${team.id}`} className={cn("text-center font-medium w-[20px] p-0", getScoreColor(score))}>
                                             {score}
                                         </TableCell>
                                     );
