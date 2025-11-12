@@ -55,6 +55,12 @@ export type MonthlyMimoM = {
   userId: string;
 };
 
+export type PlayerTeamScore = {
+    userId: string;
+    teamId: string;
+    score: number;
+};
+
 export const users: User[] = [
     { id: 'usr_1', name: 'Alex', avatar: '1', score: 86, maxScore: 100, minScore: -190, rank: 1, maxRank: 1, minRank: 5, rankChange: 0, scoreChange: 16 },
     { id: 'usr_2', name: 'Maria', avatar: '2', score: 72, maxScore: 100, minScore: -190, rank: 2, maxRank: 2, minRank: 8, rankChange: 1, scoreChange: 12 },
@@ -184,3 +190,23 @@ export const monthlyMimoM: MonthlyMimoM[] = [
     { month: 'March', year: 2025, userId: 'usr_18' },
     { month: 'April', year: 2025, userId: 'usr_8' },
 ];
+
+function generatePlayerTeamScores(): PlayerTeamScore[] {
+    const scores: PlayerTeamScore[] = [];
+    users.forEach(user => {
+        teams.forEach(team => {
+            scores.push({
+                userId: user.id,
+                teamId: team.id,
+                score: Math.floor(Math.random() * 11) - 5, // Random score between -5 and 5
+            });
+        });
+    });
+    // ensure some perfect scores
+    scores.filter(s => s.score === 5).forEach((s, i) => {
+        if (i % 2 === 0) s.score = 5;
+    });
+    return scores;
+}
+
+export const playerTeamScores: PlayerTeamScore[] = generatePlayerTeamScores();
