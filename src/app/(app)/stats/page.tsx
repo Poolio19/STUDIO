@@ -53,8 +53,8 @@ export default function StatsPage() {
                 <Table className="min-w-full">
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="sticky left-0 z-10 bg-card whitespace-nowrap w-[200px]">Player (Score)</TableHead>
-                            <TableHead className="text-center w-[120px]">TOTAL</TableHead>
+                            <TableHead className="sticky left-0 z-10 bg-card whitespace-nowrap w-[200px]">Player</TableHead>
+                            <TableHead className="sticky left-[200px] z-10 bg-card text-center w-[120px]">TOTAL</TableHead>
                             {sortedTeams.map((team) => {
                                 const TeamIcon = Icons[team.logo as IconName] || Icons.match;
                                 return (
@@ -81,7 +81,7 @@ export default function StatsPage() {
                                         <span className="font-medium">{user.name}</span>
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-center font-bold w-[120px]">{user.score}</TableCell>
+                                <TableCell className="sticky left-[200px] z-10 bg-card text-center font-bold w-[120px] text-lg">{user.score}</TableCell>
                                 {sortedTeams.map((team) => {
                                     const score = playerTeamScores.find(
                                         (s) => s.userId === user.id && s.teamId === team.id
