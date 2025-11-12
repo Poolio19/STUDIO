@@ -4,8 +4,6 @@ export type User = {
   name: string;
   avatar: string;
   score: number;
-  maxScore: number;
-  minScore: number;
   rank: number;
   maxRank: number;
   minRank: number;
@@ -63,36 +61,36 @@ export type PlayerTeamScore = {
 };
 
 export const users: User[] = [
-    { id: 'usr_1', name: 'Alex', avatar: '1', score: 86, maxScore: 100, minScore: -190, rank: 1, maxRank: 1, minRank: 5, rankChange: 0, scoreChange: 16 },
-    { id: 'usr_2', name: 'Maria', avatar: '2', score: 72, maxScore: 100, minScore: -190, rank: 2, maxRank: 2, minRank: 8, rankChange: 1, scoreChange: 12 },
-    { id: 'usr_3', name: 'David', avatar: '3', score: 72, maxScore: 100, minScore: -190, rank: 2, maxRank: 1, minRank: 10, rankChange: -1, scoreChange: -6 },
-    { id: 'usr_4', name: 'Sophia', avatar: '4', score: 56, maxScore: 100, minScore: -190, rank: 4, maxRank: 4, minRank: 6, rankChange: 0, scoreChange: 8 },
-    { id: 'usr_5', name: 'Kenji', avatar: '5', score: 40, maxScore: 100, minScore: -190, rank: 5, maxRank: 5, minRank: 9, rankChange: 2, scoreChange: 20 },
-    { id: 'usr_6', name: 'Fatima', avatar: '6', score: 26, maxScore: 100, minScore: -190, rank: 6, maxRank: 3, minRank: 12, rankChange: -1, scoreChange: -10 },
-    { id: 'usr_7', name: 'Leo', avatar: '7', score: 10, maxScore: 100, minScore: -190, rank: 7, maxRank: 7, minRank: 15, rankChange: 0, scoreChange: 6 },
-    { id: 'usr_8', name: 'Chloe', avatar: '8', score: 10, maxScore: 100, minScore: -190, rank: 7, maxRank: 8, minRank: 18, rankChange: 3, scoreChange: 18 },
-    { id: 'usr_9', name: 'Mohammed', avatar: '9', score: -6, maxScore: 100, minScore: -190, rank: 9, maxRank: 6, minRank: 20, rankChange: -2, scoreChange: -8 },
-    { id: 'usr_10', name: 'Isabella', avatar: '10', score: -16, maxScore: 100, minScore: -190, rank: 10, maxRank: 9, minRank: 22, rankChange: 1, scoreChange: 8 },
-    { id: 'usr_11', name: 'James', avatar: '11', score: -20, maxScore: 100, minScore: -190, rank: 11, maxRank: 10, minRank: 25, rankChange: 0, scoreChange: 0 },
-    { id: 'usr_12', name: 'Amelia', avatar: '12', score: -26, maxScore: 100, minScore: -190, rank: 12, maxRank: 11, minRank: 28, rankChange: -3, scoreChange: -16 },
-    { id: 'usr_13', name: 'Benjamin', avatar: '13', score: -30, maxScore: 100, minScore: -190, rank: 13, maxRank: 12, minRank: 29, rankChange: 2, scoreChange: 10 },
-    { id: 'usr_14', name: 'Mia', avatar: '14', score: -36, maxScore: 100, minScore: -190, rank: 14, maxRank: 13, minRank: 30, rankChange: 0, scoreChange: 2 },
-    { id: 'usr_15', name: 'Elijah', avatar: '15', score: -40, maxScore: 100, minScore: -190, rank: 15, maxRank: 15, minRank: 30, rankChange: 1, scoreChange: 4 },
-    { id: 'usr_16', name: 'Harper', avatar: '16', score: -46, maxScore: 100, minScore: -190, rank: 16, maxRank: 16, minRank: 30, rankChange: -1, scoreChange: -4 },
-    { id: 'usr_17', name: 'Lucas', avatar: '17', score: -50, maxScore: 100, minScore: -190, rank: 17, maxRank: 17, minRank: 30, rankChange: 0, scoreChange: 2 },
-    { id: 'usr_18', name: 'Evelyn', avatar: '18', score: -56, maxScore: 100, minScore: -190, rank: 18, maxRank: 18, minRank: 30, rankChange: 4, scoreChange: 22 },
-    { id: 'usr_19', name: 'Henry', avatar: '19', score: -60, maxScore: 100, minScore: -190, rank: 19, maxRank: 19, minRank: 30, rankChange: -2, scoreChange: -10 },
-    { id: 'usr_20', name: 'Abigail', avatar: '20', score: -66, maxScore: 100, minScore: -190, rank: 20, maxRank: 20, minRank: 30, rankChange: 1, scoreChange: 6 },
-    { id: 'usr_21', name: 'Alexander', avatar: '21', score: -70, maxScore: 100, minScore: -190, rank: 21, maxRank: 21, minRank: 30, rankChange: 0, scoreChange: 0 },
-    { id: 'usr_22', name: 'Emily', avatar: '22', score: -76, maxScore: 100, minScore: -190, rank: 22, maxRank: 22, minRank: 30, rankChange: 5, scoreChange: 26 },
-    { id: 'usr_23', name: 'Daniel', avatar: '23', score: -80, maxScore: 100, minScore: -190, rank: 23, maxRank: 23, minRank: 30, rankChange: -3, scoreChange: -12 },
-    { id: 'usr_24', name: 'Elizabeth', avatar: '24', score: -86, maxScore: 100, minScore: -190, rank: 24, maxRank: 24, minRank: 30, rankChange: 0, scoreChange: 4 },
-    { id: 'usr_25', name: 'Michael', avatar: '25', score: -90, maxScore: 100, minScore: -190, rank: 25, maxRank: 25, minRank: 30, rankChange: 2, scoreChange: 10 },
-    { id: 'usr_26', name: 'Sofia', avatar: '26', score: -90, maxScore: 100, minScore: -190, rank: 25, maxRank: 26, minRank: 30, rankChange: -1, scoreChange: -4 },
-    { id: 'usr_27', name: 'Matthew', avatar: '27', score: -90, maxScore: 100, minScore: -190, rank: 25, maxRank: 27, minRank: 30, rankChange: 0, scoreChange: 0 },
-    { id: 'usr_28', name: 'Avery', avatar: '28', score: -106, maxScore: 100, minScore: -190, rank: 28, maxRank: 28, minRank: 30, rankChange: 1, scoreChange: 6 },
-    { id: 'usr_29', name: 'Joseph', avatar: '29', score: -110, maxScore: 100, minScore: -190, rank: 29, maxRank: 29, minRank: 30, rankChange: -1, scoreChange: -2 },
-    { id: 'usr_30', name: 'Scarlett', avatar: '30', score: -110, maxScore: 100, minScore: -190, rank: 29, maxRank: 30, minRank: 30, rankChange: 0, scoreChange: 2 },
+    { id: 'usr_1', name: 'Alex', avatar: '1', score: 86, rank: 1, maxRank: 1, minRank: 5, rankChange: 0, scoreChange: 16 },
+    { id: 'usr_2', name: 'Maria', avatar: '2', score: 72, rank: 2, maxRank: 2, minRank: 8, rankChange: 1, scoreChange: 12 },
+    { id: 'usr_3', name: 'David', avatar: '3', score: 72, rank: 2, maxRank: 1, minRank: 10, rankChange: -1, scoreChange: -6 },
+    { id: 'usr_4', name: 'Sophia', avatar: '4', score: 56, rank: 4, maxRank: 4, minRank: 6, rankChange: 0, scoreChange: 8 },
+    { id: 'usr_5', name: 'Kenji', avatar: '5', score: 40, rank: 5, maxRank: 5, minRank: 9, rankChange: 2, scoreChange: 20 },
+    { id: 'usr_6', name: 'Fatima', avatar: '6', score: 26, rank: 6, maxRank: 3, minRank: 12, rankChange: -1, scoreChange: -10 },
+    { id: 'usr_7', name: 'Leo', avatar: '7', score: 10, rank: 7, maxRank: 7, minRank: 15, rankChange: 0, scoreChange: 6 },
+    { id: 'usr_8', name: 'Chloe', avatar: '8', score: 10, rank: 7, maxRank: 8, minRank: 18, rankChange: 3, scoreChange: 18 },
+    { id: 'usr_9', name: 'Mohammed', avatar: '9', score: -6, rank: 9, maxRank: 6, minRank: 20, rankChange: -2, scoreChange: -8 },
+    { id: 'usr_10', name: 'Isabella', avatar: '10', score: -16, rank: 10, maxRank: 9, minRank: 22, rankChange: 1, scoreChange: 8 },
+    { id: 'usr_11', name: 'James', avatar: '11', score: -20, rank: 11, maxRank: 10, minRank: 25, rankChange: 0, scoreChange: 0 },
+    { id: 'usr_12', name: 'Amelia', avatar: '12', score: -26, rank: 12, maxRank: 11, minRank: 28, rankChange: -3, scoreChange: -16 },
+    { id: 'usr_13', name: 'Benjamin', avatar: '13', score: -30, rank: 13, maxRank: 12, minRank: 29, rankChange: 2, scoreChange: 10 },
+    { id: 'usr_14', name: 'Mia', avatar: '14', score: -36, rank: 14, maxRank: 13, minRank: 30, rankChange: 0, scoreChange: 2 },
+    { id: 'usr_15', name: 'Elijah', avatar: '15', score: -40, rank: 15, maxRank: 15, minRank: 30, rankChange: 1, scoreChange: 4 },
+    { id: 'usr_16', name: 'Harper', avatar: '16', score: -46, rank: 16, maxRank: 16, minRank: 30, rankChange: -1, scoreChange: -4 },
+    { id: 'usr_17', name: 'Lucas', avatar: '17', score: -50, rank: 17, maxRank: 17, minRank: 30, rankChange: 0, scoreChange: 2 },
+    { id: 'usr_18', name: 'Evelyn', avatar: '18', score: -56, rank: 18, maxRank: 18, minRank: 30, rankChange: 4, scoreChange: 22 },
+    { id: 'usr_19', name: 'Henry', avatar: '19', score: -60, rank: 19, maxRank: 19, minRank: 30, rankChange: -2, scoreChange: -10 },
+    { id: 'usr_20', name: 'Abigail', avatar: '20', score: -66, rank: 20, maxRank: 20, minRank: 30, rankChange: 1, scoreChange: 6 },
+    { id: 'usr_21', name: 'Alexander', avatar: '21', score: -70, rank: 21, maxRank: 21, minRank: 30, rankChange: 0, scoreChange: 0 },
+    { id: 'usr_22', name: 'Emily', avatar: '22', score: -76, rank: 22, maxRank: 22, minRank: 30, rankChange: 5, scoreChange: 26 },
+    { id: 'usr_23', name: 'Daniel', avatar: '23', score: -80, rank: 23, maxRank: 23, minRank: 30, rankChange: -3, scoreChange: -12 },
+    { id: 'usr_24', name: 'Elizabeth', avatar: '24', score: -86, rank: 24, maxRank: 24, minRank: 30, rankChange: 0, scoreChange: 4 },
+    { id: 'usr_25', name: 'Michael', avatar: '25', score: -90, rank: 25, maxRank: 25, minRank: 30, rankChange: 2, scoreChange: 10 },
+    { id: 'usr_26', name: 'Sofia', avatar: '26', score: -90, rank: 25, maxRank: 26, minRank: 30, rankChange: -1, scoreChange: -4 },
+    { id: 'usr_27', name: 'Matthew', avatar: '27', score: -90, rank: 25, maxRank: 27, minRank: 30, rankChange: 0, scoreChange: 0 },
+    { id: 'usr_28', name: 'Avery', avatar: '28', score: -106, rank: 28, maxRank: 28, minRank: 30, rankChange: 1, scoreChange: 6 },
+    { id: 'usr_29', name: 'Joseph', avatar: '29', score: -110, rank: 29, maxRank: 29, minRank: 30, rankChange: -1, scoreChange: -2 },
+    { id: 'usr_30', name: 'Scarlett', avatar: '30', score: -110, rank: 29, maxRank: 30, minRank: 30, rankChange: 0, scoreChange: 2 },
 ];
 
 export const teams: Team[] = [
