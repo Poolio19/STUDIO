@@ -58,7 +58,7 @@ export default function StatsPage() {
                             {sortedTeams.map((team) => {
                                 const TeamIcon = Icons[team.logo as IconName] || Icons.match;
                                 return (
-                                <TableHead key={team.id} className="text-center whitespace-nowrap w-[50px] h-[150px] p-0">
+                                <TableHead key={team.id} className="text-center whitespace-nowrap w-[20px] h-[150px] p-0">
                                     <div className="flex items-center justify-center -rotate-90">
                                         <div className="flex items-center gap-3">
                                             <TeamIcon className="size-5" />
@@ -87,7 +87,7 @@ export default function StatsPage() {
                                         (s) => s.userId === user.id && s.teamId === team.id
                                     )?.score ?? 0;
                                     return (
-                                        <TableCell key={`${user.id}-${team.id}`} className={cn("text-center font-medium w-[50px]", getScoreColor(score))}>
+                                        <TableCell key={`${user.id}-${team.id}`} className={cn("text-center font-medium w-[20px] px-2", getScoreColor(score))}>
                                             {score}
                                         </TableCell>
                                     );
