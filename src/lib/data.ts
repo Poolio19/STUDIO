@@ -1,3 +1,4 @@
+
 export type User = {
   id: string;
   name: string;
@@ -117,10 +118,24 @@ export const teams: Team[] = [
   { id: 'team_20', name: 'Mountain Lions', logo: 'waves' },
 ];
 
-export const predictions: Prediction[] = [
-    { userId: 'usr_1', rankings: ['team_1', 'team_3', 'team_2', 'team_4', 'team_5', 'team_6', 'team_7', 'team_8', 'team_9', 'team_10', 'team_11', 'team_12', 'team_13', 'team_14', 'team_15', 'team_16', 'team_17', 'team_18', 'team_19', 'team_20'] },
-    { userId: 'usr_2', rankings: ['team_2', 'team_1', 'team_3', 'team_4', 'team_5', 'team_6', 'team_7', 'team_8', 'team_9', 'team_10', 'team_11', 'team_12', 'team_13', 'team_14', 'team_15', 'team_16', 'team_17', 'team_18', 'team_19', 'team_20'] },
-];
+function generateShuffledRankings(teams: Team[]): string[] {
+    const teamIds = teams.map(t => t.id);
+    // Fisher-Yates shuffle
+    for (let i = teamIds.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [teamIds[i], teamIds[j]] = [teamIds[j], teamIds[i]];
+    }
+    return teamIds;
+}
+
+function generatePredictions(users: User[], teams: Team[]): Prediction[] {
+  return users.map(user => ({
+    userId: user.id,
+    rankings: generateShuffledRankings(teams),
+  }));
+}
+
+export const predictions: Prediction[] = generatePredictions(users, teams);
 
 export const userPredictionHistory: UserPredictionHistory[] = [
   { game: "Quantum FC vs Photon United", prediction: "2-1", actual: "2-0", points: 10, date: "2024-07-21" },
@@ -210,3 +225,5 @@ function generatePlayerTeamScores(): PlayerTeamScore[] {
 }
 
 export const playerTeamScores: PlayerTeamScore[] = generatePlayerTeamScores();
+
+    
