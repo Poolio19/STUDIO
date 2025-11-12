@@ -96,50 +96,49 @@ export const users: User[] = [
 ];
 
 export const teams: Team[] = [
-    { id: 'team_1', name: 'Arsenal', logo: 'atom' },
-    { id: 'team_2', name: 'Aston Villa', logo: 'zap' },
-    { id: 'team_3', name: 'Bournemouth', logo: 'rocket' },
-    { id: 'team_4', name: 'Brentford', logo: 'orbit' },
-    { id: 'team_5', name: 'Brighton & Hove Albion', logo: 'anchor' },
-    { id: 'team_6', name: 'Chelsea', logo: 'waves' },
-    { id: 'team_7', name: 'Crystal Palace', logo: 'atom' },
-    { id: 'team_8', name: 'Everton', logo: 'swords' },
-    { id: 'team_9', name: 'Fulham', logo: 'zap' },
-    { id: 'team_10', name: 'Ipswich Town', logo: 'rocket' },
-    { id: 'team_11', name: 'Leicester City', logo: 'orbit' },
-    { id: 'team_12', name: 'Liverpool', logo: 'anchor' },
-    { id: 'team_13', name: 'Manchester City', logo: 'waves' },
-    { id: 'team_14', name: 'Manchester United', logo: 'atom' },
-    { id: 'team_15', name: 'Newcastle United', logo: 'swords' },
-    { id: 'team_16', name: 'Nottingham Forest', logo: 'zap' },
-    { id: 'team_17', name: 'Southampton', logo: 'rocket' },
-    { id: 'team_18', name: 'Tottenham Hotspur', logo: 'orbit' },
-    { id: 'team_19', name: 'West Ham United', logo: 'anchor' },
-    { id: 'team_20', name: 'Wolverhampton Wanderers', logo: 'waves' },
+  { id: 'team_1', name: 'Arsenal', logo: 'atom' },
+  { id: 'team_2', name: 'Aston Villa', logo: 'zap' },
+  { id: 'team_3', name: 'Bournemouth', logo: 'rocket' },
+  { id: 'team_4', name: 'Brentford', logo: 'orbit' },
+  { id: 'team_5', name: 'Brighton & Hove Albion', logo: 'anchor' },
+  { id: 'team_6', name: 'Chelsea', logo: 'waves' },
+  { id: 'team_7', name: 'Crystal Palace', logo: 'atom' },
+  { id: 'team_8', name: 'Everton', logo: 'swords' },
+  { id: 'team_9', name: 'Fulham', logo: 'zap' },
+  { id: 'team_10', name: 'Ipswich Town', logo: 'rocket' },
+  { id: 'team_11', name: 'Leicester City', logo: 'orbit' },
+  { id: 'team_12', name: 'Liverpool', logo: 'anchor' },
+  { id: 'team_13', name: 'Manchester City', logo: 'waves' },
+  { id: 'team_14', name: 'Manchester United', logo: 'atom' },
+  { id: 'team_15', name: 'Newcastle United', logo: 'swords' },
+  { id: 'team_16', name: 'Nottingham Forest', logo: 'zap' },
+  { id: 'team_17', name: 'Southampton', logo: 'rocket' },
+  { id: 'team_18', name: 'Tottenham Hotspur', logo: 'orbit' },
+  { id: 'team_19', name: 'West Ham United', logo: 'anchor' },
+  { id: 'team_20', name: 'Wolverhampton Wanderers', logo: 'waves' },
 ];
 
 export const previousSeasonStandings: PreviousSeasonStanding[] = [
-  { teamId: 'team_13', rank: 1, points: 91, goalDifference: 62 }, // Man City
-  { teamId: 'team_1', rank: 2, points: 89, goalDifference: 62 }, // Arsenal
-  { teamId: 'team_12', rank: 3, points: 82, goalDifference: 45 }, // Liverpool
-  { teamId: 'team_2', rank: 4, points: 68, goalDifference: 27 }, // Aston Villa
-  { teamId: 'team_18', rank: 5, points: 66, goalDifference: 13 }, // Spurs
-  { teamId: 'team_6', rank: 6, points: 63, goalDifference: 14 }, // Chelsea
-  { teamId: 'team_15', rank: 7, points: 60, goalDifference: 23 }, // Newcastle
-  { teamId: 'team_14', rank: 8, points: 60, goalDifference: -1 }, // Man Utd
-  { teamId: 'team_19', rank: 9, points: 52, goalDifference: -14 }, // West Ham
-  { teamId: 'team_7', rank: 10, points: 49, goalDifference: -1 }, // Crystal Palace
-  { teamId: 'team_5', rank: 11, points: 48, goalDifference: -7 }, // Brighton
-  { teamId: 'team_3', rank: 12, points: 48, goalDifference: -13 }, // Bournemouth
-  { teamId: 'team_9', rank: 13, points: 47, goalDifference: -6 }, // Fulham
-  { teamId: 'team_20', rank: 14, points: 46, goalDifference: -15 }, // Wolves
-  { teamId: 'team_8', rank: 15, points: 40, goalDifference: -11 }, // Everton
-  { teamId: 'team_4', rank: 16, points: 39, goalDifference: -9 }, // Brentford
-  { teamId: 'team_16', rank: 17, points: 32, goalDifference: -18 }, // Nottingham Forest
-  // Promoted teams, give them lower ranks from previous season for realism
-  { teamId: 'team_11', rank: 18, points: 97, goalDifference: 48 }, // Leicester (from Champ)
-  { teamId: 'team_10', rank: 19, points: 96, goalDifference: 35 }, // Ipswich (from Champ)
-  { teamId: 'team_17', rank: 20, points: 87, goalDifference: 29 }, // Southampton (from Champ)
+  { teamId: 'team_13', rank: 1, points: 91, goalDifference: 62 },
+  { teamId: 'team_1', rank: 2, points: 89, goalDifference: 62 },
+  { teamId: 'team_12', rank: 3, points: 82, goalDifference: 45 },
+  { teamId: 'team_2', rank: 4, points: 68, goalDifference: 27 },
+  { teamId: 'team_18', rank: 5, points: 66, goalDifference: 13 },
+  { teamId: 'team_6', rank: 6, points: 63, goalDifference: 14 },
+  { teamId: 'team_15', rank: 7, points: 60, goalDifference: 23 },
+  { teamId: 'team_14', rank: 8, points: 60, goalDifference: -1 },
+  { teamId: 'team_19', rank: 9, points: 52, goalDifference: -14 },
+  { teamId: 'team_7', rank: 10, points: 49, goalDifference: -1 },
+  { teamId: 'team_5', rank: 11, points: 48, goalDifference: -7 },
+  { teamId: 'team_3', rank: 12, points: 48, goalDifference: -13 },
+  { teamId: 'team_9', rank: 13, points: 47, goalDifference: -6 },
+  { teamId: 'team_20', rank: 14, points: 46, goalDifference: -15 },
+  { teamId: 'team_8', rank: 15, points: 40, goalDifference: -11 },
+  { teamId: 'team_4', rank: 16, points: 39, goalDifference: -9 },
+  { teamId: 'team_16', rank: 17, points: 32, goalDifference: -18 },
+  { teamId: 'team_11', rank: 18, points: 97, goalDifference: 48 },
+  { teamId: 'team_10', rank: 19, points: 96, goalDifference: 35 },
+  { teamId: 'team_17', rank: 20, points: 87, goalDifference: 29 },
 ];
 
 

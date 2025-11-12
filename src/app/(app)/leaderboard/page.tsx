@@ -50,6 +50,11 @@ const getRankChangeColor = (change: number) => {
     return 'text-gray-500';
 }
 
+const formatPointsChange = (change: number) => {
+    if (change > 0) return `+${change}`;
+    return change;
+}
+
 
 const getRankColor = (rank: number) => {
     switch (rank) {
@@ -81,6 +86,7 @@ export default function LeaderboardPage() {
               <TableRow className="border-b-0">
                 <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r">Week {currentWeek}, Current Standings</TableHead>
                 <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r">Position</TableHead>
+                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r">Points</TableHead>
                 <TableHead colSpan={1} className="text-center text-lg font-bold text-foreground">Highest</TableHead>
                 <TableHead colSpan={1} className="text-center text-lg font-bold text-foreground">Lowest</TableHead>
               </TableRow>
@@ -91,6 +97,8 @@ export default function LeaderboardPage() {
                 <TableHead className="text-center border-r">Winnings</TableHead>
                 <TableHead className="text-center">Was</TableHead>
                 <TableHead className="w-[130px] text-center border-r">Move</TableHead>
+                <TableHead className="text-center">Was</TableHead>
+                <TableHead className="w-[130px] text-center border-r">Change</TableHead>
                 <TableHead className="text-center">Pos</TableHead>
                 <TableHead className="text-center">Pos</TableHead>
               </TableRow>
@@ -99,6 +107,7 @@ export default function LeaderboardPage() {
               {sortedUsers.map((user) => {
                 const RankIcon = getRankChangeIcon(user.rankChange);
                 const lastWeekRank = user.rank - user.rankChange;
+                const lastWeekScore = user.score - user.scoreChange;
                 return (
                     <TableRow key={user.id} className={cn(getRankColor(user.rank))}>
                         <TableCell className="font-medium text-center">{user.rank}</TableCell>
@@ -118,6 +127,12 @@ export default function LeaderboardPage() {
                             <div className="flex items-center justify-center gap-2">
                                 <span>{Math.abs(user.rankChange)}</span>
                                 <RankIcon className="size-5" />
+                            </div>
+                        </TableCell>
+                        <TableCell className="text-center font-medium">{lastWeekScore}</TableCell>
+                        <TableCell className={cn("font-bold text-center border-r", getRankChangeColor(user.scoreChange))}>
+                            <div className="flex items-center justify-center gap-2">
+                                <span>{formatPointsChange(user.scoreChange)}</span>
                             </div>
                         </TableCell>
                         <TableCell className="text-center">
