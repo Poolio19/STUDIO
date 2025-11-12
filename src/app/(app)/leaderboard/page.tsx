@@ -87,8 +87,8 @@ export default function LeaderboardPage() {
                 <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r">Week {currentWeek}, Current Standings</TableHead>
                 <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r">Position</TableHead>
                 <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r">Points</TableHead>
-                <TableHead colSpan={1} className="text-center text-lg font-bold text-foreground">Highest</TableHead>
-                <TableHead colSpan={1} className="text-center text-lg font-bold text-foreground">Lowest</TableHead>
+                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r">Position</TableHead>
+                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground">Points</TableHead>
               </TableRow>
               <TableRow>
                 <TableHead className="w-[80px]">Position</TableHead>
@@ -99,8 +99,10 @@ export default function LeaderboardPage() {
                 <TableHead className="w-[130px] text-center border-r">Move</TableHead>
                 <TableHead className="text-center">Was</TableHead>
                 <TableHead className="w-[130px] text-center border-r">Change</TableHead>
-                <TableHead className="text-center">Pos</TableHead>
-                <TableHead className="text-center">Pos</TableHead>
+                <TableHead className="text-center">High</TableHead>
+                <TableHead className="text-center border-r">Low</TableHead>
+                <TableHead className="text-center">High</TableHead>
+                <TableHead className="text-center">Low</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -137,16 +139,10 @@ export default function LeaderboardPage() {
                                 <ScoreIcon className="size-5" />
                             </div>
                         </TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex items-center justify-center gap-1">
-                            <TrendingUp className="size-4 text-green-500"/>{user.maxRank}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex items-center justify-center gap-1">
-                            <TrendingDown className="size-4 text-red-500"/>{user.minRank}
-                          </div>
-                        </TableCell>
+                        <TableCell className="text-center font-medium">{user.maxRank}</TableCell>
+                        <TableCell className="text-center font-medium border-r">{user.minRank}</TableCell>
+                        <TableCell className="text-center font-medium">{user.maxScore}</TableCell>
+                        <TableCell className="text-center font-medium">{user.minScore}</TableCell>
                     </TableRow>
                 );
               })}
