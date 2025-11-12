@@ -319,11 +319,12 @@ for (let week = 1; week <= NUM_WEEKS; week++) {
 const finalUsers: User[] = usersData.map(userStub => {
     const history = userHistories.find(h => h.userId === userStub.id)!;
     
-    const currentWeekData = history.weeklyScores[NUM_WEEKS];
-    const previousWeekData = history.weeklyScores[NUM_WEEKS - 1];
+    const currentWeekData = history.weeklyScores.find(w => w.week === NUM_WEEKS)!;
     
-    // For week 1, compare to week 0 (previous season's end)
-    const baselineWeekForChange = history.weeklyScores[NUM_WEEKS - 1];
+    // For Week 1, compare against Week 0 (previous season). Otherwise, compare to previous week.
+    const baselineWeekForChange = NUM_WEEKS === 1 
+      ? history.weeklyScores.find(w => w.week === 0)!
+      : history.weeklyScores.find(w => w.week === NUM_WEEKS - 1)!;
 
     const rankChange = baselineWeekForChange.rank - currentWeekData.rank;
     const scoreChange = currentWeekData.score - baselineWeekForChange.score;
