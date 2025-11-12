@@ -240,12 +240,10 @@ const allScores: PlayerTeamScore[] = usersData.flatMap(user => generateScores(us
 export const playerTeamScores: PlayerTeamScore[] = allScores;
 
 // --- Recalculate user scores and ranks based on playerTeamScores ---
-const userScores = new Map<string, number>();
 usersData.forEach(user => {
     const totalScore = playerTeamScores
         .filter(score => score.userId === user.id)
         .reduce((sum, current) => sum + current.score, 0);
-    userScores.set(user.id, totalScore);
     user.score = totalScore;
 });
 
@@ -258,7 +256,14 @@ for (let i = 0; i < sortedUsersData.length; i++) {
     if (i > 0 && sortedUsersData[i].score < sortedUsersData[i - 1].score) {
         currentRank = i + 1;
     }
-    sortedUsersData[i].rank = currentRank;
+    const user = sortedUsersData[i];
+    user.rank = currentRank;
+
+    // Set high/low watermarks to the current (and only) values
+    user.maxRank = currentRank;
+    user.minRank = currentRank;
+    user.maxScore = user.score;
+    user.minScore = user.score;
 }
 
 export const users: User[] = sortedUsersData;
