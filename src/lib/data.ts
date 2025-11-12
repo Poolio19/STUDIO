@@ -118,41 +118,6 @@ export const teams: Team[] = [
   { id: 'team_20', name: 'Mountain Lions', logo: 'waves' },
 ];
 
-function generateShuffledRankings(teams: Team[]): string[] {
-    const teamIds = teams.map(t => t.id);
-    // Fisher-Yates shuffle
-    for (let i = teamIds.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [teamIds[i], teamIds[j]] = [teamIds[j], teamIds[i]];
-    }
-    return teamIds;
-}
-
-function generatePredictions(users: User[], teams: Team[]): Prediction[] {
-  return users.map(user => ({
-    userId: user.id,
-    rankings: generateShuffledRankings(teams),
-  }));
-}
-
-export const predictions: Prediction[] = generatePredictions(users, teams);
-
-export const userPredictionHistory: UserPredictionHistory[] = [
-  { game: "Quantum FC vs Photon United", prediction: "2-1", actual: "2-0", points: 10, date: "2024-07-21" },
-  { game: "Celestial Rovers vs Meteor Strikers", prediction: "1-1", actual: "1-1", points: 25, date: "2024-07-22" },
-  { game: "Abyssal Titans vs Tidal Waves", prediction: "0-3", actual: "1-3", points: 10, date: "2024-07-23" },
-  { game: "Giants vs Dwarves", prediction: "4-2", actual: "1-0", points: 0, date: "2024-07-14" },
-  { game: "Wizards vs Knights", prediction: "2-2", actual: "3-1", points: 0, date: "2024-07-15" },
-];
-
-export const weeklyPerformance = [
-  { week: 'Week 1', score: 50 },
-  { week: 'Week 2', score: 75 },
-  { week: 'Week 3', score: 60 },
-  { week: 'Week 4', score: 90 },
-  { week: 'Week 5', score: 85 },
-];
-
 export const previousSeasonStandings: PreviousSeasonStanding[] = [
   { teamId: 'team_3', rank: 1, points: 94, goalDifference: 62 },
   { teamId: 'team_1', rank: 2, points: 92, goalDifference: 60 },
@@ -175,6 +140,57 @@ export const previousSeasonStandings: PreviousSeasonStanding[] = [
   { teamId: 'team_17', rank: 19, points: 27, goalDifference: -32 },
   { teamId: 'team_16', rank: 20, points: 26, goalDifference: -55 },
 ];
+
+function generateRealisticRankings(previousStandings: PreviousSeasonStanding[]): string[] {
+    const baseRanking = previousStandings.slice().sort((a, b) => a.rank - b.rank).map(s => s.teamId);
+    const newRanking = [...baseRanking];
+    
+    // Apply a few random swaps to introduce variation
+    const numberOfSwaps = Math.floor(Math.random() * 5) + 3; // 3 to 7 swaps
+    for (let i = 0; i < numberOfSwaps; i++) {
+        const idx1 = Math.floor(Math.random() * newRanking.length);
+        
+        // Make swaps more likely to be local
+        const maxSwapDistance = 5;
+        let offset = Math.floor(Math.random() * (2 * maxSwapDistance + 1)) - maxSwapDistance;
+        if(offset === 0) offset = 1;
+        
+        let idx2 = idx1 + offset;
+        idx2 = Math.max(0, Math.min(newRanking.length - 1, idx2));
+
+        if (idx1 !== idx2) {
+           [newRanking[idx1], newRanking[idx2]] = [newRanking[idx2], newRanking[idx1]];
+        }
+    }
+    
+    return newRanking;
+}
+
+function generatePredictions(users: User[], previousStandings: PreviousSeasonStanding[]): Prediction[] {
+  return users.map(user => ({
+    userId: user.id,
+    rankings: generateRealisticRankings(previousStandings),
+  }));
+}
+
+export const predictions: Prediction[] = generatePredictions(users, previousSeasonStandings);
+
+export const userPredictionHistory: UserPredictionHistory[] = [
+  { game: "Quantum FC vs Photon United", prediction: "2-1", actual: "2-0", points: 10, date: "2024-07-21" },
+  { game: "Celestial Rovers vs Meteor Strikers", prediction: "1-1", actual: "1-1", points: 25, date: "2024-07-22" },
+  { game: "Abyssal Titans vs Tidal Waves", prediction: "0-3", actual: "1-3", points: 10, date: "2024-07-23" },
+  { game: "Giants vs Dwarves", prediction: "4-2", actual: "1-0", points: 0, date: "2024-07-14" },
+  { game: "Wizards vs Knights", prediction: "2-2", actual: "3-1", points: 0, date: "2024-07-15" },
+];
+
+export const weeklyPerformance = [
+  { week: 'Week 1', score: 50 },
+  { week: 'Week 2', score: 75 },
+  { week: 'Week 3', score: 60 },
+  { week: 'Week 4', score: 90 },
+  { week: 'Week 5', score: 85 },
+];
+
 
 export const currentStandings: CurrentStanding[] = [
     { teamId: 'team_1', rank: 1, points: 12, goalDifference: 8, gamesPlayed: 5, wins: 4, draws: 0, losses: 1 },
@@ -225,5 +241,7 @@ function generatePlayerTeamScores(): PlayerTeamScore[] {
 }
 
 export const playerTeamScores: PlayerTeamScore[] = generatePlayerTeamScores();
+
+    
 
     
