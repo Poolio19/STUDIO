@@ -123,7 +123,7 @@ export const teams: Team[] = [
     { id: 'team_12', name: 'Liverpool', logo: 'anchor' },
     { id: 'team_13', name: 'Man City', logo: 'atom' },
     { id: 'team_14', name: 'Man Utd', logo: 'rocket' },
-    { id: 'team_15', name: 'Newcastle United', logo: 'orbit' },
+    { id: 'team_15', 'name': 'Newcastle United', logo: 'orbit' },
     { id: 'team_16', name: 'Notts Forest', logo: 'waves' },
     { id: 'team_17', name: 'Southampton', logo: 'zap' },
     { id: 'team_18', name: 'Tottenham', logo: 'anchor' },
@@ -268,20 +268,31 @@ const userHistories: UserHistory[] = usersData.map(user => {
     const random = mulberry32(seed * 42); // Multiply by a number to get a different sequence from other generators
 
     for (let week = 1; week <= NUM_WEEKS; week++) {
-        const scoreChange = Math.floor(random() * 21) - 10; // -10 to +10
-        const currentScore = lastScore + scoreChange;
-        weeklyScores.push({ week, score: currentScore, rank: 0 });
-        lastScore = currentScore;
+        // For the final week, use the actual calculated score.
+        if (week === NUM_WEEKS) {
+            const finalScore = playerTeamScores
+                .filter(s => s.userId === user.id)
+                .reduce((sum, current) => sum + current.score, 0);
+            weeklyScores.push({ week, score: finalScore, rank: 0 });
+
+        } else {
+            const scoreChange = Math.floor(random() * 21) - 10; // -10 to +10
+            const currentScore = lastScore + scoreChange;
+            weeklyScores.push({ week, score: currentScore, rank: 0 });
+            lastScore = currentScore;
+        }
     }
     return { userId: user.id, weeklyScores };
 });
 
 // Calculate ranks for each week
 for (let week = 1; week <= NUM_WEEKS; week++) {
-    const weeklyStandings = userHistories.map(h => ({
-        userId: h.userId,
-        score: h.weeklyScores.find(w => w.week === week)!.score
-    })).sort((a, b) => b.score - a.score);
+    const weeklyStandings = userHistories
+      .map(h => ({
+          userId: h.userId,
+          score: h.weeklyScores.find(w => w.week === week)!.score
+      }))
+      .sort((a, b) => b.score - a.score);
 
     let currentRank = 1;
     for (let i = 0; i < weeklyStandings.length; i++) {
@@ -296,33 +307,10 @@ for (let week = 1; week <= NUM_WEEKS; week++) {
 
 // Create the final 'users' array by combining static data, calculated scores, and historical data
 const finalUsers: User[] = usersData.map(userStub => {
-    // 1. Calculate total score from individual team scores
-    const totalScore = playerTeamScores
-        .filter(s => s.userId === userStub.id)
-        .reduce((sum, current) => sum + current.score, 0);
-        
-    // 2. Find the user's weekly history
-    const history = userHistories.find(h => h.userId === userStub.id);
-    if (!history) {
-        // Fallback in case history isn't found, though it should be.
-        return {
-            ...userStub,
-            score: totalScore,
-            rank: 0,
-            rankChange: 0,
-            scoreChange: 0,
-            maxScore: totalScore,
-            minScore: totalScore,
-            maxRank: 0,
-            minRank: 0,
-        };
-    }
-    
-    // We'll use the pre-calculated history but override the final week's score with the *actual* total
+    const history = userHistories.find(h => h.userId === userStub.id)!;
     const currentWeekData = history.weeklyScores[NUM_WEEKS - 1];
-    currentWeekData.score = totalScore;
+    const totalScore = currentWeekData.score;
     
-    // 3. Get historical highs and lows
     const allScores = history.weeklyScores.map(w => w.score);
     const allRanks = history.weeklyScores.map(w => w.rank);
     
@@ -331,7 +319,6 @@ const finalUsers: User[] = usersData.map(userStub => {
     const maxRank = Math.min(...allRanks); // Best rank is the smallest number
     const minRank = Math.max(...allRanks); // Worst rank is the largest number
 
-    // 4. Calculate change from the previous week (if applicable)
     let rankChange = 0;
     let scoreChange = 0;
     if (NUM_WEEKS > 1) {
@@ -344,7 +331,7 @@ const finalUsers: User[] = usersData.map(userStub => {
     return {
         ...userStub,
         score: totalScore,
-        rank: 0, // Rank will be calculated in the next step
+        rank: currentWeekData.rank, 
         rankChange,
         scoreChange,
         maxScore,
@@ -355,15 +342,6 @@ const finalUsers: User[] = usersData.map(userStub => {
 });
 
 // Final ranking based on the definitive total scores
-const sortedFinalUsers = finalUsers.sort((a, b) => b.score - a.score);
+export const users: User[] = finalUsers.sort((a, b) => a.rank - b.rank);
 
-// Assign final ranks
-let currentRank = 1;
-for (let i = 0; i < sortedFinalUsers.length; i++) {
-    if (i > 0 && sortedFinalUsers[i].score < sortedFinalUsers[i - 1].score) {
-        currentRank = i + 1;
-    }
-    sortedFinalUsers[i].rank = currentRank;
-}
-
-export const users: User[] = sortedFinalUsers;
+    
