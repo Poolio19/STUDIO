@@ -24,11 +24,12 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { teams, WeeklyTeamStanding } from '@/lib/data';
+import { teams, WeeklyTeamStanding, Team } from '@/lib/data';
 import * as React from 'react';
 
 interface TeamStandingsChartProps {
   chartData: WeeklyTeamStanding[];
+  sortedTeams: (Team & { rank: number })[];
 }
 
 // Generate the chart config dynamically based on the teams
@@ -41,7 +42,7 @@ const chartConfig = teams.reduce((config, team, index) => {
 }, {} as any);
 
 
-export function TeamStandingsChart({ chartData }: TeamStandingsChartProps) {
+export function TeamStandingsChart({ chartData, sortedTeams }: TeamStandingsChartProps) {
   const transformedData = React.useMemo(() => {
     const weeks = [...new Set(chartData.map(d => d.week))].sort((a,b) => a-b);
     return weeks.map(week => {
@@ -108,8 +109,8 @@ export function TeamStandingsChart({ chartData }: TeamStandingsChartProps) {
                     />
                 }
               />
-              <Legend />
-                {teams.map((team, index) => (
+              <Legend layout="vertical" verticalAlign="middle" align="right" />
+                {sortedTeams.map((team) => (
                     <Line
                     key={team.id}
                     dataKey={team.name}

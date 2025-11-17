@@ -48,7 +48,7 @@ export default function StandingsPage() {
         <p className="text-muted-foreground">The official Premier League table and weekly position tracker.</p>
       </header>
 
-      <TeamStandingsChart chartData={weeklyTeamStandings} />
+      <TeamStandingsChart chartData={weeklyTeamStandings} sortedTeams={standingsWithTeamData} />
 
       <Card>
         <CardHeader>
