@@ -1,4 +1,6 @@
 
+'use client';
+
 import {
   Avatar,
   AvatarFallback,
@@ -23,13 +25,16 @@ import { users, monthlyMimoM, currentStandings } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Icons, IconName } from '@/components/icons';
 import type { Metadata } from 'next';
-import { Award, Star } from 'lucide-react';
+import { Award, Star, CalendarClock } from 'lucide-react';
 import { useMemo } from 'react';
 
-export const metadata: Metadata = {
-    title: 'MiMoM | PremPred 2025-2026',
-    description: 'See who is improving the most month on month.',
-};
+// Since we can't have metadata on a 'use client' component,
+// you would typically handle this in a parent layout or a server component.
+// For this example, we'll keep it but note it won't work in this file directly.
+// export const metadata: Metadata = {
+//     title: 'MiMoM | PremPred 2025-2026',
+//     description: 'See who is improving the most month on month.',
+// };
 
 const getAvatarUrl = (avatarId: string) => {
   return PlaceHolderImages.find((img) => img.id === avatarId)?.imageUrl || '';
@@ -49,44 +54,47 @@ const formatPointsChange = (change: number) => {
 
 const currentWeek = currentStandings[0]?.gamesPlayed || 1;
 
+const seasonMonths = [
+    { month: 'August', year: 2024 },
+    { month: 'September', year: 2024 },
+    { month: 'October', year: 2024 },
+    { month: 'November', year: 2024 },
+    { month: 'December', year: 2024, special: 'Christmas No. 1' },
+    { month: 'January', year: 2025 },
+    { month: 'February', year: 2025 },
+    { month: 'March', year: 2025 },
+    { month: 'April', year: 2025 },
+    { month: 'May', year: 2025 },
+];
+
 export default function MostImprovedPage() {
   const sortedByImprovement = [...users].sort((a, b) => b.rankChange - a.rankChange);
   const mostImprovedPlayer = sortedByImprovement[0];
   const currentMonth = new Date().toLocaleString('default', { month: 'long' });
 
   const mimoMWithDetails = useMemo(() => {
-    const groupedByMonth: { [key: string]: any[] } = {};
+    const winnersByMonth: { [key: string]: any[] } = {};
     
     monthlyMimoM.forEach(m => {
-      const key = `${m.month}-${m.year}`;
-      if (!groupedByMonth[key]) {
-        groupedByMonth[key] = [];
+      const key = m.special ? m.special : `${m.month}-${m.year}`;
+      if (!winnersByMonth[key]) {
+        winnersByMonth[key] = [];
       }
       const user = users.find(u => u.id === m.userId);
       if (user) {
-        groupedByMonth[key].push({ ...m, ...user });
-      } else if (m.userId === 'special_christmas') {
-         // This is a placeholder for a real user in the future
-        const christmasWinner = users.find(u => u.rank === 1);
-        if (christmasWinner) {
-            groupedByMonth[key].push({ ...m, ...christmasWinner, name: christmasWinner.name, avatar: christmasWinner.avatar, month: 'Christmas No. 1' });
-        }
+        winnersByMonth[key].push({ ...m, ...user });
       }
     });
 
-    const displayOrder = ['August', 'September', 'October', 'November', 'December', 'Christmas No. 1', 'January', 'February', 'March', 'April', 'May'];
-    const sortedGrouped = Object.values(groupedByMonth).sort((a, b) => {
-        const monthA = a[0].month;
-        const monthB = b[0].month;
-        const yearA = a[0].year;
-        const yearB = b[0].year;
-
-        if (yearA !== yearB) return yearA - yearB;
-        
-        return displayOrder.indexOf(monthA) - displayOrder.indexOf(monthB);
-    });
-
-    return sortedGrouped;
+    return seasonMonths.map(seasonMonth => {
+        const key = seasonMonth.special ? seasonMonth.special : `${seasonMonth.month}-${seasonMonth.year}`;
+        const title = seasonMonth.special ? seasonMonth.special : `${seasonMonth.month} ${seasonMonth.year}`;
+        const winners = winnersByMonth[key];
+        return {
+            title,
+            winners: winners || null
+        }
+    })
   }, []);
 
   return (
@@ -102,20 +110,27 @@ export default function MostImprovedPage() {
             <CardDescription>A list of the previous winners of the "Most Improved Manager of the Month" award.</CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {mimoMWithDetails.map((group, index) => (
-                <div key={index} className="p-4 border rounded-lg flex flex-col">
-                    <p className="font-bold text-center mb-2">{group[0].month} {group[0].year !== 9999 ? group[0].year : ''}</p>
-                    <div className="flex flex-col items-center justify-center gap-4 flex-grow">
-                        {group.map(winner => (
-                            <div key={winner.userId} className="flex flex-col items-center gap-2">
-                                <Avatar className="h-16 w-16">
-                                <AvatarImage src={getAvatarUrl(winner.avatar || '')} alt={winner.name} data-ai-hint="person portrait" />
-                                <AvatarFallback>{winner.name?.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <p className="text-sm font-medium text-center">{winner.name}</p>
-                            </div>
-                        ))}
-                    </div>
+            {mimoMWithDetails.map((monthlyAward, index) => (
+                <div key={index} className="p-4 border rounded-lg flex flex-col items-center justify-center text-center">
+                    <p className="font-bold mb-2">{monthlyAward.title}</p>
+                    {monthlyAward.winners ? (
+                         <div className="flex flex-col items-center justify-center gap-4 flex-grow">
+                            {monthlyAward.winners.map(winner => (
+                                <div key={winner.userId} className="flex flex-col items-center gap-2">
+                                    <Avatar className="h-16 w-16">
+                                    <AvatarImage src={getAvatarUrl(winner.avatar || '')} alt={winner.name} data-ai-hint="person portrait" />
+                                    <AvatarFallback>{winner.name?.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <p className="text-sm font-medium">{winner.name}</p>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center gap-2 flex-grow text-muted-foreground">
+                            <CalendarClock className="size-16" />
+                            <p className="text-sm font-medium">To be confirmed</p>
+                        </div>
+                    )}
                 </div>
             ))}
         </CardContent>
@@ -195,3 +210,5 @@ export default function MostImprovedPage() {
     </div>
   );
 }
+
+    

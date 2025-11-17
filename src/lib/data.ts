@@ -58,6 +58,7 @@ export type MonthlyMimoM = {
   month: string;
   year: number;
   userId: string;
+  special?: string;
 };
 
 export type PlayerTeamScore = {
@@ -183,18 +184,6 @@ export const currentStandings: CurrentStanding[] = [
 
 export const monthlyMimoM: MonthlyMimoM[] = [
     { month: 'August', year: 2024, userId: 'usr_12' },
-    { month: 'September', year: 2024, userId: 'usr_19' },
-    { month: 'October', year: 2024, userId: 'usr_2' },
-    { month: 'October', year: 2024, userId: 'usr_28' },
-    { month: 'November', year: 2024, userId: 'usr_15' },
-    { month: 'December', year: 9999, userId: 'special_christmas' }, // Special entry for Christmas No. 1
-    { month: 'January', year: 2025, userId: 'usr_5' },
-    { month: 'February', year: 2025, userId: 'usr_8' },
-    { month: 'March', year: 2025, userId: 'usr_13' },
-    { month: 'April', year: 2025, userId: 'usr_22' },
-    { month: 'April', year: 2025, userId: 'usr_3' },
-    { month: 'April', year: 2025, userId: 'usr_11' },
-    { month: 'May', year: 2025, userId: 'usr_7' },
 ];
 
 // --- DYNAMIC & DETERMINISTIC DATA GENERATION ---
@@ -405,3 +394,5 @@ const finalUsers: User[] = usersData.map(userStub => {
 });
 
 export const users: User[] = finalUsers.sort((a, b) => a.rank - b.rank);
+
+    
