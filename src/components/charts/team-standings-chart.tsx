@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -38,7 +37,16 @@ const CustomLegend = ({
   payload: { value: string; color: string }[];
 }) => {
   return (
-    <ul className="absolute top-[10px] bottom-[30px] right-0 flex flex-col justify-between text-xs pr-4">
+    <ul
+      className="absolute flex flex-col justify-between text-xs"
+      style={{
+        right: 0,
+        top: '12.5px',
+        bottom: '35px',
+        width: '120px',
+        paddingLeft: '1rem',
+      }}
+    >
       {payload.map((entry: any, index: number) => (
         <li key={`item-${index}`} className="flex items-center space-x-2">
           <span
