@@ -160,7 +160,7 @@ export default function MostImprovedPage() {
                             const rankColor = getLadderRankColor(user.displayRank);
                             return (
                                 <TableRow key={user.id} className={cn(rankColor, "border-b-4 border-transparent")}>
-                                    <TableCell className={cn("font-medium text-center", rankColor && 'rounded-l-md')}>{user.displayRank}</TableCell>
+                                    <TableCell className={cn("font-medium text-center", rankColor && 'first:rounded-l-md')}>{user.displayRank}</TableCell>
                                     <TableCell className={cn(rankColor)}>
                                     <div className="flex items-center gap-3">
                                         <Avatar className="h-9 w-9">
@@ -177,7 +177,7 @@ export default function MostImprovedPage() {
                                         </div>
                                     </TableCell>
                                     <TableCell className={cn("text-center font-medium", rankColor)}>{formatPointsChange(user.scoreChange)}</TableCell>
-                                    <TableCell className={cn("text-center font-bold", rankColor && 'rounded-r-md')}>{user.score}</TableCell>
+                                    <TableCell className={cn("text-center font-bold", rankColor && 'last:rounded-r-md')}>{user.score}</TableCell>
                                 </TableRow>
                             );
                         })}
