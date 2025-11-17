@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { users, currentStandings, type User } from '@/lib/data';
+import { users, currentStandings, monthlyMimoM, type User } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
@@ -47,7 +47,7 @@ const formatPointsChange = (change: number) => {
     return change;
 }
 
-const getRankColor = (rank: number) => {
+const getRankColor = (rank: number, hasWinnings: boolean) => {
     if (rank <= 5) {
         switch (rank) {
             case 1:
@@ -60,23 +60,57 @@ const getRankColor = (rank: number) => {
                 return 'bg-green-100 dark:bg-green-900/30 hover:bg-green-100/80 dark:hover:bg-green-900/40';
         }
     }
+    if (hasWinnings) {
+        return 'bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-100/80 dark:hover:bg-blue-900/40';
+    }
     return '';
 }
 
 export default function LeaderboardPage() {
   const sortedUsers = useMemo(() => [...users].sort((a, b) => a.rank - b.rank), []);
 
-  const winningsMap = useMemo(() => {
-    const prizeTiers = [45, 36, 28, 23, 18];
-    const winnings = new Map<string, number>();
+  const totalWinningsMap = useMemo(() => {
+    // 1. Calculate MiMoM Winnings
+    const mimoMWinnings = new Map<string, number>();
+    const monthlyAwards: { [key: string]: { winners: string[], runnersUp: string[] } } = {};
 
+    monthlyMimoM.forEach(m => {
+        const key = m.special ? m.special : `${m.month}-${m.year}`;
+        if (!monthlyAwards[key]) {
+            monthlyAwards[key] = { winners: [], runnersUp: [] };
+        }
+        if (m.type === 'winner') {
+            monthlyAwards[key].winners.push(m.userId);
+        } else if (m.type === 'runner-up') {
+            monthlyAwards[key].runnersUp.push(m.userId);
+        }
+    });
+
+    Object.values(monthlyAwards).forEach(award => {
+        const winnerPrize = 10 / (award.winners.length || 1);
+        award.winners.forEach(userId => {
+            mimoMWinnings.set(userId, (mimoMWinnings.get(userId) || 0) + winnerPrize);
+        });
+
+        // Only award runner-up prize if there's a single winner
+        if (award.winners.length === 1 && award.runnersUp.length > 0) {
+            const runnerUpPrize = 5 / award.runnersUp.length;
+            award.runnersUp.forEach(userId => {
+                mimoMWinnings.set(userId, (mimoMWinnings.get(userId) || 0) + runnerUpPrize);
+            });
+        }
+    });
+    
+    // 2. Calculate Leaderboard Winnings
+    const leaderboardWinnings = new Map<string, number>();
+    const prizeTiers = [45, 36, 28, 23, 18];
+    
     let userIndex = 0;
     while (userIndex < sortedUsers.length) {
       const currentUser = sortedUsers[userIndex];
       const currentRank = currentUser.rank;
 
       if (currentRank > 5) {
-        // No prizes for ranks outside the top 5
         userIndex++;
         continue;
       }
@@ -89,7 +123,7 @@ export default function LeaderboardPage() {
         
         let prizePool = 0;
         ranksCovered.forEach(rank => {
-          if (rank -1 < prizeTiers.length) {
+          if (rank - 1 < prizeTiers.length) {
             prizePool += prizeTiers[rank - 1];
           }
         });
@@ -97,7 +131,7 @@ export default function LeaderboardPage() {
         const individualWinnings = prizePool / numTied;
         
         tiedUsers.forEach(user => {
-          winnings.set(user.id, individualWinnings);
+          leaderboardWinnings.set(user.id, individualWinnings);
         });
         
         userIndex += numTied;
@@ -106,7 +140,15 @@ export default function LeaderboardPage() {
       }
     }
 
-    return winnings;
+    // 3. Combine winnings
+    const totalWinnings = new Map<string, number>();
+    users.forEach(user => {
+        const lbWinnings = leaderboardWinnings.get(user.id) || 0;
+        const mmWinnings = mimoMWinnings.get(user.id) || 0;
+        totalWinnings.set(user.id, lbWinnings + mmWinnings);
+    });
+
+    return totalWinnings;
   }, [sortedUsers]);
 
 
@@ -152,10 +194,10 @@ export default function LeaderboardPage() {
               {sortedUsers.map((user) => {
                 const RankIcon = getRankChangeIcon(user.rankChange);
                 const ScoreIcon = getRankChangeIcon(user.scoreChange);
-                const userWinnings = winningsMap.get(user.id) || 0;
+                const userWinnings = totalWinningsMap.get(user.id) || 0;
                 
                 return (
-                    <TableRow key={user.id} className={cn(getRankColor(user.rank))}>
+                    <TableRow key={user.id} className={cn(getRankColor(user.rank, userWinnings > 0))}>
                         <TableCell className="font-medium text-center">{user.rank}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
