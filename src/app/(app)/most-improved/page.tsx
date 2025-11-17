@@ -119,8 +119,8 @@ export default function MostImprovedPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="flex flex-col gap-8">
                 <Card>
-                    <CardHeader>
-                    <CardTitle>Monthly Improvement Rankings</CardTitle>
+                    <CardHeader className="bg-gradient-to-r from-yellow-400/20 via-yellow-400/5 to-slate-400/20">
+                    <CardTitle>In-Month MiMoM Standings</CardTitle>
                     <CardDescription>Current rankings based on position change in Week {currentWeek}.</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -196,7 +196,7 @@ export default function MostImprovedPage() {
                                                     <AvatarFallback>{winner.name?.charAt(0)}</AvatarFallback>
                                                 </Avatar>
                                                 <div className="text-left">
-                                                    <p className="text-sm font-bold">{winner.name} - £{winnerPrize}</p>
+                                                    <p className="text-sm font-bold">{winner.name} - £{winnerPrize % 1 === 0 ? winnerPrize : winnerPrize.toFixed(2)}</p>
                                                     {monthlyAward.winners && <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">{(monthlyAward.winners.length > 1 ? 'JoMiMoM' : 'MiMoM')}</p>}
                                                     {monthlyAward.currentLeaders && <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">Current Leader</p>}
                                                 </div>
@@ -210,7 +210,7 @@ export default function MostImprovedPage() {
                                                     <AvatarFallback>{runnerUp.name?.charAt(0)}</AvatarFallback>
                                                 </Avatar>
                                                 <div className="text-left">
-                                                    <p className="text-sm font-bold">{runnerUp.name} - £{runnerUpPrize}</p>
+                                                    <p className="text-sm font-bold">{runnerUp.name} - £{runnerUpPrize % 1 === 0 ? runnerUpPrize : runnerUpPrize.toFixed(2)}</p>
                                                     <p className="text-xs font-semibold text-slate-800/80 dark:text-slate-200/80">{(monthlyAward.runnersUp!.length > 1 ? 'JoRuMiMoM' : 'RuMiMoM')}</p>
                                                 </div>
                                             </div>
@@ -235,3 +235,5 @@ export default function MostImprovedPage() {
     </div>
   );
 }
+
+    
