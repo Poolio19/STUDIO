@@ -68,7 +68,11 @@ export default function MostImprovedPage() {
       }
     });
     
-    return seasonMonths.map(seasonMonth => {
+    return seasonMonths.filter(sm => {
+        const monthDate = new Date(`${sm.month} 1, ${sm.year}`);
+        const currentDate = new Date();
+        return monthDate <= new Date(currentDate.getFullYear(), currentDate.getMonth(), 31);
+    }).map(seasonMonth => {
         const key = seasonMonth.special ? seasonMonth.special : `${seasonMonth.month}-${seasonMonth.year}`;
         const awards = awardsByMonth[key];
         const isCurrentMonth = seasonMonth.month === currentMonthName && seasonMonth.year === new Date().getFullYear();
@@ -186,7 +190,7 @@ export default function MostImprovedPage() {
                         <CardTitle>MiMoM Hall of Fame</CardTitle>
                         <CardDescription>Previous winners and runners-up.</CardDescription>
                     </CardHeader>
-                    <CardContent className="grid grid-cols-1 gap-4">
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
                         {mimoMWithDetails.map((monthlyAward, index) => (
                             <div key={index} className="p-3 border rounded-lg flex flex-col items-center justify-start text-center">
                                 <p className="font-bold mb-2 text-sm">{monthlyAward.abbreviation}</p>
