@@ -144,12 +144,14 @@ export default function LeaderboardPage() {
 
     // 3. "Beat THE PROs" Prize
     const proWinnings = new Map<string, number>();
-    const worstProRank = Math.max(...proPlayers.map(p => p.rank));
-    regularPlayers.forEach(player => {
-        if (player.rank < worstProRank) {
-            proWinnings.set(player.id, 5);
-        }
-    });
+    if (proPlayers.length > 0) {
+      const bestProRank = Math.min(...proPlayers.map(p => p.rank));
+      regularPlayers.forEach(player => {
+          if (player.rank <= bestProRank) {
+              proWinnings.set(player.id, 5);
+          }
+      });
+    }
 
 
     // 4. Combine all winnings
