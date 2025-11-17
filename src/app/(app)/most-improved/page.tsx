@@ -48,7 +48,6 @@ const currentWeek = currentStandings[0]?.gamesPlayed || 1;
 
 export default function MostImprovedPage() {
   const sortedByImprovement = [...users].sort((a, b) => b.rankChange - a.rankChange);
-  const mostImprovedPlayer = sortedByImprovement[0];
   
   // For design purposes, we assume it's mid-September
   const currentMonthName = 'September';
@@ -119,30 +118,6 @@ export default function MostImprovedPage() {
       </header>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="flex flex-col gap-8">
-                <Card className="bg-primary/10 border-primary/50">
-                    <CardHeader className="flex-row items-center gap-4">
-                    <div className="p-3 rounded-full bg-primary/20">
-                        <Trophy className="size-6 text-primary" />
-                    </div>
-                    <div>
-                        <CardTitle>Manager of the Month - {currentMonthName}</CardTitle>
-                        <CardDescription>This is the current leader for this month's award!</CardDescription>
-                    </div>
-                    </CardHeader>
-                    <CardContent>
-                    <div className="flex items-center gap-4">
-                        <Avatar className="h-16 w-16 border-2 border-primary">
-                        <AvatarImage src={getAvatarUrl(mostImprovedPlayer.avatar)} alt={mostImprovedPlayer.name} data-ai-hint="person portrait" />
-                        <AvatarFallback>{mostImprovedPlayer.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                        <h3 className="text-xl font-bold">{mostImprovedPlayer.name}</h3>
-                        <p className="text-muted-foreground">Jumped <span className="font-bold text-green-600">{mostImprovedPlayer.rankChange}</span> spots this month!</p>
-                        </div>
-                    </div>
-                    </CardContent>
-                </Card>
-
                 <Card>
                     <CardHeader>
                     <CardTitle>Monthly Improvement Rankings</CardTitle>
@@ -196,7 +171,7 @@ export default function MostImprovedPage() {
                         <CardTitle>MiMoM Hall of Fame</CardTitle>
                         <CardDescription>Previous winners and runners-up.</CardDescription>
                     </CardHeader>
-                    <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {mimoMWithDetails.map((monthlyAward, index) => {
                             const hasAwards = monthlyAward.winners || monthlyAward.runnersUp || monthlyAward.currentLeaders;
                             const isFuture = !hasAwards;
@@ -260,7 +235,3 @@ export default function MostImprovedPage() {
     </div>
   );
 }
-
-    
-
-    
