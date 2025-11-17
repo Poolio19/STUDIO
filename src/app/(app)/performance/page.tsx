@@ -9,14 +9,8 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { users, userHistories } from '@/lib/data';
-import type { Metadata } from 'next';
 import { useMemo } from 'react';
 import { PlayerPerformanceChart } from '@/components/charts/player-performance-chart';
-
-// export const metadata: Metadata = {
-//     title: 'Player Performance | PremPred 2025-2026',
-//     description: 'Player score progression over the season.',
-// };
 
 export default function PerformancePage() {
   const { chartData, yAxisDomain } = useMemo(() => {
