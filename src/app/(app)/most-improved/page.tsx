@@ -26,6 +26,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Icons, IconName } from '@/components/icons';
 import { Award, Star, CalendarClock, Trophy } from 'lucide-react';
 import { useMemo } from 'react';
+import { cn } from '@/lib/utils';
 
 const getAvatarUrl = (avatarId: string) => {
   return PlaceHolderImages.find((img) => img.id === avatarId)?.imageUrl || '';
@@ -68,11 +69,7 @@ export default function MostImprovedPage() {
       }
     });
     
-    return seasonMonths.filter(sm => {
-        const monthDate = new Date(`${sm.month} 1, ${sm.year}`);
-        const currentDate = new Date();
-        return monthDate <= new Date(currentDate.getFullYear(), currentDate.getMonth(), 31);
-    }).map(seasonMonth => {
+    return seasonMonths.map(seasonMonth => {
         const key = seasonMonth.special ? seasonMonth.special : `${seasonMonth.month}-${seasonMonth.year}`;
         const awards = awardsByMonth[key];
         const isCurrentMonth = seasonMonth.month === currentMonthName && seasonMonth.year === new Date().getFullYear();
@@ -92,16 +89,6 @@ export default function MostImprovedPage() {
             winners: awards?.winners.length > 0 ? awards.winners : null,
             runnersUp: awards?.runnersUp.length > 0 ? awards.runnersUp : null
         }
-    }).sort((a,b) => {
-        const aHasAward = a.winners || a.currentLeaders;
-        const bHasAward = b.winners || b.currentLeaders;
-        // If one has an award and the other doesn't, the one with the award comes first.
-        if (aHasAward && !bHasAward) return -1;
-        if (!aHasAward && bHasAward) return 1;
-        
-        // If both have awards or both are TBC, sort by month index
-        const monthOrder = seasonMonths.map(m => m.month);
-        return monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month);
     });
   }, [sortedByImprovement, currentMonthName]);
 
@@ -190,9 +177,9 @@ export default function MostImprovedPage() {
                         <CardTitle>MiMoM Hall of Fame</CardTitle>
                         <CardDescription>Previous winners and runners-up.</CardDescription>
                     </CardHeader>
-                    <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                         {mimoMWithDetails.map((monthlyAward, index) => (
-                            <div key={index} className="p-3 border rounded-lg flex flex-col items-center justify-start text-center">
+                            <div key={index} className={cn("p-3 border rounded-lg flex flex-col items-center justify-start text-center", monthlyAward.isCurrentMonth && 'opacity-60')}>
                                 <p className="font-bold mb-2 text-sm">{monthlyAward.abbreviation}</p>
                                 
                                 {monthlyAward.winners || monthlyAward.currentLeaders ? (
@@ -238,5 +225,3 @@ export default function MostImprovedPage() {
     </div>
   );
 }
-
-    

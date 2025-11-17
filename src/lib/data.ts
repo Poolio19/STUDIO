@@ -191,16 +191,16 @@ export const currentStandings: CurrentStanding[] = [
 ];
 
 export const seasonMonths: SeasonMonth[] = [
-    { month: 'May', year: 2026, abbreviation: 'MAY' },
-    { month: 'April', year: 2026, abbreviation: 'APR' },
-    { month: 'March', year: 2026, abbreviation: 'MAR' },
-    { month: 'February', year: 2026, abbreviation: 'FEB' },
-    { month: 'January', year: 2026, abbreviation: 'JAN' },
-    { month: 'December', year: 2025, special: 'Christmas No. 1', abbreviation: 'XMAS' },
-    { month: 'November', year: 2025, abbreviation: 'NOV' },
-    { month: 'October', year: 2025, abbreviation: 'OCT' },
-    { month: 'September', year: 2025, abbreviation: 'SEPT' },
     { month: 'August', year: 2025, abbreviation: 'AUG' },
+    { month: 'September', year: 2025, abbreviation: 'SEPT' },
+    { month: 'October', year: 2025, abbreviation: 'OCT' },
+    { month: 'November', year: 2025, abbreviation: 'NOV' },
+    { month: 'December', year: 2025, special: 'Christmas No. 1', abbreviation: 'XMAS' },
+    { month: 'January', year: 2026, abbreviation: 'JAN' },
+    { month: 'February', year: 2026, abbreviation: 'FEB' },
+    { month: 'March', year: 2026, abbreviation: 'MAR' },
+    { month: 'April', year: 2026, abbreviation: 'APR' },
+    { month: 'May', year: 2026, abbreviation: 'MAY' },
 ];
 
 export const monthlyMimoM: MonthlyMimoM[] = [
