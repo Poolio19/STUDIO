@@ -201,36 +201,78 @@ const mulberry32 = (seed: number) => {
 const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed: number): string[] => {
     const random = mulberry32(seed);
     const standings = [...baseStandings].sort((a, b) => a.rank - b.rank);
-    const teamIds = standings.map(s => s.teamId);
     
-    // Number of swaps to perform
-    const numSwaps = Math.floor(random() * 10) + 5; // 5 to 14 swaps
+    // Create a list of teams with their original rank and a new predicted rank
+    let perturbedStandings = standings.map(team => {
+        const originalRank = team.rank;
+        
+        // Define max perturbation based on rank. Tighter for top teams.
+        let maxPerturbation;
+        if (originalRank <= 2) maxPerturbation = 1; // Top 2 can move 1 spot
+        else if (originalRank <= 5) maxPerturbation = 2; // Top 5 can move 2 spots
+        else if (originalRank <= 10) maxPerturbation = 4; // Top 10 can move 4 spots
+        else maxPerturbation = 6; // Rest can move 6 spots
 
-    for (let i = 0; i < numSwaps; i++) {
-        const idx1 = Math.floor(random() * teamIds.length);
-        const originalRank = standings.find(s => s.teamId === teamIds[idx1])!.rank;
+        const perturbation = Math.round((random() - 0.5) * 2 * maxPerturbation);
+        let predictedRank = originalRank + perturbation;
 
-        // Determine max swap distance based on original rank
-        let maxDistance;
-        if (originalRank <= 4) {
-            maxDistance = 3; // Top 4 teams can only move within top 7
-        } else if (originalRank <= 10) {
-            maxDistance = 5; // Top 10 can move ~5 spots
-        } else {
-            maxDistance = 8; // Others can move a bit more freely
+        // Clamp to be within 1-20
+        predictedRank = Math.max(1, Math.min(20, predictedRank));
+
+        return {
+            teamId: team.teamId,
+            originalRank: team.rank,
+            predictedRank: predictedRank
+        };
+    });
+
+    // Sort by the new predicted rank to handle collisions
+    perturbedStandings.sort((a, b) => a.predictedRank - b.predictedRank || a.originalRank - b.originalRank);
+    
+    // Resolve duplicate predictedRanks
+    const finalRanks = new Map<string, number>();
+    const usedRanks = new Set<number>();
+
+    // First, place teams that have a unique predicted rank
+    perturbedStandings.forEach(p => {
+        if (![...perturbedStandings].some(other => other !== p && other.predictedRank === p.predictedRank)) {
+            if (!usedRanks.has(p.predictedRank)) {
+                finalRanks.set(p.teamId, p.predictedRank);
+                usedRanks.add(p.predictedRank);
+            }
         }
+    });
+    
+    // Then, place the rest of the teams in available slots
+    perturbedStandings.forEach(p => {
+        if (!finalRanks.has(p.teamId)) {
+            let rank = p.predictedRank;
+            while(usedRanks.has(rank)) {
+                rank++;
+                if (rank > 20) rank = 1; // wrap around if needed, though less likely
+            }
+            finalRanks.set(p.teamId, rank);
+            usedRanks.add(rank);
+        }
+    });
 
-        const offset = Math.floor(random() * (maxDistance * 2 + 1)) - maxDistance;
-        let idx2 = idx1 + offset;
+    // Create the final sorted list of teamIds
+    const finalTeamIds = Array(20);
+    finalRanks.forEach((rank, teamId) => {
+        finalTeamIds[rank - 1] = teamId;
+    });
 
-        // Clamp index to be within bounds
-        idx2 = Math.max(0, Math.min(teamIds.length - 1, idx2));
-
-        if (idx1 !== idx2) {
-            [teamIds[idx1], teamIds[idx2]] = [teamIds[idx2], teamIds[idx1]];
+    // Fill any gaps (should be rare)
+    const allTeamIds = standings.map(s => s.teamId);
+    const rankedTeamIds = new Set(finalTeamIds);
+    const unrankedTeams = allTeamIds.filter(id => !rankedTeamIds.has(id));
+    for (let i = 0; i < 20; i++) {
+        if (!finalTeamIds[i]) {
+            finalTeamIds[i] = unrankedTeams.pop();
         }
     }
-    return teamIds;
+
+    return finalTeamIds;
 };
 
 export const predictions: Prediction[] = usersData.map((user, index) => {
@@ -333,23 +375,20 @@ const finalUsers: User[] = usersData.map(userStub => {
     const history = userHistories.find(h => h.userId === userStub.id)!;
     
     const currentWeekData = history.weeklyScores.find(w => w.week === NUM_WEEKS)!;
-    const previousWeekData = history.weeklyScores.find(w => w.week === Math.max(0, NUM_WEEKS - 1))!;
-
-    let previousRank = previousWeekData.rank;
-    let previousScore = previousWeekData.score;
+    const lastWeekNumber = Math.max(1, NUM_WEEKS - 1);
+    const previousWeekData = history.weeklyScores.find(w => w.week === lastWeekNumber)!;
     
-    if (NUM_WEEKS === 1) {
-        const week0Data = history.weeklyScores.find(w => w.week === 0)!;
-        previousRank = week0Data.rank;
-        previousScore = week0Data.score;
-    }
-
+    // For Week 1, the "previous week" is the end of last season (Week 0)
+    const previousWeekForChange = history.weeklyScores.find(w => w.week === (NUM_WEEKS === 1 ? 0 : NUM_WEEKS - 1))!;
+    
+    const previousRank = previousWeekForChange.rank;
+    const previousScore = previousWeekForChange.score;
 
     // Rank change: positive for up (e.g. 5 -> 1 is +4), negative for down (e.g. 1 -> 5 is -4)
     const rankChange = previousRank - currentWeekData.rank;
     const scoreChange = currentWeekData.score - previousScore;
 
-    // Filter out week 0 for calculating season highs/lows for this season
+    // Filter out week 0 for calculating this season's highs/lows
     const seasonWeeklyScores = history.weeklyScores.slice(1);
     
     const allScores = seasonWeeklyScores.map(w => w.score);
@@ -364,8 +403,8 @@ const finalUsers: User[] = usersData.map(userStub => {
         ...userStub,
         score: currentWeekData.score,
         rank: currentWeekData.rank, 
-        previousRank,
-        previousScore,
+        previousRank: previousRank,
+        previousScore: previousScore,
         rankChange,
         scoreChange,
         maxScore,
