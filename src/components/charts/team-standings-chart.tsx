@@ -128,7 +128,7 @@ export function TeamStandingsChart({ chartData, sortedTeams }: TeamStandingsChar
               <Legend 
                 content={<CustomLegend />}
                 layout="vertical"
-                verticalAlign="middle"
+                verticalAlign="top"
                 align="right"
                 payload={sortedTeams.map(team => ({
                     value: team.name,
