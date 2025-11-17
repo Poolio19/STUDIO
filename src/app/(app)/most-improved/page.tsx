@@ -21,20 +21,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { users, monthlyMimoM, currentStandings } from '@/lib/data';
+import { users, monthlyMimoM, currentStandings, seasonMonths } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Icons, IconName } from '@/components/icons';
-import type { Metadata } from 'next';
 import { Award, Star, CalendarClock } from 'lucide-react';
 import { useMemo } from 'react';
-
-// Since we can't have metadata on a 'use client' component,
-// you would typically handle this in a parent layout or a server component.
-// For this example, we'll keep it but note it won't work in this file directly.
-// export const metadata: Metadata = {
-//     title: 'MiMoM | PremPred 2025-2026',
-//     description: 'See who is improving the most month on month.',
-// };
 
 const getAvatarUrl = (avatarId: string) => {
   return PlaceHolderImages.find((img) => img.id === avatarId)?.imageUrl || '';
@@ -54,45 +45,36 @@ const formatPointsChange = (change: number) => {
 
 const currentWeek = currentStandings[0]?.gamesPlayed || 1;
 
-const seasonMonths = [
-    { month: 'August', year: 2024 },
-    { month: 'September', year: 2024 },
-    { month: 'October', year: 2024 },
-    { month: 'November', year: 2024 },
-    { month: 'December', year: 2024, special: 'Christmas No. 1' },
-    { month: 'January', year: 2025 },
-    { month: 'February', year: 2025 },
-    { month: 'March', year: 2025 },
-    { month: 'April', year: 2025 },
-    { month: 'May', year: 2025 },
-];
-
 export default function MostImprovedPage() {
   const sortedByImprovement = [...users].sort((a, b) => b.rankChange - a.rankChange);
   const mostImprovedPlayer = sortedByImprovement[0];
   const currentMonth = new Date().toLocaleString('default', { month: 'long' });
 
   const mimoMWithDetails = useMemo(() => {
-    const winnersByMonth: { [key: string]: any[] } = {};
-    
+    const awardsByMonth: { [key: string]: { winners: any[], runnersUp: any[] } } = {};
+
     monthlyMimoM.forEach(m => {
       const key = m.special ? m.special : `${m.month}-${m.year}`;
-      if (!winnersByMonth[key]) {
-        winnersByMonth[key] = [];
+      if (!awardsByMonth[key]) {
+        awardsByMonth[key] = { winners: [], runnersUp: [] };
       }
       const user = users.find(u => u.id === m.userId);
       if (user) {
-        winnersByMonth[key].push({ ...m, ...user });
+        if (m.type === 'winner') {
+          awardsByMonth[key].winners.push({ ...m, ...user });
+        } else if (m.type === 'runner-up') {
+          awardsByMonth[key].runnersUp.push({ ...m, ...user });
+        }
       }
     });
 
     return seasonMonths.map(seasonMonth => {
         const key = seasonMonth.special ? seasonMonth.special : `${seasonMonth.month}-${seasonMonth.year}`;
-        const title = seasonMonth.special ? seasonMonth.special : `${seasonMonth.month} ${seasonMonth.year}`;
-        const winners = winnersByMonth[key];
+        const awards = awardsByMonth[key];
         return {
-            title,
-            winners: winners || null
+            title: seasonMonth.abbreviation,
+            winners: awards?.winners.length > 0 ? awards.winners : null,
+            runnersUp: awards?.runnersUp.length > 0 ? awards.runnersUp : null
         }
     })
   }, []);
@@ -107,28 +89,39 @@ export default function MostImprovedPage() {
       <Card>
         <CardHeader>
             <CardTitle>MiMoM Hall of Fame</CardTitle>
-            <CardDescription>A list of the previous winners of the "Most Improved Manager of the Month" award.</CardDescription>
+            <CardDescription>Previous winners of the "Most Improved Manager of the Month" award.</CardDescription>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <CardContent className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
             {mimoMWithDetails.map((monthlyAward, index) => (
-                <div key={index} className="p-4 border rounded-lg flex flex-col items-center justify-center text-center">
-                    <p className="font-bold mb-2">{monthlyAward.title}</p>
-                    {monthlyAward.winners ? (
-                         <div className="flex flex-col items-center justify-center gap-4 flex-grow">
-                            {monthlyAward.winners.map(winner => (
-                                <div key={winner.userId} className="flex flex-col items-center gap-2">
-                                    <Avatar className="h-16 w-16">
-                                    <AvatarImage src={getAvatarUrl(winner.avatar || '')} alt={winner.name} data-ai-hint="person portrait" />
-                                    <AvatarFallback>{winner.name?.charAt(0)}</AvatarFallback>
+                <div key={index} className="p-3 border rounded-lg flex flex-col items-center justify-start text-center aspect-square">
+                    <p className="font-bold mb-2 text-sm">{monthlyAward.title}</p>
+                    {monthlyAward.winners || monthlyAward.runnersUp ? (
+                         <div className="flex flex-col items-center justify-center gap-3 flex-grow">
+                            {monthlyAward.winners && monthlyAward.winners.map(winner => (
+                                <div key={winner.userId} className="flex flex-col items-center gap-1 relative">
+                                    <Avatar className="h-10 w-10">
+                                      <AvatarImage src={getAvatarUrl(winner.avatar || '')} alt={winner.name} data-ai-hint="person portrait" />
+                                      <AvatarFallback>{winner.name?.charAt(0)}</AvatarFallback>
                                     </Avatar>
-                                    <p className="text-sm font-medium">{winner.name}</p>
+                                    <p className="text-xs font-medium">{winner.name}</p>
+                                    <Award className="size-4 text-yellow-500 absolute -top-1 -right-1" />
+                                </div>
+                            ))}
+                             {monthlyAward.runnersUp && monthlyAward.winners?.length === 1 && monthlyAward.runnersUp.map(runnerUp => (
+                                <div key={runnerUp.userId} className="flex flex-col items-center gap-1 relative">
+                                    <Avatar className="h-10 w-10">
+                                        <AvatarImage src={getAvatarUrl(runnerUp.avatar || '')} alt={runnerUp.name} data-ai-hint="person portrait" />
+                                        <AvatarFallback>{runnerUp.name?.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <p className="text-xs font-medium">{runnerUp.name}</p>
+                                    <Star className="size-4 text-slate-400 absolute -top-1 -right-1" />
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <div className="flex flex-col items-center justify-center gap-2 flex-grow text-muted-foreground">
-                            <CalendarClock className="size-16" />
-                            <p className="text-sm font-medium">To be confirmed</p>
+                        <div className="flex flex-col items-center justify-center gap-1 flex-grow text-muted-foreground">
+                            <CalendarClock className="size-8" />
+                            <p className="text-xs font-medium">TBC</p>
                         </div>
                     )}
                 </div>
@@ -210,5 +203,3 @@ export default function MostImprovedPage() {
     </div>
   );
 }
-
-    
