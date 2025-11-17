@@ -94,19 +94,17 @@ export default function MostImprovedPage() {
     }).sort((a, b) => {
       const monthOrder = ['August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
       if (a.year !== b.year) return a.year - b.year;
-      if (a.special && a.month === 'December') {
-        const aIndex = monthOrder.indexOf(a.month);
-        const bIndex = monthOrder.indexOf(b.month);
-        if(aIndex !== bIndex) return aIndex - bIndex;
-        return 1;
-      }
-       if (b.special && b.month === 'December') {
-        const aIndex = monthOrder.indexOf(a.month);
-        const bIndex = monthOrder.indexOf(b.month);
-        if(aIndex !== bIndex) return aIndex - bIndex;
-        return -1;
-      }
-      return monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month);
+      
+      const aIndex = monthOrder.indexOf(a.month);
+      const bIndex = monthOrder.indexOf(b.month);
+
+      if (aIndex !== bIndex) return aIndex - bIndex;
+
+      // If months are the same (e.g., December), 'special' comes after.
+      if (a.special && !b.special) return 1;
+      if (!a.special && b.special) return -1;
+      
+      return 0;
     });
   }, [sortedByImprovement, currentMonthName, currentYear]);
 
@@ -150,7 +148,7 @@ export default function MostImprovedPage() {
                             <TableHead>Player</TableHead>
                             <TableHead className="text-center">Position Change</TableHead>
                             <TableHead className="text-center">Points Change</TableHead>
-                            <TableHead className="text-right">Current Score</TableHead>
+                            <TableHead className="text-center">Current Score</TableHead>
                         </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -176,7 +174,7 @@ export default function MostImprovedPage() {
                                         </div>
                                     </TableCell>
                                     <TableCell className={cn("text-center font-medium", rankColor && `p-2 ${rankColor}`)}>{formatPointsChange(user.scoreChange)}</TableCell>
-                                    <TableCell className={cn("text-right font-bold", rankColor && `p-2 ${rankColor} last:rounded-r-md`)}>{user.score}</TableCell>
+                                    <TableCell className={cn("text-center font-bold", rankColor && `p-2 ${rankColor} last:rounded-r-md`)}>{user.score}</TableCell>
                                 </TableRow>
                             );
                         })}
@@ -197,7 +195,7 @@ export default function MostImprovedPage() {
                             const isFuture = !hasAwards;
                             const isCurrent = monthlyAward.isCurrentMonth && !monthlyAward.winners;
                             
-                            const winnerPrize = 10 / (monthlyAward.winners?.length || 1);
+                            const winnerPrize = 10 / (monthlyAward.winners?.length || monthlyAward.currentLeaders?.length || 1);
                             const runnerUpPrize = 5 / (monthlyAward.runnersUp?.length || 1);
 
                             return (
@@ -255,3 +253,5 @@ export default function MostImprovedPage() {
     </div>
   );
 }
+
+    
