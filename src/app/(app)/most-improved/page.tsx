@@ -141,7 +141,7 @@ export default function MostImprovedPage() {
                     <CardDescription>Current standings for SEPT</CardDescription>
                     </CardHeader>
                     <CardContent>
-                    <Table>
+                    <Table className="border-separate border-spacing-y-1">
                         <TableHeader>
                         <TableRow>
                             <TableHead className="w-[80px]">Rank</TableHead>
@@ -156,9 +156,9 @@ export default function MostImprovedPage() {
                             const RankIcon = Icons[getRankChangeIcon(user.rankChange) as IconName];
                             const rankColor = getLadderRankColor(user.displayRank);
                             return (
-                                <TableRow key={user.id}>
-                                    <TableCell className={cn("font-medium", rankColor && `p-2 ${rankColor} first:rounded-l-md`)}>{user.displayRank}</TableCell>
-                                    <TableCell className={cn(rankColor && `p-2 ${rankColor}`)}>
+                                <TableRow key={user.id} className={cn(rankColor, "border-b-4 border-transparent")}>
+                                    <TableCell className={cn("font-medium", rankColor && 'first:rounded-l-md')}>{user.displayRank}</TableCell>
+                                    <TableCell className={cn(rankColor)}>
                                     <div className="flex items-center gap-3">
                                         <Avatar className="h-9 w-9">
                                         <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
@@ -167,14 +167,14 @@ export default function MostImprovedPage() {
                                         <span>{user.name}</span>
                                     </div>
                                     </TableCell>
-                                    <TableCell className={cn("text-center", rankColor && `p-2 ${rankColor}`)}>
+                                    <TableCell className={cn("text-center", rankColor)}>
                                         <div className="flex items-center justify-center gap-1 font-bold text-lg">
                                         <RankIcon className="size-5" />
                                         <span>{Math.abs(user.rankChange)}</span>
                                         </div>
                                     </TableCell>
-                                    <TableCell className={cn("text-center font-medium", rankColor && `p-2 ${rankColor}`)}>{formatPointsChange(user.scoreChange)}</TableCell>
-                                    <TableCell className={cn("text-center font-bold", rankColor && `p-2 ${rankColor} last:rounded-r-md`)}>{user.score}</TableCell>
+                                    <TableCell className={cn("text-center font-medium", rankColor)}>{formatPointsChange(user.scoreChange)}</TableCell>
+                                    <TableCell className={cn("text-center font-bold", rankColor && 'last:rounded-r-md')}>{user.score}</TableCell>
                                 </TableRow>
                             );
                         })}
@@ -253,5 +253,3 @@ export default function MostImprovedPage() {
     </div>
   );
 }
-
-    
