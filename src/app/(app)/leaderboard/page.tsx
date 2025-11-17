@@ -1,4 +1,6 @@
 
+'use client';
+
 import {
   Avatar,
   AvatarFallback,
@@ -7,9 +9,6 @@ import {
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription
 } from '@/components/ui/card';
 import {
   Table,
@@ -19,20 +18,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { users, currentStandings } from '@/lib/data';
+import { users, currentStandings, type User } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { Icons, IconName } from '@/components/icons';
 import { cn } from '@/lib/utils';
-import type { Metadata } from 'next';
-import { TrendingUp, TrendingDown, ArrowUp, ArrowDown, Minus } from 'lucide-react';
+import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
+import { useMemo } from 'react';
 
 const currentWeek = currentStandings[0]?.gamesPlayed || 1;
-
-export const metadata: Metadata = {
-    title: `Week ${currentWeek} - Standings | PremPred 2025-2026`,
-    description: 'See who is at the top of the prediction game.',
-};
 
 const getAvatarUrl = (avatarId: string) => {
   return PlaceHolderImages.find((img) => img.id === avatarId)?.imageUrl || '';
@@ -55,22 +47,68 @@ const formatPointsChange = (change: number) => {
     return change;
 }
 
-
 const getRankColor = (rank: number) => {
-    switch (rank) {
-        case 1:
-            return 'bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-100/80 dark:hover:bg-yellow-900/40';
-        case 2:
-            return 'bg-slate-100 dark:bg-slate-800/30 hover:bg-slate-100/80 dark:hover:bg-slate-800/40';
-        case 3:
-            return 'bg-orange-100 dark:bg-orange-900/30 hover:bg-orange-100/80 dark:hover:bg-orange-900/40';
-        default:
-            return '';
+    if (rank <= 5) {
+        switch (rank) {
+            case 1:
+                return 'bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-100/80 dark:hover:bg-yellow-900/40';
+            case 2:
+                return 'bg-slate-100 dark:bg-slate-800/30 hover:bg-slate-100/80 dark:hover:bg-slate-800/40';
+            case 3:
+                return 'bg-orange-100 dark:bg-orange-900/30 hover:bg-orange-100/80 dark:hover:bg-orange-900/40';
+            default:
+                return 'bg-green-100 dark:bg-green-900/30 hover:bg-green-100/80 dark:hover:bg-green-900/40';
+        }
     }
+    return '';
 }
 
 export default function LeaderboardPage() {
-  const sortedUsers = [...users].sort((a, b) => a.rank - b.rank);
+  const sortedUsers = useMemo(() => [...users].sort((a, b) => a.rank - b.rank), []);
+
+  const winningsMap = useMemo(() => {
+    const prizeTiers = [45, 36, 28, 23, 18];
+    const winnings = new Map<string, number>();
+
+    let userIndex = 0;
+    while (userIndex < sortedUsers.length) {
+      const currentUser = sortedUsers[userIndex];
+      const currentRank = currentUser.rank;
+
+      if (currentRank > 5) {
+        // No prizes for ranks outside the top 5
+        userIndex++;
+        continue;
+      }
+      
+      const tiedUsers = sortedUsers.filter(u => u.rank === currentRank);
+      const numTied = tiedUsers.length;
+      
+      if (numTied > 0) {
+        const ranksCovered = Array.from({ length: numTied }, (_, i) => currentRank + i);
+        
+        let prizePool = 0;
+        ranksCovered.forEach(rank => {
+          if (rank -1 < prizeTiers.length) {
+            prizePool += prizeTiers[rank - 1];
+          }
+        });
+        
+        const individualWinnings = prizePool / numTied;
+        
+        tiedUsers.forEach(user => {
+          winnings.set(user.id, individualWinnings);
+        });
+        
+        userIndex += numTied;
+      } else {
+        userIndex++;
+      }
+    }
+
+    return winnings;
+  }, [sortedUsers]);
+
 
   return (
     <div className="flex flex-col gap-8">
@@ -114,6 +152,7 @@ export default function LeaderboardPage() {
               {sortedUsers.map((user) => {
                 const RankIcon = getRankChangeIcon(user.rankChange);
                 const ScoreIcon = getRankChangeIcon(user.scoreChange);
+                const userWinnings = winningsMap.get(user.id) || 0;
                 
                 return (
                     <TableRow key={user.id} className={cn(getRankColor(user.rank))}>
@@ -128,7 +167,9 @@ export default function LeaderboardPage() {
                           </div>
                         </TableCell>
                         <TableCell className="text-center font-bold text-lg">{user.score}</TableCell>
-                        <TableCell className="text-center font-medium border-r">£0.00</TableCell>
+                        <TableCell className="text-center font-medium border-r">
+                           {userWinnings > 0 ? `£${userWinnings.toFixed(2)}` : '£0.00'}
+                        </TableCell>
                         <TableCell className="text-center font-medium">{user.previousRank}</TableCell>
                         <TableCell className={cn("font-bold text-center border-r", getRankChangeColor(user.rankChange))}>
                             <div className="flex items-center justify-center gap-2">
