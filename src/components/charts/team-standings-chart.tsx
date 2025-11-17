@@ -32,9 +32,13 @@ interface TeamStandingsChartProps {
   sortedTeams: (Team & { rank: number })[];
 }
 
-const CustomLegend = ({ payload }: { payload: any[] }) => {
+const CustomLegend = ({
+  payload,
+}: {
+  payload: { value: string; color: string }[];
+}) => {
   return (
-    <ul className="absolute right-0 top-[20px] bottom-[20px] flex flex-col justify-between text-xs pr-4">
+    <ul className="absolute top-[10px] bottom-[30px] right-0 flex flex-col justify-between text-xs pr-4">
       {payload.map((entry: any, index: number) => (
         <li key={`item-${index}`} className="flex items-center space-x-2">
           <span
