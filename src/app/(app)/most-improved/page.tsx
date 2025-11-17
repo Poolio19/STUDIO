@@ -49,9 +49,26 @@ const currentWeek = currentStandings[0]?.gamesPlayed || 1;
 export default function MostImprovedPage() {
   const sortedByImprovement = [...users].sort((a, b) => b.rankChange - a.rankChange);
   
-  // For design purposes, we assume it's mid-September
   const currentMonthName = 'September';
   const currentYear = 2025;
+
+  const ladderWithRanks = useMemo(() => {
+    const regularPlayersSorted = sortedByImprovement.filter(u => !u.isPro);
+    let rank = 0;
+    let lastRankChange = Infinity;
+    const rankedUsers = regularPlayersSorted.map((user, index) => {
+      if (user.rankChange < lastRankChange) {
+        rank = index + 1;
+        lastRankChange = user.rankChange;
+      }
+      return { ...user, displayRank: rank };
+    });
+    
+    const firstPlaceRankChange = rankedUsers.find(u => u.displayRank === 1)?.rankChange;
+    const secondPlaceRankChange = rankedUsers.find(u => u.displayRank === 2)?.rankChange;
+
+    return { ladderWithRanks: rankedUsers, firstPlaceRankChange, secondPlaceRankChange };
+  }, [sortedByImprovement]);
 
   const mimoMWithDetails = useMemo(() => {
     const awardsByMonth: { [key: string]: { winners: any[], runnersUp: any[] } } = {};
@@ -74,8 +91,6 @@ export default function MostImprovedPage() {
         }
       }
     });
-
-    const { firstPlaceRankChange, secondPlaceRankChange } = ladderWithRanks;
     
     return seasonMonths.map(seasonMonth => {
         const key = seasonMonth.special ? seasonMonth.special : `${seasonMonth.month}-${seasonMonth.year}`;
@@ -132,24 +147,6 @@ export default function MostImprovedPage() {
       return 0;
     });
   }, [sortedByImprovement, currentMonthName, currentYear]);
-
-  const ladderWithRanks = useMemo(() => {
-    const regularPlayersSorted = sortedByImprovement.filter(u => !u.isPro);
-    let rank = 0;
-    let lastRankChange = Infinity;
-    const rankedUsers = regularPlayersSorted.map((user, index) => {
-      if (user.rankChange < lastRankChange) {
-        rank = index + 1;
-        lastRankChange = user.rankChange;
-      }
-      return { ...user, displayRank: rank };
-    });
-    
-    const firstPlaceRankChange = rankedUsers.find(u => u.displayRank === 1)?.rankChange;
-    const secondPlaceRankChange = rankedUsers.find(u => u.displayRank === 2)?.rankChange;
-
-    return { ladderWithRanks: rankedUsers, firstPlaceRankChange, secondPlaceRankChange };
-  }, [sortedByImprovement]);
 
   const getLadderRankColor = (user: (typeof ladderWithRanks.ladderWithRanks)[0]) => {
     if (user.rankChange > 0 && user.rankChange === ladderWithRanks.firstPlaceRankChange) return 'bg-yellow-400/20';
