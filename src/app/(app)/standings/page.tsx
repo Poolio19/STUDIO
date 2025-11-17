@@ -52,9 +52,9 @@ export default function StandingsPage() {
                 <TableHead className="text-center">W</TableHead>
                 <TableHead className="text-center">D</TableHead>
                 <TableHead className="text-center">L</TableHead>
+                <TableHead className="text-center">GD</TableHead>
                 <TableHead className="text-center">GF</TableHead>
                 <TableHead className="text-center">GA</TableHead>
-                <TableHead className="text-center">GD</TableHead>
                 <TableHead className="text-right">Pts</TableHead>
               </TableRow>
             </TableHeader>
@@ -75,9 +75,9 @@ export default function StandingsPage() {
                     <TableCell className="text-center">{team.wins}</TableCell>
                     <TableCell className="text-center">{team.draws}</TableCell>
                     <TableCell className="text-center">{team.losses}</TableCell>
+                    <TableCell className="text-center">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
                     <TableCell className="text-center">{team.goalsFor}</TableCell>
                     <TableCell className="text-center">{team.goalsAgainst}</TableCell>
-                    <TableCell className="text-center">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
                     <TableCell className="text-right font-bold">{team.points}</TableCell>
                   </TableRow>
                 );
