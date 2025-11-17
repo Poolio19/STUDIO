@@ -70,6 +70,9 @@ export default function LeaderboardPage() {
   const sortedUsers = useMemo(() => [...users].sort((a, b) => a.rank - b.rank), []);
 
   const totalWinningsMap = useMemo(() => {
+    const regularPlayers = sortedUsers.filter(u => !u.isPro);
+    const proPlayers = sortedUsers.filter(u => u.isPro);
+
     // 1. Calculate MiMoM Winnings
     const mimoMWinnings = new Map<string, number>();
     const monthlyAwards: { [key: string]: { winners: string[], runnersUp: string[] } } = {};
@@ -92,7 +95,6 @@ export default function LeaderboardPage() {
             mimoMWinnings.set(userId, (mimoMWinnings.get(userId) || 0) + winnerPrize);
         });
 
-        // Only award runner-up prize if there's a single winner
         if (award.winners.length === 1 && award.runnersUp.length > 0) {
             const runnerUpPrize = 5 / award.runnersUp.length;
             award.runnersUp.forEach(userId => {
@@ -106,8 +108,8 @@ export default function LeaderboardPage() {
     const prizeTiers = [45, 36, 28, 23, 18];
     
     let userIndex = 0;
-    while (userIndex < sortedUsers.length) {
-      const currentUser = sortedUsers[userIndex];
+    while (userIndex < regularPlayers.length) {
+      const currentUser = regularPlayers[userIndex];
       const currentRank = currentUser.rank;
 
       if (currentRank > 5) {
@@ -115,7 +117,7 @@ export default function LeaderboardPage() {
         continue;
       }
       
-      const tiedUsers = sortedUsers.filter(u => u.rank === currentRank);
+      const tiedUsers = regularPlayers.filter(u => u.rank === currentRank);
       const numTied = tiedUsers.length;
       
       if (numTied > 0) {
@@ -140,12 +142,23 @@ export default function LeaderboardPage() {
       }
     }
 
-    // 3. Combine winnings
+    // 3. "Beat THE PROs" Prize
+    const proWinnings = new Map<string, number>();
+    const worstProRank = Math.max(...proPlayers.map(p => p.rank));
+    regularPlayers.forEach(player => {
+        if (player.rank < worstProRank) {
+            proWinnings.set(player.id, 5);
+        }
+    });
+
+
+    // 4. Combine all winnings
     const totalWinnings = new Map<string, number>();
-    users.forEach(user => {
+    regularPlayers.forEach(user => {
         const lbWinnings = leaderboardWinnings.get(user.id) || 0;
         const mmWinnings = mimoMWinnings.get(user.id) || 0;
-        totalWinnings.set(user.id, lbWinnings + mmWinnings);
+        const pWinnings = proWinnings.get(user.id) || 0;
+        totalWinnings.set(user.id, lbWinnings + mmWinnings + pWinnings);
     });
 
     return totalWinnings;
@@ -197,7 +210,7 @@ export default function LeaderboardPage() {
                 const userWinnings = totalWinningsMap.get(user.id) || 0;
                 
                 return (
-                    <TableRow key={user.id} className={cn(getRankColor(user.rank, userWinnings > 0))}>
+                    <TableRow key={user.id} className={cn(getRankColor(user.rank, userWinnings > 0 && !user.isPro))}>
                         <TableCell className="font-medium text-center">{user.rank}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
@@ -205,12 +218,12 @@ export default function LeaderboardPage() {
                               <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
                               <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                               </Avatar>
-                              <span>{user.name}</span>
+                              <span>{user.isPro ? user.name.toUpperCase() : user.name}</span>
                           </div>
                         </TableCell>
                         <TableCell className="text-center font-bold text-lg">{user.score}</TableCell>
                         <TableCell className="text-center font-medium border-r">
-                           {userWinnings > 0 ? `£${userWinnings.toFixed(2)}` : '£0.00'}
+                           {user.isPro ? '-' : (userWinnings > 0 ? `£${userWinnings.toFixed(2)}` : '£0.00')}
                         </TableCell>
                         <TableCell className="text-center font-medium">{user.previousRank}</TableCell>
                         <TableCell className={cn("font-bold text-center border-r", getRankChangeColor(user.rankChange))}>

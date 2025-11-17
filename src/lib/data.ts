@@ -13,6 +13,7 @@ export type User = {
   minScore: number;
   rankChange: number; // positive for up, negative for down, 0 for no change
   scoreChange: number;
+  isPro?: boolean;
 };
 
 export type Team = {
@@ -135,10 +136,9 @@ let usersData: Omit<User, 'score' | 'rank' | 'previousRank' | 'previousScore' | 
     { id: 'usr_44', name: 'Stella', avatar: '44' },
     { id: 'usr_45', name: 'Samuel', avatar: '45' },
     { id: 'usr_46', name: 'Natalie', avatar: '46' },
-    { id: 'usr_47', name: 'John', avatar: '47' },
-    { id: 'usr_48', name: 'Leah', avatar: '48' },
-    { id: 'usr_49', name: 'Jack', avatar: '49' },
-    { id: 'usr_50', name: 'Hazel', avatar: '50' },
+    { id: 'usr_47', name: 'BBC', avatar: '47', isPro: true },
+    { id: 'usr_48', name: 'SKY', avatar: '48', isPro: true },
+    { id: 'usr_49', name: 'OPTA', avatar: '49', isPro: true },
 ];
 
 export const teams: Team[] = [
