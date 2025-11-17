@@ -205,29 +205,24 @@ const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed:
     let perturbedStandings = standings.map(team => {
         const originalRank = team.rank;
         
-        let maxPerturbation: number;
-        // Generate a random number from a triangular distribution (-1 to 1, biased towards 0)
-        // This creates the "bell curve" effect
-        const triangularRandom = (random() - random());
+        // This generates a random number from a distribution that approximates a bell curve (mean 0, std dev ~1/3).
+        // By adding two randoms and subtracting 1, we get a range of -1 to 1 with values clustering around 0.
+        const bellCurveRandom = (random() + random()) - 1;
 
-        // Define max perturbation and apply bias for lower-ranked teams
-        if (originalRank <= 4) {
-            maxPerturbation = 2; // Top 4 are very stable
-        } else if (originalRank <= 10) {
-            maxPerturbation = 4; // Top 10 are quite stable
-        } else {
-            // For teams below 10th, introduce a pessimistic bias.
-            // They are more likely to be predicted lower than higher.
-            const pessimisticBias = 0.25; // Skews predictions downwards
-            const biasedRandom = (triangularRandom + pessimisticBias) / (1 + pessimisticBias);
+        let maxPerturbation: number;
+        let pessimisticBias = 0;
+
+        if (originalRank <= 4) { // Top 4
+            maxPerturbation = 2;
+        } else if (originalRank <= 10) { // 5th to 10th
+            maxPerturbation = 4;
+        } else { // 11th to 20th
             maxPerturbation = 6;
-            const perturbation = Math.round(biasedRandom * maxPerturbation);
-            let predictedRank = originalRank + perturbation;
-            predictedRank = Math.max(1, Math.min(20, predictedRank)); // Clamp
-            return { teamId: team.teamId, originalRank, predictedRank, tieBreaker: random() };
+            // Introduce a pessimistic bias: makes the random shift more likely to be positive (i.e., a worse rank).
+            pessimisticBias = 0.2; 
         }
         
-        const perturbation = Math.round(triangularRandom * maxPerturbation);
+        const perturbation = Math.round((bellCurveRandom + pessimisticBias) * maxPerturbation);
         let predictedRank = originalRank + perturbation;
 
         // Clamp to be within 1-20
@@ -237,7 +232,7 @@ const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed:
             teamId: team.teamId,
             originalRank: team.rank,
             predictedRank: predictedRank,
-            // Add a random tie-breaker to prevent deterministic collision resolution
+            // Add a random tie-breaker
             tieBreaker: random(),
         };
     });
@@ -249,21 +244,17 @@ const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed:
     const finalTeamIds = Array(20);
     const usedRanks = new Set<number>();
     
-    // Assign unique ranks greedily
     perturbedStandings.forEach(p => {
         let desiredRank = p.predictedRank;
-        // Find the closest available rank
         while (usedRanks.has(desiredRank) && desiredRank <= 20) {
             desiredRank++;
         }
-        if (desiredRank > 20) { // If we went off the end, search backwards
+        if (desiredRank > 20) {
              desiredRank = p.predictedRank;
              while (usedRanks.has(desiredRank) && desiredRank >= 1) {
                 desiredRank--;
             }
         }
-        
-        // If still no slot, something is very wrong, but we'll find any empty slot
         if (usedRanks.has(desiredRank)) {
              for (let i = 1; i <= 20; i++) {
                 if (!usedRanks.has(i)) {
@@ -272,12 +263,10 @@ const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed:
                 }
              }
         }
-
         finalTeamIds[desiredRank - 1] = p.teamId;
         usedRanks.add(desiredRank);
     });
 
-    // Fill any gaps (should be extremely rare with the new logic)
     const allTeamIds = standings.map(s => s.teamId);
     const rankedTeamIds = new Set(finalTeamIds.filter(Boolean));
     const unrankedTeams = allTeamIds.filter(id => !rankedTeamIds.has(id));
@@ -325,19 +314,14 @@ export const playerTeamScores: PlayerTeamScore[] = usersData.flatMap(user => {
 
 const NUM_WEEKS = 5;
 
-// This represents the final player rankings from the previous season.
 const previousSeasonPlayerRanks: {[key: string]: number} = {};
-// A bit of deterministic shuffling for previous season ranks
 [...usersData].sort((a,b) => (parseInt(a.id.replace('usr_','')) % 5) - (parseInt(b.id.replace('usr_','')) % 5))
   .forEach((user, index) => {
     previousSeasonPlayerRanks[user.id] = index + 1;
   });
 
-
-// Simulate weekly score history for each user
 const userHistories: UserHistory[] = usersData.map(user => {
     let weeklyScores: WeeklyScore[] = [];
-    // Week 0 represents the end of the previous season's rank
     weeklyScores.push({ week: 0, score: 0, rank: previousSeasonPlayerRanks[user.id] });
 
     let lastScore = 0;
@@ -348,7 +332,6 @@ const userHistories: UserHistory[] = usersData.map(user => {
                 .filter(s => s.userId === user.id)
                 .reduce((sum, current) => sum + current.score, 0);
 
-    // Create a path to the final score
     const weeklyIncrements = Array.from({length: NUM_WEEKS}, () => random());
     const totalIncrements = weeklyIncrements.reduce((a, b) => a + b, 0);
     const scaleFactor = totalIncrements > 0 ? (finalScore - 0) / totalIncrements : 0;
@@ -356,18 +339,17 @@ const userHistories: UserHistory[] = usersData.map(user => {
 
     for (let week = 1; week <= NUM_WEEKS; week++) {
         if (week === NUM_WEEKS) {
-            weeklyScores.push({ week, score: finalScore, rank: 0 }); // Rank to be calculated later
+            weeklyScores.push({ week, score: finalScore, rank: 0 }); 
         } else {
             const score_increment = weeklyIncrements[week-1] * scaleFactor;
             const currentScore = Math.round(lastScore + score_increment);
-            weeklyScores.push({ week, score: currentScore, rank: 0 }); // Rank to be calculated later
+            weeklyScores.push({ week, score: currentScore, rank: 0 }); 
             lastScore = currentScore;
         }
     }
     return { userId: user.id, weeklyScores };
 });
 
-// Calculate ranks for each week based on score
 for (let week = 1; week <= NUM_WEEKS; week++) {
     const weeklyStandings = userHistories
       .map(h => ({
@@ -387,25 +369,20 @@ for (let week = 1; week <= NUM_WEEKS; week++) {
     }
 }
 
-// Create the final 'users' array with all stats
 const finalUsers: User[] = usersData.map(userStub => {
     const history = userHistories.find(h => h.userId === userStub.id)!;
     
     const currentWeekData = history.weeklyScores.find(w => w.week === NUM_WEEKS)!;
     
-    // For Week 1, the "previous week" is the end of last season (Week 0)
-    // For other weeks, it's the week before.
-    const previousWeekNumber = NUM_WEEKS === 1 ? 0 : NUM_WEEKS - 1;
+    const previousWeekNumber = NUM_WEEKS > 1 ? NUM_WEEKS - 1 : 0;
     const previousWeekData = history.weeklyScores.find(w => w.week === previousWeekNumber)!;
         
     const previousRank = previousWeekData.rank;
     const previousScore = previousWeekData.score;
 
-    // Rank change: positive for up (e.g. 5 -> 1 is +4), negative for down (e.g. 1 -> 5 is -4)
     const rankChange = previousRank - currentWeekData.rank;
     const scoreChange = currentWeekData.score - previousScore;
 
-    // Filter out week 0 for calculating this season's highs/lows
     const seasonWeeklyScores = history.weeklyScores.filter(w => w.week > 0);
     
     const allScores = seasonWeeklyScores.map(w => w.score);
@@ -413,8 +390,8 @@ const finalUsers: User[] = usersData.map(userStub => {
     
     const maxScore = Math.max(...allScores);
     const minScore = Math.min(...allScores);
-    const maxRank = Math.min(...allRanks); // Best rank is the lowest number
-    const minRank = Math.max(...allRanks); // Worst rank is the highest number
+    const maxRank = Math.min(...allRanks);
+    const minRank = Math.max(...allRanks);
     
     return {
         ...userStub,
@@ -431,5 +408,4 @@ const finalUsers: User[] = usersData.map(userStub => {
     };
 });
 
-// Final ranking based on the definitive total scores
 export const users: User[] = finalUsers.sort((a, b) => a.rank - b.rank);
