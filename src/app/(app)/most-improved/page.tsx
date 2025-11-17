@@ -95,8 +95,18 @@ export default function MostImprovedPage() {
     }).sort((a, b) => {
       const monthOrder = ['August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
       if (a.year !== b.year) return a.year - b.year;
-      if (a.month === 'December' && a.special) return 1;
-      if (b.month === 'December' && b.special) return -1;
+      if (a.special && a.month === 'December') {
+        const aIndex = monthOrder.indexOf(a.month);
+        const bIndex = monthOrder.indexOf(b.month);
+        if(aIndex !== bIndex) return aIndex - bIndex;
+        return 1;
+      }
+       if (b.special && b.month === 'December') {
+        const aIndex = monthOrder.indexOf(a.month);
+        const bIndex = monthOrder.indexOf(b.month);
+        if(aIndex !== bIndex) return aIndex - bIndex;
+        return -1;
+      }
       return monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month);
     });
   }, [sortedByImprovement, currentMonthName, currentYear]);
@@ -104,8 +114,8 @@ export default function MostImprovedPage() {
   return (
     <div className="flex flex-col gap-8">
       <header>
-          <h1 className="text-3xl font-bold tracking-tight">Most Improved Manager of the Month (MiMoM)</h1>
-          <p className="text-muted-foreground">Celebrating the sharpest climbers in the ranks.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Most Improved (and Runner Up) Manager(s) of the Month MiMoM & RuMiMoM</h1>
+          <p className="text-muted-foreground">Celebrating the meek, rarely-vaunted, mid-season heroes of the PremPred - with cash!</p>
       </header>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="flex flex-col gap-8">
@@ -198,7 +208,7 @@ export default function MostImprovedPage() {
                             return (
                             <div key={index} className={cn("p-3 border rounded-lg flex flex-col items-center justify-start text-center", {
                                 'opacity-70': isCurrent,
-                                'opacity-50': isFuture,
+                                'opacity-50': isFuture && !isCurrent,
                             })}>
                                 <p className="font-bold mb-2 text-sm">{monthlyAward.abbreviation}</p>
                                 
@@ -250,5 +260,7 @@ export default function MostImprovedPage() {
     </div>
   );
 }
+
+    
 
     
