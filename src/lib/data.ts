@@ -206,7 +206,6 @@ const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed:
         const originalRank = team.rank;
         
         // This generates a random number from a distribution that approximates a bell curve (mean 0, std dev ~1/3).
-        // By adding two randoms and subtracting 1, we get a range of -1 to 1 with values clustering around 0.
         const bellCurveRandom = (random() + random()) - 1;
 
         let maxPerturbation: number;
