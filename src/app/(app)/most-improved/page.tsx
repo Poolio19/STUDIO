@@ -55,6 +55,8 @@ export default function MostImprovedPage() {
 
   const mimoMWithDetails = useMemo(() => {
     const awardsByMonth: { [key: string]: { winners: any[], runnersUp: any[] } } = {};
+    const monthOrder = ['August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
+    const currentMonthIndex = monthOrder.indexOf(currentMonthName);
 
     monthlyMimoM.forEach(m => {
       const key = m.special ? m.special : `${m.month}-${m.year}`;
@@ -75,6 +77,9 @@ export default function MostImprovedPage() {
         const key = seasonMonth.special ? seasonMonth.special : `${seasonMonth.month}-${seasonMonth.year}`;
         const awards = awardsByMonth[key];
         const isCurrentMonth = seasonMonth.month === currentMonthName && seasonMonth.year === currentYear;
+        
+        const monthIndex = monthOrder.indexOf(seasonMonth.month);
+        const isFuture = seasonMonth.year > currentYear || (seasonMonth.year === currentYear && monthIndex > currentMonthIndex);
 
         let currentLeaders: User[] | null = null;
         if (isCurrentMonth && !awards) {
@@ -87,23 +92,23 @@ export default function MostImprovedPage() {
         return {
             ...seasonMonth,
             isCurrentMonth,
+            isFuture,
             currentLeaders,
             winners: awards?.winners.length > 0 ? awards.winners : null,
             runnersUp: awards?.runnersUp.length > 0 ? awards.runnersUp : null
         }
     }).sort((a, b) => {
-      const monthOrder = ['August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
+      const monthOrderSort = ['August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
       
       const aYear = a.special === 'Christmas No. 1' ? a.year + 0.1 : a.year;
       const bYear = b.special === 'Christmas No. 1' ? b.year + 0.1 : b.year;
       if (aYear !== bYear) return aYear - bYear;
       
-      const aIndex = monthOrder.indexOf(a.month);
-      const bIndex = monthOrder.indexOf(b.month);
+      const aIndex = monthOrderSort.indexOf(a.month);
+      const bIndex = monthOrderSort.indexOf(b.month);
 
       if (aIndex !== bIndex) return aIndex - bIndex;
 
-      // If months are the same (e.g., December), 'special' comes after.
       if (a.special && !b.special) return 1;
       if (!a.special && b.special) return -1;
       
@@ -195,7 +200,7 @@ export default function MostImprovedPage() {
                     <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {mimoMWithDetails.map((monthlyAward, index) => {
                             const hasAwards = monthlyAward.winners || monthlyAward.runnersUp || monthlyAward.currentLeaders;
-                            const isFuture = !hasAwards;
+                            const isFuture = monthlyAward.isFuture;
                             const isCurrent = monthlyAward.isCurrentMonth;
                             
                             const winnerPrize = 10 / (monthlyAward.winners?.length || monthlyAward.currentLeaders?.length || 1);
@@ -203,7 +208,7 @@ export default function MostImprovedPage() {
 
                             return (
                             <div key={index} className={cn("p-3 border rounded-lg flex flex-col items-center justify-start text-center", {
-                                'opacity-70': isCurrent && isFuture,
+                                'opacity-70': isCurrent,
                                 'opacity-50': isFuture && !isCurrent,
                             })}>
                                 <p className="font-bold mb-2 text-sm">{monthlyAward.abbreviation}</p>
