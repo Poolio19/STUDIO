@@ -93,7 +93,10 @@ export default function MostImprovedPage() {
         }
     }).sort((a, b) => {
       const monthOrder = ['August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
-      if (a.year !== b.year) return a.year - b.year;
+      
+      const aYear = a.special === 'Christmas No. 1' ? a.year + 0.1 : a.year;
+      const bYear = b.special === 'Christmas No. 1' ? b.year + 0.1 : b.year;
+      if (aYear !== bYear) return aYear - bYear;
       
       const aIndex = monthOrder.indexOf(a.month);
       const bIndex = monthOrder.indexOf(b.month);
@@ -133,8 +136,8 @@ export default function MostImprovedPage() {
           <h1 className="text-3xl font-bold tracking-tight">Most Improved (and Runner Up) Manager(s) of the Month MiMoM & RuMiMoM</h1>
           <p className="text-muted-foreground">Celebrating the meek, rarely-vaunted, mid-season heroes of the PremPred - with cash!</p>
       </header>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="flex flex-col gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <div className="flex flex-col gap-8 lg:col-span-2">
                 <Card>
                     <CardHeader className="bg-gradient-to-r from-yellow-400/20 via-yellow-400/5 to-slate-400/20">
                     <CardTitle>In-Month MiMoM Standings</CardTitle>
@@ -144,7 +147,7 @@ export default function MostImprovedPage() {
                     <Table className="border-separate border-spacing-y-1">
                         <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[80px]">Rank</TableHead>
+                            <TableHead className="w-[50px] text-center">Rank</TableHead>
                             <TableHead>Player</TableHead>
                             <TableHead className="text-center">Position Change</TableHead>
                             <TableHead className="text-center">Points Change</TableHead>
@@ -157,7 +160,7 @@ export default function MostImprovedPage() {
                             const rankColor = getLadderRankColor(user.displayRank);
                             return (
                                 <TableRow key={user.id} className={cn(rankColor, "border-b-4 border-transparent")}>
-                                    <TableCell className={cn("font-medium", rankColor && 'first:rounded-l-md')}>{user.displayRank}</TableCell>
+                                    <TableCell className={cn("font-medium text-center", rankColor && 'rounded-l-md')}>{user.displayRank}</TableCell>
                                     <TableCell className={cn(rankColor)}>
                                     <div className="flex items-center gap-3">
                                         <Avatar className="h-9 w-9">
@@ -174,7 +177,7 @@ export default function MostImprovedPage() {
                                         </div>
                                     </TableCell>
                                     <TableCell className={cn("text-center font-medium", rankColor)}>{formatPointsChange(user.scoreChange)}</TableCell>
-                                    <TableCell className={cn("text-center font-bold", rankColor && 'last:rounded-r-md')}>{user.score}</TableCell>
+                                    <TableCell className={cn("text-center font-bold", rankColor && 'rounded-r-md')}>{user.score}</TableCell>
                                 </TableRow>
                             );
                         })}
@@ -183,7 +186,7 @@ export default function MostImprovedPage() {
                     </CardContent>
                 </Card>
             </div>
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-3">
                  <Card>
                     <CardHeader>
                         <CardTitle>MiMoM Hall of Fame</CardTitle>
