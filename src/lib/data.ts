@@ -213,7 +213,11 @@ const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed:
         else if (originalRank <= 10) maxPerturbation = 4; // Top 10 can move 4 spots
         else maxPerturbation = 6; // Rest can move 6 spots
 
-        const perturbation = Math.round((random() - 0.5) * 2 * maxPerturbation);
+        // Generate a random number from a triangular distribution (-1 to 1, biased towards 0)
+        // This creates the "bell curve" effect
+        const triangularRandom = (random() - random()); 
+        const perturbation = Math.round(triangularRandom * maxPerturbation);
+
         let predictedRank = originalRank + perturbation;
 
         // Clamp to be within 1-20
@@ -222,53 +226,56 @@ const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed:
         return {
             teamId: team.teamId,
             originalRank: team.rank,
-            predictedRank: predictedRank
+            predictedRank: predictedRank,
+            // Add a random tie-breaker to prevent deterministic collision resolution
+            tieBreaker: random(),
         };
     });
 
     // Sort by the new predicted rank to handle collisions
-    perturbedStandings.sort((a, b) => a.predictedRank - b.predictedRank || a.originalRank - b.originalRank);
+    perturbedStandings.sort((a, b) => a.predictedRank - b.predictedRank || a.tieBreaker - b.tieBreaker);
     
-    // Resolve duplicate predictedRanks
-    const finalRanks = new Map<string, number>();
-    const usedRanks = new Set<number>();
-
-    // First, place teams that have a unique predicted rank
-    perturbedStandings.forEach(p => {
-        if (![...perturbedStandings].some(other => other !== p && other.predictedRank === p.predictedRank)) {
-            if (!usedRanks.has(p.predictedRank)) {
-                finalRanks.set(p.teamId, p.predictedRank);
-                usedRanks.add(p.predictedRank);
-            }
-        }
-    });
-    
-    // Then, place the rest of the teams in available slots
-    perturbedStandings.forEach(p => {
-        if (!finalRanks.has(p.teamId)) {
-            let rank = p.predictedRank;
-            while(usedRanks.has(rank)) {
-                rank++;
-                if (rank > 20) rank = 1; // wrap around if needed, though less likely
-            }
-            finalRanks.set(p.teamId, rank);
-            usedRanks.add(rank);
-        }
-    });
-
-    // Create the final sorted list of teamIds
+    // Resolve duplicate predictedRanks by assigning unique ranks
     const finalTeamIds = Array(20);
-    finalRanks.forEach((rank, teamId) => {
-        finalTeamIds[rank - 1] = teamId;
+    const usedRanks = new Set<number>();
+    
+    // Assign unique ranks greedily
+    perturbedStandings.forEach(p => {
+        let desiredRank = p.predictedRank;
+        // Find the closest available rank
+        while (usedRanks.has(desiredRank) && desiredRank <= 20) {
+            desiredRank++;
+        }
+        if (desiredRank > 20) { // If we went off the end, search backwards
+             desiredRank = p.predictedRank;
+             while (usedRanks.has(desiredRank) && desiredRank >= 1) {
+                desiredRank--;
+            }
+        }
+        
+        // If still no slot, something is very wrong, but we'll find any empty slot
+        if (usedRanks.has(desiredRank)) {
+             for (let i = 1; i <= 20; i++) {
+                if (!usedRanks.has(i)) {
+                    desiredRank = i;
+                    break;
+                }
+             }
+        }
+
+        finalTeamIds[desiredRank - 1] = p.teamId;
+        usedRanks.add(desiredRank);
     });
 
-    // Fill any gaps (should be rare)
+    // Fill any gaps (should be extremely rare with the new logic)
     const allTeamIds = standings.map(s => s.teamId);
-    const rankedTeamIds = new Set(finalTeamIds);
+    const rankedTeamIds = new Set(finalTeamIds.filter(Boolean));
     const unrankedTeams = allTeamIds.filter(id => !rankedTeamIds.has(id));
-    for (let i = 0; i < 20; i++) {
+    
+    let unrankedIdx = 0;
+    for (let i = 0; i < 20 && unrankedIdx < unrankedTeams.length; i++) {
         if (!finalTeamIds[i]) {
-            finalTeamIds[i] = unrankedTeams.pop();
+            finalTeamIds[i] = unrankedTeams[unrankedIdx++];
         }
     }
 
@@ -375,14 +382,14 @@ const finalUsers: User[] = usersData.map(userStub => {
     const history = userHistories.find(h => h.userId === userStub.id)!;
     
     const currentWeekData = history.weeklyScores.find(w => w.week === NUM_WEEKS)!;
-    const lastWeekNumber = Math.max(1, NUM_WEEKS - 1);
-    const previousWeekData = history.weeklyScores.find(w => w.week === lastWeekNumber)!;
     
     // For Week 1, the "previous week" is the end of last season (Week 0)
-    const previousWeekForChange = history.weeklyScores.find(w => w.week === (NUM_WEEKS === 1 ? 0 : NUM_WEEKS - 1))!;
-    
-    const previousRank = previousWeekForChange.rank;
-    const previousScore = previousWeekForChange.score;
+    // For other weeks, it's the week before.
+    const previousWeekNumber = NUM_WEEKS === 1 ? 0 : NUM_WEEKS - 1;
+    const previousWeekData = history.weeklyScores.find(w => w.week === previousWeekNumber)!;
+        
+    const previousRank = previousWeekData.rank;
+    const previousScore = previousWeekData.score;
 
     // Rank change: positive for up (e.g. 5 -> 1 is +4), negative for down (e.g. 1 -> 5 is -4)
     const rankChange = previousRank - currentWeekData.rank;
