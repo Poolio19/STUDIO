@@ -163,7 +163,7 @@ export const teams: Team[] = [
     { id: 'team_12', name: 'Liverpool', logo: 'anchor' },
     { id: 'team_13', name: 'Man City', logo: 'atom' },
     { id: 'team_14', name: 'Man Utd', logo: 'rocket' },
-    { id: 'team_15', 'name': 'Newcastle United', logo: 'orbit' },
+    { id: 'team_15', 'name': 'Newcastle', logo: 'orbit' },
     { id: 'team_16', name: 'Notts Forest', logo: 'waves' },
     { id: 'team_17', name: 'Southampton', logo: 'zap' },
     { id: 'team_18', name: 'Tottenham', logo: 'anchor' },
