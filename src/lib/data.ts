@@ -205,23 +205,27 @@ const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed:
     let perturbedStandings = standings.map(team => {
         const originalRank = team.rank;
         
-        // This generates a random number from a distribution that approximates a bell curve (mean 0, std dev ~1/3).
+        // This generates a random number from a distribution that approximates a bell curve (mean 0).
+        // Summing two random numbers creates a triangular distribution, a good approximation of a bell curve.
         const bellCurveRandom = (random() + random()) - 1;
 
         let maxPerturbation: number;
-        let pessimisticBias = 0;
+        let pessimism = 0;
 
         if (originalRank <= 4) { // Top 4
-            maxPerturbation = 2;
+            maxPerturbation = 2; // Very tight predictions
         } else if (originalRank <= 10) { // 5th to 10th
-            maxPerturbation = 4;
+            maxPerturbation = 4; // Slightly more variance
         } else { // 11th to 20th
-            maxPerturbation = 6;
-            // Introduce a pessimistic bias: makes the random shift more likely to be positive (i.e., a worse rank).
-            pessimisticBias = 0.2; 
+            maxPerturbation = 7; // More variance
+            // Introduce a pessimistic bias: a positive value makes it more likely the shift is positive (a worse rank).
+            pessimism = 0.35; 
         }
         
-        const perturbation = Math.round((bellCurveRandom + pessimisticBias) * maxPerturbation);
+        // The final shift is the bell curve value plus the pessimism bias, scaled by the max perturbation.
+        // A positive shift means a worse predicted rank (e.g., rank 15 -> 17)
+        // A negative shift means a better predicted rank (e.g., rank 15 -> 13)
+        const perturbation = Math.round((bellCurveRandom + pessimism) * maxPerturbation);
         let predictedRank = originalRank + perturbation;
 
         // Clamp to be within 1-20
@@ -231,49 +235,33 @@ const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed:
             teamId: team.teamId,
             originalRank: team.rank,
             predictedRank: predictedRank,
-            // Add a random tie-breaker
+            // Add a random tie-breaker for sorting
             tieBreaker: random(),
         };
     });
 
-    // Sort by the new predicted rank to handle collisions
+    // Sort by the new predicted rank to handle collisions, using tie-breaker if needed
     perturbedStandings.sort((a, b) => a.predictedRank - b.predictedRank || a.tieBreaker - b.tieBreaker);
     
-    // Resolve duplicate predictedRanks by assigning unique ranks
-    const finalTeamIds = Array(20);
-    const usedRanks = new Set<number>();
-    
-    perturbedStandings.forEach(p => {
-        let desiredRank = p.predictedRank;
-        while (usedRanks.has(desiredRank) && desiredRank <= 20) {
-            desiredRank++;
-        }
-        if (desiredRank > 20) {
-             desiredRank = p.predictedRank;
-             while (usedRanks.has(desiredRank) && desiredRank >= 1) {
-                desiredRank--;
-            }
-        }
-        if (usedRanks.has(desiredRank)) {
-             for (let i = 1; i <= 20; i++) {
-                if (!usedRanks.has(i)) {
-                    desiredRank = i;
-                    break;
-                }
-             }
-        }
-        finalTeamIds[desiredRank - 1] = p.teamId;
-        usedRanks.add(desiredRank);
-    });
+    // This array will hold the final, de-duplicated ranking.
+    const finalTeamIds = new Array(20).fill(null);
+    const assignedRanks = new Set<number>();
 
-    const allTeamIds = standings.map(s => s.teamId);
-    const rankedTeamIds = new Set(finalTeamIds.filter(Boolean));
-    const unrankedTeams = allTeamIds.filter(id => !rankedTeamIds.has(id));
+    // First pass: assign teams to their desired rank if it's available.
+    perturbedStandings.forEach(p => {
+        if (!assignedRanks.has(p.predictedRank)) {
+            finalTeamIds[p.predictedRank - 1] = p.teamId;
+            assignedRanks.add(p.predictedRank);
+        }
+    });
     
-    let unrankedIdx = 0;
-    for (let i = 0; i < 20 && unrankedIdx < unrankedTeams.length; i++) {
-        if (!finalTeamIds[i]) {
-            finalTeamIds[i] = unrankedTeams[unrankedIdx++];
+    // Get a list of teams that couldn't be placed in the first pass.
+    const unplacedTeams = perturbedStandings.filter(p => !finalTeamIds.includes(p.teamId));
+
+    // Second pass: fill in the gaps with the unplaced teams.
+    for (let i = 0; i < 20 && unplacedTeams.length > 0; i++) {
+        if (finalTeamIds[i] === null) {
+            finalTeamIds[i] = unplacedTeams.shift()!.teamId;
         }
     }
 
@@ -288,8 +276,6 @@ export const predictions: Prediction[] = usersData.map((user, index) => {
 });
 
 const generateScoresForUser = (userId: string, userPredictions: string[]): PlayerTeamScore[] => {
-    const seed = parseInt(userId.replace('usr_', ''), 10);
-    const random = mulberry32(seed);
     const actualRanks = new Map<string, number>();
     currentStandings.forEach(s => actualRanks.set(s.teamId, s.rank));
     
