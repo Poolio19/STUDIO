@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/chart';
 import { teams, WeeklyTeamStanding, Team } from '@/lib/data';
 import * as React from 'react';
+import { cn } from '@/lib/utils';
 
 interface TeamStandingsChartProps {
   chartData: WeeklyTeamStanding[];
@@ -73,7 +74,7 @@ export function TeamStandingsChart({ chartData, sortedTeams }: TeamStandingsChar
               data={transformedData}
               margin={{
                 top: 5,
-                right: 40,
+                right: 120, // Increased right margin to make space for the legend
                 left: -20,
                 bottom: 5,
               }}
@@ -109,7 +110,25 @@ export function TeamStandingsChart({ chartData, sortedTeams }: TeamStandingsChar
                     />
                 }
               />
-              <Legend layout="vertical" verticalAlign="middle" align="right" />
+              <Legend 
+                layout="vertical" 
+                verticalAlign="middle" 
+                align="right"
+                content={({ payload }) => (
+                  <ul className="flex flex-col space-y-1 text-xs">
+                    {sortedTeams.map((team) => {
+                      const item = payload?.find(p => p.value === team.name);
+                      if (!item) return null;
+                      return (
+                        <li key={item.value} className="flex items-center gap-2">
+                          <span className="size-2.5 rounded-full" style={{ backgroundColor: item.color }}/>
+                          <span>{item.value}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              />
                 {sortedTeams.map((team) => (
                     <Line
                     key={team.id}
