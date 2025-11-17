@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/chart';
 import { WeeklyTeamStanding, Team } from '@/lib/data';
 import * as React from 'react';
+import { cn } from '@/lib/utils';
 
 interface TeamStandingsChartProps {
   chartData: WeeklyTeamStanding[];
@@ -40,10 +41,13 @@ const CustomLegend = ({
   chartConfig: ChartConfig;
 }) => {
   return (
-    <ul className="absolute right-0 top-[25px] bottom-[25px] flex flex-col justify-between text-xs pr-4">
+    <ul className="absolute right-0 top-[20px] bottom-[20px] flex flex-col justify-between text-xs pr-4">
       {payload.map((entry: any, index: number) => (
         <li key={`item-${index}`} className="flex items-center space-x-2">
-          <span style={{ color: entry.color }}>●</span>
+          <span
+            className="size-2 rounded-full"
+            style={{ backgroundColor: entry.color }}
+          ></span>
           <span>{entry.value}</span>
         </li>
       ))}
@@ -106,10 +110,10 @@ export function TeamStandingsChart({
               <LineChart
                 data={transformedData}
                 margin={{
-                  top: 25,
+                  top: 20,
                   right: 130,
                   left: -20,
-                  bottom: 25,
+                  bottom: 20,
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
