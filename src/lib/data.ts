@@ -199,28 +199,38 @@ const mulberry32 = (seed: number) => {
 };
 
 const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed: number): string[] => {
-  const random = mulberry32(seed);
-  const teamIds = baseStandings.map(s => s.teamId);
-  const newRankings = [...teamIds];
-  
-  // More swaps for more variability, but still biased
-  const numSwaps = Math.floor(random() * 15) + 8; 
-  for (let i = 0; i < numSwaps; i++) {
-    const idx1 = Math.floor(random() * newRankings.length);
-    // Bias swaps to be closer to the original position
-    const maxSwapDistance = Math.floor(random() * 8) + 2; // Can swap up to 10 positions away
-    let offset = Math.floor(random() * (maxSwapDistance * 2 + 1)) - maxSwapDistance;
-    let idx2 = idx1 + offset;
-
-    if (idx2 < 0) idx2 = 0;
-    if (idx2 >= newRankings.length) idx2 = newRankings.length - 1;
-    if (idx1 === idx2) {
-        idx2 = (idx1 + 1) % newRankings.length;
-    }
+    const random = mulberry32(seed);
+    const standings = [...baseStandings].sort((a, b) => a.rank - b.rank);
+    const teamIds = standings.map(s => s.teamId);
     
-    [newRankings[idx1], newRankings[idx2]] = [newRankings[idx2], newRankings[idx1]];
-  }
-  return newRankings;
+    // Number of swaps to perform
+    const numSwaps = Math.floor(random() * 10) + 5; // 5 to 14 swaps
+
+    for (let i = 0; i < numSwaps; i++) {
+        const idx1 = Math.floor(random() * teamIds.length);
+        const originalRank = standings.find(s => s.teamId === teamIds[idx1])!.rank;
+
+        // Determine max swap distance based on original rank
+        let maxDistance;
+        if (originalRank <= 4) {
+            maxDistance = 3; // Top 4 teams can only move within top 7
+        } else if (originalRank <= 10) {
+            maxDistance = 5; // Top 10 can move ~5 spots
+        } else {
+            maxDistance = 8; // Others can move a bit more freely
+        }
+
+        const offset = Math.floor(random() * (maxDistance * 2 + 1)) - maxDistance;
+        let idx2 = idx1 + offset;
+
+        // Clamp index to be within bounds
+        idx2 = Math.max(0, Math.min(teamIds.length - 1, idx2));
+
+        if (idx1 !== idx2) {
+            [teamIds[idx1], teamIds[idx2]] = [teamIds[idx2], teamIds[idx1]];
+        }
+    }
+    return teamIds;
 };
 
 export const predictions: Prediction[] = usersData.map((user, index) => {
@@ -282,7 +292,8 @@ const userHistories: UserHistory[] = usersData.map(user => {
     // Create a path to the final score
     const weeklyIncrements = Array.from({length: NUM_WEEKS}, () => random());
     const totalIncrements = weeklyIncrements.reduce((a, b) => a + b, 0);
-    const scaleFactor = (finalScore - 0) / totalIncrements;
+    const scaleFactor = totalIncrements > 0 ? (finalScore - 0) / totalIncrements : 0;
+
 
     for (let week = 1; week <= NUM_WEEKS; week++) {
         if (week === NUM_WEEKS) {
@@ -322,12 +333,17 @@ const finalUsers: User[] = usersData.map(userStub => {
     const history = userHistories.find(h => h.userId === userStub.id)!;
     
     const currentWeekData = history.weeklyScores.find(w => w.week === NUM_WEEKS)!;
+    const previousWeekData = history.weeklyScores.find(w => w.week === Math.max(0, NUM_WEEKS - 1))!;
+
+    let previousRank = previousWeekData.rank;
+    let previousScore = previousWeekData.score;
     
-    const previousWeekNumber = NUM_WEEKS > 1 ? NUM_WEEKS - 1 : 0;
-    const baselineWeekForChange = history.weeklyScores.find(w => w.week === previousWeekNumber)!;
-    
-    const previousRank = baselineWeekForChange.rank;
-    const previousScore = baselineWeekForChange.score;
+    if (NUM_WEEKS === 1) {
+        const week0Data = history.weeklyScores.find(w => w.week === 0)!;
+        previousRank = week0Data.rank;
+        previousScore = week0Data.score;
+    }
+
 
     // Rank change: positive for up (e.g. 5 -> 1 is +4), negative for down (e.g. 1 -> 5 is -4)
     const rankChange = previousRank - currentWeekData.rank;
