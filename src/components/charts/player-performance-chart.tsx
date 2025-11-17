@@ -76,7 +76,7 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain }: PlayerPerform
                 />
             }
           />
-          <Legend content={<></>} />
+          <Legend />
             {users.map((user) => (
                 <Line
                 key={user.id}

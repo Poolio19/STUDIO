@@ -78,7 +78,7 @@ export function PlayerRankChart({ chartData, yAxisDomain }: PlayerRankChartProps
                 />
             }
           />
-          <Legend content={<></>} />
+          <Legend />
             {users.map((user) => (
                 <Line
                 key={user.id}

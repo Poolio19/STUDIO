@@ -108,7 +108,7 @@ export function TeamStandingsChart({ chartData }: TeamStandingsChartProps) {
                     />
                 }
               />
-              <Legend content={<></>} />
+              <Legend />
                 {teams.map((team, index) => (
                     <Line
                     key={team.id}
