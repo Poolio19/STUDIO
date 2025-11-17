@@ -196,14 +196,14 @@ export default function MostImprovedPage() {
                         {mimoMWithDetails.map((monthlyAward, index) => {
                             const hasAwards = monthlyAward.winners || monthlyAward.runnersUp || monthlyAward.currentLeaders;
                             const isFuture = !hasAwards;
-                            const isCurrent = monthlyAward.isCurrentMonth && !monthlyAward.winners;
+                            const isCurrent = monthlyAward.isCurrentMonth;
                             
                             const winnerPrize = 10 / (monthlyAward.winners?.length || monthlyAward.currentLeaders?.length || 1);
                             const runnerUpPrize = 5 / (monthlyAward.runnersUp?.length || 1);
 
                             return (
                             <div key={index} className={cn("p-3 border rounded-lg flex flex-col items-center justify-start text-center", {
-                                'opacity-70': isCurrent,
+                                'opacity-70': isCurrent && isFuture,
                                 'opacity-50': isFuture && !isCurrent,
                             })}>
                                 <p className="font-bold mb-2 text-sm">{monthlyAward.abbreviation}</p>
