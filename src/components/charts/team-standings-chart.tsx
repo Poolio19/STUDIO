@@ -71,15 +71,15 @@ export function TeamStandingsChart({ chartData, sortedTeams }: TeamStandingsChar
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[500px] w-full">
+        <ChartContainer config={chartConfig} className="h-[550px] w-full">
           <ResponsiveContainer>
             <LineChart
               data={transformedData}
               margin={{
-                top: 5,
+                top: 20,
                 right: 120,
                 left: -20,
-                bottom: 5,
+                bottom: 20,
               }}
             >
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -122,18 +122,18 @@ export function TeamStandingsChart({ chartData, sortedTeams }: TeamStandingsChar
                   ).filter(Boolean);
 
                   return (
-                    <ul className="flex flex-col space-y-1 text-xs">
+                    <div className="flex h-full flex-col justify-between text-xs">
                       {orderedPayload.map((item) => {
                         if (!item) return null;
                         const config = chartConfig[item.value as keyof typeof chartConfig];
                         return (
-                          <li key={item.value} className="flex items-center gap-2">
+                          <div key={item.value} className="flex items-center gap-2">
                             <span className="size-2.5 rounded-full" style={{ backgroundColor: config?.color }}/>
                             <span>{item.value}</span>
-                          </li>
+                          </div>
                         );
                       })}
-                    </ul>
+                    </div>
                   )
                 }}
               />
