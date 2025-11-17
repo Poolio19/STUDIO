@@ -202,22 +202,32 @@ const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed:
     const random = mulberry32(seed);
     const standings = [...baseStandings].sort((a, b) => a.rank - b.rank);
     
-    // Create a list of teams with their original rank and a new predicted rank
     let perturbedStandings = standings.map(team => {
         const originalRank = team.rank;
         
-        // Define max perturbation based on rank. Tighter for top teams.
-        let maxPerturbation;
-        if (originalRank <= 2) maxPerturbation = 1; // Top 2 can move 1 spot
-        else if (originalRank <= 5) maxPerturbation = 2; // Top 5 can move 2 spots
-        else if (originalRank <= 10) maxPerturbation = 4; // Top 10 can move 4 spots
-        else maxPerturbation = 6; // Rest can move 6 spots
-
+        let maxPerturbation: number;
         // Generate a random number from a triangular distribution (-1 to 1, biased towards 0)
         // This creates the "bell curve" effect
-        const triangularRandom = (random() - random()); 
-        const perturbation = Math.round(triangularRandom * maxPerturbation);
+        const triangularRandom = (random() - random());
 
+        // Define max perturbation and apply bias for lower-ranked teams
+        if (originalRank <= 4) {
+            maxPerturbation = 2; // Top 4 are very stable
+        } else if (originalRank <= 10) {
+            maxPerturbation = 4; // Top 10 are quite stable
+        } else {
+            // For teams below 10th, introduce a pessimistic bias.
+            // They are more likely to be predicted lower than higher.
+            const pessimisticBias = 0.25; // Skews predictions downwards
+            const biasedRandom = (triangularRandom + pessimisticBias) / (1 + pessimisticBias);
+            maxPerturbation = 6;
+            const perturbation = Math.round(biasedRandom * maxPerturbation);
+            let predictedRank = originalRank + perturbation;
+            predictedRank = Math.max(1, Math.min(20, predictedRank)); // Clamp
+            return { teamId: team.teamId, originalRank, predictedRank, tieBreaker: random() };
+        }
+        
+        const perturbation = Math.round(triangularRandom * maxPerturbation);
         let predictedRank = originalRank + perturbation;
 
         // Clamp to be within 1-20
@@ -396,7 +406,7 @@ const finalUsers: User[] = usersData.map(userStub => {
     const scoreChange = currentWeekData.score - previousScore;
 
     // Filter out week 0 for calculating this season's highs/lows
-    const seasonWeeklyScores = history.weeklyScores.slice(1);
+    const seasonWeeklyScores = history.weeklyScores.filter(w => w.week > 0);
     
     const allScores = seasonWeeklyScores.map(w => w.score);
     const allRanks = seasonWeeklyScores.map(w => w.rank).filter(r => r > 0);
