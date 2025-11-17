@@ -1,3 +1,4 @@
+
 import {
   Avatar,
   AvatarFallback,
@@ -23,6 +24,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Icons, IconName } from '@/components/icons';
 import type { Metadata } from 'next';
 import { Award, Star } from 'lucide-react';
+import { useMemo } from 'react';
 
 export const metadata: Metadata = {
     title: 'MiMoM | PremPred 2025-2026',
@@ -52,10 +54,40 @@ export default function MostImprovedPage() {
   const mostImprovedPlayer = sortedByImprovement[0];
   const currentMonth = new Date().toLocaleString('default', { month: 'long' });
 
-  const mimoMWithDetails = monthlyMimoM.map(m => {
-    const user = users.find(u => u.id === m.userId);
-    return { ...m, ...user };
-  })
+  const mimoMWithDetails = useMemo(() => {
+    const groupedByMonth: { [key: string]: any[] } = {};
+    
+    monthlyMimoM.forEach(m => {
+      const key = `${m.month}-${m.year}`;
+      if (!groupedByMonth[key]) {
+        groupedByMonth[key] = [];
+      }
+      const user = users.find(u => u.id === m.userId);
+      if (user) {
+        groupedByMonth[key].push({ ...m, ...user });
+      } else if (m.userId === 'special_christmas') {
+         // This is a placeholder for a real user in the future
+        const christmasWinner = users.find(u => u.rank === 1);
+        if (christmasWinner) {
+            groupedByMonth[key].push({ ...m, ...christmasWinner, name: christmasWinner.name, avatar: christmasWinner.avatar, month: 'Christmas No. 1' });
+        }
+      }
+    });
+
+    const displayOrder = ['August', 'September', 'October', 'November', 'December', 'Christmas No. 1', 'January', 'February', 'March', 'April', 'May'];
+    const sortedGrouped = Object.values(groupedByMonth).sort((a, b) => {
+        const monthA = a[0].month;
+        const monthB = b[0].month;
+        const yearA = a[0].year;
+        const yearB = b[0].year;
+
+        if (yearA !== yearB) return yearA - yearB;
+        
+        return displayOrder.indexOf(monthA) - displayOrder.indexOf(monthB);
+    });
+
+    return sortedGrouped;
+  }, []);
 
   return (
     <div className="flex flex-col gap-8">
@@ -69,15 +101,21 @@ export default function MostImprovedPage() {
             <CardTitle>MiMoM Hall of Fame</CardTitle>
             <CardDescription>A list of the previous winners of the "Most Improved Manager of the Month" award.</CardDescription>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {mimoMWithDetails.map((m) => (
-                <div key={`${m.month}-${m.year}`} className="flex flex-col items-center gap-2 p-4 border rounded-lg">
-                    <Avatar className="h-16 w-16">
-                      <AvatarImage src={getAvatarUrl(m.avatar || '')} alt={m.name} data-ai-hint="person portrait" />
-                      <AvatarFallback>{m.name?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <p className="font-bold text-center">{m.name}</p>
-                    <p className="text-sm text-muted-foreground text-center">{m.month} {m.year}</p>
+        <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {mimoMWithDetails.map((group, index) => (
+                <div key={index} className="p-4 border rounded-lg flex flex-col">
+                    <p className="font-bold text-center mb-2">{group[0].month} {group[0].year !== 9999 ? group[0].year : ''}</p>
+                    <div className="flex flex-col items-center justify-center gap-4 flex-grow">
+                        {group.map(winner => (
+                            <div key={winner.userId} className="flex flex-col items-center gap-2">
+                                <Avatar className="h-16 w-16">
+                                <AvatarImage src={getAvatarUrl(winner.avatar || '')} alt={winner.name} data-ai-hint="person portrait" />
+                                <AvatarFallback>{winner.name?.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <p className="text-sm font-medium text-center">{winner.name}</p>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             ))}
         </CardContent>
