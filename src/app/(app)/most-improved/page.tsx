@@ -93,17 +93,10 @@ export default function MostImprovedPage() {
             runnersUp: awards?.runnersUp.length > 0 ? awards.runnersUp : null
         }
     }).sort((a, b) => {
-      // Custom sort to keep chronological order of months but ensure year sorting is primary
       const monthOrder = ['August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
-      if (a.year !== b.year) {
-        return a.year - b.year;
-      }
-      // Handle special 'Christmas No. 1' case to appear after December
+      if (a.year !== b.year) return a.year - b.year;
       if (a.month === 'December' && a.special) return 1;
       if (b.month === 'December' && b.special) return -1;
-      if (b.month === 'December' && !b.special && a.special) return -1;
-
-
       return monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month);
     });
   }, [sortedByImprovement, currentMonthName, currentYear]);
@@ -205,7 +198,7 @@ export default function MostImprovedPage() {
                             return (
                             <div key={index} className={cn("p-3 border rounded-lg flex flex-col items-center justify-start text-center", {
                                 'opacity-70': isCurrent,
-                                'opacity-50': isFuture && !isCurrent,
+                                'opacity-50': isFuture,
                             })}>
                                 <p className="font-bold mb-2 text-sm">{monthlyAward.abbreviation}</p>
                                 
@@ -241,10 +234,10 @@ export default function MostImprovedPage() {
                                 ) : (
                                     <div className="w-full space-y-2">
                                         <div className="bg-yellow-400/20 p-2 rounded-md flex items-center justify-center h-[60px]">
-                                            <p className="text-sm font-bold text-yellow-800/80 dark:text-yellow-200/80">TBC</p>
+                                            <p className="text-sm font-bold text-yellow-800/80 dark:text-yellow-200/80">MiMoM - TBC</p>
                                         </div>
                                         <div className="bg-slate-400/20 p-2 rounded-md flex items-center justify-center h-[60px]">
-                                            <p className="text-sm font-bold text-slate-800/80 dark:text-slate-200/80">TBC</p>
+                                            <p className="text-sm font-bold text-slate-800/80 dark:text-slate-200/80">RuMiMoM - TBC</p>
                                         </div>
                                     </div>
                                 )}
@@ -257,3 +250,5 @@ export default function MostImprovedPage() {
     </div>
   );
 }
+
+    
