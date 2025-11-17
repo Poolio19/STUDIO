@@ -47,9 +47,12 @@ const formatPointsChange = (change: number) => {
     return change;
 }
 
-const getRankColor = (rank: number, hasWinnings: boolean) => {
-    if (rank <= 5) {
-        switch (rank) {
+const getRankColor = (user: User, hasWinnings: boolean) => {
+    if (user.isPro) {
+        return 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-200/80 dark:hover:bg-gray-700/80';
+    }
+    if (user.rank <= 5) {
+        switch (user.rank) {
             case 1:
                 return 'bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-100/80 dark:hover:bg-yellow-900/40';
             case 2:
@@ -68,16 +71,18 @@ const getRankColor = (rank: number, hasWinnings: boolean) => {
 
 export default function LeaderboardPage() {
   const sortedUsers = useMemo(() => [...users].sort((a, b) => a.rank - b.rank), []);
+  const proPlayers = useMemo(() => sortedUsers.filter(u => u.isPro), [sortedUsers]);
+  const regularPlayers = useMemo(() => sortedUsers.filter(u => !u.isPro), [sortedUsers]);
 
   const totalWinningsMap = useMemo(() => {
-    const regularPlayers = sortedUsers.filter(u => !u.isPro);
-    const proPlayers = sortedUsers.filter(u => u.isPro);
-
     // 1. Calculate MiMoM Winnings
     const mimoMWinnings = new Map<string, number>();
     const monthlyAwards: { [key: string]: { winners: string[], runnersUp: string[] } } = {};
+    const proPlayerIds = new Set(proPlayers.map(p => p.id));
 
     monthlyMimoM.forEach(m => {
+        if (proPlayerIds.has(m.userId)) return; // Exclude PROs from MiMoM
+
         const key = m.special ? m.special : `${m.month}-${m.year}`;
         if (!monthlyAwards[key]) {
             monthlyAwards[key] = { winners: [], runnersUp: [] };
@@ -112,16 +117,15 @@ export default function LeaderboardPage() {
       const currentUser = regularPlayers[userIndex];
       const currentRank = currentUser.rank;
 
-      if (currentRank > 5) {
-        userIndex++;
-        continue;
+      // Stop if we are past the prize-winning ranks
+      if (currentRank > prizeTiers.length) {
+        break;
       }
       
       const tiedUsers = regularPlayers.filter(u => u.rank === currentRank);
-      const numTied = tiedUsers.length;
       
-      if (numTied > 0) {
-        const ranksCovered = Array.from({ length: numTied }, (_, i) => currentRank + i);
+      if (tiedUsers.length > 0) {
+        const ranksCovered = Array.from({ length: tiedUsers.length }, (_, i) => currentRank + i);
         
         let prizePool = 0;
         ranksCovered.forEach(rank => {
@@ -130,13 +134,13 @@ export default function LeaderboardPage() {
           }
         });
         
-        const individualWinnings = prizePool / numTied;
+        const individualWinnings = prizePool / tiedUsers.length;
         
         tiedUsers.forEach(user => {
           leaderboardWinnings.set(user.id, individualWinnings);
         });
         
-        userIndex += numTied;
+        userIndex += tiedUsers.length;
       } else {
         userIndex++;
       }
@@ -153,7 +157,6 @@ export default function LeaderboardPage() {
       });
     }
 
-
     // 4. Combine all winnings
     const totalWinnings = new Map<string, number>();
     regularPlayers.forEach(user => {
@@ -164,7 +167,7 @@ export default function LeaderboardPage() {
     });
 
     return totalWinnings;
-  }, [sortedUsers]);
+  }, [sortedUsers, regularPlayers, proPlayers]);
 
 
   return (
@@ -212,7 +215,7 @@ export default function LeaderboardPage() {
                 const userWinnings = totalWinningsMap.get(user.id) || 0;
                 
                 return (
-                    <TableRow key={user.id} className={cn(getRankColor(user.rank, userWinnings > 0 && !user.isPro))}>
+                    <TableRow key={user.id} className={cn(getRankColor(user, userWinnings > 0))}>
                         <TableCell className="font-medium text-center">{user.rank}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
@@ -255,3 +258,5 @@ export default function LeaderboardPage() {
     </div>
   );
 }
+
+    

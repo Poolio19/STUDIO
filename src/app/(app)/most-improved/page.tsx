@@ -58,13 +58,15 @@ export default function MostImprovedPage() {
     const monthOrder = ['August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
     const currentMonthIndex = monthOrder.indexOf(currentMonthName);
 
+    const proPlayerIds = new Set(users.filter(u => u.isPro).map(u => u.id));
+
     monthlyMimoM.forEach(m => {
       const key = m.special ? m.special : `${m.month}-${m.year}`;
       if (!awardsByMonth[key]) {
         awardsByMonth[key] = { winners: [], runnersUp: [] };
       }
       const user = users.find(u => u.id === m.userId);
-      if (user) {
+      if (user && !user.isPro) { // Ensure user exists and is not a PRO
         if (m.type === 'winner') {
           awardsByMonth[key].winners.push({ ...m, ...user });
         } else if (m.type === 'runner-up') {
@@ -82,10 +84,11 @@ export default function MostImprovedPage() {
         const isFuture = seasonMonth.year > currentYear || (seasonMonth.year === currentYear && monthIndex > currentMonthIndex);
 
         let currentLeaders: User[] | null = null;
-        if (isCurrentMonth && !awards) {
-            const maxRankChange = sortedByImprovement[0].rankChange;
+        if (isCurrentMonth && (!awards || awards.winners.length === 0)) {
+            const regularPlayersSorted = sortedByImprovement.filter(u => !u.isPro);
+            const maxRankChange = regularPlayersSorted.length > 0 ? regularPlayersSorted[0].rankChange : 0;
             if (maxRankChange > 0) {
-              currentLeaders = sortedByImprovement.filter(u => u.rankChange === maxRankChange);
+              currentLeaders = regularPlayersSorted.filter(u => u.rankChange === maxRankChange);
             }
         }
         
@@ -117,9 +120,10 @@ export default function MostImprovedPage() {
   }, [sortedByImprovement, currentMonthName, currentYear]);
 
   const { ladderWithRanks, firstPlaceRankChange, secondPlaceRankChange } = useMemo(() => {
+    const regularPlayersSorted = sortedByImprovement.filter(u => !u.isPro);
     let rank = 0;
     let lastRankChange = Infinity;
-    const rankedUsers = sortedByImprovement.map((user, index) => {
+    const rankedUsers = regularPlayersSorted.map((user, index) => {
       if (user.rankChange < lastRankChange) {
         rank = index + 1;
         lastRankChange = user.rankChange;
@@ -234,7 +238,7 @@ export default function MostImprovedPage() {
                                             </div>
                                         ))}
 
-                                        {monthlyAward.runnersUp && (monthlyAward.winners?.length === 1 || monthlyAward.currentLeaders?.length === 1) && monthlyAward.runnersUp.map(runnerUp => (
+                                        {monthlyAward.runnersUp && (monthlyAward.winners?.length === 1 || (monthlyAward.currentLeaders?.length === 1 && !monthlyAward.winners)) && monthlyAward.runnersUp.map(runnerUp => (
                                             <div key={runnerUp.userId} className="bg-slate-400/20 p-2 rounded-md flex items-center gap-3">
                                                 <Avatar className="h-10 w-10">
                                                     <AvatarImage src={getAvatarUrl(runnerUp.avatar || '')} alt={runnerUp.name} data-ai-hint="person portrait" />
@@ -266,3 +270,5 @@ export default function MostImprovedPage() {
     </div>
   );
 }
+
+    
