@@ -9,7 +9,7 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  Legend,
+  Customized,
 } from 'recharts';
 
 import {
@@ -33,6 +33,30 @@ interface TeamStandingsChartProps {
   sortedTeams: (Team & { rank: number })[];
 }
 
+const CustomLegend = ({ yAxis, sortedTeams, chartConfig }: any) => {
+    if (!yAxis || !yAxis.scale) {
+      return null;
+    }
+  
+    return (
+      <g>
+        {sortedTeams.map((team: Team & { rank: number }) => {
+          const y = yAxis.scale(team.rank);
+          const color = chartConfig[team.name]?.color;
+          if (y === undefined) return null;
+          
+          return (
+            <g key={team.id} transform={`translate(740, ${y})`}>
+              <circle cx="0" cy="0" r="5" fill={color} />
+              <text x="10" y="4" textAnchor="start" fill="hsl(var(--foreground))" fontSize="12">
+                {team.name}
+              </text>
+            </g>
+          );
+        })}
+      </g>
+    );
+  };
 
 export function TeamStandingsChart({ chartData, sortedTeams }: TeamStandingsChartProps) {
     const chartConfig = React.useMemo(() => {
@@ -71,13 +95,13 @@ export function TeamStandingsChart({ chartData, sortedTeams }: TeamStandingsChar
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[550px] w-full">
+        <ChartContainer config={chartConfig} className="h-[600px] w-full">
           <ResponsiveContainer>
             <LineChart
               data={transformedData}
               margin={{
                 top: 20,
-                right: 120,
+                right: 200, 
                 left: -20,
                 bottom: 20,
               }}
@@ -112,41 +136,17 @@ export function TeamStandingsChart({ chartData, sortedTeams }: TeamStandingsChar
                     />
                 }
               />
-              <Legend
-                layout="vertical"
-                verticalAlign="middle"
-                align="right"
-                content={({ payload }) => {
-                  const orderedPayload = sortedTeams.map(team =>
-                    payload?.find(p => p.value === team.name)
-                  ).filter(Boolean);
-
-                  return (
-                    <div className="flex h-full flex-col justify-between text-xs">
-                      {orderedPayload.map((item) => {
-                        if (!item) return null;
-                        const config = chartConfig[item.value as keyof typeof chartConfig];
-                        return (
-                          <div key={item.value} className="flex items-center gap-2">
-                            <span className="size-2.5 rounded-full" style={{ backgroundColor: config?.color }}/>
-                            <span>{item.value}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )
-                }}
-              />
-                {sortedTeams.map((team) => (
-                    <Line
-                      key={team.id}
-                      dataKey={team.name}
-                      type="monotone"
-                      stroke={chartConfig[team.name]?.color}
-                      strokeWidth={3}
-                      dot={false}
-                    />
-                ))}
+              <Customized component={(props: any) => <CustomLegend {...props} sortedTeams={sortedTeams} chartConfig={chartConfig} />} />
+              {sortedTeams.map((team) => (
+                  <Line
+                    key={team.id}
+                    dataKey={team.name}
+                    type="monotone"
+                    stroke={chartConfig[team.name]?.color}
+                    strokeWidth={3}
+                    dot={false}
+                  />
+              ))}
             </LineChart>
           </ResponsiveContainer>
         </ChartContainer>
