@@ -29,7 +29,13 @@ export default function StandingsPage() {
       return team ? { ...standing, ...team } : null;
     })
     .filter(Boolean)
-    .sort((a, b) => a!.rank - b!.rank);
+    .sort((a, b) => {
+        if (b!.points !== a!.points) {
+            return b!.points - a!.points;
+        }
+        return b!.goalsFor - a!.goalsFor;
+    })
+    .map((team, index) => ({ ...team!, rank: index + 1 }));
 
   return (
     <div className="space-y-8">
