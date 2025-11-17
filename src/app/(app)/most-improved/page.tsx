@@ -156,10 +156,11 @@ export default function MostImprovedPage() {
                         <TableBody>
                         {ladderWithRanks.map((user) => {
                             const RankIcon = Icons[getRankChangeIcon(user.rankChange) as IconName];
+                            const rankColor = getLadderRankColor(user.displayRank);
                             return (
-                                <TableRow key={user.id} className={cn(getLadderRankColor(user.displayRank))}>
-                                    <TableCell className="font-medium">{user.displayRank}</TableCell>
-                                    <TableCell>
+                                <TableRow key={user.id}>
+                                    <TableCell className={cn("font-medium", rankColor && `p-2 ${rankColor} first:rounded-l-md`)}>{user.displayRank}</TableCell>
+                                    <TableCell className={cn(rankColor && `p-2 ${rankColor}`)}>
                                     <div className="flex items-center gap-3">
                                         <Avatar className="h-9 w-9">
                                         <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
@@ -168,14 +169,14 @@ export default function MostImprovedPage() {
                                         <span>{user.name}</span>
                                     </div>
                                     </TableCell>
-                                    <TableCell className="text-center">
+                                    <TableCell className={cn("text-center", rankColor && `p-2 ${rankColor}`)}>
                                         <div className="flex items-center justify-center gap-1 font-bold text-lg">
                                         <RankIcon className="size-5" />
                                         <span>{Math.abs(user.rankChange)}</span>
                                         </div>
                                     </TableCell>
-                                    <TableCell className="text-center font-medium">{formatPointsChange(user.scoreChange)}</TableCell>
-                                    <TableCell className="text-right font-bold">{user.score}</TableCell>
+                                    <TableCell className={cn("text-center font-medium", rankColor && `p-2 ${rankColor}`)}>{formatPointsChange(user.scoreChange)}</TableCell>
+                                    <TableCell className={cn("text-right font-bold", rankColor && `p-2 ${rankColor} last:rounded-r-md`)}>{user.score}</TableCell>
                                 </TableRow>
                             );
                         })}
@@ -254,7 +255,3 @@ export default function MostImprovedPage() {
     </div>
   );
 }
-
-    
-
-    
