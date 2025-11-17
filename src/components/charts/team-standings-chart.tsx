@@ -40,7 +40,7 @@ const CustomLegend = ({
   chartConfig: ChartConfig;
 }) => {
   return (
-    <ul className="absolute right-0 top-[20px] h-[calc(100%-40px)] flex flex-col justify-between text-xs pr-4">
+    <ul className="absolute right-0 top-[25px] bottom-[25px] flex flex-col justify-between text-xs pr-4">
       {payload.map((entry: any, index: number) => (
         <li key={`item-${index}`} className="flex items-center space-x-2">
           <span style={{ color: entry.color }}>●</span>
