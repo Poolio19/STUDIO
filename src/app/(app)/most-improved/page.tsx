@@ -182,7 +182,7 @@ export default function MostImprovedPage() {
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                         {mimoMWithDetails.map((monthlyAward, index) => {
-                            const isFuture = !monthlyAward.winners && !monthlyAward.currentLeaders;
+                            const isFuture = !monthlyAward.winners && !monthlyAward.runnersUp && !monthlyAward.currentLeaders;
                             const isCurrent = monthlyAward.isCurrentMonth;
 
                             return (
@@ -192,7 +192,7 @@ export default function MostImprovedPage() {
                             })}>
                                 <p className="font-bold mb-2 text-sm">{monthlyAward.abbreviation}</p>
                                 
-                                {monthlyAward.winners || monthlyAward.currentLeaders ? (
+                                {monthlyAward.winners || monthlyAward.currentLeaders || monthlyAward.runnersUp ? (
                                     <div className="w-full space-y-2">
                                         {(monthlyAward.winners || monthlyAward.currentLeaders)?.map(winner => (
                                             <div key={winner.userId || winner.id} className="bg-yellow-400/20 p-2 rounded-md flex items-center gap-3">
@@ -207,7 +207,7 @@ export default function MostImprovedPage() {
                                             </div>
                                         ))}
 
-                                        {monthlyAward.runnersUp && monthlyAward.winners?.length === 1 && monthlyAward.runnersUp.map(runnerUp => (
+                                        {monthlyAward.runnersUp && (monthlyAward.winners?.length === 1 || monthlyAward.currentLeaders?.length === 1) && monthlyAward.runnersUp.map(runnerUp => (
                                             <div key={runnerUp.userId} className="bg-slate-400/20 p-2 rounded-md flex items-center gap-3">
                                                 <Avatar className="h-10 w-10">
                                                     <AvatarImage src={getAvatarUrl(runnerUp.avatar || '')} alt={runnerUp.name} data-ai-hint="person portrait" />
@@ -221,9 +221,13 @@ export default function MostImprovedPage() {
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="flex flex-col items-center justify-center gap-1 flex-grow text-muted-foreground p-4">
-                                        <CalendarClock className="size-8" />
-                                        <p className="text-xs font-medium">TBC</p>
+                                    <div className="w-full space-y-2">
+                                        <div className="bg-yellow-400/20 p-2 rounded-md flex items-center justify-center h-[52px]">
+                                            <p className="text-sm font-bold text-yellow-800/80 dark:text-yellow-200/80">TBC</p>
+                                        </div>
+                                        <div className="bg-slate-400/20 p-2 rounded-md flex items-center justify-center h-[52px]">
+                                             <p className="text-sm font-bold text-slate-800/80 dark:text-slate-200/80">TBC</p>
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -235,3 +239,5 @@ export default function MostImprovedPage() {
     </div>
   );
 }
+
+    
