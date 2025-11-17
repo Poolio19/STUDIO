@@ -82,7 +82,7 @@ export default function MostImprovedPage() {
         }
         
         return {
-            title: seasonMonth.abbreviation,
+            ...seasonMonth,
             isCurrentMonth,
             currentLeaders,
             winners: awards?.winners.length > 0 ? awards.winners : null,
@@ -91,9 +91,13 @@ export default function MostImprovedPage() {
     }).sort((a,b) => {
         const aHasAward = a.winners || a.currentLeaders;
         const bHasAward = b.winners || b.currentLeaders;
+        // If one has an award and the other doesn't, the one with the award comes first.
         if (aHasAward && !bHasAward) return -1;
         if (!aHasAward && bHasAward) return 1;
-        return 0; // Keep original seasonMonths order
+        
+        // If both have awards or both are TBC, sort by month index
+        const monthOrder = seasonMonths.map(m => m.month);
+        return monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month);
     });
   }, [sortedByImprovement, currentMonthName]);
 
@@ -180,37 +184,43 @@ export default function MostImprovedPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>MiMoM Hall of Fame</CardTitle>
-                        <CardDescription>Previous winners of the "Most Improved Manager of the Month" award.</CardDescription>
+                        <CardDescription>Previous winners and runners-up.</CardDescription>
                     </CardHeader>
-                    <CardContent className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-2">
+                    <CardContent className="grid grid-cols-1 gap-4">
                         {mimoMWithDetails.map((monthlyAward, index) => (
-                            <div key={index} className="p-3 border rounded-lg flex flex-col items-center justify-start text-center aspect-square">
-                                <p className="font-bold mb-2 text-sm">{monthlyAward.title}</p>
+                            <div key={index} className="p-3 border rounded-lg flex flex-col items-center justify-start text-center">
+                                <p className="font-bold mb-2 text-sm">{monthlyAward.abbreviation}</p>
+                                
                                 {monthlyAward.winners || monthlyAward.currentLeaders ? (
-                                    <div className="flex flex-col items-center justify-center gap-3 flex-grow">
+                                    <div className="w-full space-y-2">
                                         {(monthlyAward.winners || monthlyAward.currentLeaders)?.map(winner => (
-                                            <div key={winner.userId || winner.id} className="flex flex-col items-center gap-1 relative">
+                                            <div key={winner.userId || winner.id} className="bg-yellow-400/20 p-2 rounded-md flex items-center gap-3">
                                                 <Avatar className="h-10 w-10">
-                                                <AvatarImage src={getAvatarUrl(winner.avatar || '')} alt={winner.name} data-ai-hint="person portrait" />
-                                                <AvatarFallback>{winner.name?.charAt(0)}</AvatarFallback>
+                                                    <AvatarImage src={getAvatarUrl(winner.avatar || '')} alt={winner.name} data-ai-hint="person portrait" />
+                                                    <AvatarFallback>{winner.name?.charAt(0)}</AvatarFallback>
                                                 </Avatar>
-                                                <p className="text-xs font-medium">{winner.name}</p>
-                                                <Award className="size-4 text-yellow-500 absolute -top-1 -right-1" />
+                                                <div className="text-left">
+                                                    <p className="text-sm font-bold">{winner.name}</p>
+                                                    <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">{monthlyAward.winners && monthlyAward.winners.length > 1 ? 'JoMiMoM' : 'MiMoM'}</p>
+                                                </div>
                                             </div>
                                         ))}
+
                                         {monthlyAward.runnersUp && monthlyAward.winners?.length === 1 && monthlyAward.runnersUp.map(runnerUp => (
-                                            <div key={runnerUp.userId} className="flex flex-col items-center gap-1 relative">
+                                            <div key={runnerUp.userId} className="bg-slate-400/20 p-2 rounded-md flex items-center gap-3">
                                                 <Avatar className="h-10 w-10">
                                                     <AvatarImage src={getAvatarUrl(runnerUp.avatar || '')} alt={runnerUp.name} data-ai-hint="person portrait" />
                                                     <AvatarFallback>{runnerUp.name?.charAt(0)}</AvatarFallback>
                                                 </Avatar>
-                                                <p className="text-xs font-medium">{runnerUp.name}</p>
-                                                <Star className="size-4 text-slate-400 absolute -top-1 -right-1" />
+                                                <div className="text-left">
+                                                    <p className="text-sm font-bold">{runnerUp.name}</p>
+                                                     <p className="text-xs font-semibold text-slate-800/80 dark:text-slate-200/80">{monthlyAward.runnersUp && monthlyAward.runnersUp.length > 1 ? 'JoRuMiMoM' : 'RuMiMoM'}</p>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="flex flex-col items-center justify-center gap-1 flex-grow text-muted-foreground">
+                                    <div className="flex flex-col items-center justify-center gap-1 flex-grow text-muted-foreground p-4">
                                         <CalendarClock className="size-8" />
                                         <p className="text-xs font-medium">TBC</p>
                                     </div>
@@ -224,3 +234,5 @@ export default function MostImprovedPage() {
     </div>
   );
 }
+
+    
