@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -42,6 +43,8 @@ import {
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type { Metadata } from 'next';
 import { teams } from '@/lib/data';
+import { UserHistoryChart } from '@/components/charts/user-history-chart';
+import { defaultUserHistory } from '@/lib/user-history';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -72,14 +75,6 @@ const defaultValues: Partial<ProfileFormValues> = {
   favoriteTeam: 'team_1',
 };
 
-// Since we can't have metadata on a 'use client' component,
-// you would typically handle this in a parent layout or a server component.
-// For this example, we'll keep it but note it won't work in this file directly.
-// export const metadata: Metadata = {
-//     title: 'Profile | PremPred 2025-2026',
-//     description: 'Manage your profile settings.',
-// };
-
 export default function ProfilePage() {
   const { toast } = useToast();
   const form = useForm<ProfileFormValues>({
@@ -97,6 +92,7 @@ export default function ProfilePage() {
   }
 
   const user = {
+    id: 'usr_1',
     name: 'Alex',
     avatarId: '1',
     rank: 1,
@@ -132,6 +128,7 @@ export default function ProfilePage() {
               </div>
             </CardContent>
           </Card>
+           <UserHistoryChart chartData={defaultUserHistory} />
         </div>
 
         <div className="lg:col-span-2 space-y-8">
