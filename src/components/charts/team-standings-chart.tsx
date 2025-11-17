@@ -9,7 +9,7 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  Customized,
+  Legend,
 } from 'recharts';
 
 import {
@@ -25,7 +25,7 @@ import {
   ChartTooltipContent,
   ChartConfig,
 } from '@/components/ui/chart';
-import { teams, WeeklyTeamStanding, Team } from '@/lib/data';
+import { WeeklyTeamStanding, Team } from '@/lib/data';
 import * as React from 'react';
 
 interface TeamStandingsChartProps {
@@ -33,38 +33,26 @@ interface TeamStandingsChartProps {
   sortedTeams: (Team & { rank: number })[];
 }
 
-const CustomLegend = ({ yAxis, sortedTeams, chartConfig }: any) => {
-    if (!yAxis || !yAxis.scale) {
-      return null;
-    }
-  
+const CustomLegend = ({ payload }: any) => {
     return (
-      <g>
-        {sortedTeams.map((team: Team & { rank: number }) => {
-          const y = yAxis.scale(team.rank);
-          const color = chartConfig[team.name]?.color;
-          if (y === undefined) return null;
-          
-          return (
-            <g key={team.id} transform={`translate(740, ${y})`}>
-              <circle cx="0" cy="0" r="5" fill={color} />
-              <text x="10" y="4" textAnchor="start" fill="hsl(var(--foreground))" fontSize="12">
-                {team.name}
-              </text>
-            </g>
-          );
-        })}
-      </g>
+      <ul className="flex flex-col justify-between h-full ml-4">
+        {payload.map((entry: any, index: number) => (
+          <li key={`item-${index}`} className="flex items-center space-x-2">
+            <span style={{ color: entry.color }}>●</span>
+            <span className="text-xs">{entry.value}</span>
+          </li>
+        ))}
+      </ul>
     );
   };
 
 export function TeamStandingsChart({ chartData, sortedTeams }: TeamStandingsChartProps) {
     const chartConfig = React.useMemo(() => {
     const config: ChartConfig = {};
-    sortedTeams.forEach((team, index) => {
+    sortedTeams.forEach((team) => {
       config[team.name] = {
         label: team.name,
-        color: `hsl(var(--chart-color-${index + 1}))`,
+        color: `hsl(var(--chart-color-${team.rank}))`,
       };
     });
     return config;
@@ -75,15 +63,16 @@ export function TeamStandingsChart({ chartData, sortedTeams }: TeamStandingsChar
     const weeks = [...new Set(chartData.map(d => d.week))].sort((a,b) => a-b);
     return weeks.map(week => {
       const weekData: {[key: string]: number | string} = { week: `Wk ${week}` };
-      chartData.filter(d => d.week === week).forEach(d => {
-        const team = teams.find(t => t.id === d.teamId);
-        if (team) {
-          weekData[team.name] = d.rank;
+      const teamsForWeek = chartData.filter(d => d.week === week);
+      sortedTeams.forEach(team => {
+        const teamDataForWeek = teamsForWeek.find(t => t.teamId === team.id);
+        if (teamDataForWeek) {
+            weekData[team.name] = teamDataForWeek.rank;
         }
       });
       return weekData;
     });
-  }, [chartData]);
+  }, [chartData, sortedTeams]);
 
 
   return (
@@ -95,13 +84,13 @@ export function TeamStandingsChart({ chartData, sortedTeams }: TeamStandingsChar
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[600px] w-full">
+        <ChartContainer config={chartConfig} className="h-[550px] w-full">
           <ResponsiveContainer>
             <LineChart
               data={transformedData}
               margin={{
                 top: 20,
-                right: 200, 
+                right: 120, 
                 left: -20,
                 bottom: 20,
               }}
@@ -136,7 +125,17 @@ export function TeamStandingsChart({ chartData, sortedTeams }: TeamStandingsChar
                     />
                 }
               />
-              <Customized component={(props: any) => <CustomLegend {...props} sortedTeams={sortedTeams} chartConfig={chartConfig} />} />
+              <Legend 
+                content={<CustomLegend />}
+                layout="vertical"
+                verticalAlign="middle"
+                align="right"
+                payload={sortedTeams.map(team => ({
+                    value: team.name,
+                    type: 'line',
+                    color: chartConfig[team.name].color
+                }))}
+               />
               {sortedTeams.map((team) => (
                   <Line
                     key={team.id}
