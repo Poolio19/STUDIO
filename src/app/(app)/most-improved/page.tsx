@@ -101,6 +101,8 @@ export default function MostImprovedPage() {
       // Handle special 'Christmas No. 1' case to appear after December
       if (a.month === 'December' && a.special) return 1;
       if (b.month === 'December' && b.special) return -1;
+      if (b.month === 'December' && !b.special && a.special) return -1;
+
 
       return monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month);
     });
@@ -112,8 +114,8 @@ export default function MostImprovedPage() {
           <h1 className="text-3xl font-bold tracking-tight">Most Improved Manager of the Month (MiMoM)</h1>
           <p className="text-muted-foreground">Celebrating the sharpest climbers in the ranks.</p>
       </header>
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-            <div className="lg:col-span-3 flex flex-col gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="flex flex-col gap-8">
                 <Card className="bg-primary/10 border-primary/50">
                     <CardHeader className="flex-row items-center gap-4">
                     <div className="p-3 rounded-full bg-primary/20">
@@ -185,13 +187,13 @@ export default function MostImprovedPage() {
                     </CardContent>
                 </Card>
             </div>
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-1">
                  <Card>
                     <CardHeader>
                         <CardTitle>MiMoM Hall of Fame</CardTitle>
                         <CardDescription>Previous winners and runners-up.</CardDescription>
                     </CardHeader>
-                    <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
+                    <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {mimoMWithDetails.map((monthlyAward, index) => {
                             const hasAwards = monthlyAward.winners || monthlyAward.runnersUp || monthlyAward.currentLeaders;
                             const isFuture = !hasAwards;
@@ -255,5 +257,3 @@ export default function MostImprovedPage() {
     </div>
   );
 }
-
-    
