@@ -110,6 +110,25 @@ export default function MostImprovedPage() {
     });
   }, [sortedByImprovement, currentMonthName, currentYear]);
 
+  const ladderWithRanks = useMemo(() => {
+    let rank = 0;
+    let lastRankChange = Infinity;
+    return sortedByImprovement.map((user, index) => {
+      if (user.rankChange < lastRankChange) {
+        rank = index + 1;
+        lastRankChange = user.rankChange;
+      }
+      return { ...user, displayRank: rank };
+    });
+  }, [sortedByImprovement]);
+
+  const getLadderRankColor = (rank: number) => {
+    if (rank === 1) return 'bg-yellow-400/20';
+    if (rank === 2) return 'bg-slate-400/20';
+    return '';
+  };
+
+
   return (
     <div className="flex flex-col gap-8">
       <header>
@@ -121,7 +140,7 @@ export default function MostImprovedPage() {
                 <Card>
                     <CardHeader className="bg-gradient-to-r from-yellow-400/20 via-yellow-400/5 to-slate-400/20">
                     <CardTitle>In-Month MiMoM Standings</CardTitle>
-                    <CardDescription>Current rankings based on position change in Week {currentWeek}.</CardDescription>
+                    <CardDescription>Current standings for SEPT</CardDescription>
                     </CardHeader>
                     <CardContent>
                     <Table>
@@ -135,11 +154,11 @@ export default function MostImprovedPage() {
                         </TableRow>
                         </TableHeader>
                         <TableBody>
-                        {sortedByImprovement.map((user, index) => {
+                        {ladderWithRanks.map((user) => {
                             const RankIcon = Icons[getRankChangeIcon(user.rankChange) as IconName];
                             return (
-                                <TableRow key={user.id}>
-                                    <TableCell className="font-medium">{index + 1}</TableCell>
+                                <TableRow key={user.id} className={cn(getLadderRankColor(user.displayRank))}>
+                                    <TableCell className="font-medium">{user.displayRank}</TableCell>
                                     <TableCell>
                                     <div className="flex items-center gap-3">
                                         <Avatar className="h-9 w-9">
@@ -235,5 +254,7 @@ export default function MostImprovedPage() {
     </div>
   );
 }
+
+    
 
     
