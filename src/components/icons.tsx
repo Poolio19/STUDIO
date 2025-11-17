@@ -20,6 +20,7 @@ import {
   Award,
   BarChart,
   Users,
+  TrendingUp,
 } from 'lucide-react';
 
 export const Icons = {
@@ -33,6 +34,8 @@ export const Icons = {
   profile: User,
   notifications: Bell,
   award: Award,
+  performance: BarChart,
+  rankings: TrendingUp,
   atom: Atom,
   zap: Zap,
   rocket: Rocket,

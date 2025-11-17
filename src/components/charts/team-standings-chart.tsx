@@ -35,7 +35,7 @@ interface TeamStandingsChartProps {
 const chartConfig = teams.reduce((config, team, index) => {
   config[team.name] = {
     label: team.name,
-    color: `hsl(var(--chart-${index + 1}))`,
+    color: `hsl(var(--chart-color-${index + 1}))`,
   };
   return config;
 }, {} as any);
@@ -109,7 +109,7 @@ export function TeamStandingsChart({ chartData }: TeamStandingsChartProps) {
                 }
               />
               <Legend content={<></>} />
-                {teams.map((team) => (
+                {teams.map((team, index) => (
                     <Line
                     key={team.id}
                     dataKey={team.name}

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -23,6 +24,8 @@ const navItems = [
   { href: '/stats', icon: 'stats', label: 'Stats' },
   { href: '/consensus', icon: 'consensus', label: 'Consensus' },
   { href: '/standings', icon: 'standings', label: 'Premier League Standings' },
+  { href: '/performance', icon: 'performance', label: 'Player Performance' },
+  { href: '/rankings', icon: 'rankings', label: 'Player Rankings' },
   { href: '/scoring', icon: 'scoring', label: 'Rules & Scoring' },
   { href: '/profile', icon: 'profile', label: 'Profile' },
   { href: '/notifications', icon: 'notifications', label: 'Notifications' },
