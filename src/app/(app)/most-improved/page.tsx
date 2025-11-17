@@ -92,6 +92,17 @@ export default function MostImprovedPage() {
             winners: awards?.winners.length > 0 ? awards.winners : null,
             runnersUp: awards?.runnersUp.length > 0 ? awards.runnersUp : null
         }
+    }).sort((a, b) => {
+      const aHasAward = a.winners || a.runnersUp || a.currentLeaders;
+      const bHasAward = b.winners || b.runnersUp || b.currentLeaders;
+
+      if (aHasAward && !bHasAward) return -1;
+      if (!aHasAward && bHasAward) return 1;
+
+      if (a.year !== b.year) {
+        return a.year - b.year;
+      }
+      return seasonMonths.findIndex(m => m.month === a.month) - seasonMonths.findIndex(m => m.month === b.month);
     });
   }, [sortedByImprovement, currentMonthName, currentYear]);
 
@@ -184,11 +195,13 @@ export default function MostImprovedPage() {
                         {mimoMWithDetails.map((monthlyAward, index) => {
                             const isFuture = !monthlyAward.winners && !monthlyAward.runnersUp && !monthlyAward.currentLeaders;
                             const isCurrent = monthlyAward.isCurrentMonth;
+                            const winnerPrize = 10 / (monthlyAward.winners?.length || 1);
+                            const runnerUpPrize = 5 / (monthlyAward.runnersUp?.length || 1);
 
                             return (
                             <div key={index} className={cn("p-3 border rounded-lg flex flex-col items-center justify-start text-center", {
                                 'opacity-70': isCurrent,
-                                'opacity-50': isFuture,
+                                'opacity-50': isFuture && !isCurrent,
                             })}>
                                 <p className="font-bold mb-2 text-sm">{monthlyAward.abbreviation}</p>
                                 
@@ -202,7 +215,7 @@ export default function MostImprovedPage() {
                                                 </Avatar>
                                                 <div className="text-left">
                                                     <p className="text-sm font-bold">{winner.name}</p>
-                                                    {monthlyAward.winners && <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">{monthlyAward.winners && monthlyAward.winners.length > 1 ? 'JoMiMoM' : 'MiMoM'}</p>}
+                                                    {monthlyAward.winners && <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">{(monthlyAward.winners.length > 1 ? 'JoMiMoM' : 'MiMoM')} - £{winnerPrize}</p>}
                                                 </div>
                                             </div>
                                         ))}
@@ -215,7 +228,7 @@ export default function MostImprovedPage() {
                                                 </Avatar>
                                                 <div className="text-left">
                                                     <p className="text-sm font-bold">{runnerUp.name}</p>
-                                                     <p className="text-xs font-semibold text-slate-800/80 dark:text-slate-200/80">{monthlyAward.runnersUp && monthlyAward.runnersUp.length > 1 ? 'JoRuMiMoM' : 'RuMiMoM'}</p>
+                                                     <p className="text-xs font-semibold text-slate-800/80 dark:text-slate-200/80">{(monthlyAward.runnersUp.length > 1 ? 'JoRuMiMoM' : 'RuMiMoM')} - £{runnerUpPrize}</p>
                                                 </div>
                                             </div>
                                         ))}
@@ -239,5 +252,7 @@ export default function MostImprovedPage() {
     </div>
   );
 }
+
+    
 
     
