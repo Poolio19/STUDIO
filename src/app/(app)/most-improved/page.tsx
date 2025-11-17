@@ -92,7 +92,7 @@ export default function MostImprovedPage() {
             winners: awards?.winners.length > 0 ? awards.winners : null,
             runnersUp: awards?.runnersUp.length > 0 ? awards.runnersUp : null
         }
-    }).filter(m => new Date(m.year, seasonMonths.findIndex(sm => sm.month === m.month)) <= new Date(currentYear, seasonMonths.findIndex(sm => sm.month === currentMonthName)));
+    });
   }, [sortedByImprovement, currentMonthName, currentYear]);
 
   return (
@@ -182,7 +182,7 @@ export default function MostImprovedPage() {
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                         {mimoMWithDetails.map((monthlyAward, index) => (
-                            <div key={index} className={cn("p-3 border rounded-lg flex flex-col items-center justify-start text-center", monthlyAward.isCurrentMonth && 'opacity-60')}>
+                            <div key={index} className={cn("p-3 border rounded-lg flex flex-col items-center justify-start text-center", !monthlyAward.winners && !monthlyAward.currentLeaders && 'opacity-60')}>
                                 <p className="font-bold mb-2 text-sm">{monthlyAward.abbreviation}</p>
                                 
                                 {monthlyAward.winners || monthlyAward.currentLeaders ? (
