@@ -181,8 +181,15 @@ export default function MostImprovedPage() {
                         <CardDescription>Previous winners and runners-up.</CardDescription>
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                        {mimoMWithDetails.map((monthlyAward, index) => (
-                            <div key={index} className={cn("p-3 border rounded-lg flex flex-col items-center justify-start text-center", !monthlyAward.winners && !monthlyAward.currentLeaders && 'opacity-60')}>
+                        {mimoMWithDetails.map((monthlyAward, index) => {
+                            const isFuture = !monthlyAward.winners && !monthlyAward.currentLeaders;
+                            const isCurrent = monthlyAward.isCurrentMonth;
+
+                            return (
+                            <div key={index} className={cn("p-3 border rounded-lg flex flex-col items-center justify-start text-center", {
+                                'opacity-70': isCurrent,
+                                'opacity-50': isFuture,
+                            })}>
                                 <p className="font-bold mb-2 text-sm">{monthlyAward.abbreviation}</p>
                                 
                                 {monthlyAward.winners || monthlyAward.currentLeaders ? (
@@ -220,7 +227,7 @@ export default function MostImprovedPage() {
                                     </div>
                                 )}
                             </div>
-                        ))}
+                        )})}
                     </CardContent>
                 </Card>
             </div>
