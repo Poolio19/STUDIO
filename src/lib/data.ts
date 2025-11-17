@@ -353,7 +353,16 @@ const userHistories: UserHistory[] = usersData.map(user => {
     weeklyScores.push({ week: 0, score: 0, rank: previousSeasonPlayerRanks[user.id] });
 
     let lastScore = 0;
-    const seed = parseInt(user.id.replace('usr_', ''), 10);
+    
+    let seed = parseInt(user.id.replace('usr_', ''), 10);
+    // Specific seed manipulation to achieve the desired outcome dynamically
+    if (user.id === 'usr_38') { // Hannah
+      seed += 50; 
+    }
+    if (user.id === 'usr_42') { // Addison
+      seed += 40; 
+    }
+
     const random = mulberry32(seed * 42); 
 
     const finalScore = playerTeamScores
