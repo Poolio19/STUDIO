@@ -27,23 +27,26 @@ import {
 import { teams, WeeklyTeamStanding, Team } from '@/lib/data';
 import * as React from 'react';
 import { cn } from '@/lib/utils';
+import { ChartConfig } from '@/components/ui/chart';
 
 interface TeamStandingsChartProps {
   chartData: WeeklyTeamStanding[];
   sortedTeams: (Team & { rank: number })[];
 }
 
-// Generate the chart config dynamically based on the teams
-const chartConfig = teams.reduce((config, team, index) => {
-  config[team.name] = {
-    label: team.name,
-    color: `hsl(var(--chart-color-${index + 1}))`,
-  };
-  return config;
-}, {} as any);
-
 
 export function TeamStandingsChart({ chartData, sortedTeams }: TeamStandingsChartProps) {
+  const chartConfig = React.useMemo(() => {
+    const config: ChartConfig = {};
+    sortedTeams.forEach((team, index) => {
+        config[team.name] = {
+            label: team.name,
+            color: `hsl(var(--chart-color-${index + 1}))`,
+        };
+    });
+    return config;
+  }, [sortedTeams]);
+
   const transformedData = React.useMemo(() => {
     const weeks = [...new Set(chartData.map(d => d.week))].sort((a,b) => a-b);
     return weeks.map(week => {
@@ -74,7 +77,7 @@ export function TeamStandingsChart({ chartData, sortedTeams }: TeamStandingsChar
               data={transformedData}
               margin={{
                 top: 5,
-                right: 120, // Increased right margin to make space for the legend
+                right: 120, 
                 left: -20,
                 bottom: 5,
               }}
@@ -114,29 +117,34 @@ export function TeamStandingsChart({ chartData, sortedTeams }: TeamStandingsChar
                 layout="vertical" 
                 verticalAlign="middle" 
                 align="right"
-                content={({ payload }) => (
-                  <ul className="flex flex-col space-y-1 text-xs">
-                    {sortedTeams.map((team) => {
-                      const item = payload?.find(p => p.value === team.name);
-                      if (!item) return null;
-                      return (
-                        <li key={item.value} className="flex items-center gap-2">
-                          <span className="size-2.5 rounded-full" style={{ backgroundColor: item.color }}/>
-                          <span>{item.value}</span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
+                content={({ payload }) => {
+                  const orderedPayload = sortedTeams.map(team => 
+                    payload?.find(p => p.value === team.name)
+                  ).filter(Boolean);
+
+                  return (
+                    <ul className="flex flex-col space-y-1 text-xs">
+                      {orderedPayload.map((item) => {
+                        if (!item) return null;
+                        return (
+                          <li key={item.value} className="flex items-center gap-2">
+                            <span className="size-2.5 rounded-full" style={{ backgroundColor: item.color }}/>
+                            <span>{item.value}</span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )
+                }}
               />
                 {sortedTeams.map((team) => (
                     <Line
-                    key={team.id}
-                    dataKey={team.name}
-                    type="monotone"
-                    stroke={`var(--color-${team.name})`}
-                    strokeWidth={3}
-                    dot={false}
+                      key={team.id}
+                      dataKey={team.name}
+                      type="monotone"
+                      stroke={`var(--color-${team.name})`}
+                      strokeWidth={3}
+                      dot={false}
                     />
                 ))}
             </LineChart>
