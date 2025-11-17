@@ -1,3 +1,6 @@
+
+'use client';
+
 import {
     Card,
     CardContent,
@@ -13,14 +16,15 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { teams, currentStandings } from '@/lib/data';
+import { teams, currentStandings, weeklyTeamStandings } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
 import type { Metadata } from 'next';
+import { TeamStandingsChart } from '@/components/charts/team-standings-chart';
 
-export const metadata: Metadata = {
-    title: 'Premier League Standings | PremPred 2025-2026',
-    description: 'The current Premier League standings.',
-};
+// export const metadata: Metadata = {
+//     title: 'Premier League Standings | PremPred 2025-2026',
+//     description: 'The current Premier League standings.',
+// };
 
 export default function StandingsPage() {
     const standingsWithTeamData = currentStandings
@@ -41,8 +45,11 @@ export default function StandingsPage() {
     <div className="space-y-8">
       <header>
         <h1 className="text-3xl font-bold tracking-tight">Premier League Standings</h1>
-        <p className="text-muted-foreground">The official Premier League table as it stands.</p>
+        <p className="text-muted-foreground">The official Premier League table and weekly position tracker.</p>
       </header>
+
+      <TeamStandingsChart chartData={weeklyTeamStandings} />
+
       <Card>
         <CardHeader>
           <CardTitle>Premier League Table 2025-2026</CardTitle>

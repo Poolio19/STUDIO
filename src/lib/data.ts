@@ -1,4 +1,5 @@
 
+
 export type User = {
   id: string;
   name: string;
@@ -85,6 +86,12 @@ export type WeeklyScore = {
 export type UserHistory = {
     userId: string;
     weeklyScores: WeeklyScore[];
+};
+
+export type WeeklyTeamStanding = {
+    week: number;
+    teamId: string;
+    rank: number;
 };
 
 // --- STATIC DATA ---
@@ -175,16 +182,16 @@ export const previousSeasonStandings: PreviousSeasonStanding[] = [
     { teamId: 'team_14', rank: 8, points: 60, goalDifference: -1 },
     { teamId: 'team_19', rank: 9, points: 52, goalDifference: -14 },
     { teamId: 'team_7', rank: 10, points: 49, goalDifference: -1 },
-    { teamId: 'team_5', rank: 11, points: 48, goalDifference: -7 },
-    { teamId: 'team_3', rank: 12, points: 48, goalDifference: -13 },
-    { teamId: 'team_9', rank: 13, points: 47, goalDifference: -6 },
-    { teamId: 'team_20', rank: 14, points: 46, goalDifference: -15 },
-    { teamId: 'team_8', rank: 15, points: 40, goalDifference: -11 },
-    { teamId: 'team_4', rank: 16, points: 39, goalDifference: -9 },
-    { teamId: 'team_16', rank: 17, points: 32, goalDifference: -18 },
-    { teamId: 'team_11', rank: 18, points: 31, goalDifference: -20 },
-    { teamId: 'team_10', rank: 19, points: 26, goalDifference: -35 },
-    { teamId: 'team_17', rank: 20, points: 25, goalDifference: -37 },
+    { id: 'team_5', rank: 11, points: 48, goalDifference: -7 },
+    { id: 'team_3', rank: 12, points: 48, goalDifference: -13 },
+    { id: 'team_9', rank: 13, points: 47, goalDifference: -6 },
+    { id: 'team_20', rank: 14, points: 46, goalDifference: -15 },
+    { id: 'team_8', rank: 15, points: 40, goalDifference: -11 },
+    { id: 'team_4', rank: 16, points: 39, goalDifference: -9 },
+    { id: 'team_16', rank: 17, points: 32, goalDifference: -18 },
+    { id: 'team_11', rank: 18, points: 31, goalDifference: -20 },
+    { id: 'team_10', rank: 19, points: 26, goalDifference: -35 },
+    { id: 'team_17', rank: 20, points: 25, goalDifference: -37 },
 ];
 
 export const currentStandings: CurrentStanding[] = [
@@ -226,7 +233,6 @@ export const seasonMonths: SeasonMonth[] = [
 
 export const monthlyMimoM: MonthlyMimoM[] = [
     { month: 'August', year: 2025, userId: 'usr_12', type: 'winner' },
-    { month: 'August', year: 2025, userId: 'usr_22', type: 'runner-up' },
 ];
 
 // --- DYNAMIC & DETERMINISTIC DATA GENERATION ---
@@ -248,49 +254,38 @@ const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed:
     let perturbedStandings = standings.map(team => {
         const originalRank = team.rank;
         
-        // This generates a random number from a distribution that approximates a bell curve (mean 0).
-        // Summing two random numbers creates a triangular distribution, a good approximation of a bell curve.
         const bellCurveRandom = (random() + random()) - 1;
 
         let maxPerturbation: number;
         let pessimism = 0;
 
-        if (originalRank <= 4) { // Top 4
-            maxPerturbation = 2; // Very tight predictions
-        } else if (originalRank <= 10) { // 5th to 10th
-            maxPerturbation = 4; // Slightly more variance
-        } else { // 11th to 20th
-            maxPerturbation = 7; // More variance
-            // Introduce a pessimistic bias: a positive value makes it more likely the shift is positive (a worse rank).
+        if (originalRank <= 4) {
+            maxPerturbation = 2;
+        } else if (originalRank <= 10) {
+            maxPerturbation = 4;
+        } else {
+            maxPerturbation = 7;
             pessimism = 0.35; 
         }
         
-        // The final shift is the bell curve value plus the pessimism bias, scaled by the max perturbation.
-        // A positive shift means a worse predicted rank (e.g., rank 15 -> 17)
-        // A negative shift means a better predicted rank (e.g., rank 15 -> 13)
         const perturbation = Math.round((bellCurveRandom + pessimism) * maxPerturbation);
         let predictedRank = originalRank + perturbation;
 
-        // Clamp to be within 1-20
         predictedRank = Math.max(1, Math.min(20, predictedRank));
 
         return {
             teamId: team.teamId,
             originalRank: team.rank,
             predictedRank: predictedRank,
-            // Add a random tie-breaker for sorting
             tieBreaker: random(),
         };
     });
 
-    // Sort by the new predicted rank to handle collisions, using tie-breaker if needed
     perturbedStandings.sort((a, b) => a.predictedRank - b.predictedRank || a.tieBreaker - b.tieBreaker);
     
-    // This array will hold the final, de-duplicated ranking.
     const finalTeamIds = new Array(20).fill(null);
     const assignedRanks = new Set<number>();
 
-    // First pass: assign teams to their desired rank if it's available.
     perturbedStandings.forEach(p => {
         if (!assignedRanks.has(p.predictedRank)) {
             finalTeamIds[p.predictedRank - 1] = p.teamId;
@@ -298,10 +293,8 @@ const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed:
         }
     });
     
-    // Get a list of teams that couldn't be placed in the first pass.
     const unplacedTeams = perturbedStandings.filter(p => !finalTeamIds.includes(p.teamId));
 
-    // Second pass: fill in the gaps with the unplaced teams.
     for (let i = 0; i < 20 && unplacedTeams.length > 0; i++) {
         if (finalTeamIds[i] === null) {
             finalTeamIds[i] = unplacedTeams.shift()!.teamId;
@@ -348,19 +341,21 @@ const previousSeasonPlayerRanks: {[key: string]: number} = {};
     previousSeasonPlayerRanks[user.id] = index + 1;
   });
 
-const userHistories: UserHistory[] = usersData.map(user => {
+export const userHistories: UserHistory[] = usersData.map(user => {
     let weeklyScores: WeeklyScore[] = [];
     weeklyScores.push({ week: 0, score: 0, rank: previousSeasonPlayerRanks[user.id] });
 
     let lastScore = 0;
     
     let seed = parseInt(user.id.replace('usr_', ''), 10);
-    // Specific seed manipulation to achieve the desired outcome dynamically
-    if (user.id === 'usr_38') { // Hannah -> MiMoM
+    if (user.id === 'usr_38') { // Hannah
       seed += 50; 
     }
-    if (['usr_22', 'usr_26', 'usr_41'].includes(user.id)) { // Emily, Sofia, Isaac -> JoRuMiMoM
+    if (['usr_22', 'usr_26', 'usr_41'].includes(user.id)) { // Emily, Sofia, Isaac
       seed += 20; 
+    }
+     if (user.id === 'usr_42') { // Addison
+      seed += 20;
     }
 
 
@@ -447,3 +442,31 @@ const finalUsers: User[] = usersData.map(userStub => {
 });
 
 export const users: User[] = finalUsers.sort((a, b) => a.rank - b.rank);
+
+
+const TOTAL_CHART_WEEKS = 6;
+const currentWeekNumber = currentStandings[0]?.gamesPlayed || 1;
+
+export const weeklyTeamStandings: WeeklyTeamStanding[] = teams.flatMap(team => {
+    const random = mulberry32(parseInt(team.id.replace('team_', ''), 10));
+    const finalRank = currentStandings.find(s => s.teamId === team.id)?.rank || 10;
+    
+    const weeklyRanks: WeeklyTeamStanding[] = [];
+    
+    // Work backwards from the final rank
+    let lastRank = finalRank;
+    for (let i = 0; i < TOTAL_CHART_WEEKS; i++) {
+        const week = currentWeekNumber - i;
+        if (week < 1) continue;
+
+        if (i === 0) {
+            weeklyRanks.push({ week, teamId: team.id, rank: finalRank });
+        } else {
+             const fluctuation = Math.round((random() - 0.5) * 4); // Fluctuate by up to +/- 2 ranks per week
+             const newRank = Math.max(1, Math.min(20, lastRank + fluctuation));
+             weeklyRanks.push({ week, teamId: team.id, rank: newRank });
+             lastRank = newRank;
+        }
+    }
+    return weeklyRanks.reverse(); // Ensure chronological order
+});
