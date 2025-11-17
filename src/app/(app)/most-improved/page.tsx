@@ -116,21 +116,26 @@ export default function MostImprovedPage() {
     });
   }, [sortedByImprovement, currentMonthName, currentYear]);
 
-  const ladderWithRanks = useMemo(() => {
+  const { ladderWithRanks, firstPlaceRankChange, secondPlaceRankChange } = useMemo(() => {
     let rank = 0;
     let lastRankChange = Infinity;
-    return sortedByImprovement.map((user, index) => {
+    const rankedUsers = sortedByImprovement.map((user, index) => {
       if (user.rankChange < lastRankChange) {
         rank = index + 1;
         lastRankChange = user.rankChange;
       }
       return { ...user, displayRank: rank };
     });
+    
+    const firstPlaceRankChange = rankedUsers.find(u => u.displayRank === 1)?.rankChange;
+    const secondPlaceRankChange = rankedUsers.find(u => u.displayRank === 2)?.rankChange;
+
+    return { ladderWithRanks: rankedUsers, firstPlaceRankChange, secondPlaceRankChange };
   }, [sortedByImprovement]);
 
-  const getLadderRankColor = (rank: number) => {
-    if (rank === 1) return 'bg-yellow-400/20';
-    if (rank === 2) return 'bg-slate-400/20';
+  const getLadderRankColor = (user: (typeof ladderWithRanks)[0]) => {
+    if (user.rankChange > 0 && user.rankChange === firstPlaceRankChange) return 'bg-yellow-400/20';
+    if (user.rankChange > 0 && user.rankChange === secondPlaceRankChange) return 'bg-slate-400/20';
     return '';
   };
 
@@ -162,11 +167,11 @@ export default function MostImprovedPage() {
                         <TableBody>
                         {ladderWithRanks.map((user) => {
                             const RankIcon = Icons[getRankChangeIcon(user.rankChange) as IconName];
-                            const rankColor = getLadderRankColor(user.displayRank);
+                            const rankColor = getLadderRankColor(user);
                             return (
-                                <TableRow key={user.id} className={cn(rankColor, "border-b-4 border-transparent")}>
-                                    <TableCell className={cn("font-medium text-center", rankColor && 'first:rounded-l-md')}>{user.displayRank}</TableCell>
-                                    <TableCell className={cn(rankColor)}>
+                                <TableRow key={user.id} className="border-b-4 border-transparent">
+                                    <TableCell className={cn("p-2 font-medium text-center", rankColor, rankColor && 'rounded-l-md')}>{user.displayRank}</TableCell>
+                                    <TableCell className={cn("p-2", rankColor)}>
                                     <div className="flex items-center gap-3">
                                         <Avatar className="h-9 w-9">
                                         <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
@@ -175,14 +180,14 @@ export default function MostImprovedPage() {
                                         <span>{user.name}</span>
                                     </div>
                                     </TableCell>
-                                    <TableCell className={cn("text-center", rankColor)}>
+                                    <TableCell className={cn("p-2 text-center", rankColor)}>
                                         <div className="flex items-center justify-center gap-1 font-bold text-lg">
                                         <RankIcon className="size-5" />
                                         <span>{Math.abs(user.rankChange)}</span>
                                         </div>
                                     </TableCell>
-                                    <TableCell className={cn("text-center font-medium", rankColor)}>{formatPointsChange(user.scoreChange)}</TableCell>
-                                    <TableCell className={cn("text-center font-bold", rankColor && 'last:rounded-r-md')}>{user.score}</TableCell>
+                                    <TableCell className={cn("p-2 text-center font-medium", rankColor)}>{formatPointsChange(user.scoreChange)}</TableCell>
+                                    <TableCell className={cn("p-2 text-center font-bold", rankColor, rankColor && 'rounded-r-md')}>{user.score}</TableCell>
                                 </TableRow>
                             );
                         })}
@@ -193,7 +198,7 @@ export default function MostImprovedPage() {
             </div>
             <div className="lg:col-span-3">
                  <Card>
-                    <CardHeader>
+                    <CardHeader className="bg-gradient-to-r from-yellow-400/20 via-yellow-400/5 to-slate-400/20">
                         <CardTitle>MiMoM Hall of Fame</CardTitle>
                         <CardDescription>Previous winners and runners-up.</CardDescription>
                     </CardHeader>
