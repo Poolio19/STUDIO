@@ -49,7 +49,10 @@ const currentWeek = currentStandings[0]?.gamesPlayed || 1;
 export default function MostImprovedPage() {
   const sortedByImprovement = [...users].sort((a, b) => b.rankChange - a.rankChange);
   const mostImprovedPlayer = sortedByImprovement[0];
-  const currentMonthName = new Date().toLocaleString('default', { month: 'long' });
+  
+  // For design purposes, we assume it's mid-September
+  const currentMonthName = 'September';
+  const currentYear = 2025;
 
   const mimoMWithDetails = useMemo(() => {
     const awardsByMonth: { [key: string]: { winners: any[], runnersUp: any[] } } = {};
@@ -72,7 +75,7 @@ export default function MostImprovedPage() {
     return seasonMonths.map(seasonMonth => {
         const key = seasonMonth.special ? seasonMonth.special : `${seasonMonth.month}-${seasonMonth.year}`;
         const awards = awardsByMonth[key];
-        const isCurrentMonth = seasonMonth.month === currentMonthName && seasonMonth.year === new Date().getFullYear();
+        const isCurrentMonth = seasonMonth.month === currentMonthName && seasonMonth.year === currentYear;
 
         let currentLeaders: User[] | null = null;
         if (isCurrentMonth && !awards) {
@@ -89,8 +92,8 @@ export default function MostImprovedPage() {
             winners: awards?.winners.length > 0 ? awards.winners : null,
             runnersUp: awards?.runnersUp.length > 0 ? awards.runnersUp : null
         }
-    });
-  }, [sortedByImprovement, currentMonthName]);
+    }).filter(m => new Date(m.year, seasonMonths.findIndex(sm => sm.month === m.month)) <= new Date(currentYear, seasonMonths.findIndex(sm => sm.month === currentMonthName)));
+  }, [sortedByImprovement, currentMonthName, currentYear]);
 
   return (
     <div className="flex flex-col gap-8">
@@ -192,7 +195,7 @@ export default function MostImprovedPage() {
                                                 </Avatar>
                                                 <div className="text-left">
                                                     <p className="text-sm font-bold">{winner.name}</p>
-                                                    <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">{monthlyAward.winners && monthlyAward.winners.length > 1 ? 'JoMiMoM' : 'MiMoM'}</p>
+                                                    {monthlyAward.winners && <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">{monthlyAward.winners && monthlyAward.winners.length > 1 ? 'JoMiMoM' : 'MiMoM'}</p>}
                                                 </div>
                                             </div>
                                         ))}
