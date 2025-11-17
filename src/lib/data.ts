@@ -205,11 +205,7 @@ export const seasonMonths: SeasonMonth[] = [
 
 export const monthlyMimoM: MonthlyMimoM[] = [
     { month: 'August', year: 2025, userId: 'usr_12', type: 'winner' },
-    { month: 'September', year: 2025, userId: 'usr_5', type: 'winner' },
-    { month: 'September', year: 2025, userId: 'usr_18', type: 'runner-up' },
-    { month: 'September', year: 2025, userId: 'usr_21', type: 'runner-up' },
-    { month: 'October', year: 2025, userId: 'usr_2', type: 'winner' },
-    { month: 'October', year: 2025, userId: 'usr_9', type: 'winner' },
+    { month: 'August', year: 2025, userId: 'usr_22', type: 'runner-up' },
 ];
 
 // --- DYNAMIC & DETERMINISTIC DATA GENERATION ---
