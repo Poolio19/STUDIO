@@ -26,20 +26,13 @@ import {
 } from '@/components/ui/chart';
 import { WeeklyTeamStanding, Team } from '@/lib/data';
 import * as React from 'react';
-import { cn } from '@/lib/utils';
 
 interface TeamStandingsChartProps {
   chartData: WeeklyTeamStanding[];
   sortedTeams: (Team & { rank: number })[];
 }
 
-const CustomLegend = ({
-  payload,
-  chartConfig,
-}: {
-  payload: any[];
-  chartConfig: ChartConfig;
-}) => {
+const CustomLegend = ({ payload }: { payload: any[] }) => {
   return (
     <ul className="absolute right-0 top-[20px] bottom-[20px] flex flex-col justify-between text-xs pr-4">
       {payload.map((entry: any, index: number) => (
@@ -166,7 +159,7 @@ export function TeamStandingsChart({
               </LineChart>
             </ResponsiveContainer>
           </ChartContainer>
-          <CustomLegend payload={legendPayload} chartConfig={chartConfig} />
+          <CustomLegend payload={legendPayload} />
         </div>
       </CardContent>
     </Card>
