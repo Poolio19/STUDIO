@@ -356,12 +356,13 @@ const userHistories: UserHistory[] = usersData.map(user => {
     
     let seed = parseInt(user.id.replace('usr_', ''), 10);
     // Specific seed manipulation to achieve the desired outcome dynamically
-    if (user.id === 'usr_38') { // Hannah
+    if (user.id === 'usr_38') { // Hannah -> MiMoM
       seed += 50; 
     }
-    if (user.id === 'usr_42') { // Addison
-      seed += 40; 
+    if (['usr_22', 'usr_26', 'usr_41'].includes(user.id)) { // Emily, Sofia, Isaac -> JoRuMiMoM
+      seed += 20; 
     }
+
 
     const random = mulberry32(seed * 42); 
 

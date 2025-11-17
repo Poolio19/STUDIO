@@ -74,6 +74,8 @@ export default function MostImprovedPage() {
         }
       }
     });
+
+    const { firstPlaceRankChange, secondPlaceRankChange } = ladderWithRanks;
     
     return seasonMonths.map(seasonMonth => {
         const key = seasonMonth.special ? seasonMonth.special : `${seasonMonth.month}-${seasonMonth.year}`;
@@ -84,11 +86,22 @@ export default function MostImprovedPage() {
         const isFuture = seasonMonth.year > currentYear || (seasonMonth.year === currentYear && monthIndex > currentMonthIndex);
 
         let currentLeaders: User[] | null = null;
+        let currentRunnersUp: User[] | null = null;
+        
         if (isCurrentMonth && (!awards || awards.winners.length === 0)) {
-            const regularPlayersSorted = sortedByImprovement.filter(u => !u.isPro);
-            const maxRankChange = regularPlayersSorted.length > 0 ? regularPlayersSorted[0].rankChange : 0;
-            if (maxRankChange > 0) {
-              currentLeaders = regularPlayersSorted.filter(u => u.rankChange === maxRankChange);
+            const regularPlayersSorted = sortedByImprovement.filter(u => !u.isPro && u.rankChange > 0);
+            
+            if (regularPlayersSorted.length > 0) {
+                const maxRankChange = regularPlayersSorted[0].rankChange;
+                currentLeaders = regularPlayersSorted.filter(u => u.rankChange === maxRankChange);
+
+                const remainingPlayers = regularPlayersSorted.filter(u => u.rankChange < maxRankChange);
+                if (remainingPlayers.length > 0) {
+                    const secondMaxRankChange = remainingPlayers[0].rankChange;
+                    if (secondMaxRankChange > 0) {
+                        currentRunnersUp = remainingPlayers.filter(u => u.rankChange === secondMaxRankChange);
+                    }
+                }
             }
         }
         
@@ -97,6 +110,7 @@ export default function MostImprovedPage() {
             isCurrentMonth,
             isFuture,
             currentLeaders,
+            currentRunnersUp,
             winners: awards?.winners.length > 0 ? awards.winners : null,
             runnersUp: awards?.runnersUp.length > 0 ? awards.runnersUp : null
         }
@@ -119,7 +133,7 @@ export default function MostImprovedPage() {
     });
   }, [sortedByImprovement, currentMonthName, currentYear]);
 
-  const { ladderWithRanks, firstPlaceRankChange, secondPlaceRankChange } = useMemo(() => {
+  const ladderWithRanks = useMemo(() => {
     const regularPlayersSorted = sortedByImprovement.filter(u => !u.isPro);
     let rank = 0;
     let lastRankChange = Infinity;
@@ -137,9 +151,9 @@ export default function MostImprovedPage() {
     return { ladderWithRanks: rankedUsers, firstPlaceRankChange, secondPlaceRankChange };
   }, [sortedByImprovement]);
 
-  const getLadderRankColor = (user: (typeof ladderWithRanks)[0]) => {
-    if (user.rankChange > 0 && user.rankChange === firstPlaceRankChange) return 'bg-yellow-400/20';
-    if (user.rankChange > 0 && user.rankChange === secondPlaceRankChange) return 'bg-slate-400/20';
+  const getLadderRankColor = (user: (typeof ladderWithRanks.ladderWithRanks)[0]) => {
+    if (user.rankChange > 0 && user.rankChange === ladderWithRanks.firstPlaceRankChange) return 'bg-yellow-400/20';
+    if (user.rankChange > 0 && user.rankChange === ladderWithRanks.secondPlaceRankChange) return 'bg-slate-400/20';
     return '';
   };
 
@@ -169,7 +183,7 @@ export default function MostImprovedPage() {
                         </TableRow>
                         </TableHeader>
                         <TableBody>
-                        {ladderWithRanks.map((user) => {
+                        {ladderWithRanks.ladderWithRanks.map((user) => {
                             const RankIcon = Icons[getRankChangeIcon(user.rankChange) as IconName];
                             const rankColor = getLadderRankColor(user);
                             return (
@@ -208,12 +222,15 @@ export default function MostImprovedPage() {
                     </CardHeader>
                     <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {mimoMWithDetails.map((monthlyAward, index) => {
-                            const hasAwards = monthlyAward.winners || monthlyAward.runnersUp || monthlyAward.currentLeaders;
+                            const hasAwards = monthlyAward.winners || monthlyAward.runnersUp || monthlyAward.currentLeaders || monthlyAward.currentRunnersUp;
                             const isFuture = monthlyAward.isFuture;
                             const isCurrent = monthlyAward.isCurrentMonth;
                             
-                            const winnerPrize = 10 / (monthlyAward.winners?.length || monthlyAward.currentLeaders?.length || 1);
-                            const runnerUpPrize = 5 / (monthlyAward.runnersUp?.length || 1);
+                            const winners = monthlyAward.winners || monthlyAward.currentLeaders;
+                            const runnersUp = monthlyAward.runnersUp || monthlyAward.currentRunnersUp;
+
+                            const winnerPrize = 10 / (winners?.length || 1);
+                            const runnerUpPrize = (winners?.length === 1 && runnersUp?.length) ? (5 / runnersUp.length) : 0;
 
                             return (
                             <div key={index} className={cn("p-3 border rounded-lg flex flex-col items-center justify-start text-center", {
@@ -224,7 +241,7 @@ export default function MostImprovedPage() {
                                 
                                 {hasAwards ? (
                                     <div className="w-full space-y-2">
-                                        {(monthlyAward.winners || monthlyAward.currentLeaders)?.map(winner => (
+                                        {winners?.map(winner => (
                                             <div key={winner.userId || winner.id} className="bg-yellow-400/20 p-2 rounded-md flex items-center gap-3">
                                                 <Avatar className="h-10 w-10">
                                                     <AvatarImage src={getAvatarUrl(winner.avatar || '')} alt={winner.name} data-ai-hint="person portrait" />
@@ -232,21 +249,21 @@ export default function MostImprovedPage() {
                                                 </Avatar>
                                                 <div className="text-left">
                                                     <p className="text-sm font-bold">{winner.name} - £{winnerPrize % 1 === 0 ? winnerPrize : winnerPrize.toFixed(2)}</p>
-                                                    {monthlyAward.winners && <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">{(monthlyAward.winners.length > 1 ? 'JoMiMoM' : 'MiMoM')}</p>}
+                                                    {monthlyAward.winners && <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">{(winners.length > 1 ? 'JoMiMoM' : 'MiMoM')}</p>}
                                                     {monthlyAward.currentLeaders && <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">Current Leader</p>}
                                                 </div>
                                             </div>
                                         ))}
 
-                                        {monthlyAward.runnersUp && (monthlyAward.winners?.length === 1 || (monthlyAward.currentLeaders?.length === 1 && !monthlyAward.winners)) && monthlyAward.runnersUp.map(runnerUp => (
-                                            <div key={runnerUp.userId} className="bg-slate-400/20 p-2 rounded-md flex items-center gap-3">
+                                        {runnerUpPrize > 0 && runnersUp?.map(runnerUp => (
+                                            <div key={runnerUp.userId || runnerUp.id} className="bg-slate-400/20 p-2 rounded-md flex items-center gap-3">
                                                 <Avatar className="h-10 w-10">
                                                     <AvatarImage src={getAvatarUrl(runnerUp.avatar || '')} alt={runnerUp.name} data-ai-hint="person portrait" />
                                                     <AvatarFallback>{runnerUp.name?.charAt(0)}</AvatarFallback>
                                                 </Avatar>
                                                 <div className="text-left">
                                                     <p className="text-sm font-bold">{runnerUp.name} - £{runnerUpPrize % 1 === 0 ? runnerUpPrize : runnerUpPrize.toFixed(2)}</p>
-                                                    <p className="text-xs font-semibold text-slate-800/80 dark:text-slate-200/80">{(monthlyAward.runnersUp!.length > 1 ? 'JoRuMiMoM' : 'RuMiMoM')}</p>
+                                                    <p className="text-xs font-semibold text-slate-800/80 dark:text-slate-200/80">{(runnersUp.length > 1 ? 'JoRuMiMoM' : 'RuMiMoM')}</p>
                                                 </div>
                                             </div>
                                         ))}
@@ -270,5 +287,3 @@ export default function MostImprovedPage() {
     </div>
   );
 }
-
-    
