@@ -23,11 +23,10 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
+  ChartConfig,
 } from '@/components/ui/chart';
 import { teams, WeeklyTeamStanding, Team } from '@/lib/data';
 import * as React from 'react';
-import { cn } from '@/lib/utils';
-import { ChartConfig } from '@/components/ui/chart';
 
 interface TeamStandingsChartProps {
   chartData: WeeklyTeamStanding[];
@@ -36,16 +35,17 @@ interface TeamStandingsChartProps {
 
 
 export function TeamStandingsChart({ chartData, sortedTeams }: TeamStandingsChartProps) {
-  const chartConfig = React.useMemo(() => {
+    const chartConfig = React.useMemo(() => {
     const config: ChartConfig = {};
     sortedTeams.forEach((team, index) => {
-        config[team.name] = {
-            label: team.name,
-            color: `hsl(var(--chart-color-${index + 1}))`,
-        };
+      config[team.name] = {
+        label: team.name,
+        color: `hsl(var(--chart-color-${index + 1}))`,
+      };
     });
     return config;
   }, [sortedTeams]);
+
 
   const transformedData = React.useMemo(() => {
     const weeks = [...new Set(chartData.map(d => d.week))].sort((a,b) => a-b);
@@ -77,7 +77,7 @@ export function TeamStandingsChart({ chartData, sortedTeams }: TeamStandingsChar
               data={transformedData}
               margin={{
                 top: 5,
-                right: 120, 
+                right: 120,
                 left: -20,
                 bottom: 5,
               }}
@@ -101,11 +101,10 @@ export function TeamStandingsChart({ chartData, sortedTeams }: TeamStandingsChar
                 cursor={{ strokeDasharray: '3 3' }}
                 content={
                     <ChartTooltipContent
-                        labelKey="name"
                         indicator="dot"
                         formatter={(value, name) => (
                            <div className="flex items-center gap-2">
-                            <div className="size-2.5 rounded-sm" style={{ backgroundColor: `var(--color-${name})` }}/>
+                            <div className="size-2.5 rounded-sm" style={{ backgroundColor: chartConfig[name as string]?.color }}/>
                             <span className="font-medium">{name}:</span>
                             <span className="text-muted-foreground">Rank {value}</span>
                            </div>
@@ -113,12 +112,12 @@ export function TeamStandingsChart({ chartData, sortedTeams }: TeamStandingsChar
                     />
                 }
               />
-              <Legend 
-                layout="vertical" 
-                verticalAlign="middle" 
+              <Legend
+                layout="vertical"
+                verticalAlign="middle"
                 align="right"
                 content={({ payload }) => {
-                  const orderedPayload = sortedTeams.map(team => 
+                  const orderedPayload = sortedTeams.map(team =>
                     payload?.find(p => p.value === team.name)
                   ).filter(Boolean);
 
@@ -126,9 +125,10 @@ export function TeamStandingsChart({ chartData, sortedTeams }: TeamStandingsChar
                     <ul className="flex flex-col space-y-1 text-xs">
                       {orderedPayload.map((item) => {
                         if (!item) return null;
+                        const config = chartConfig[item.value as keyof typeof chartConfig];
                         return (
                           <li key={item.value} className="flex items-center gap-2">
-                            <span className="size-2.5 rounded-full" style={{ backgroundColor: item.color }}/>
+                            <span className="size-2.5 rounded-full" style={{ backgroundColor: config?.color }}/>
                             <span>{item.value}</span>
                           </li>
                         );
@@ -142,7 +142,7 @@ export function TeamStandingsChart({ chartData, sortedTeams }: TeamStandingsChar
                       key={team.id}
                       dataKey={team.name}
                       type="monotone"
-                      stroke={`var(--color-${team.name})`}
+                      stroke={chartConfig[team.name]?.color}
                       strokeWidth={3}
                       dot={false}
                     />
