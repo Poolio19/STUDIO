@@ -26,6 +26,9 @@ type ConsensusData = {
   [teamId: string]: number[];
 };
 
+const lightTextColours = ['#FFFFFF', '#FBE122', '#99D6EA', '#FDBE11'];
+
+
 export default function ConsensusPage() {
   const standingsWithTeamData = useMemo(() => {
     const teamMap = new Map(teams.map(t => [t.id, t]));
@@ -137,14 +140,17 @@ export default function ConsensusPage() {
                         const maxCount = predictions.length;
                         const alpha = count > 0 ? 0.1 + (0.9 * (count / maxCount)) : 0;
                         
-                        const cellStyle: React.CSSProperties = {};
+                        const cellStyle: React.CSSProperties = {
+                          color: teamData.textColour
+                        };
+                        
                         if (teamData.bgColourSolid && count > 0) {
                           cellStyle.backgroundColor = hexToRgba(teamData.bgColourSolid, alpha);
-                          // Set text color based on alpha
-                          if (alpha < 0.4) {
-                            cellStyle.color = teamData.bgColourSolid;
-                          } else {
-                            cellStyle.color = teamData.textColour;
+                          
+                          if (teamData.textColour && lightTextColours.includes(teamData.textColour)) {
+                              if (alpha < 0.4) {
+                                cellStyle.color = teamData.bgColourSolid;
+                              }
                           }
                         }
 
