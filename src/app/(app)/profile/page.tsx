@@ -158,9 +158,9 @@ export default function ProfilePage() {
   return (
     <div className="space-y-8">
       <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
-        <h1 className="text-3xl font-bold tracking-tight">Your Profile</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Personal Pred Profile</h1>
         <p className="text-slate-400">
-          Here's a look at your prediction performance.
+          Pred Performance and Personal Particulars
         </p>
       </header>
 
