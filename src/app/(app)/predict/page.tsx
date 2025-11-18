@@ -164,7 +164,7 @@ export default function PredictPage() {
                   </div>
                  </div>
                     <div className="flex-1 border rounded-md overflow-hidden">
-                      <Table className="h-full">
+                      <Table className="h-full border-separate border-spacing-y-1">
                         <TableBody>
                           {standingsWithTeamData.map(team => {
                             if (!team) return null;
@@ -173,13 +173,13 @@ export default function PredictPage() {
                             return (
                               <TableRow
                                 key={team.id}
-                                className="h-[53px] border-b-white/20"
+                                className="h-[53px] border-b-4 border-transparent"
                                 style={{
                                   backgroundColor: team.bgColourFaint,
                                   color: team.textColour,
                                 }}
                               >
-                                <TableCell className="font-medium w-[50px] opacity-80">{team.rank}</TableCell>
+                                <TableCell className="font-medium w-[50px] opacity-80 rounded-l-md">{team.rank}</TableCell>
                                 <TableCell className="w-[48px] p-0" style={{backgroundColor: team.bgColourFaint}}>
                                   <div className="flex items-center justify-center h-full">
                                     <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}>
@@ -199,7 +199,7 @@ export default function PredictPage() {
                                 <TableCell className="text-right font-semibold w-16">
                                   {team.points}
                                 </TableCell>
-                                <TableCell className="text-right w-16">
+                                <TableCell className="text-right w-16 rounded-r-md">
                                   {team.goalDifference > 0 ? '+' : ''}{team.goalDifference}
                                 </TableCell>
                               </TableRow>
@@ -216,4 +216,3 @@ export default function PredictPage() {
     </div>
   );
 }
-
