@@ -125,8 +125,8 @@ export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers }: PlayerR
         className="absolute"
         style={{
           right: 0,
-          top: '25px',
-          bottom: '-7.5px',
+          top: '12.5px',
+          bottom: '42.5px',
           width: '130px',
           paddingLeft: '1rem',
         }}
