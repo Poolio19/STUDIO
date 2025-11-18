@@ -100,7 +100,7 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers }: 
         style={{
           right: 0,
           top: '-25px',
-          bottom: '40px',
+          bottom: '50px',
           width: '130px',
           paddingLeft: '1rem',
           transform: 'scale(0.9)',
