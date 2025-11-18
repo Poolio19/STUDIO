@@ -88,6 +88,7 @@ export default function StandingsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[50px]">#</TableHead>
+                <TableHead className="w-[40px]"></TableHead>
                 <TableHead>Team</TableHead>
                 <TableHead className="text-center">Plyd</TableHead>
                 <TableHead className="text-center">W</TableHead>
@@ -109,22 +110,27 @@ export default function StandingsPage() {
                     key={team.id}
                     className="border-b-white/20"
                     style={{
-                      backgroundColor: team.bgColour,
+                      backgroundColor: team.bgColourFaint,
                       color: team.textColour,
                     }}
                   >
                     <TableCell className="font-medium">{team.rank}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
+                    <TableCell
+                      className="p-0"
+                      style={{ backgroundColor: team.bgColourSolid }}
+                    >
+                      <div className="flex items-center justify-center h-full">
                         <TeamIcon
                           className={cn(
                             "size-5",
                             isLiverpool && "scale-x-[-1]"
                           )}
-                          style={{ color: team.colour }}
+                          style={{ color: team.iconColour }}
                         />
-                        <span className="font-medium">{team.name}</span>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-medium">{team.name}</span>
                     </TableCell>
                     <TableCell className="text-center">{team.gamesPlayed}</TableCell>
                     <TableCell className="text-center">{team.wins}</TableCell>
@@ -144,5 +150,3 @@ export default function StandingsPage() {
     </div>
   );
 }
-
-    

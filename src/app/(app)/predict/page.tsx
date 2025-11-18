@@ -26,8 +26,9 @@ const predictionSchema = z.object({
   teamId: z.string(),
   teamName: z.string(),
   teamLogo: z.string(),
-  teamColour: z.string().optional(),
-  bgColour: z.string().optional(),
+  iconColour: z.string().optional(),
+  bgColourFaint: z.string().optional(),
+  bgColourSolid: z.string().optional(),
   textColour: z.string().optional(),
   id: z.string(), // Add id to schema
 });
@@ -53,8 +54,9 @@ export default function PredictPage() {
           teamId: standing.teamId,
           teamName: team?.name || 'Unknown Team',
           teamLogo: team?.logo || 'match',
-          teamColour: team?.colour,
-          bgColour: team?.bgColour,
+          iconColour: team?.iconColour,
+          bgColourFaint: team?.bgColourFaint,
+          bgColourSolid: team?.bgColourSolid,
           textColour: team?.textColour,
         };
       });
@@ -123,25 +125,27 @@ export default function PredictPage() {
                           key={item.teamId}
                           value={item}
                           className={cn(
-                            "flex items-center gap-4 h-[53px] px-4 cursor-grab active:cursor-grabbing",
+                            "flex items-center h-[53px] cursor-grab active:cursor-grabbing",
                             index < items.length - 1 && "border-b border-white/20"
                           )}
                            style={{
-                            backgroundColor: item.bgColour,
+                            backgroundColor: item.bgColourFaint,
                             color: item.textColour
                           }}
                         >
-                          <div className={cn("text-base font-medium w-6 text-center opacity-80")}>
+                          <div className={cn("text-base font-medium w-12 text-center opacity-80")}>
                             {index + 1}
                           </div>
-                           <TeamIcon
-                            className={cn(
-                              "size-5",
-                              isLiverpool && "scale-x-[-1]"
-                            )}
-                            style={{ color: item.teamColour }}
-                          />
-                          <span className="font-medium text-sm">{item.teamName}</span>
+                          <div className="w-12 h-full flex items-center justify-center" style={{backgroundColor: item.bgColourSolid}}>
+                            <TeamIcon
+                              className={cn(
+                                "size-5",
+                                isLiverpool && "scale-x-[-1]"
+                              )}
+                              style={{ color: item.iconColour }}
+                            />
+                          </div>
+                          <span className="font-medium text-sm pl-4">{item.teamName}</span>
                         </Reorder.Item>
                       );
                     })}
@@ -168,22 +172,24 @@ export default function PredictPage() {
                                 key={team.id}
                                 className="h-[53px] border-b-white/20"
                                 style={{
-                                  backgroundColor: team.bgColour,
+                                  backgroundColor: team.bgColourFaint,
                                   color: team.textColour,
                                 }}
                               >
                                 <TableCell className="font-medium w-[50px] opacity-80">{team.rank}</TableCell>
-                                <TableCell>
-                                  <div className="flex items-center gap-2">
-                                     <TeamIcon
+                                <TableCell className="w-[48px] p-0" style={{backgroundColor: team.bgColourSolid}}>
+                                  <div className="flex items-center justify-center h-full">
+                                    <TeamIcon
                                       className={cn(
                                         "size-5",
                                         isLiverpool && "scale-x-[-1]"
                                       )}
-                                      style={{ color: team.colour }}
+                                      style={{ color: team.iconColour }}
                                     />
+                                    </div>
+                                </TableCell>
+                                <TableCell>
                                     <span className="truncate">{team.name}</span>
-                                  </div>
                                 </TableCell>
                                 <TableCell className="text-right font-semibold w-16">
                                   {team.points}
