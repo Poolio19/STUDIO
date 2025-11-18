@@ -28,13 +28,13 @@ type ConsensusData = {
 
 export default function ConsensusPage() {
   const standingsWithTeamData = useMemo(() => {
-    return previousSeasonStandings
-      .map((standing) => {
-        const team = teams.find((t) => t.id === standing.teamId);
-        return team ? { ...standing, ...team } : null;
+    const previousRanks = new Map(previousSeasonStandings.map(s => [s.teamId, s.rank]));
+    return teams
+      .map(team => {
+        const rank = previousRanks.get(team.id) || 99; // Assign a high rank if not found to sort to bottom
+        return { ...team, rank };
       })
-      .filter(Boolean)
-      .sort((a, b) => a!.rank - b!.rank);
+      .sort((a, b) => a.rank - b.rank);
   }, []);
 
   const consensusData = useMemo((): ConsensusData => {
