@@ -29,6 +29,7 @@ const predictionSchema = z.object({
   teamColour: z.string().optional(),
   bgColour: z.string().optional(),
   textColour: z.string().optional(),
+  id: z.string(), // Add id to schema
 });
 
 const formSchema = z.object({
