@@ -96,7 +96,7 @@ export function TeamStandingsChart({
 
   const legendPayload = sortedTeams.map(team => ({
     ...team,
-    color: chartConfig[team.name].color as string,
+    color: chartConfig[team.name]?.color as string,
   }));
 
   return (
