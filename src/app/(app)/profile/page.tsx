@@ -174,12 +174,8 @@ export default function ProfilePage() {
       // Seed Users
       const usersCollectionRef = collection(firestore, 'users');
       allUsers.forEach(user => {
-        const totalScore = playerTeamScores
-          .filter(s => s.userId === user.id)
-          .reduce((acc, s) => acc + s.score, 0);
-        const userProfile = { ...user, score: totalScore };
         const userDocRef = doc(usersCollectionRef, user.id);
-        batch.set(userDocRef, userProfile);
+        batch.set(userDocRef, user);
       });
 
       // Seed Teams
