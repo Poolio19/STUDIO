@@ -21,6 +21,7 @@ export type Team = {
   id: string;
   name: string;
   logo: string;
+  colour?: string;
 };
 
 export type Prediction = {
@@ -123,26 +124,26 @@ let usersData: Omit<User, 'score' | 'rank' | 'previousRank' | 'previousScore' | 
 ];
 
 export const teams: Team[] = [
-    { id: 'team_1', name: 'Arsenal', logo: 'rocket' },
-    { id: 'team_2', name: 'Aston Villa', logo: 'orbit' },
-    { id: 'team_3', name: 'Bournemouth', logo: 'waves' },
-    { id: 'team_4', name: 'Brentford', logo: 'atom' },
-    { id: 'team_5', name: 'Brighton', logo: 'zap' },
-    { id: 'team_6', name: 'Chelsea', logo: 'anchor' },
-    { id: 'team_7', name: 'Crystal Palace', logo: 'atom' },
-    { id: 'team_8', name: 'Everton', logo: 'rocket' },
-    { id: 'team_9', name: 'Fulham', logo: 'orbit' },
-    { id: 'team_10', name: 'Ipswich Town', logo: 'waves' },
-    { id: 'team_11', name: 'Leicester City', logo: 'zap' },
-    { id: 'team_12', name: 'Liverpool', logo: 'anchor' },
-    { id: 'team_13', name: 'Man City', logo: 'atom' },
-    { id: 'team_14', name: 'Man Utd', logo: 'rocket' },
-    { id: 'team_15', name: 'Newcastle', logo: 'orbit' },
-    { id: 'team_16', name: 'Notts Forest', logo: 'waves' },
-    { id: 'team_17', name: 'Southampton', logo: 'zap' },
-    { id: 'team_18', name: 'Tottenham', logo: 'anchor' },
-    { id: 'team_19', name: 'West Ham', logo: 'atom' },
-    { id: 'team_20', name: 'Wolves', logo: 'rocket' },
+    { id: 'team_1', name: 'Arsenal', logo: 'swords', colour: 'text-red-600' },
+    { id: 'team_2', name: 'Aston Villa', logo: 'shield', colour: 'text-red-900' },
+    { id 'team_3', name: 'Bournemouth', logo: 'cherry', colour: 'text-red-600' },
+    { id: 'team_4', name: 'Brentford', logo: 'bee', colour: 'text-red-600' },
+    { id: 'team_5', name: 'Brighton', logo: 'bird', colour: 'text-blue-500' },
+    { id: 'team_6', name: 'Chelsea', logo: 'lion', colour: 'text-blue-600' },
+    { id: 'team_7', name: 'Crystal Palace', logo: 'bird', colour: 'text-blue-600' },
+    { id: 'team_8', name: 'Everton', logo: 'castle', colour: 'text-blue-700' },
+    { id: 'team_9', name: 'Fulham', logo: 'shield', colour: 'text-gray-900' },
+    { id: 'team_10', name: 'Ipswich Town', logo: 'horse', colour: 'text-blue-600' },
+    { id: 'team_11', name: 'Leicester City', logo: 'fox', colour: 'text-blue-600' },
+    { id: 'team_12', name: 'Liverpool', logo: 'bird', colour: 'text-red-600' },
+    { id: 'team_13', name: 'Man City', logo: 'ship', colour: 'text-sky-400' },
+    { id: 'team_14', name: 'Man Utd', logo: 'sparkles', colour: 'text-red-600' },
+    { id: 'team_15', name: 'Newcastle', logo: 'bird', colour: 'text-gray-900' },
+    { id: 'team_16', name: 'Notts Forest', logo: 'tree', colour: 'text-red-600' },
+    { id: 'team_17', name: 'Southampton', logo: 'flower', colour: 'text-red-600' },
+    { id: 'team_18', name: 'Tottenham', logo: 'bird', colour: 'text-gray-700' },
+    { id: 'team_19', name: 'West Ham', logo: 'hammer', colour: 'text-red-900' },
+    { id: 'team_20', name: 'Wolves', logo: 'wolf', colour: 'text-orange-400' },
 ];
 
 export const previousSeasonStandings: PreviousSeasonStanding[] = [

@@ -56,7 +56,7 @@ export default function ConsensusPage() {
 
   const positions = Array.from({ length: 20 }, (_, i) => i + 1);
 
-  const getCellColor = (count: number) => {
+  const getCellColour = (count: number) => {
     if (count > predictions.length / 2) return 'bg-primary/30';
     if (count > predictions.length / 4) return 'bg-primary/20';
     if (count > 0) return 'bg-primary/10';
@@ -105,14 +105,14 @@ export default function ConsensusPage() {
                       <TableCell className="sticky left-0 z-10 bg-card text-center font-medium">{index + 1}</TableCell>
                       <TableCell className="sticky left-[50px] z-10 bg-card">
                         <div className="flex items-center gap-3">
-                          <TeamIcon className="size-5" />
+                          <TeamIcon className={cn("size-5", teamData.colour)} />
                           <span className="font-medium">{teamData.name}</span>
                         </div>
                       </TableCell>
                       {predictionCounts.map((count, posIndex) => (
                         <TableCell
                           key={`${teamId}-${posIndex}`}
-                          className={cn('text-center font-medium', getCellColor(count))}
+                          className={cn('text-center font-medium', getCellColour(count))}
                         >
                           {count > 0 ? count : ''}
                         </TableCell>

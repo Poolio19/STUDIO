@@ -20,6 +20,7 @@ import { teams, currentStandings, weeklyTeamStandings } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
 import { TeamStandingsChart } from '@/components/charts/team-standings-chart';
 import { useMemo } from 'react';
+import { cn } from '@/lib/utils';
 
 export default function StandingsPage() {
     const { standingsWithTeamData, chartData } = useMemo(() => {
@@ -107,7 +108,7 @@ export default function StandingsPage() {
                     <TableCell className="font-medium">{team.rank}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <TeamIcon className="size-5" />
+                        <TeamIcon className={cn("size-5", team.colour)} />
                         <span className="font-medium">{team.name}</span>
                       </div>
                     </TableCell>
@@ -118,8 +119,7 @@ export default function StandingsPage() {
                     <TableCell className="text-center">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
                     <TableCell className="text-center">{team.goalsFor}</TableCell>
                     <TableCell className="text-center">{team.goalsAgainst}</TableCell>
-                    <TableCell className="text-right font-bold">{team.points}</TableCell>
-                  </TableRow>
+                    <TableCell className="text-right font-bold">{team.points}</TableCell>                  </TableRow>
                 );
               })}
             </TableBody>

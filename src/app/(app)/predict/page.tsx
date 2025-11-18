@@ -26,6 +26,7 @@ const predictionSchema = z.object({
   teamId: z.string(),
   teamName: z.string(),
   teamLogo: z.string(),
+  teamColour: z.string().optional(),
 });
 
 const formSchema = z.object({
@@ -49,6 +50,7 @@ export default function PredictPage() {
           teamId: standing.teamId,
           teamName: team?.name || 'Unknown Team',
           teamLogo: team?.logo || 'match',
+          teamColour: team?.colour,
         };
       });
   }, []);
@@ -122,7 +124,7 @@ export default function PredictPage() {
                           <div className="text-base font-medium w-6 text-center text-muted-foreground">
                             {index + 1}
                           </div>
-                          <TeamIcon className="size-5" />
+                          <TeamIcon className={cn("size-5", item.teamColour)} />
                           <span className="font-medium text-sm">{item.teamName}</span>
                         </Reorder.Item>
                       );
@@ -149,7 +151,7 @@ export default function PredictPage() {
                                 <TableCell className="font-medium w-[50px]">{team.rank}</TableCell>
                                 <TableCell>
                                   <div className="flex items-center gap-2">
-                                    <TeamIcon className="size-5" />
+                                    <TeamIcon className={cn("size-5", team.colour)} />
                                     <span className="truncate">{team.name}</span>
                                   </div>
                                 </TableCell>
