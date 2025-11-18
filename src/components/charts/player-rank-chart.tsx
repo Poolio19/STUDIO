@@ -19,15 +19,9 @@ import {
 import { User } from '@/lib/data';
 import * as React from 'react';
 
-interface PlayerRankChartProps {
-  chartData: any[];
-  yAxisDomain: [number, number];
-  sortedUsers: User[];
-}
-
 const CustomLegend = ({ sortedUsers, chartConfig }: any) => {
   return (
-    <div className="flex flex-col justify-between h-full">
+    <div className="flex flex-col justify-between">
       <div>
         <p className="text-xs font-medium mb-2">Player, Rank</p>
         <ul className="flex flex-col space-y-1 text-xs">
@@ -125,8 +119,8 @@ export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers }: PlayerR
         className="absolute"
         style={{
           right: 0,
-          top: '0px',
-          bottom: '-20px',
+          top: '20px',
+          bottom: '40px',
           width: '130px',
           paddingLeft: '1rem',
         }}
