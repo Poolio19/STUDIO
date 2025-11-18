@@ -130,7 +130,7 @@ export default function PredictPage() {
                           <div className={cn("text-base font-medium w-6 text-center", item.textColour ? `${item.textColour}/80` : 'text-muted-foreground')}>
                             {index + 1}
                           </div>
-                          <TeamIcon className={cn("size-5", item.textColour)} />
+                          <TeamIcon className={cn("size-5", item.teamColour)} />
                           <span className="font-medium text-sm">{item.teamName}</span>
                         </Reorder.Item>
                       );
@@ -157,7 +157,7 @@ export default function PredictPage() {
                                 <TableCell className={cn("font-medium w-[50px]", team.textColour ? `${team.textColour}/80` : '')}>{team.rank}</TableCell>
                                 <TableCell>
                                   <div className="flex items-center gap-2">
-                                    <TeamIcon className={cn("size-5", team.textColour)} />
+                                    <TeamIcon className={cn("size-5", team.teamColour)} />
                                     <span className="truncate">{team.name}</span>
                                   </div>
                                 </TableCell>

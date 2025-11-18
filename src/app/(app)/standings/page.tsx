@@ -104,7 +104,7 @@ export default function StandingsPage() {
                 if (!team) return null;
                 const TeamIcon = Icons[team.logo as IconName] || Icons.match;
                 return (
-                  <TableRow key={team.id}>
+                  <TableRow key={team.id} className={cn(team.bgColour, team.textColour)}>
                     <TableCell className="font-medium">{team.rank}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
