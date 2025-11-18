@@ -17,13 +17,12 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
-import { Team, Prediction } from '@/lib/data';
+import { Team, Prediction, CurrentStanding } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
-import { CurrentStanding } from '@/lib/data';
 
 type ConsensusData = {
   [teamId: string]: number[];
@@ -63,11 +62,13 @@ export default function ConsensusPage() {
     }, {} as ConsensusData);
 
     userPredictions.forEach((prediction) => {
-      prediction.rankings.forEach((teamId, index) => {
-        if (data[teamId]) {
-          data[teamId][index]++;
-        }
-      });
+      if (prediction.rankings) {
+        prediction.rankings.forEach((teamId, index) => {
+          if (data[teamId]) {
+            data[teamId][index]++;
+          }
+        });
+      }
     });
 
     return data;
