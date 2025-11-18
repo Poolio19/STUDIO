@@ -15,22 +15,39 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { teams, currentStandings, weeklyTeamStandings, teamRecentResults, TeamRecentResult } from '@/lib/data';
+import { weeklyTeamStandings, teamRecentResults, TeamRecentResult } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
 import { TeamStandingsChart } from '@/components/charts/team-standings-chart';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import { Team, CurrentStanding } from '@/lib/data';
 
 export default function StandingsPage() {
+    const firestore = useFirestore();
+    const teamsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
+    const standingsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'standings') : null, [firestore]);
+
+    const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsCollectionRef);
+    const { data: currentStandings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsCollectionRef);
+
+    const isLoading = teamsLoading || standingsLoading;
+
     const { standingsWithTeamData, chartData } = useMemo(() => {
+        if (!teams || !currentStandings) {
+            return { standingsWithTeamData: [], chartData: [] };
+        }
+
         const recentResultsMap = new Map(teamRecentResults.map(r => [r.teamId, r.results]));
+        const teamMap = new Map(teams.map(t => [t.id, t]));
 
         const initialData = currentStandings
             .map(standing => {
-                const team = teams.find(t => t.id === standing.teamId);
+                const team = teamMap.get(standing.teamId);
                 const recentResults = recentResultsMap.get(standing.teamId) || Array(6).fill('-');
-                return team ? { 
-                    ...standing, 
+                return team ? {
+                    ...standing,
                     ...team,
                     sortValue: standing.points + (standing.goalDifference / 100) + (standing.goalsFor / 1000),
                     recentResults: recentResults
@@ -42,7 +59,7 @@ export default function StandingsPage() {
             if (!a || !b) return 0;
             return b.sortValue - a.sortValue;
         });
-        
+
         let rank = 1;
         const finalStandings = sortedData.map((team, index) => {
             if (index > 0) {
@@ -54,7 +71,6 @@ export default function StandingsPage() {
             return { ...team!, rank: rank };
         });
 
-        // Transform data for the chart
         const weeks = [...new Set(weeklyTeamStandings.map(d => d.week))].sort((a, b) => a - b);
         const transformedChartData = weeks.map(week => {
             const weekData: { [key: string]: any } = { week };
@@ -70,7 +86,7 @@ export default function StandingsPage() {
         });
 
         return { standingsWithTeamData: finalStandings, chartData: transformedChartData };
-    }, []);
+    }, [teams, currentStandings]);
 
     const getResultColor = (result: 'W' | 'D' | 'L' | '-') => {
         switch (result) {
@@ -81,7 +97,7 @@ export default function StandingsPage() {
         }
     };
 
-    const gamesPlayed = currentStandings[0]?.gamesPlayed || 0;
+    const gamesPlayed = currentStandings?.[0]?.gamesPlayed || 0;
     const weekHeaders = Array.from({ length: 6 }, (_, i) => {
         const week = gamesPlayed - 5 + i;
         return week > 0 ? `WK${week}` : '';
@@ -94,7 +110,7 @@ export default function StandingsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Premier League</h1>
       </header>
 
-      <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData} />
+      <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData as (Team & { rank: number })[]} />
 
       <Card>
         <CardHeader className="items-center">
@@ -124,65 +140,69 @@ export default function StandingsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {standingsWithTeamData.map(team => {
-                if (!team) return null;
-                const TeamIcon = Icons[team.logo as IconName] || Icons.match;
-                const isLiverpool = team.id === 'team_12';
-                const resultsToDisplay = team.recentResults.slice(-weekHeaders.length);
+              {isLoading ? (
+                <TableRow><TableCell colSpan={17} className="text-center">Loading standings...</TableCell></TableRow>
+              ) : (
+                standingsWithTeamData.map(team => {
+                    if (!team) return null;
+                    const TeamIcon = Icons[team.logo as IconName] || Icons.match;
+                    const isLiverpool = team.id === 'team_12';
+                    const resultsToDisplay = team.recentResults.slice(-weekHeaders.length);
 
-                return (
-                  <TableRow
-                    key={team.id}
-                    style={{
-                      backgroundColor: team.bgColourFaint,
-                      color: team.textColour,
-                    }}
-                    className="border-b-4 border-transparent"
-                  >
-                    <TableCell className="font-medium rounded-l-md">{team.rank}</TableCell>
-                    <TableCell
-                      className="p-0"
+                    return (
+                    <TableRow
+                        key={team.id}
+                        style={{
+                        backgroundColor: team.bgColourFaint,
+                        color: team.textColour,
+                        }}
+                        className="border-b-4 border-transparent"
                     >
-                      <div className="flex items-center justify-center h-full">
-                        <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}>
-                          <TeamIcon
-                            className={cn(
-                              "size-5",
-                              isLiverpool && "scale-x-[-1]"
-                            )}
-                            style={{ color: team.iconColour }}
-                          />
+                        <TableCell className="font-medium rounded-l-md">{team.rank}</TableCell>
+                        <TableCell
+                        className="p-0"
+                        >
+                        <div className="flex items-center justify-center h-full">
+                            <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}>
+                            <TeamIcon
+                                className={cn(
+                                "size-5",
+                                isLiverpool && "scale-x-[-1]"
+                                )}
+                                style={{ color: team.iconColour }}
+                            />
+                            </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-medium">{team.name}</span>
-                    </TableCell>
-                    <TableCell className="text-center">{team.gamesPlayed}</TableCell>
-                    <TableCell className="text-center">{team.wins}</TableCell>
-                    <TableCell className="text-center">{team.draws}</TableCell>
-                    <TableCell className="text-center">{team.losses}</TableCell>
-                    <TableCell className="text-center">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
-                    <TableCell className="text-center">{team.goalsFor}</TableCell>
-                    <TableCell className="text-center">{team.goalsAgainst}</TableCell>
-                    <TableCell className="text-center font-bold">{team.points}</TableCell>
-                    {Array(6-resultsToDisplay.length).fill('-').map((_, index) => (
-                      <TableCell key={index} className={cn("text-center font-bold p-0 w-12")}>
-                         <div className={cn("flex items-center justify-center h-10 w-full", getResultColor('-'))}>
-                          -
-                        </div>
-                      </TableCell>
-                    ))}
-                    {resultsToDisplay.map((result, index) => (
-                      <TableCell key={index} className={cn("text-center font-bold p-0 w-12", index === resultsToDisplay.length - 1 && 'rounded-r-md')}>
-                         <div className={cn("flex items-center justify-center h-10 w-full", getResultColor(result), index === resultsToDisplay.length - 1 && 'rounded-r-md')}>
-                          {result}
-                        </div>
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                );
-              })}
+                        </TableCell>
+                        <TableCell>
+                        <span className="font-medium">{team.name}</span>
+                        </TableCell>
+                        <TableCell className="text-center">{team.gamesPlayed}</TableCell>
+                        <TableCell className="text-center">{team.wins}</TableCell>
+                        <TableCell className="text-center">{team.draws}</TableCell>
+                        <TableCell className="text-center">{team.losses}</TableCell>
+                        <TableCell className="text-center">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
+                        <TableCell className="text-center">{team.goalsFor}</TableCell>
+                        <TableCell className="text-center">{team.goalsAgainst}</TableCell>
+                        <TableCell className="text-center font-bold">{team.points}</TableCell>
+                        {Array(6-resultsToDisplay.length).fill('-').map((_, index) => (
+                        <TableCell key={index} className={cn("text-center font-bold p-0 w-12")}>
+                            <div className={cn("flex items-center justify-center h-10 w-full", getResultColor('-'))}>
+                            -
+                            </div>
+                        </TableCell>
+                        ))}
+                        {resultsToDisplay.map((result, index) => (
+                        <TableCell key={index} className={cn("text-center font-bold p-0 w-12", index === resultsToDisplay.length - 1 && 'rounded-r-md')}>
+                            <div className={cn("flex items-center justify-center h-10 w-full", getResultColor(result), index === resultsToDisplay.length - 1 && 'rounded-r-md')}>
+                            {result}
+                            </div>
+                        </TableCell>
+                        ))}
+                    </TableRow>
+                    );
+                })
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -190,3 +210,5 @@ export default function StandingsPage() {
     </div>
   );
 }
+
+    

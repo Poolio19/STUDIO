@@ -8,24 +8,33 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
-import { users, userHistories } from '@/lib/data';
+import { userHistories as staticUserHistories } from '@/lib/data';
 import { useMemo } from 'react';
 import { PlayerRankChart } from '@/components/charts/player-rank-chart';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import { User } from '@/lib/data';
 
 export default function RankingsPage() {
+  const firestore = useFirestore();
+  const usersCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+  const { data: users, isLoading: usersLoading } = useCollection<User>(usersCollectionRef);
+
   const sortedUsers = useMemo(() => {
-    return [...users].sort((a, b) => a.rank - b.rank);
-  }, []);
+    if (!users) return [];
+    return [...users].sort((a, b) => (a.rank || 0) - (b.rank || 0));
+  }, [users]);
 
   const { chartData, yAxisDomain } = useMemo(() => {
+    if (!users) return { chartData: [], yAxisDomain: [1, 20] };
     const totalPlayers = users.length;
     const yAxisDomain: [number, number] = [1, totalPlayers];
 
-    const weeks = [...new Set(userHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.week)))].sort((a,b) => a-b);
+    const weeks = [...new Set(staticUserHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.week)))].sort((a,b) => a-b);
     
     const transformedData = weeks.map(week => {
       const weekData: { [key: string]: number | string } = { week: `Wk ${week}` };
-      userHistories.forEach(history => {
+      staticUserHistories.forEach(history => {
         const user = users.find(u => u.id === history.userId);
         if (user) {
           const weekScore = history.weeklyScores.find(w => w.week === week);
@@ -38,7 +47,7 @@ export default function RankingsPage() {
     });
 
     return { chartData: transformedData, yAxisDomain };
-  }, []);
+  }, [users]);
 
   return (
     <div className="space-y-8">
@@ -57,9 +66,15 @@ export default function RankingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <PlayerRankChart chartData={chartData} yAxisDomain={yAxisDomain} sortedUsers={sortedUsers} />
+          {usersLoading ? (
+            <div className="flex justify-center items-center h-[600px]">Loading chart data...</div>
+          ) : (
+            <PlayerRankChart chartData={chartData} yAxisDomain={yAxisDomain} sortedUsers={sortedUsers} />
+          )}
         </CardContent>
       </Card>
     </div>
   );
 }
+
+    

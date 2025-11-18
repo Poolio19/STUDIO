@@ -10,19 +10,58 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { users, teams, playerTeamScores } from '@/lib/data';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import { User, Team, PlayerTeamScore } from '@/lib/data';
 
 const getAvatarUrl = (avatarId: string) => {
   return PlaceHolderImages.find((img) => img.id === avatarId)?.imageUrl || '';
 };
 
 export default function StatsPage() {
-  const sortedUsers = useMemo(() => [...users].sort((a, b) => a.rank - b.rank), []);
-  const sortedTeams = useMemo(() => [...teams].sort((a, b) => a.name.localeCompare(b.name)), []);
+  const firestore = useFirestore();
+  const usersCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+  const teamsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
+  
+  const { data: users, isLoading: usersLoading } = useCollection<User>(usersCollectionRef);
+  const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsCollectionRef);
+  
+  // Note: playerTeamScores is still from static data. This would need to be a collection in Firestore too.
+  const { playerTeamScores } = useMemo(() => {
+    // In a real app, this would be fetched from Firestore.
+    // For now, we simulate it based on static predictions to calculate scores.
+    const actualRanks = new Map<string, number>();
+    // Using previousSeasonStandings for demonstration as final standings aren't available.
+    const { previousSeasonStandings, predictions: userPredictions } = require('@/lib/data');
+    previousSeasonStandings.forEach((s: any) => actualRanks.set(s.teamId, s.rank));
+
+    const scores = userPredictions.flatMap((prediction: any) => {
+      return prediction.rankings.map((teamId: string, index: number) => {
+        const predictedRank = index + 1;
+        const actualRank = actualRanks.get(teamId) || 0;
+        let score = 0;
+        if (actualRank > 0) {
+            score = 5 - Math.abs(predictedRank - actualRank);
+        }
+        return {
+            userId: prediction.userId,
+            teamId: teamId,
+            score: score,
+        };
+      });
+    });
+    return { playerTeamScores: scores as PlayerTeamScore[] };
+  }, []);
+
+
+  const sortedUsers = useMemo(() => users ? [...users].sort((a, b) => (a.rank || 0) - (b.rank || 0)) : [], [users]);
+  const sortedTeams = useMemo(() => teams ? [...teams].sort((a, b) => a.name.localeCompare(b.name)) : [], [teams]);
+
+  const isLoading = usersLoading || teamsLoading;
 
   const getScoreColour = (score: number) => {
     if (score === 5) return 'bg-green-200/50 dark:bg-green-800/50 font-bold';
@@ -49,55 +88,61 @@ export default function StatsPage() {
         </CardHeader>
         <CardContent>
             <div className="overflow-x-auto">
-                <Table className="min-w-full border-collapse">
-                    <TableHeader>
-                        <TableRow className="h-40">
-                            <TableHead className="sticky left-0 z-10 bg-card whitespace-nowrap w-[250px]">Player</TableHead>
-                             <TableHead className="text-center p-0 w-[40px] border-l border-dashed border-border">
-                                <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-bold h-[140px] flex items-center justify-center">TOTAL</div>
-                            </TableHead>
-                            {sortedTeams.map((team) => {
-                                return (
-                                <TableHead key={team.id} className="text-center p-0 w-[40px] border-l border-dashed border-border">
-                                     <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium h-[140px] flex items-center justify-center">{team.name}</div>
+                {isLoading ? (
+                    <div className="flex justify-center items-center h-64">Loading stats...</div>
+                ) : (
+                    <Table className="min-w-full border-collapse">
+                        <TableHeader>
+                            <TableRow className="h-40">
+                                <TableHead className="sticky left-0 z-10 bg-card whitespace-nowrap w-[250px]">Player</TableHead>
+                                <TableHead className="text-center p-0 w-[40px] border-l border-dashed border-border">
+                                    <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-bold h-[140px] flex items-center justify-center">TOTAL</div>
                                 </TableHead>
-                            )})}
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {sortedUsers.map((user) => (
-                            <TableRow key={user.id}>
-                                <TableCell className="sticky left-0 z-10 bg-card whitespace-nowrap font-medium w-[250px]">
-                                    <div className="flex items-center justify-between gap-3">
-                                        <div className="flex items-center gap-3">
-                                            <Avatar className="h-9 w-9">
-                                                <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
-                                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <span className="font-medium">{user.name}</span>
-                                        </div>
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-center font-bold text-lg border-l border-dashed border-border">
-                                    {user.score}
-                                </TableCell>
                                 {sortedTeams.map((team) => {
-                                    const score = playerTeamScores.find(
-                                        (s) => s.userId === user.id && s.teamId === team.id
-                                    )?.score ?? 0;
                                     return (
-                                        <TableCell key={`${user.id}-${team.id}`} className={cn("text-center font-medium p-0 border-l border-dashed border-border", getScoreColour(score))}>
-                                            {score}
-                                        </TableCell>
-                                    );
-                                })}
+                                    <TableHead key={team.id} className="text-center p-0 w-[40px] border-l border-dashed border-border">
+                                        <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium h-[140px] flex items-center justify-center">{team.name}</div>
+                                    </TableHead>
+                                )})}
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                        </TableHeader>
+                        <TableBody>
+                            {sortedUsers.map((user) => (
+                                <TableRow key={user.id}>
+                                    <TableCell className="sticky left-0 z-10 bg-card whitespace-nowrap font-medium w-[250px]">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div className="flex items-center gap-3">
+                                                <Avatar className="h-9 w-9">
+                                                    <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
+                                                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                                </Avatar>
+                                                <span className="font-medium">{user.name}</span>
+                                            </div>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-center font-bold text-lg border-l border-dashed border-border">
+                                        {user.score}
+                                    </TableCell>
+                                    {sortedTeams.map((team) => {
+                                        const score = playerTeamScores.find(
+                                            (s) => s.userId === user.id && s.teamId === team.id
+                                        )?.score ?? 0;
+                                        return (
+                                            <TableCell key={`${user.id}-${team.id}`} className={cn("text-center font-medium p-0 border-l border-dashed border-border", getScoreColour(score))}>
+                                                {score}
+                                            </TableCell>
+                                        );
+                                    })}
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                )}
             </div>
         </CardContent>
       </Card>
     </div>
   );
 }
+
+    

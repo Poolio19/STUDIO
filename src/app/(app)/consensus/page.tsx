@@ -17,10 +17,13 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
-import { teams, predictions, currentStandings, Team } from '@/lib/data';
+import { predictions, Team } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import { CurrentStanding } from '@/lib/data';
 
 type ConsensusData = {
   [teamId: string]: number[];
@@ -28,9 +31,18 @@ type ConsensusData = {
 
 const lightTextColours = ['#FFFFFF', '#FBE122', '#99D6EA', '#FDBE11'];
 
-
 export default function ConsensusPage() {
+  const firestore = useFirestore();
+  const teamsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
+  const standingsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'standings') : null, [firestore]);
+
+  const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsCollectionRef);
+  const { data: currentStandings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsCollectionRef);
+
+  const isLoading = teamsLoading || standingsLoading;
+
   const standingsWithTeamData = useMemo(() => {
+    if (!teams || !currentStandings) return [];
     const teamMap = new Map(teams.map(t => [t.id, t]));
     return currentStandings
       .map(standing => {
@@ -39,9 +51,10 @@ export default function ConsensusPage() {
       })
       .filter((team): team is Team & { rank: number } => !!team)
       .sort((a, b) => a.rank - b.rank);
-  }, []);
+  }, [teams, currentStandings]);
 
-  const consensusData = useMemo((): ConsensusData => {
+  const consensusData = useMemo((): ConsensusData | null => {
+    if (!teams) return null;
     const data: ConsensusData = teams.reduce((acc, team) => {
       acc[team.id] = Array(20).fill(0);
       return acc;
@@ -56,11 +69,10 @@ export default function ConsensusPage() {
     });
 
     return data;
-  }, []);
+  }, [teams]);
 
   const positions = Array.from({ length: 20 }, (_, i) => i + 1);
 
-  // Helper function to convert hex to rgba
   const hexToRgba = (hex: string, alpha: number) => {
     if (!hex) return 'transparent';
     const r = parseInt(hex.slice(1, 3), 16);
@@ -68,6 +80,10 @@ export default function ConsensusPage() {
     const b = parseInt(hex.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-full">Loading consensus data...</div>;
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -100,37 +116,37 @@ export default function ConsensusPage() {
               </TableHeader>
               <TableBody>
                 {standingsWithTeamData.map((teamData) => {
-                  if (!teamData) return null;
+                  if (!teamData || !consensusData) return null;
                   const TeamIcon = Icons[teamData.logo as IconName] || Icons.match;
                   const teamId = teamData.id;
                   const predictionCounts = consensusData[teamId];
-                  if (!predictionCounts) return null; // guard against missing data
+                  if (!predictionCounts) return null;
                   const isLiverpool = teamId === 'team_12';
                   return (
                     <TableRow
                       key={teamId}
                       className="border-b border-dashed border-border"
                     >
-                      <TableCell 
+                      <TableCell
                         className={cn("sticky left-0 z-20 text-center font-medium p-4 rounded-l-md")}
                         style={{ backgroundColor: teamData.bgColourFaint, color: teamData.textColour }}
                       >
                         {teamData.rank}
                       </TableCell>
-                       <TableCell
+                      <TableCell
                         className={cn("sticky left-[50px] z-20 p-0")}
                         style={{ backgroundColor: teamData.bgColourFaint, color: teamData.textColour }}
                       >
                         <div className="flex items-center justify-center h-full">
-                            <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: teamData.bgColourSolid }}>
-                                <TeamIcon
-                                    className={cn("size-5", isLiverpool && "scale-x-[-1]")}
-                                    style={{ color: teamData.iconColour }}
-                                />
-                            </div>
+                          <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: teamData.bgColourSolid }}>
+                            <TeamIcon
+                              className={cn("size-5", isLiverpool && "scale-x-[-1]")}
+                              style={{ color: teamData.iconColour }}
+                            />
+                          </div>
                         </div>
                       </TableCell>
-                      <TableCell 
+                      <TableCell
                         className={cn("sticky left-[98px] z-10 py-4 pr-4 pl-4 overflow-hidden")}
                         style={{ backgroundColor: teamData.bgColourFaint, color: teamData.textColour }}
                       >
@@ -139,30 +155,20 @@ export default function ConsensusPage() {
                       {predictionCounts.map((count, posIndex) => {
                         const maxCount = predictions.length;
                         const alpha = count > 0 ? 0.1 + (0.9 * (count / maxCount)) : 0;
-                        
-                        const cellStyle: React.CSSProperties = {
-                          color: teamData.textColour
-                        };
-                        
+                        const cellStyle: React.CSSProperties = { color: teamData.textColour };
                         if (teamData.bgColourSolid && count > 0) {
                           cellStyle.backgroundColor = hexToRgba(teamData.bgColourSolid, alpha);
-                          
                           if (teamData.textColour && lightTextColours.includes(teamData.textColour)) {
-                              if (alpha < 0.4) {
-                                cellStyle.color = teamData.bgColourSolid;
-                              }
+                            if (alpha < 0.4) {
+                              cellStyle.color = teamData.bgColourSolid;
+                            }
                           }
                         }
-                        
                         const isLastCell = posIndex === predictionCounts.length - 1;
-
                         return (
                           <TableCell
                             key={`${teamId}-${posIndex}`}
-                            className={cn(
-                              'text-center font-medium p-0 border-l border-b border-dashed border-border',
-                              isLastCell && 'rounded-r-md'
-                            )}
+                            className={cn('text-center font-medium p-0 border-l border-b border-dashed border-border', isLastCell && 'rounded-r-md')}
                             style={cellStyle}
                           >
                             <div className="flex items-center justify-center h-[53px]">
@@ -182,3 +188,5 @@ export default function ConsensusPage() {
     </div>
   );
 }
+
+    

@@ -21,12 +21,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { users, monthlyMimoM, currentStandings, seasonMonths, type User } from '@/lib/data';
+import { monthlyMimoM, currentStandings, seasonMonths, type User } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { Icons, IconName } from '@/components/icons';
-import { Award, Star, CalendarClock, Trophy, ArrowUp, ArrowDown, Minus } from 'lucide-react';
+import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+
 
 const getAvatarUrl = (avatarId: string) => {
   return PlaceHolderImages.find((img) => img.id === avatarId)?.imageUrl || '';
@@ -53,14 +55,18 @@ const formatPointsChange = (change: number) => {
 const currentWeek = currentStandings[0]?.gamesPlayed || 1;
 
 export default function MostImprovedPage() {
+  const firestore = useFirestore();
+  const usersCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+  const { data: users, isLoading: usersLoading } = useCollection<User>(usersCollectionRef);
   
   const currentMonthName = 'September';
   const currentYear = 2025;
 
   const ladderData = useMemo(() => {
+    if (!users) return { ladderWithRanks: [], firstPlaceRankChange: undefined, secondPlaceRankChange: undefined };
     const regularPlayersSorted = users
       .filter(u => !u.isPro)
-      .sort((a, b) => b.rankChange - a.rankChange || a.rank - b.rank);
+      .sort((a, b) => b.rankChange - a.rankChange || (a.rank || 0) - (b.rank || 0));
       
     let rank = 0;
     let lastRankChange = Infinity;
@@ -80,6 +86,7 @@ export default function MostImprovedPage() {
   }, [users]);
 
   const mimoMWithDetails = useMemo(() => {
+    if (!users) return [];
     const awardsByMonth: { [key: string]: { winners: any[], runnersUp: any[] } } = {};
     const monthOrder = ['August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
     const currentMonthIndex = monthOrder.indexOf(currentMonthName);
@@ -154,6 +161,9 @@ export default function MostImprovedPage() {
     return '';
   };
 
+  if (usersLoading) {
+    return <div className="flex justify-center items-center h-full">Loading page...</div>;
+  }
 
   return (
     <div className="flex flex-col gap-8">
