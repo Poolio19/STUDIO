@@ -96,15 +96,14 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers }: 
         </ResponsiveContainer>
       </ChartContainer>
       <ul
-        className="absolute flex flex-col justify-between"
+        className="absolute flex h-full flex-col justify-between"
         style={{
           right: 0,
           top: '-25px',
-          bottom: '50px',
+          bottom: '20px',
           width: '130px',
           paddingLeft: '1rem',
-          transform: 'scale(0.9)',
-          transformOrigin: 'top right',
+          fontSize: '12px',
         }}
       >
         <p className="font-medium mb-2">Player, Score</p>
