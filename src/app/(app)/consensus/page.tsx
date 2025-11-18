@@ -31,10 +31,12 @@ export default function ConsensusPage() {
     const previousRanks = new Map(previousSeasonStandings.map(s => [s.teamId, s.rank]));
     return teams
       .map(team => {
-        const rank = previousRanks.get(team.id) || 99; // Assign a high rank if not found to sort to bottom
+        const rank = previousRanks.get(team.id);
+        if (rank === undefined) return null; // Exclude teams not in previous season standings
         return { ...team, rank };
       })
-      .sort((a, b) => a.rank - b.rank);
+      .filter(Boolean) // Remove null entries
+      .sort((a, b) => a!.rank - b!.rank);
   }, []);
 
   const consensusData = useMemo((): ConsensusData => {
@@ -58,6 +60,7 @@ export default function ConsensusPage() {
 
   // Helper function to convert hex to rgba
   const hexToRgba = (hex: string, alpha: number) => {
+    if (!hex) return 'transparent';
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
     const b = parseInt(hex.slice(5, 7), 16);
@@ -136,7 +139,7 @@ export default function ConsensusPage() {
                       </TableCell>
                       {predictionCounts.map((count, posIndex) => {
                         const maxCount = predictions.length;
-                        const alpha = count > 0 ? 0.1 + (0.4 * (count / maxCount)) : 0;
+                        const alpha = count > 0 ? 0.1 + (0.9 * (count / maxCount)) : 0;
                         const cellStyle = teamData.bgColourSolid && count > 0 ? {
                           backgroundColor: hexToRgba(teamData.bgColourSolid, alpha)
                         } : {};
@@ -145,7 +148,7 @@ export default function ConsensusPage() {
                           <TableCell
                             key={`${teamId}-${posIndex}`}
                             className={cn(
-                              'text-center font-medium',
+                              'text-center font-medium p-0',
                               posIndex === predictionCounts.length - 1 && 'rounded-r-md'
                             )}
                             style={cellStyle}
