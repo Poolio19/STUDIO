@@ -112,6 +112,7 @@ export function TeamStandingsChart({
                   tickLine={false}
                   axisLine={false}
                   tickMargin={8}
+                  orientation="top"
                 />
                 <YAxis
                   tickLine={false}
