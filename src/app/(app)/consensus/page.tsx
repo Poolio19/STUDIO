@@ -109,9 +109,10 @@ export default function ConsensusPage() {
                   return (
                     <TableRow
                       key={teamId}
+                      className="border-b border-transparent"
                     >
                       <TableCell 
-                        className={cn("sticky left-0 z-20 text-center font-medium p-4")}
+                        className={cn("sticky left-0 z-20 text-center font-medium p-4 rounded-l-md")}
                         style={{ backgroundColor: teamData.bgColourFaint, color: teamData.textColour }}
                       >
                         {teamData.rank}
@@ -152,16 +153,21 @@ export default function ConsensusPage() {
                               }
                           }
                         }
+                        
+                        const isLastCell = posIndex === predictionCounts.length - 1;
 
                         return (
                           <TableCell
                             key={`${teamId}-${posIndex}`}
                             className={cn(
-                              'text-center font-medium p-0 border-l border-b border-dashed border-border'
+                              'text-center font-medium p-0 border-l border-b border-dashed border-border',
+                              isLastCell && 'rounded-r-md'
                             )}
                             style={cellStyle}
                           >
-                            {count > 0 ? count : ''}
+                            <div className="flex items-center justify-center h-[53px]">
+                              {count > 0 ? count : ''}
+                            </div>
                           </TableCell>
                         );
                       })}
