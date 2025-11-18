@@ -20,6 +20,7 @@ import { teams, currentStandings, weeklyTeamStandings } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
 import type { Metadata } from 'next';
 import { TeamStandingsChart } from '@/components/charts/team-standings-chart';
+import { useMemo } from 'react';
 
 // export const metadata: Metadata = {
 //     title: 'Premier League Standings | PremPred 2025-2026',
@@ -27,26 +28,30 @@ import { TeamStandingsChart } from '@/components/charts/team-standings-chart';
 // };
 
 export default function StandingsPage() {
-    const standingsWithTeamData = currentStandings
-    .map(standing => {
-      const team = teams.find(t => t.id === standing.teamId);
-      return team ? { ...standing, ...team } : null;
-    })
-    .filter(Boolean)
-    .sort((a, b) => {
-        if (!a || !b) return 0;
-        if (a.points !== b.points) {
-            return b.points - a.points;
-        }
-        if (a.goalDifference !== b.goalDifference) {
-            return b.goalDifference - a.goalDifference;
-        }
-        if (a.goalsFor !== b.goalsFor) {
-            return b.goalsFor - a.goalsFor;
-        }
-        return a.name.localeCompare(b.name);
-    })
-    .map((team, index) => ({ ...team!, rank: index + 1 }));
+    const standingsWithTeamData = useMemo(() => {
+        const initialData = currentStandings
+            .map(standing => {
+                const team = teams.find(t => t.id === standing.teamId);
+                return team ? { ...standing, ...team } : null;
+            })
+            .filter(Boolean);
+
+        const sortedData = initialData.sort((a, b) => {
+            if (!a || !b) return 0;
+            if (a.points !== b.points) {
+                return b.points - a.points;
+            }
+            if (a.goalDifference !== b.goalDifference) {
+                return b.goalDifference - a.goalDifference;
+            }
+            if (a.goalsFor !== b.goalsFor) {
+                return b.goalsFor - a.goalsFor;
+            }
+            return a.name.localeCompare(b.name);
+        });
+
+        return sortedData.map((team, index) => ({ ...team!, rank: index + 1 }));
+    }, []);
 
   return (
     <div className="space-y-8">
