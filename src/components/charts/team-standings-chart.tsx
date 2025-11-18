@@ -35,11 +35,13 @@ type TransformedChartData = {
 interface TeamStandingsChartProps {
   chartData: TransformedChartData[];
   sortedTeams: (Team & { rank: number })[];
+  chartConfig: ChartConfig;
 }
 
 export function TeamStandingsChart({
   chartData,
   sortedTeams,
+  chartConfig
 }: TeamStandingsChartProps) {
   const allWeeks = [...new Set(chartData.map(d => d.week))];
 
@@ -53,7 +55,7 @@ export function TeamStandingsChart({
       </CardHeader>
       <CardContent>
         <div className="relative">
-          <ChartContainer config={{}} className="h-[700px] w-full">
+          <ChartContainer config={chartConfig} className="h-[700px] w-full">
             <ResponsiveContainer>
               <LineChart
                 data={chartData}
@@ -86,10 +88,10 @@ export function TeamStandingsChart({
                   content={
                     <ChartTooltipContent
                       indicator="dot"
-                      formatter={(value, name, props) => {
-                        const team = sortedTeams.find(t => t.name === name);
-                        if (!team) return null;
-                        const color = `hsl(var(--chart-color-${team.rank}))`;
+                      formatter={(value, name) => {
+                        const teamConfig = chartConfig[name as string];
+                        if (!teamConfig) return null;
+                         const color = teamConfig.color;
                         return (
                           <div className="flex items-center gap-2">
                             <div
@@ -113,7 +115,7 @@ export function TeamStandingsChart({
                     key={team.id}
                     dataKey={team.name}
                     type="monotone"
-                    stroke={`hsl(var(--chart-color-${team.rank}))`}
+                    stroke={`var(--color-${team.name})`}
                     strokeWidth={3}
                     dot={false}
                     name={team.name}

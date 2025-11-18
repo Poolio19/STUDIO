@@ -18,17 +18,12 @@ import {
 } from '@/components/ui/table';
 import { teams, currentStandings, weeklyTeamStandings } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
-import type { Metadata } from 'next';
 import { TeamStandingsChart } from '@/components/charts/team-standings-chart';
 import { useMemo } from 'react';
-
-// export const metadata: Metadata = {
-//     title: 'Premier League Standings | PremPred 2025-2026',
-//     description: 'The current Premier League standings.',
-// };
+import { ChartConfig } from '@/components/ui/chart';
 
 export default function StandingsPage() {
-    const standingsWithTeamData = useMemo(() => {
+    const { standingsWithTeamData, chartData, chartConfig } = useMemo(() => {
         const initialData = currentStandings
             .map(standing => {
                 const team = teams.find(t => t.id === standing.teamId);
@@ -45,7 +40,7 @@ export default function StandingsPage() {
         });
         
         let rank = 1;
-        return sortedData.map((team, index) => {
+        const finalStandings = sortedData.map((team, index) => {
             if (index > 0) {
                 const prevTeam = sortedData[index - 1]!;
                 if (team!.points !== prevTeam.points || team!.goalDifference !== prevTeam.goalDifference || team!.goalsFor !== prevTeam.goalsFor) {
@@ -54,24 +49,35 @@ export default function StandingsPage() {
             }
             return { ...team!, rank: rank };
         });
-    }, []);
 
-    const chartData = useMemo(() => {
-        const dataByWeek: { [week: number]: { week: string; [teamName: string]: number | string } } = {};
-
-        weeklyTeamStandings.forEach(standing => {
-            const team = teams.find(t => t.id === standing.teamId);
-            if (!team) return;
-
-            if (!dataByWeek[standing.week]) {
-                dataByWeek[standing.week] = { week: `Wk ${standing.week}` };
+        const transformedChartData = (() => {
+            const dataByWeek: { [week: number]: { week: string; [teamName: string]: number | string } } = {};
+    
+            weeklyTeamStandings.forEach(standing => {
+                const team = teams.find(t => t.id === standing.teamId);
+                if (!team) return;
+    
+                if (!dataByWeek[standing.week]) {
+                    dataByWeek[standing.week] = { week: `Wk ${standing.week}` };
+                }
+                dataByWeek[standing.week][team.name] = standing.rank;
+            });
+    
+            return Object.values(dataByWeek).sort((a, b) => parseInt(a.week.substring(3)) - parseInt(b.week.substring(3)));
+        })();
+        
+        const config = finalStandings.reduce((acc, team) => {
+            if(team) {
+                acc[team.name] = {
+                    label: team.name,
+                    color: `hsl(var(--chart-color-${team.rank}))`,
+                };
             }
-            dataByWeek[standing.week][team.name] = standing.rank;
-        });
+            return acc;
+        }, {} as ChartConfig);
 
-        return Object.values(dataByWeek).sort((a, b) => parseInt(a.week.substring(3)) - parseInt(b.week.substring(3)));
+        return { standingsWithTeamData: finalStandings, chartData: transformedChartData, chartConfig: config };
     }, []);
-
 
   return (
     <div className="space-y-8">
@@ -80,7 +86,7 @@ export default function StandingsPage() {
         <p className="text-muted-foreground">The official Premier League table and weekly position tracker.</p>
       </header>
 
-      <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData} />
+      <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData} chartConfig={chartConfig} />
 
       <Card>
         <CardHeader>
