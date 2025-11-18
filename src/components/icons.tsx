@@ -4,7 +4,6 @@ import {
   Calculator,
   User,
   Bell,
-  BrainCircuit,
   LucideProps,
   Shield,
   Bird,
@@ -42,10 +41,11 @@ import {
   UtensilsCrossed,
   Gitlab,
   Database,
+  Volleyball,
 } from 'lucide-react';
 
 export const Icons = {
-  logo: BrainCircuit,
+  logo: Volleyball,
   leaderboard: Trophy,
   predict: PenSquare,
   scoring: Calculator,
