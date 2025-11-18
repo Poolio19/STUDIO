@@ -90,12 +90,13 @@ const seedDatabase = (firestore: Firestore | null, toast: (options: any) => void
       toast({
         variant: 'destructive',
         title: 'Firestore not available',
-        description: 'Unable to connect to the database.',
+        description: 'Unable to connect to the database. Please try again in a moment.',
       });
       return;
     }
 
     let hasError = false;
+    
     const handleError = (permissionError: FirestorePermissionError) => {
       if (hasError) return;
       hasError = true;
@@ -141,6 +142,7 @@ const seedDatabase = (firestore: Firestore | null, toast: (options: any) => void
       });
     });
     
+    // Using a timeout to allow Firestore operations to begin and potentially fail
     setTimeout(() => {
         if (!hasError) {
              toast({
@@ -148,7 +150,7 @@ const seedDatabase = (firestore: Firestore | null, toast: (options: any) => void
                 description: `Started adding ${allUsers.length} users, ${teams.length} teams, and ${currentStandings.length} standings.`,
             });
         }
-    }, 2000); // Give time for errors to potentially be caught
+    }, 2000);
 };
 
 
@@ -329,7 +331,7 @@ export default function ProfilePage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Button onClick={() => seedDatabase(firestore, toast)}>
+                    <Button onClick={() => seedDatabase(firestore, toast)} disabled={!firestore}>
                         <Database className="mr-2 h-4 w-4" />
                         Seed Database
                     </Button>
