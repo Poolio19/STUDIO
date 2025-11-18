@@ -127,7 +127,7 @@ let usersData: Omit<User, 'score' | 'rank' | 'previousRank' | 'previousScore' | 
 ];
 
 export const teams: Team[] = [
-    { id: 'team_1', name: 'Arsenal', logo: 'drill', bgColourFaint: 'rgba(239, 1, 7, 0.2)', bgColourSolid: '#EF0107', textColour: '#000000', iconColour: '#FFFFFF' },
+    { id: 'team_1', name: 'Arsenal', logo: 'drill', bgColourFaint: 'rgba(239, 1, 7, 0.2)', bgColourSolid: '#EF0107', textColour: '#062657', iconColour: '#FFFFFF' },
     { id: 'team_2', name: 'Aston Villa', logo: 'squirrel', bgColourFaint: 'rgba(149, 191, 229, 0.2)', bgColourSolid: '#95BFE5', textColour: '#670E36', iconColour: '#670E36' },
     { id: 'team_3', name: 'Bournemouth', logo: 'fingerprint', bgColourFaint: 'rgba(218, 41, 28, 0.2)', bgColourSolid: '#DA291C', textColour: '#000000', iconColour: '#000000' },
     { id: 'team_4', name: 'Brentford', logo: 'bug', bgColourFaint: 'rgba(200, 16, 46, 0.2)', bgColourSolid: '#C8102E', textColour: '#000000', iconColour: '#FFFFFF' },

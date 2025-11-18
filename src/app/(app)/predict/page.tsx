@@ -136,15 +136,19 @@ export default function PredictPage() {
                           <div className={cn("text-base font-medium w-12 text-center opacity-80")}>
                             {index + 1}
                           </div>
-                          <div className="w-12 h-full flex items-center justify-center" style={{backgroundColor: item.bgColourSolid}}>
-                            <TeamIcon
-                              className={cn(
-                                "size-5",
-                                isLiverpool && "scale-x-[-1]"
-                              )}
-                              style={{ color: item.iconColour }}
-                            />
-                          </div>
+                          <div className="w-12 h-full p-0">
+                            <div className="flex items-center justify-center h-full">
+                                <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: item.bgColourSolid }}>
+                                    <TeamIcon
+                                    className={cn(
+                                        "size-5",
+                                        isLiverpool && "scale-x-[-1]"
+                                    )}
+                                    style={{ color: item.iconColour }}
+                                    />
+                                </div>
+                            </div>
+                           </div>
                           <span className="font-medium text-sm pl-4">{item.teamName}</span>
                         </Reorder.Item>
                       );
@@ -177,15 +181,17 @@ export default function PredictPage() {
                                 }}
                               >
                                 <TableCell className="font-medium w-[50px] opacity-80">{team.rank}</TableCell>
-                                <TableCell className="w-[48px] p-0" style={{backgroundColor: team.bgColourSolid}}>
+                                <TableCell className="w-[48px] p-0" style={{backgroundColor: team.bgColourFaint}}>
                                   <div className="flex items-center justify-center h-full">
-                                    <TeamIcon
-                                      className={cn(
-                                        "size-5",
-                                        isLiverpool && "scale-x-[-1]"
-                                      )}
-                                      style={{ color: team.iconColour }}
-                                    />
+                                    <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}>
+                                        <TeamIcon
+                                        className={cn(
+                                            "size-5",
+                                            isLiverpool && "scale-x-[-1]"
+                                        )}
+                                        style={{ color: team.iconColour }}
+                                        />
+                                    </div>
                                     </div>
                                 </TableCell>
                                 <TableCell>
@@ -211,3 +217,4 @@ export default function PredictPage() {
     </div>
   );
 }
+

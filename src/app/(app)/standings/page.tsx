@@ -88,7 +88,7 @@ export default function StandingsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[50px]">#</TableHead>
-                <TableHead className="w-[40px]"></TableHead>
+                <TableHead className="w-[48px]"></TableHead>
                 <TableHead>Team</TableHead>
                 <TableHead className="text-center">Plyd</TableHead>
                 <TableHead className="text-center">W</TableHead>
@@ -117,16 +117,18 @@ export default function StandingsPage() {
                     <TableCell className="font-medium">{team.rank}</TableCell>
                     <TableCell
                       className="p-0"
-                      style={{ backgroundColor: team.bgColourSolid }}
+                      style={{ backgroundColor: team.bgColourFaint }}
                     >
                       <div className="flex items-center justify-center h-full">
-                        <TeamIcon
-                          className={cn(
-                            "size-5",
-                            isLiverpool && "scale-x-[-1]"
-                          )}
-                          style={{ color: team.iconColour }}
-                        />
+                        <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}>
+                          <TeamIcon
+                            className={cn(
+                              "size-5",
+                              isLiverpool && "scale-x-[-1]"
+                            )}
+                            style={{ color: team.iconColour }}
+                          />
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -150,3 +152,4 @@ export default function StandingsPage() {
     </div>
   );
 }
+

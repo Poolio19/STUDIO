@@ -85,8 +85,8 @@ export default function ConsensusPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="sticky left-0 z-10 w-[50px] bg-card text-center">Pos</TableHead>
-                  <TableHead className="sticky left-[50px] z-10 w-[40px] bg-card"></TableHead>
-                  <TableHead className="sticky left-[90px] z-10 w-[200px] bg-card">Team</TableHead>
+                  <TableHead className="sticky left-[50px] z-10 w-[48px] bg-card"></TableHead>
+                  <TableHead className="sticky left-[98px] z-10 w-[200px] bg-card">Team</TableHead>
                   {positions.map((pos) => (
                     <TableHead key={pos} className="w-[60px] text-center">{pos}</TableHead>
                   ))}
@@ -114,16 +114,18 @@ export default function ConsensusPage() {
                       <TableCell className={cn("sticky left-0 z-10 text-center font-medium")}>{index + 1}</TableCell>
                        <TableCell
                         className={cn("sticky left-[50px] z-10 p-0")}
-                        style={{ backgroundColor: teamData.bgColourSolid }}
+                        style={{ backgroundColor: teamData.bgColourFaint }}
                       >
                         <div className="flex items-center justify-center h-full">
-                          <TeamIcon
-                            className={cn("size-5", isLiverpool && "scale-x-[-1]")}
-                            style={{ color: teamData.iconColour }}
-                          />
+                            <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: teamData.bgColourSolid }}>
+                                <TeamIcon
+                                    className={cn("size-5", isLiverpool && "scale-x-[-1]")}
+                                    style={{ color: teamData.iconColour }}
+                                />
+                            </div>
                         </div>
                       </TableCell>
-                      <TableCell className={cn("sticky left-[90px] z-10")}>
+                      <TableCell className={cn("sticky left-[98px] z-10")}>
                         <span className="font-medium">{teamData.name}</span>
                       </TableCell>
                       {predictionCounts.map((count, posIndex) => (
@@ -148,3 +150,4 @@ export default function ConsensusPage() {
     </div>
   );
 }
+
