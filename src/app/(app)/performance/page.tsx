@@ -8,37 +8,40 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
-import { userHistories as staticUserHistories } from '@/lib/data';
 import { useMemo } from 'react';
 import { PlayerPerformanceChart } from '@/components/charts/player-performance-chart';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
-import { User } from '@/lib/data';
+import { User, UserHistory } from '@/lib/data';
 
 export default function PerformancePage() {
   const firestore = useFirestore();
   const usersCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+  const userHistoriesCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'userHistories') : null, [firestore]);
+
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersCollectionRef);
+  const { data: userHistories, isLoading: historiesLoading } = useCollection<UserHistory>(userHistoriesCollectionRef);
+
+  const isLoading = usersLoading || historiesLoading;
 
   const sortedUsers = useMemo(() => {
     if (!users) return [];
     return [...users].sort((a, b) => (a.rank || 0) - (b.rank || 0));
   }, [users]);
 
-  // Note: userHistories is static. In a real app this would come from a collection.
   const { chartData, yAxisDomain } = useMemo(() => {
-    if (!users) return { chartData: [], yAxisDomain: [0, 0] };
-    const allScores = staticUserHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.score));
+    if (!users || !userHistories) return { chartData: [], yAxisDomain: [0, 0] };
+    const allScores = userHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.score));
     const minScore = Math.min(...allScores);
     const maxScore = Math.max(...allScores);
     const yAxisDomain: [number, number] = [minScore - 5, maxScore + 5];
 
-    const weeks = [...new Set(staticUserHistories.flatMap(h => h.weeklyScores.map(w => w.week)))].sort((a,b) => a-b);
+    const weeks = [...new Set(userHistories.flatMap(h => h.weeklyScores.map(w => w.week)))].sort((a,b) => a-b);
     
     const transformedData = weeks.map(week => {
       const weekData: { [key: string]: number | string } = { week: `Wk ${week}` };
-      staticUserHistories.forEach(history => {
-        const user = users.find(u => u.id === history.userId);
+      userHistories.forEach(history => {
+        const user = users.find(u => u.id === history.id); // history doc id is user id
         if (user) {
           const weekScore = history.weeklyScores.find(w => w.week === week);
           if (weekScore) {
@@ -50,7 +53,7 @@ export default function PerformancePage() {
     });
 
     return { chartData: transformedData, yAxisDomain };
-  }, [users]);
+  }, [users, userHistories]);
 
   return (
     <div className="space-y-8">
@@ -69,7 +72,7 @@ export default function PerformancePage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-            {usersLoading ? (
+            {isLoading ? (
                 <div className="flex justify-center items-center h-[600px]">Loading chart data...</div>
             ) : (
                 <PlayerPerformanceChart chartData={chartData} yAxisDomain={yAxisDomain} sortedUsers={sortedUsers} />

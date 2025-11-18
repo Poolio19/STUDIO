@@ -35,11 +35,13 @@ export default function ConsensusPage() {
   const firestore = useFirestore();
   const teamsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
   const standingsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'standings') : null, [firestore]);
+  const predictionsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'predictions') : null, [firestore]);
 
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsCollectionRef);
   const { data: currentStandings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsCollectionRef);
+  const { data: userPredictions, isLoading: predictionsLoading } = useCollection<{rankings: string[]}>(predictionsCollectionRef);
 
-  const isLoading = teamsLoading || standingsLoading;
+  const isLoading = teamsLoading || standingsLoading || predictionsLoading;
 
   const standingsWithTeamData = useMemo(() => {
     if (!teams || !currentStandings) return [];
@@ -54,13 +56,13 @@ export default function ConsensusPage() {
   }, [teams, currentStandings]);
 
   const consensusData = useMemo((): ConsensusData | null => {
-    if (!teams) return null;
+    if (!teams || !userPredictions) return null;
     const data: ConsensusData = teams.reduce((acc, team) => {
       acc[team.id] = Array(20).fill(0);
       return acc;
     }, {} as ConsensusData);
 
-    predictions.forEach((prediction) => {
+    userPredictions.forEach((prediction) => {
       prediction.rankings.forEach((teamId, index) => {
         if (data[teamId]) {
           data[teamId][index]++;
@@ -69,7 +71,7 @@ export default function ConsensusPage() {
     });
 
     return data;
-  }, [teams]);
+  }, [teams, userPredictions]);
 
   const positions = Array.from({ length: 20 }, (_, i) => i + 1);
 
@@ -116,7 +118,7 @@ export default function ConsensusPage() {
               </TableHeader>
               <TableBody>
                 {standingsWithTeamData.map((teamData) => {
-                  if (!teamData || !consensusData) return null;
+                  if (!teamData || !consensusData || !userPredictions) return null;
                   const TeamIcon = Icons[teamData.logo as IconName] || Icons.match;
                   const teamId = teamData.id;
                   const predictionCounts = consensusData[teamId];
@@ -153,7 +155,7 @@ export default function ConsensusPage() {
                         <span className="font-medium">{teamData.name}</span>
                       </TableCell>
                       {predictionCounts.map((count, posIndex) => {
-                        const maxCount = predictions.length;
+                        const maxCount = userPredictions.length;
                         const alpha = count > 0 ? 0.1 + (0.9 * (count / maxCount)) : 0;
                         const cellStyle: React.CSSProperties = { color: teamData.textColour };
                         if (teamData.bgColourSolid && count > 0) {

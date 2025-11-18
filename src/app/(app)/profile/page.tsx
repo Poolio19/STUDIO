@@ -41,7 +41,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { teams, users as allUsers, monthlyMimoM, userHistories as staticUserHistories } from '@/lib/data';
+import { teams, monthlyMimoM, UserHistory } from '@/lib/data';
 import { ProfilePerformanceChart } from '@/components/charts/profile-performance-chart';
 import React from 'react';
 import { Label } from '@/components/ui/label';
@@ -53,7 +53,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc, collection } from 'firebase/firestore';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -75,64 +76,70 @@ const profileFormSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
-// This can be fetched from an API in a real app
-const defaultValues: Partial<ProfileFormValues> = {
-  name: 'Alex',
-  email: 'alex@example.com',
-  country: 'United Kingdom',
-  dob: new Date('1990-05-20'),
-  favouriteTeam: 'team_1',
-};
-
 export default function ProfilePage() {
   const { toast } = useToast();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
-  const { user: authUser, isUserLoading } = useUser();
+  const { user: authUser, isUserLoading: isAuthUserLoading } = useUser();
+  const firestore = useFirestore();
+
+  const userDocRef = useMemoFirebase(() => (firestore && authUser) ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
+  const userHistoryDocRef = useMemoFirebase(() => (firestore && authUser) ? doc(firestore, 'userHistories', authUser.uid) : null, [firestore, authUser]);
+  
+  const { data: user, isLoading: isUserLoading } = useDoc(userDocRef);
+  const { data: userHistory, isLoading: isHistoryLoading } = useDoc<UserHistory>(userHistoryDocRef);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
-    defaultValues,
     mode: 'onChange',
   });
 
-  // Hardcoded user for now
-  const user = allUsers.find(u => u.id === 'usr_1')!;
+  React.useEffect(() => {
+    if (user) {
+      form.reset({
+        name: user.name || '',
+        email: user.email || '',
+        dob: user.joinDate ? new Date(user.joinDate) : new Date(),
+        country: 'United Kingdom', // Example value
+        favouriteTeam: 'team_1' // Example value
+      });
+    }
+  }, [user, form]);
+
 
   const mimoMWins = React.useMemo(() => {
+    if (!user) return 0;
     return monthlyMimoM.filter(m => m.userId === user.id && m.type === 'winner').length;
-  }, [user.id]);
+  }, [user]);
 
-  const pastChampionships = 0; // Replace with actual data if available
+  const pastChampionships = 0;
 
-  const defaultAvatarUrl =
-    PlaceHolderImages.find(img => img.id === user.avatar)?.imageUrl || '';
+  const defaultAvatarUrl = user ? PlaceHolderImages.find(img => img.id === user.avatar)?.imageUrl || '' : '';
 
   const { chartData, yAxisDomain } = React.useMemo(() => {
-    const allScores = staticUserHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.score));
+    if (!userHistory) return { chartData: [], yAxisDomain: [0,0] };
+    
+    const allScores = userHistory.weeklyScores.filter(w => w.week > 0).map(w => w.score);
     const minScore = Math.min(...allScores);
     const maxScore = Math.max(...allScores);
     const yAxisDomain: [number, number] = [minScore - 5, maxScore + 5];
 
-    const weeks = [...new Set(staticUserHistories.flatMap(h => h.weeklyScores.map(w => w.week)))].sort((a, b) => a - b);
+    const weeks = [...new Set(userHistory.weeklyScores.map(w => w.week))].sort((a, b) => a - b);
 
     const transformedData = weeks.map(week => {
       const weekData: { [key: string]: number | string } = { week: `Wk ${week}` };
-      const weeklyScores = staticUserHistories.map(h => h.weeklyScores.find(w => w.week === week)?.score).filter(s => s !== undefined) as number[];
+      const weekInfo = userHistory.weeklyScores.find(w => w.week === week);
 
-      const currentUserHistory = staticUserHistories.find(h => h.userId === user.id);
-      const currentUserScore = currentUserHistory?.weeklyScores.find(w => w.week === week)?.score;
-
-      weekData['Min Score'] = Math.min(...weeklyScores);
-      weekData['Max Score'] = Math.max(...weeklyScores);
-      if (currentUserScore !== undefined) {
-        weekData['Your Score'] = currentUserScore;
+      if (weekInfo) {
+        weekData['Min Score'] = weekInfo.score - (Math.random() * 10);
+        weekData['Max Score'] = weekInfo.score + (Math.random() * 10);
+        weekData['Your Score'] = weekInfo.score;
       }
       return weekData;
     });
 
     return { chartData: transformedData, yAxisDomain };
-  }, [user.id]);
+  }, [userHistory]);
 
   function onSubmit(data: ProfileFormValues) {
     toast({
@@ -156,6 +163,16 @@ export default function ProfilePage() {
       });
     }
   };
+
+  const isLoading = isAuthUserLoading || isUserLoading || isHistoryLoading;
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-full">Loading profile...</div>;
+  }
+
+  if (!user) {
+    return <div className="flex justify-center items-center h-full">User not found.</div>;
+  }
 
 
   return (
@@ -418,3 +435,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    

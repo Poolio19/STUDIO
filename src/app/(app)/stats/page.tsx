@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
-import { User, Team, PlayerTeamScore } from '@/lib/data';
+import { User, Team, PlayerTeamScore, PreviousSeasonStanding, Prediction } from '@/lib/data';
 
 const getAvatarUrl = (avatarId: string) => {
   return PlaceHolderImages.find((img) => img.id === avatarId)?.imageUrl || '';
@@ -26,17 +26,18 @@ export default function StatsPage() {
   const firestore = useFirestore();
   const usersCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
   const teamsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
+  const predictionsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'predictions') : null, [firestore]);
+  const previousStandingsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'previousSeasonStandings') : null, [firestore]);
   
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersCollectionRef);
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsCollectionRef);
+  const { data: userPredictions, isLoading: predictionsLoading } = useCollection<Prediction>(predictionsCollectionRef);
+  const { data: previousSeasonStandings, isLoading: prevStandingsLoading } = useCollection<PreviousSeasonStanding>(previousStandingsCollectionRef);
   
-  // Note: playerTeamScores is still from static data. This would need to be a collection in Firestore too.
   const { playerTeamScores } = useMemo(() => {
-    // In a real app, this would be fetched from Firestore.
-    // For now, we simulate it based on static predictions to calculate scores.
+    if (!userPredictions || !previousSeasonStandings) return { playerTeamScores: [] };
+    
     const actualRanks = new Map<string, number>();
-    // Using previousSeasonStandings for demonstration as final standings aren't available.
-    const { previousSeasonStandings, predictions: userPredictions } = require('@/lib/data');
     previousSeasonStandings.forEach((s: any) => actualRanks.set(s.teamId, s.rank));
 
     const scores = userPredictions.flatMap((prediction: any) => {
@@ -48,20 +49,20 @@ export default function StatsPage() {
             score = 5 - Math.abs(predictedRank - actualRank);
         }
         return {
-            userId: prediction.userId,
+            userId: prediction.id, // prediction doc id is the user id
             teamId: teamId,
             score: score,
         };
       });
     });
     return { playerTeamScores: scores as PlayerTeamScore[] };
-  }, []);
+  }, [userPredictions, previousSeasonStandings]);
 
 
   const sortedUsers = useMemo(() => users ? [...users].sort((a, b) => (a.rank || 0) - (b.rank || 0)) : [], [users]);
   const sortedTeams = useMemo(() => teams ? [...teams].sort((a, b) => a.name.localeCompare(b.name)) : [], [teams]);
 
-  const isLoading = usersLoading || teamsLoading;
+  const isLoading = usersLoading || teamsLoading || predictionsLoading || prevStandingsLoading;
 
   const getScoreColour = (score: number) => {
     if (score === 5) return 'bg-green-200/50 dark:bg-green-800/50 font-bold';

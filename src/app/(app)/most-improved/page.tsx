@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { monthlyMimoM, currentStandings, seasonMonths, type User } from '@/lib/data';
+import { monthlyMimoM, seasonMonths, type User, CurrentStanding } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { useMemo } from 'react';
@@ -52,12 +52,17 @@ const formatPointsChange = (change: number) => {
     return <span>{change}</span>;
 }
 
-const currentWeek = currentStandings[0]?.gamesPlayed || 1;
-
 export default function MostImprovedPage() {
   const firestore = useFirestore();
   const usersCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+  const standingsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'standings') : null, [firestore]);
+
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersCollectionRef);
+  const { data: currentStandings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsCollectionRef);
+
+  const isLoading = usersLoading || standingsLoading;
+
+  const currentWeek = currentStandings?.[0]?.gamesPlayed || 1;
   
   const currentMonthName = 'September';
   const currentYear = 2025;
@@ -161,7 +166,7 @@ export default function MostImprovedPage() {
     return '';
   };
 
-  if (usersLoading) {
+  if (isLoading) {
     return <div className="flex justify-center items-center h-full">Loading page...</div>;
   }
 
