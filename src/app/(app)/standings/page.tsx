@@ -113,6 +113,7 @@ export default function StandingsPage() {
                       backgroundColor: team.bgColourFaint,
                       color: team.textColour,
                     }}
+                    className="border-b-4 border-transparent"
                   >
                     <TableCell className="font-medium rounded-l-md">{team.rank}</TableCell>
                     <TableCell
@@ -152,4 +153,3 @@ export default function StandingsPage() {
     </div>
   );
 }
-
