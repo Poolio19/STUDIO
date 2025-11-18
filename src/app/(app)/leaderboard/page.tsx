@@ -48,33 +48,20 @@ const formatPointsChange = (change: number) => {
 }
 
 const getRankColor = (user: User, allUsers: User[], hasWinnings: boolean) => {
+    const userNonProRank = users.filter(u => !u.isPro).findIndex(u => u.id === user.id);
+    const nonProUsers = allUsers.filter(u => !u.isPro);
+    const tiedUsers = nonProUsers.filter(u => u.rank === user.rank);
+    const firstTiedUserIndex = nonProUsers.findIndex(u => u.id === tiedUsers[0]?.id);
+
     if (user.isPro) {
         return 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-200/80 dark:hover:bg-gray-700/80';
     }
 
-    const previousUser = allUsers.find(u => u.rank === user.rank - 1);
-
-    if (user.rank === 1) {
-        return 'bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-100/80 dark:hover:bg-yellow-900/40';
-    }
-    if (user.rank === 2 && (!previousUser || previousUser.rank !== 1)) {
-        return 'bg-slate-100 dark:bg-slate-800/30 hover:bg-slate-100/80 dark:hover:bg-slate-800/40';
-    }
-    const nonProUsers = allUsers.filter(u => !u.isPro);
-    const userNonProRank = nonProUsers.findIndex(u => u.id === user.id) + 1;
-
-    if (userNonProRank > 0 && userNonProRank <= 3) {
-      const rankToCompare = user.rank;
-      const usersAtSameRank = nonProUsers.filter(u => u.rank === rankToCompare);
-      const ranksOccupied = usersAtSameRank.map(u => nonProUsers.findIndex(nu => nu.id === u.id) + 1);
-      const minRank = Math.min(...ranksOccupied);
-
-      if (minRank === 1) return 'bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-100/80 dark:hover:bg-yellow-900/40';
-      if (minRank === 2) return 'bg-slate-100 dark:bg-slate-800/30 hover:bg-slate-100/80 dark:hover:bg-slate-800/40';
-      if (minRank === 3) return 'bg-orange-100 dark:bg-orange-900/30 hover:bg-orange-100/80 dark:hover:bg-orange-900/40';
-    }
-
-    if (userNonProRank > 0 && userNonProRank <= 5) {
+    if (firstTiedUserIndex === 0) return 'bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-100/80 dark:hover:bg-yellow-900/40';
+    if (firstTiedUserIndex === 1) return 'bg-slate-100 dark:bg-slate-800/30 hover:bg-slate-100/80 dark:hover:bg-slate-800/40';
+    if (firstTiedUserIndex === 2) return 'bg-orange-100 dark:bg-orange-900/30 hover:bg-orange-100/80 dark:hover:bg-orange-900/40';
+    
+    if (userNonProRank < 5) {
         return 'bg-green-100 dark:bg-green-900/30 hover:bg-green-100/80 dark:hover:bg-green-900/40';
     }
 
@@ -90,13 +77,11 @@ export default function LeaderboardPage() {
   const regularPlayers = useMemo(() => sortedUsers.filter(u => !u.isPro), [sortedUsers]);
 
   const totalWinningsMap = useMemo(() => {
-    // 1. Calculate MiMoM Winnings
     const mimoMWinnings = new Map<string, number>();
     const monthlyAwards: { [key: string]: { winners: string[], runnersUp: string[] } } = {};
-    const proPlayerIds = new Set(proPlayers.map(p => p.id));
 
     monthlyMimoM.forEach(m => {
-        if (proPlayerIds.has(m.userId)) return; // Exclude PROs from MiMoM
+        if (m.type !== 'winner' && m.type !== 'runner-up') return;
 
         const key = m.special ? m.special : `${m.month}-${m.year}`;
         if (!monthlyAwards[key]) {
@@ -123,45 +108,28 @@ export default function LeaderboardPage() {
         }
     });
     
-    // 2. Calculate Leaderboard Winnings
     const leaderboardWinnings = new Map<string, number>();
     const prizeTiers = [50, 41, 33, 26, 20];
     
-    let userIndex = 0;
-    while (userIndex < regularPlayers.length) {
-      const currentUser = regularPlayers[userIndex];
-      const currentRank = currentUser.rank;
+    let playerIndex = 0;
+    while(playerIndex < regularPlayers.length) {
+        const player = regularPlayers[playerIndex];
+        const playersAtSameRank = regularPlayers.filter(p => p.rank === player.rank);
+        
+        const prizePoolRanks = Array.from({ length: playersAtSameRank.length }, (_, i) => playerIndex + i);
+        const prizePool = prizePoolRanks.reduce((sum, rankIndex) => {
+            return sum + (prizeTiers[rankIndex] || 0);
+        }, 0);
 
-      const nonProPlayers = regularPlayers.filter(u => !u.isPro);
-      const playerNonProRank = nonProPlayers.findIndex(u => u.id === currentUser.id) + 1;
-      
-      const tiedUsers = nonProPlayers.filter(u => u.rank === currentRank);
-      
-      if (tiedUsers.length > 0) {
-          const firstTiedUserRankIndex = nonProPlayers.findIndex(u => u.id === tiedUsers[0].id);
-          const ranksCovered = Array.from({ length: tiedUsers.length }, (_, i) => firstTiedUserRankIndex + i);
-          
-          let prizePool = 0;
-          ranksCovered.forEach(rankIndex => {
-              if (rankIndex < prizeTiers.length) {
-                  prizePool += prizeTiers[rankIndex];
-              }
-          });
-          
-          const individualWinnings = prizePool / tiedUsers.length;
-          
-          tiedUsers.forEach(user => {
-              leaderboardWinnings.set(user.id, individualWinnings);
-          });
-          
-          userIndex += tiedUsers.length;
-      } else {
-          userIndex++;
-      }
+        const individualWinnings = prizePool > 0 ? prizePool / playersAtSameRank.length : 0;
+
+        playersAtSameRank.forEach(tiedPlayer => {
+            leaderboardWinnings.set(tiedPlayer.id, individualWinnings);
+        });
+
+        playerIndex += playersAtSameRank.length;
     }
 
-
-    // 3. "Beat THE PROs" Prize
     const proWinnings = new Map<string, number>();
     if (proPlayers.length > 0) {
       const bestProRank = Math.min(...proPlayers.map(p => p.rank));
@@ -172,13 +140,16 @@ export default function LeaderboardPage() {
       });
     }
 
-    // 4. Combine all winnings
     const totalWinnings = new Map<string, number>();
-    regularPlayers.forEach(user => {
+    [...regularPlayers, ...proPlayers].forEach(user => {
+      if (user.isPro) {
+        totalWinnings.set(user.id, 0);
+      } else {
         const lbWinnings = leaderboardWinnings.get(user.id) || 0;
         const mmWinnings = mimoMWinnings.get(user.id) || 0;
         const pWinnings = proWinnings.get(user.id) || 0;
         totalWinnings.set(user.id, lbWinnings + mmWinnings + pWinnings);
+      }
     });
 
     return totalWinnings;
@@ -197,30 +168,30 @@ export default function LeaderboardPage() {
           <Table>
             <TableHeader>
                <TableRow>
-                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r">PremPred Standings</TableHead>
-                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r">Changes in the past week</TableHead>
-                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground">Seasons Highs & Lows</TableHead>
+                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-blue-200/50 dark:bg-blue-800/30">PremPred Standings</TableHead>
+                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-green-200/50 dark:bg-green-800/30">Changes in the past week</TableHead>
+                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground bg-purple-200/50 dark:bg-purple-800/30">Seasons Highs & Lows</TableHead>
               </TableRow>
               <TableRow>
-                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r">Week {currentWeek}, Current Standings</TableHead>
-                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r">Position</TableHead>
-                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r">Points</TableHead>
-                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r">Position</TableHead>
-                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground">Points</TableHead>
+                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-blue-100/50 dark:bg-blue-900/20">Week {currentWeek}, Current Standings</TableHead>
+                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-green-100/50 dark:bg-green-900/20">Position</TableHead>
+                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-green-100/50 dark:bg-green-900/20">Points</TableHead>
+                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-purple-100/50 dark:bg-purple-900/20">Position</TableHead>
+                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground bg-purple-100/50 dark:bg-purple-900/20">Points</TableHead>
               </TableRow>
               <TableRow>
-                <TableHead className="w-[80px]">Position</TableHead>
-                <TableHead>Player</TableHead>
-                <TableHead className="text-center">Points</TableHead>
-                <TableHead className="text-center border-r">Winnings</TableHead>
-                <TableHead className="text-center">Was</TableHead>
-                <TableHead className="w-[130px] text-center border-r">Move</TableHead>
-                <TableHead className="text-center">Was</TableHead>
-                <TableHead className="w-[130px] text-center border-r">Change</TableHead>
-                <TableHead className="text-center">High</TableHead>
-                <TableHead className="text-center border-r">Low</TableHead>
-                <TableHead className="text-center">High</TableHead>
-                <TableHead className="text-center">Low</TableHead>
+                <TableHead className="w-[80px] bg-blue-50/50 dark:bg-blue-900/10">Position</TableHead>
+                <TableHead className="bg-blue-50/50 dark:bg-blue-900/10">Player</TableHead>
+                <TableHead className="text-center bg-blue-50/50 dark:bg-blue-900/10">Points</TableHead>
+                <TableHead className="text-center border-r bg-blue-50/50 dark:bg-blue-900/10">Winnings</TableHead>
+                <TableHead className="text-center bg-green-50/50 dark:bg-green-900/10">Was</TableHead>
+                <TableHead className="w-[130px] text-center border-r bg-green-50/50 dark:bg-green-900/10">Move</TableHead>
+                <TableHead className="text-center bg-green-50/50 dark:bg-green-900/10">Was</TableHead>
+                <TableHead className="w-[130px] text-center border-r bg-green-50/50 dark:bg-green-900/10">Change</TableHead>
+                <TableHead className="text-center bg-purple-50/50 dark:bg-purple-900/10">High</TableHead>
+                <TableHead className="text-center border-r bg-purple-50/50 dark:bg-purple-900/10">Low</TableHead>
+                <TableHead className="text-center bg-purple-50/50 dark:bg-purple-900/10">High</TableHead>
+                <TableHead className="text-center bg-purple-50/50 dark:bg-purple-900/10">Low</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -273,3 +244,5 @@ export default function LeaderboardPage() {
     </div>
   );
 }
+
+    
