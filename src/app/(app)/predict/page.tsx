@@ -131,7 +131,7 @@ export default function PredictPage() {
                           <div className={cn("text-base font-medium w-6 text-center opacity-80")}>
                             {index + 1}
                           </div>
-                          <TeamIcon className={cn("size-5", item.teamColour)} />
+                          <TeamIcon className={cn("size-5 transform-gpu scale-x-[-1]", item.teamColour)} />
                           <span className="font-medium text-sm">{item.teamName}</span>
                         </Reorder.Item>
                       );
@@ -158,7 +158,7 @@ export default function PredictPage() {
                                 <TableCell className={cn("font-medium w-[50px] opacity-80")}>{team.rank}</TableCell>
                                 <TableCell>
                                   <div className="flex items-center gap-2">
-                                    <TeamIcon className={cn("size-5", team.colour)} />
+                                    <TeamIcon className={cn("size-5 transform-gpu scale-x-[-1]", team.colour)} />
                                     <span className="truncate">{team.name}</span>
                                   </div>
                                 </TableCell>
