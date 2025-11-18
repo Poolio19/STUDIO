@@ -98,7 +98,7 @@ export function TeamStandingsChart({
                   top: -10,
                   right: 130,
                   left: -20,
-                  bottom: 40,
+                  bottom: 50,
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
