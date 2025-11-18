@@ -37,6 +37,9 @@ export default function StandingsPage() {
         if (b!.points !== a!.points) {
             return b!.points - a!.points;
         }
+        if (b!.goalDifference !== a!.goalDifference) {
+            return b!.goalDifference - a!.goalDifference;
+        }
         return b!.goalsFor - a!.goalsFor;
     })
     .map((team, index) => ({ ...team!, rank: index + 1 }));
