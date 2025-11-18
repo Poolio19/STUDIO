@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -91,7 +90,6 @@ export default function ConsensusPage() {
                   {positions.map((pos) => (
                     <TableHead key={pos} className="w-[60px] text-center">{pos}</TableHead>
                   ))}
-                  <TableHead className="w-[60px] text-center">Total</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -101,7 +99,6 @@ export default function ConsensusPage() {
                   const teamId = teamData.id;
                   const predictionCounts = consensusData[teamId];
                   if (!predictionCounts) return null; // guard against missing data
-                  const totalPredictions = predictionCounts.reduce((sum, count) => sum + count, 0);
                   const isLiverpool = teamId === 'team_12';
                   return (
                     <TableRow
@@ -132,14 +129,15 @@ export default function ConsensusPage() {
                       {predictionCounts.map((count, posIndex) => (
                         <TableCell
                           key={`${teamId}-${posIndex}`}
-                          className={cn('text-center font-medium', getCellColour(count))}
+                          className={cn(
+                            'text-center font-medium',
+                            getCellColour(count),
+                            posIndex === predictionCounts.length - 1 && 'rounded-r-md'
+                          )}
                         >
                           {count > 0 ? count : ''}
                         </TableCell>
                       ))}
-                      <TableCell className="text-center font-bold rounded-r-md">
-                        {totalPredictions}
-                      </TableCell>
                     </TableRow>
                   );
                 })}
