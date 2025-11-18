@@ -107,19 +107,16 @@ export default function ConsensusPage() {
                     <TableRow
                       key={teamId}
                       className="border-b-4 border-transparent"
-                      style={{
-                        color: teamData.textColour,
-                      }}
                     >
                       <TableCell 
                         className={cn("sticky left-0 z-10 text-center font-medium rounded-l-md p-4")}
-                        style={{ backgroundColor: teamData.bgColourFaint }}
+                        style={{ backgroundColor: teamData.bgColourFaint, color: teamData.textColour }}
                       >
                         {teamData.rank}
                       </TableCell>
                        <TableCell
                         className={cn("sticky left-[50px] z-10 p-0")}
-                        style={{ backgroundColor: teamData.bgColourFaint }}
+                        style={{ backgroundColor: teamData.bgColourFaint, color: teamData.textColour }}
                       >
                         <div className="flex items-center justify-center h-full">
                             <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: teamData.bgColourSolid }}>
@@ -132,16 +129,24 @@ export default function ConsensusPage() {
                       </TableCell>
                       <TableCell 
                         className={cn("sticky left-[98px] z-10 whitespace-nowrap p-4")}
-                        style={{ backgroundColor: teamData.bgColourFaint }}
+                        style={{ backgroundColor: teamData.bgColourFaint, color: teamData.textColour }}
                       >
                         <span className="font-medium">{teamData.name}</span>
                       </TableCell>
                       {predictionCounts.map((count, posIndex) => {
                         const maxCount = predictions.length;
                         const alpha = count > 0 ? 0.1 + (0.9 * (count / maxCount)) : 0;
-                        const cellStyle = teamData.bgColourSolid && count > 0 ? {
-                          backgroundColor: hexToRgba(teamData.bgColourSolid, alpha)
-                        } : {};
+                        
+                        const cellStyle: React.CSSProperties = {};
+                        if (teamData.bgColourSolid && count > 0) {
+                          cellStyle.backgroundColor = hexToRgba(teamData.bgColourSolid, alpha);
+                          // Set text color based on alpha
+                          if (alpha < 0.4) {
+                            cellStyle.color = teamData.bgColourSolid;
+                          } else {
+                            cellStyle.color = teamData.textColour;
+                          }
+                        }
 
                         return (
                           <TableCell
