@@ -122,27 +122,31 @@ export function TeamStandingsChart({
                   tickCount={20}
                 />
                 <Tooltip content={<CustomTooltip />} />
+                {/* Render the solid background lines first */}
                 {sortedTeams.map(team => (
-                  <React.Fragment key={team.id}>
-                    <Line
-                      dataKey={team.name}
-                      type="monotone"
-                      stroke={chartConfig[team.name]?.colour}
-                      strokeWidth={4}
-                      dot={false}
-                      name={team.name}
-                      legendType="none"
-                    />
-                     <Line
-                      dataKey={team.name}
-                      type="monotone"
-                      stroke={chartConfig[team.name]?.secondaryColour}
-                      strokeWidth={2}
-                      strokeDasharray="3 3"
-                      dot={false}
-                      name={team.name}
-                    />
-                  </React.Fragment>
+                  <Line
+                    key={`${team.id}-solid`}
+                    dataKey={team.name}
+                    type="monotone"
+                    stroke={chartConfig[team.name]?.colour}
+                    strokeWidth={4}
+                    dot={false}
+                    name={team.name}
+                    legendType="none"
+                  />
+                ))}
+                {/* Render the dashed foreground lines on top */}
+                {sortedTeams.map(team => (
+                  <Line
+                    key={`${team.id}-dashed`}
+                    dataKey={team.name}
+                    type="monotone"
+                    stroke={chartConfig[team.name]?.secondaryColour}
+                    strokeWidth={2}
+                    strokeDasharray="3 3"
+                    dot={false}
+                    name={team.name}
+                  />
                 ))}
               </LineChart>
             </ResponsiveContainer>
