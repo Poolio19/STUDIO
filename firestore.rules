@@ -11,12 +11,12 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
 
-    match /standings/{teamId} {
+    match /standings/{standingId} {
       allow read, write: if request.auth != null;
     }
 
     match /events/{eventId} {
-      allow read: if true;
+      allow read: if request.auth != null;
       allow write: if false; 
     }
 
@@ -25,7 +25,7 @@ service cloud.firestore {
     }
     
     match /leaderboard/{leaderboardEntryId} {
-      allow read: if true;
+      allow read: if request.auth != null;
       allow write: if false;
     }
   }
