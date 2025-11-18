@@ -109,9 +109,15 @@ export default function ConsensusPage() {
                         color: teamData.textColour,
                       }}
                     >
-                      <TableCell className={cn("sticky left-0 z-10 text-center font-medium rounded-l-md bg-card")}>{index + 1}</TableCell>
+                      <TableCell 
+                        className={cn("sticky left-0 z-10 text-center font-medium rounded-l-md")}
+                        style={{ backgroundColor: teamData.bgColourFaint }}
+                      >
+                        {index + 1}
+                      </TableCell>
                        <TableCell
-                        className={cn("sticky left-[50px] z-10 p-0 bg-card")}
+                        className={cn("sticky left-[50px] z-10 p-0")}
+                        style={{ backgroundColor: teamData.bgColourFaint }}
                       >
                         <div className="flex items-center justify-center h-full">
                             <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: teamData.bgColourSolid }}>
@@ -122,7 +128,10 @@ export default function ConsensusPage() {
                             </div>
                         </div>
                       </TableCell>
-                      <TableCell className={cn("sticky left-[98px] z-10 whitespace-nowrap bg-card")}>
+                      <TableCell 
+                        className={cn("sticky left-[98px] z-10 whitespace-nowrap")}
+                        style={{ backgroundColor: teamData.bgColourFaint }}
+                      >
                         <span className="font-medium">{teamData.name}</span>
                       </TableCell>
                       {predictionCounts.map((count, posIndex) => {
