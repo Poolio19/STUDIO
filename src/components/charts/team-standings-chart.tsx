@@ -142,7 +142,7 @@ export function TeamStandingsChart({
                     dataKey={team.name}
                     type="monotone"
                     stroke={chartConfig[team.name]?.secondaryColour}
-                    strokeWidth={2}
+                    strokeWidth={4}
                     strokeDasharray="9 12"
                     dot={false}
                     name={team.name}
@@ -164,15 +164,15 @@ export function TeamStandingsChart({
           >
             {sortedTeams.map(team => (
               <li key={team.id} className="flex items-center space-x-2">
-                <div className="relative w-4 h-1 shrink-0">
+                <div className="relative w-4 h-4 shrink-0 flex items-center justify-center">
                   <div 
-                    className="absolute inset-0" 
+                    className="absolute w-full h-1" 
                     style={{ backgroundColor: chartConfig[team.name]?.colour }}
                   ></div>
                   <div 
-                    className="absolute inset-0"
+                    className="absolute w-2 h-1"
                     style={{ 
-                      borderTop: `2px dashed ${chartConfig[team.name]?.secondaryColour}`
+                      backgroundColor: chartConfig[team.name]?.secondaryColour
                     }}
                   ></div>
                 </div>
