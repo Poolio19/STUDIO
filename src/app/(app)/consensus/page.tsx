@@ -158,7 +158,7 @@ export default function ConsensusPage() {
                           <TableCell
                             key={`${teamId}-${posIndex}`}
                             className={cn(
-                              'text-center font-medium p-0 border-l border-dashed border-border',
+                              'text-center font-medium p-0 border-l border-b border-dashed border-border',
                               posIndex === predictionCounts.length - 1 && 'rounded-r-md'
                             )}
                             style={cellStyle}
