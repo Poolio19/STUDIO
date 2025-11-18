@@ -14,7 +14,6 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -96,7 +95,7 @@ export function TeamStandingsChart({
               <LineChart
                 data={chartData}
                 margin={{
-                  top: 30,
+                  top: 12.5,
                   right: 130,
                   left: -20,
                   bottom: 5,
