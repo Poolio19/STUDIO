@@ -118,7 +118,6 @@ export default function StandingsPage() {
                     <TableCell className="font-medium rounded-l-md">{team.rank}</TableCell>
                     <TableCell
                       className="p-0"
-                      style={{ backgroundColor: team.bgColourFaint }}
                     >
                       <div className="flex items-center justify-center h-full">
                         <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}>
