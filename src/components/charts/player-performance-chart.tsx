@@ -99,8 +99,8 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers }: 
         className="absolute flex flex-col justify-between text-xs"
         style={{
           right: 0,
-          top: '-10px',
-          bottom: '10px',
+          top: '-20px',
+          bottom: '0px',
           width: '130px',
           paddingLeft: '1rem',
           border: '1px solid red',
