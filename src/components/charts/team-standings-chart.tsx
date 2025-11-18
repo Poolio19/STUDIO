@@ -95,7 +95,7 @@ export function TeamStandingsChart({
               <LineChart
                 data={chartData}
                 margin={{
-                  top: -10,
+                  top: 20,
                   right: 130,
                   left: -20,
                   bottom: 50,
