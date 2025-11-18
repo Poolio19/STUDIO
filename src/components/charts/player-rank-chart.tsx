@@ -32,21 +32,24 @@ const CustomLegend = ({ payload, sortedUsers, chartConfig }: any) => {
   }
 
   return (
-    <ul className="flex flex-col space-y-2">
-      {sortedUsers.map((user: User) => {
-        const userConfig = chartConfig[user.name];
-        if (!userConfig) return null;
-        return (
-          <li key={user.id} className="flex items-center space-x-2 text-sm">
-            <span
-              className="inline-block h-2.5 w-2.5 rounded-sm"
-              style={{ backgroundColor: userConfig.colour }}
-            ></span>
-            <span>{`${user.name}, Rank ${user.rank}`}</span>
-          </li>
-        );
-      })}
-    </ul>
+    <div>
+      <p className="text-xs font-medium mb-2">Player, Rank</p>
+      <ul className="flex flex-col space-y-1 text-xs">
+        {sortedUsers.map((user: User) => {
+          const userConfig = chartConfig[user.name];
+          if (!userConfig) return null;
+          return (
+            <li key={user.id} className="flex items-center space-x-2">
+              <span
+                className="inline-block h-2 w-2 rounded-sm"
+                style={{ backgroundColor: userConfig.colour }}
+              ></span>
+              <span>{`${user.name}, ${user.rank}`}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 };
 
