@@ -155,7 +155,7 @@ export function TeamStandingsChart({
             className="absolute flex flex-col justify-between text-xs"
             style={{
               right: 0,
-              top: '12.5px',
+              top: '37.5px',
               bottom: '42.5px',
               width: '120px',
               paddingLeft: '1rem',
