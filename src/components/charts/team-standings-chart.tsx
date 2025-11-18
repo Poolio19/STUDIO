@@ -164,10 +164,18 @@ export function TeamStandingsChart({
           >
             {sortedTeams.map(team => (
               <li key={team.id} className="flex items-center space-x-2">
-                <span
-                  className="size-2 rounded-full"
-                  style={{ backgroundColor: chartConfig[team.name]?.colour }}
-                ></span>
+                <div className="relative w-3 h-2 shrink-0">
+                  <div 
+                    className="absolute inset-0" 
+                    style={{ backgroundColor: chartConfig[team.name]?.colour }}
+                  ></div>
+                  <div 
+                    className="absolute inset-0"
+                    style={{ 
+                      borderTop: `2px dashed ${chartConfig[team.name]?.secondaryColour}`
+                    }}
+                  ></div>
+                </div>
                 <span>{team.name}</span>
               </li>
             ))}
