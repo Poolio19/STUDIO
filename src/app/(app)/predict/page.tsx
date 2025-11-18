@@ -27,6 +27,8 @@ const predictionSchema = z.object({
   teamName: z.string(),
   teamLogo: z.string(),
   teamColour: z.string().optional(),
+  bgColour: z.string().optional(),
+  textColour: z.string().optional(),
 });
 
 const formSchema = z.object({
@@ -51,6 +53,8 @@ export default function PredictPage() {
           teamName: team?.name || 'Unknown Team',
           teamLogo: team?.logo || 'match',
           teamColour: team?.colour,
+          bgColour: team?.bgColour,
+          textColour: team?.textColour,
         };
       });
   }, []);
@@ -102,7 +106,7 @@ export default function PredictPage() {
              <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-stretch">
               <div className="lg:col-span-3 flex flex-col">
                  <div className="font-medium pb-2 text-muted-foreground">Your Prediction (2025-2026)</div>
-                <div className="border rounded-md">
+                <div className="border rounded-md overflow-hidden">
                   <Reorder.Group
                     axis="y"
                     values={items}
@@ -117,14 +121,16 @@ export default function PredictPage() {
                           key={item.teamId}
                           value={item}
                           className={cn(
-                            "flex items-center gap-4 h-[53px] px-4 bg-card cursor-grab active:cursor-grabbing",
-                            index < items.length - 1 && "border-b"
+                            "flex items-center gap-4 h-[53px] px-4 cursor-grab active:cursor-grabbing",
+                            item.bgColour,
+                            item.textColour,
+                            index < items.length - 1 && "border-b border-white/20"
                           )}
                         >
-                          <div className="text-base font-medium w-6 text-center text-muted-foreground">
+                          <div className={cn("text-base font-medium w-6 text-center", item.textColour ? `${item.textColour}/80` : 'text-muted-foreground')}>
                             {index + 1}
                           </div>
-                          <TeamIcon className={cn("size-5", item.teamColour)} />
+                          <TeamIcon className={cn("size-5", item.textColour)} />
                           <span className="font-medium text-sm">{item.teamName}</span>
                         </Reorder.Item>
                       );
@@ -140,18 +146,18 @@ export default function PredictPage() {
                     <span className="w-16 text-right">GD</span>
                   </div>
                  </div>
-                    <div className="flex-1 border rounded-md">
+                    <div className="flex-1 border rounded-md overflow-hidden">
                       <Table className="h-full">
                         <TableBody>
                           {standingsWithTeamData.map(team => {
                             if (!team) return null;
                             const TeamIcon = Icons[team.logo as IconName] || Icons.match;
                             return (
-                              <TableRow key={team.id} className="h-[53px]">
-                                <TableCell className="font-medium w-[50px]">{team.rank}</TableCell>
+                              <TableRow key={team.id} className={cn("h-[53px] border-b-white/20", team.bgColour, team.textColour)}>
+                                <TableCell className={cn("font-medium w-[50px]", team.textColour ? `${team.textColour}/80` : '')}>{team.rank}</TableCell>
                                 <TableCell>
                                   <div className="flex items-center gap-2">
-                                    <TeamIcon className={cn("size-5", team.colour)} />
+                                    <TeamIcon className={cn("size-5", team.textColour)} />
                                     <span className="truncate">{team.name}</span>
                                   </div>
                                 </TableCell>
@@ -159,7 +165,7 @@ export default function PredictPage() {
                                   {team.points}
                                 </TableCell>
                                 <TableCell className="text-right w-16">
-                                  {team.goalDifference}
+                                  {team.goalDifference > 0 ? '+' : ''}{team.goalDifference}
                                 </TableCell>
                               </TableRow>
                             );

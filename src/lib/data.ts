@@ -22,6 +22,8 @@ export type Team = {
   name: string;
   logo: string;
   colour?: string;
+  bgColour?: string;
+  textColour?: string;
 };
 
 export type Prediction = {
@@ -124,27 +126,28 @@ let usersData: Omit<User, 'score' | 'rank' | 'previousRank' | 'previousScore' | 
 ];
 
 export const teams: Team[] = [
-    { id: 'team_1', name: 'Arsenal', logo: 'swords', colour: 'text-red-600' },
-    { id: 'team_2', name: 'Aston Villa', logo: 'shield', colour: 'text-red-900' },
-    { id 'team_3', name: 'Bournemouth', logo: 'cherry', colour: 'text-red-600' },
-    { id: 'team_4', name: 'Brentford', logo: 'bee', colour: 'text-red-600' },
-    { id: 'team_5', name: 'Brighton', logo: 'bird', colour: 'text-blue-500' },
-    { id: 'team_6', name: 'Chelsea', logo: 'lion', colour: 'text-blue-600' },
-    { id: 'team_7', name: 'Crystal Palace', logo: 'bird', colour: 'text-blue-600' },
-    { id: 'team_8', name: 'Everton', logo: 'castle', colour: 'text-blue-700' },
-    { id: 'team_9', name: 'Fulham', logo: 'shield', colour: 'text-gray-900' },
-    { id: 'team_10', name: 'Ipswich Town', logo: 'horse', colour: 'text-blue-600' },
-    { id: 'team_11', name: 'Leicester City', logo: 'fox', colour: 'text-blue-600' },
-    { id: 'team_12', name: 'Liverpool', logo: 'bird', colour: 'text-red-600' },
-    { id: 'team_13', name: 'Man City', logo: 'ship', colour: 'text-sky-400' },
-    { id: 'team_14', name: 'Man Utd', logo: 'sparkles', colour: 'text-red-600' },
-    { id: 'team_15', name: 'Newcastle', logo: 'bird', colour: 'text-gray-900' },
-    { id: 'team_16', name: 'Notts Forest', logo: 'tree', colour: 'text-red-600' },
-    { id: 'team_17', name: 'Southampton', logo: 'flower', colour: 'text-red-600' },
-    { id: 'team_18', name: 'Tottenham', logo: 'bird', colour: 'text-gray-700' },
-    { id: 'team_19', name: 'West Ham', logo: 'hammer', colour: 'text-red-900' },
-    { id: 'team_20', name: 'Wolves', logo: 'wolf', colour: 'text-orange-400' },
+    { id: 'team_1', name: 'Arsenal', logo: 'swords', colour: 'text-red-600', bgColour: 'bg-red-600', textColour: 'text-white' },
+    { id: 'team_2', name: 'Aston Villa', logo: 'shield', colour: 'text-red-900', bgColour: 'bg-red-900', textColour: 'text-sky-300' },
+    { id: 'team_3', name: 'Bournemouth', logo: 'cherry', colour: 'text-red-600', bgColour: 'bg-red-600', textColour: 'text-black' },
+    { id: 'team_4', name: 'Brentford', logo: 'bee', colour: 'text-red-600', bgColour: 'bg-red-600', textColour: 'text-white' },
+    { id: 'team_5', name: 'Brighton', logo: 'bird', colour: 'text-blue-500', bgColour: 'bg-blue-500', textColour: 'text-white' },
+    { id: 'team_6', name: 'Chelsea', logo: 'lion', colour: 'text-blue-600', bgColour: 'bg-blue-600', textColour: 'text-white' },
+    { id: 'team_7', name: 'Crystal Palace', logo: 'bird', colour: 'text-blue-600', bgColour: 'bg-blue-600', textColour: 'text-red-600' },
+    { id: 'team_8', name: 'Everton', logo: 'castle', colour: 'text-blue-700', bgColour: 'bg-blue-700', textColour: 'text-white' },
+    { id: 'team_9', name: 'Fulham', logo: 'shield', colour: 'text-gray-900', bgColour: 'bg-white', textColour: 'text-black' },
+    { id: 'team_10', name: 'Ipswich Town', logo: 'horse', colour: 'text-blue-600', bgColour: 'bg-blue-600', textColour: 'text-white' },
+    { id: 'team_11', name: 'Leicester City', logo: 'fox', colour: 'text-blue-600', bgColour: 'bg-blue-600', textColour: 'text-white' },
+    { id: 'team_12', name: 'Liverpool', logo: 'bird', colour: 'text-red-600', bgColour: 'bg-red-600', textColour: 'text-white' },
+    { id: 'team_13', name: 'Man City', logo: 'ship', colour: 'text-sky-400', bgColour: 'bg-sky-400', textColour: 'text-white' },
+    { id: 'team_14', name: 'Man Utd', logo: 'sparkles', colour: 'text-red-600', bgColour: 'bg-red-600', textColour: 'text-white' },
+    { id: 'team_15', name: 'Newcastle', logo: 'bird', colour: 'text-gray-900', bgColour: 'bg-black', textColour: 'text-white' },
+    { id: 'team_16', name: 'Notts Forest', logo: 'tree', colour: 'text-red-600', bgColour: 'bg-red-600', textColour: 'text-white' },
+    { id: 'team_17', name: 'Southampton', logo: 'flower', colour: 'text-red-600', bgColour: 'bg-red-600', textColour: 'text-white' },
+    { id: 'team_18', name: 'Tottenham', logo: 'bird', colour: 'text-gray-700', bgColour: 'bg-white', textColour: 'text-gray-900' },
+    { id: 'team_19', name: 'West Ham', logo: 'hammer', colour: 'text-red-900', bgColour: 'bg-red-900', textColour: 'text-sky-300' },
+    { id: 'team_20', name: 'Wolves', logo: 'wolf', colour: 'text-orange-400', bgColour: 'bg-orange-400', textColour: 'text-black' },
 ];
+
 
 export const previousSeasonStandings: PreviousSeasonStanding[] = [
     { teamId: 'team_13', rank: 1, points: 91, goalDifference: 62 },
