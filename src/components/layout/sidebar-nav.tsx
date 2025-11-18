@@ -15,7 +15,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Icons } from '@/components/icons';
 import Link from 'next/link';
-import { Award } from 'lucide-react';
+import { Award, Database } from 'lucide-react';
 
 const navItems = [
   { href: '/standings', icon: 'standings', label: 'Premier League' },
@@ -26,8 +26,9 @@ const navItems = [
   { href: '/performance', icon: 'performance', label: 'Player Score Graph' },
   { href: '/rankings', icon: 'rankings', label: 'Player Position Graph' },
   { href: '/scoring', icon: 'scoring', label: 'Rules & Scoring' },
-  { href: '/profile', icon: 'profile', label: 'Your Pred Profile' },
   { href: '/predict', icon: 'predict', label: 'Your Prediction' },
+  { href: '/profile', icon: 'profile', label: 'Your Pred Profile' },
+  { href: '/admin', icon: 'database', label: 'Data Admin' },
 ];
 
 export function SidebarNav() {

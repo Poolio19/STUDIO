@@ -41,6 +41,7 @@ import {
   Theater,
   UtensilsCrossed,
   Gitlab,
+  Database,
 } from 'lucide-react';
 
 export const Icons = {
@@ -84,6 +85,7 @@ export const Icons = {
   theater: Theater,
   utensilsCrossed: UtensilsCrossed,
   gitlab: Gitlab,
+  database: Database,
   match: Swords,
   rankUp: (props: LucideProps) => <ChevronUp {...props} className="text-green-500" />,
   rankDown: (props: LucideProps) => <ChevronDown {...props} className="text-red-500" />,
