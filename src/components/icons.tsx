@@ -42,6 +42,8 @@ import {
   Gitlab,
   Database,
   Volleyball,
+  LineChart,
+  Spline,
 } from 'lucide-react';
 
 export const Icons = {
@@ -49,14 +51,14 @@ export const Icons = {
   leaderboard: Trophy,
   predict: PenSquare,
   scoring: Calculator,
-  standings: ListOrdered,
+  standings: Shield,
   stats: BarChart,
   consensus: Users,
   profile: User,
   notifications: Bell,
   award: Award,
-  performance: BarChart,
-  rankings: TrendingUp,
+  performance: LineChart,
+  rankings: Spline,
   shield: Shield,
   bird: Bird,
   ship: Ship,
