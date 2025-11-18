@@ -88,7 +88,7 @@ export default function PredictPage() {
     <div className="flex flex-col gap-8">
        <header>
           <h1 className="text-3xl font-bold tracking-tight">
-            Predict Final Standings
+            PredictFinalStandings
           </h1>
           <p className="text-muted-foreground">
             Drag and drop the teams to create your predicted league table for the 2025-2026 season.
@@ -99,7 +99,7 @@ export default function PredictPage() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
              <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-stretch">
               <div className="lg:col-span-3 flex flex-col">
-                 <div className="font-medium pb-2 text-muted-foreground">Your Prediction (2025-2026)</div>
+                 <div className="font-medium pb-2 text-muted-foreground">YourPrediction (2025-2026)</div>
                 <div className="border rounded-md">
                   <Reorder.Group
                     axis="y"
@@ -132,7 +132,7 @@ export default function PredictPage() {
               </div>
               <div className="lg:col-span-2 flex flex-col">
                  <div className="font-medium pb-2 text-muted-foreground flex justify-between">
-                  <span>Last Season (2024-25)</span>
+                  <span>LastSeason (2024-25)</span>
                   <div className="flex">
                     <span className="w-16 text-right">Pts</span>
                     <span className="w-16 text-right">GD</span>
@@ -167,7 +167,7 @@ export default function PredictPage() {
                     </div>
               </div>
             </div>
-            <Button type="submit">Submit Final Prediction</Button>
+            <Button type="submit">SubmitFinalPrediction</Button>
           </form>
         </Form>
     </div>

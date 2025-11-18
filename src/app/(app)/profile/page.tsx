@@ -104,7 +104,7 @@ export default function ProfilePage() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Your Profile</h1>
+        <h1 className="text-3xl font-bold tracking-tight">YourProfile</h1>
         <p className="text-muted-foreground">
           Here's a look at your prediction performance.
         </p>
@@ -134,7 +134,7 @@ export default function ProfilePage() {
         <div className="lg:col-span-2 space-y-8">
           <Card>
             <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
+              <CardTitle>ProfileInformation</CardTitle>
               <CardDescription>
                 Update your personal details here.
               </CardDescription>
@@ -227,7 +227,7 @@ export default function ProfilePage() {
                     name="favoriteTeam"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Favorite Premier League Team</FormLabel>
+                        <FormLabel>FavoritePremierLeagueTeam</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -246,7 +246,7 @@ export default function ProfilePage() {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit">Update Profile</Button>
+                  <Button type="submit">UpdateProfile</Button>
                 </form>
               </Form>
             </CardContent>

@@ -41,7 +41,7 @@ export default function PerformancePage() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Player Performance</h1>
+        <h1 className="text-3xl font-bold tracking-tight">PlayerPerformance</h1>
         <p className="text-muted-foreground">
           Track player score progression over the season.
         </p>
@@ -49,7 +49,7 @@ export default function PerformancePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Player Scores by Week</CardTitle>
+          <CardTitle>PlayerScoresByWeek</CardTitle>
           <CardDescription>
             Each line represents a player's total score over the weeks.
           </CardDescription>

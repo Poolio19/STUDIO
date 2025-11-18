@@ -39,7 +39,7 @@ export default function RankingsPage() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Player Rankings</h1>
+        <h1 className="text-3xl font-bold tracking-tight">PlayerRankings</h1>
         <p className="text-muted-foreground">
           Track player rank progression over the season.
         </p>
@@ -47,7 +47,7 @@ export default function RankingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Player Position by Week</CardTitle>
+          <CardTitle>PlayerPositionByWeek</CardTitle>
           <CardDescription>
             Each line represents a player's rank over the weeks.
           </CardDescription>

@@ -25,27 +25,27 @@ export default function NotificationsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Email Notifications</CardTitle>
+          <CardTitle>EmailNotifications</CardTitle>
           <CardDescription>Choose which emails you want to receive.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div>
-              <Label htmlFor="weekly-progress" className="text-base font-medium">Weekly Progress Emails</Label>
+              <Label htmlFor="weekly-progress" className="text-base font-medium">WeeklyProgressEmails</Label>
               <p className="text-sm text-muted-foreground">Receive a summary of your performance and rank every week.</p>
             </div>
             <Switch id="weekly-progress" defaultChecked />
           </div>
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div>
-                <Label htmlFor="new-events" className="text-base font-medium">New Event Alerts</Label>
+                <Label htmlFor="new-events" className="text-base font-medium">NewEventAlerts</Label>
                 <p className="text-sm text-muted-foreground">Get notified when new games are available for prediction.</p>
             </div>
             <Switch id="new-events" defaultChecked />
           </div>
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div>
-                <Label htmlFor="prediction-reminders" className="text-base font-medium">Prediction Reminders</Label>
+                <Label htmlFor="prediction-reminders" className="text-base font-medium">PredictionReminders</Label>
                 <p className="text-sm text-muted-foreground">Get a reminder before the prediction deadline for a game.</p>
             </div>
             <Switch id="prediction-reminders" />
@@ -55,13 +55,13 @@ export default function NotificationsPage() {
       
       <Card>
         <CardHeader>
-          <CardTitle>Push Notifications</CardTitle>
+          <CardTitle>PushNotifications</CardTitle>
           <CardDescription>Manage real-time alerts on your devices (coming soon).</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between rounded-lg border p-4 bg-gray-50 dark:bg-gray-800/50 opacity-60">
             <div>
-              <Label htmlFor="score-updates" className="text-base font-medium">Score Updates</Label>
+              <Label htmlFor="score-updates" className="text-base font-medium">ScoreUpdates</Label>
               <p className="text-sm text-muted-foreground">Get a push notification when scores are updated.</p>
             </div>
             <Switch id="score-updates" disabled />

@@ -71,7 +71,7 @@ export default function StandingsPage() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Premier League Standings</h1>
+        <h1 className="text-3xl font-bold tracking-tight">PremierLeagueStandings</h1>
         <p className="text-muted-foreground">The official Premier League table and weekly position tracker.</p>
       </header>
 
@@ -79,7 +79,7 @@ export default function StandingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Premier League Table 2025-2026</CardTitle>
+          <CardTitle>PremierLeagueTable 2025-2026</CardTitle>
           <CardDescription>Live standings updated weekly.</CardDescription>
         </CardHeader>
         <CardContent>

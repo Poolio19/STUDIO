@@ -66,14 +66,14 @@ export default function ConsensusPage() {
   return (
     <div className="flex flex-col gap-8">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Prediction Consensus</h1>
+        <h1 className="text-3xl font-bold tracking-tight">PredictionConsensus</h1>
         <p className="text-muted-foreground">
           See how the community predicts the final league standings.
         </p>
       </header>
       <Card>
         <CardHeader>
-          <CardTitle>Consensus Matrix</CardTitle>
+          <CardTitle>ConsensusMatrix</CardTitle>
           <CardDescription>
             The grid shows the number of players who have predicted each team to
             finish in a specific position. The total should equal the number of players.

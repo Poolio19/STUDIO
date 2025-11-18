@@ -77,7 +77,7 @@ export function TeamStandingsChart({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Weekly Standings Tracker</CardTitle>
+        <CardTitle>WeeklyStandingsTracker</CardTitle>
         <CardDescription>Team positions over the last {chartData.length} weeks.</CardDescription>
       </CardHeader>
       <CardContent>

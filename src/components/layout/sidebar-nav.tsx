@@ -18,14 +18,14 @@ import Link from 'next/link';
 import { Award } from 'lucide-react';
 
 const navItems = [
-  { href: '/leaderboard', icon: 'leaderboard', label: 'PremPred Standings' },
+  { href: '/leaderboard', icon: 'leaderboard', label: 'PremPredStandings' },
   { href: '/most-improved', icon: 'award', label: 'MiMoM' },
-  { href: '/predict', icon: 'predict', label: 'Your Prediction' },
+  { href: '/predict', icon: 'predict', label: 'YourPrediction' },
   { href: '/stats', icon: 'stats', label: 'Stats' },
   { href: '/consensus', icon: 'consensus', label: 'Consensus' },
-  { href: '/standings', icon: 'standings', label: 'Premier League Standings' },
-  { href: '/performance', icon: 'performance', label: 'Player Performance' },
-  { href: '/rankings', icon: 'rankings', label: 'Player Rankings' },
+  { href: '/standings', icon: 'standings', label: 'PremierLeagueStandings' },
+  { href: '/performance', icon: 'performance', label: 'PlayerPerformance' },
+  { href: '/rankings', icon: 'rankings', label: 'PlayerRankings' },
   { href: '/scoring', icon: 'scoring', label: 'Rules & Scoring' },
   { href: '/profile', icon: 'profile', label: 'Profile' },
   { href: '/notifications', icon: 'notifications', label: 'Notifications' },

@@ -168,12 +168,12 @@ export default function LeaderboardPage() {
           <Table>
             <TableHeader>
                <TableRow>
-                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-blue-200/50 dark:bg-blue-800/30">PremPred Standings</TableHead>
-                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-green-200/50 dark:bg-green-800/30">Changes in the past week</TableHead>
-                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground bg-purple-200/50 dark:bg-purple-800/30">Seasons Highs & Lows</TableHead>
+                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-blue-200/50 dark:bg-blue-800/30">PremPredStandings</TableHead>
+                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-green-200/50 dark:bg-green-800/30">ChangesInThePastWeek</TableHead>
+                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground bg-purple-200/50 dark:bg-purple-800/30">SeasonsHighsAndLows</TableHead>
               </TableRow>
               <TableRow>
-                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-blue-100/50 dark:bg-blue-900/20">Week {currentWeek}, Current Standings</TableHead>
+                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-blue-100/50 dark:bg-blue-900/20">Week {currentWeek}, CurrentStandings</TableHead>
                 <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-green-100/50 dark:bg-green-900/20">Position</TableHead>
                 <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-green-100/50 dark:bg-green-900/20">Points</TableHead>
                 <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-purple-100/50 dark:bg-purple-900/20">Position</TableHead>
