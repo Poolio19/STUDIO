@@ -38,7 +38,7 @@ export function TeamStandingsChart({
     return sortedTeams.reduce((config, team) => {
       config[team.name] = {
         label: team.name,
-        colour: `hsl(var(--chart-color-${team.rank}))`,
+        colour: team.bgColourSolid || `hsl(var(--chart-color-${team.rank}))`,
       };
       return config;
     }, {} as any);
