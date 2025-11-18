@@ -125,8 +125,7 @@ export default function PredictPage() {
                           key={item.teamId}
                           value={item}
                           className={cn(
-                            "flex items-center h-[53px] cursor-grab active:cursor-grabbing rounded-md",
-                            "border-b-4 border-transparent"
+                            "flex items-center h-[53px] cursor-grab active:cursor-grabbing rounded-md mb-1",
                           )}
                            style={{
                             backgroundColor: item.bgColourFaint,
