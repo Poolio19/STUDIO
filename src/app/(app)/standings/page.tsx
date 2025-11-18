@@ -34,13 +34,17 @@ export default function StandingsPage() {
     })
     .filter(Boolean)
     .sort((a, b) => {
-        if (b!.points !== a!.points) {
-            return b!.points - a!.points;
+        if (!a || !b) return 0;
+        if (a.points !== b.points) {
+            return b.points - a.points;
         }
-        if (b!.goalDifference !== a!.goalDifference) {
-            return b!.goalDifference - a!.goalDifference;
+        if (a.goalDifference !== b.goalDifference) {
+            return b.goalDifference - a.goalDifference;
         }
-        return b!.goalsFor - a!.goalsFor;
+        if (a.goalsFor !== b.goalsFor) {
+            return b.goalsFor - a.goalsFor;
+        }
+        return a.name.localeCompare(b.name);
     })
     .map((team, index) => ({ ...team!, rank: index + 1 }));
 
