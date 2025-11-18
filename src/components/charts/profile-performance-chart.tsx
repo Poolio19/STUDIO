@@ -89,14 +89,14 @@ export function ProfilePerformanceChart({ chartData, yAxisDomain }: ProfilePerfo
               <Line
                 dataKey="Your Score"
                 type="monotone"
-                stroke="var(--colour-Your Score)"
+                stroke={chartConfig['Your Score'].colour}
                 strokeWidth={3}
                 dot={true}
               />
                <Line
                 dataKey="Max Score"
                 type="monotone"
-                stroke="var(--colour-Max Score)"
+                stroke={chartConfig['Max Score'].colour}
                 strokeWidth={2}
                 strokeDasharray="3 4"
                 dot={false}
@@ -104,7 +104,7 @@ export function ProfilePerformanceChart({ chartData, yAxisDomain }: ProfilePerfo
                <Line
                 dataKey="Min Score"
                 type="monotone"
-                stroke="var(--colour-Min Score)"
+                stroke={chartConfig['Min Score'].colour}
                 strokeWidth={2}
                 strokeDasharray="3 4"
                 dot={false}
