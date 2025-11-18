@@ -33,8 +33,8 @@ const getAvatarUrl = (avatarId: string) => {
 };
 
 const getRankChangeIcon = (change: number) => {
-  if (change < 0) return 'rankUp'; // rank number went down = improvement
-  if (change > 0) return 'rankDown';
+  if (change > 0) return 'rankUp'; // rank number went down = improvement
+  if (change < 0) return 'rankDown';
   return 'rankSame';
 };
 
