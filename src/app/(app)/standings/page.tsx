@@ -85,7 +85,7 @@ export default function StandingsPage() {
           <Table className="border-separate border-spacing-y-1">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[50px]">#</TableHead>
+                <TableHead className="w-[50px]">Pos</TableHead>
                 <TableHead className="w-[48px]"></TableHead>
                 <TableHead>Team</TableHead>
                 <TableHead className="text-center">Plyd</TableHead>
@@ -149,3 +149,4 @@ export default function StandingsPage() {
     </div>
   );
 }
+
