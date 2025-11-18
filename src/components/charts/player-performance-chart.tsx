@@ -33,7 +33,7 @@ const CustomLegend = ({ payload, sortedUsers, chartConfig }: any) => {
 
   return (
     <div>
-      <p className="text-xs font-medium mb-2">Player, Rank</p>
+      <p className="text-xs font-medium mb-2">Player, Score</p>
       <ul className="flex flex-col space-y-1 text-xs">
         {sortedUsers.map((user: User) => {
           const userConfig = chartConfig[user.name];
@@ -44,7 +44,7 @@ const CustomLegend = ({ payload, sortedUsers, chartConfig }: any) => {
                 className="inline-block h-2 w-2 rounded-sm"
                 style={{ backgroundColor: userConfig.colour }}
               ></span>
-              <span>{`${user.name}, ${user.rank}`}</span>
+              <span>{`${user.name}, ${user.score}`}</span>
             </li>
           );
         })}
