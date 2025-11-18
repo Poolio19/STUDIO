@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Upload, Trophy, Award, ShieldCheck } from 'lucide-react';
+import { Calendar as CalendarIcon, Upload, Trophy, Award, ShieldCheck, Database } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -41,7 +41,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { teams, userHistories, users as allUsers, monthlyMimoM } from '@/lib/data';
+import { teams, userHistories, users as allUsers, monthlyMimoM, playerTeamScores } from '@/lib/data';
 import { ProfilePerformanceChart } from '@/components/charts/profile-performance-chart';
 import React from 'react';
 import { Label } from '@/components/ui/label';
@@ -53,6 +53,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useFirestore } from '@/firebase';
+import { collection, doc, writeBatch } from 'firebase/firestore';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -87,6 +89,7 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
+  const firestore = useFirestore();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -154,6 +157,53 @@ export default function ProfilePage() {
       });
     }
   };
+
+  const seedDatabase = async () => {
+    if (!firestore) {
+      toast({
+        variant: "destructive",
+        title: "Firestore not available",
+        description: "Unable to connect to the database.",
+      });
+      return;
+    }
+
+    try {
+      const batch = writeBatch(firestore);
+      const usersCollectionRef = collection(firestore, 'users');
+
+      allUsers.forEach(user => {
+        // Find the total score for the user
+        const totalScore = playerTeamScores
+          .filter(s => s.userId === user.id)
+          .reduce((acc, s) => acc + s.score, 0);
+
+        // Create a new user profile object with the calculated score
+        const userProfile = {
+          ...user,
+          score: totalScore, // Add the calculated total score
+        };
+
+        const userDocRef = doc(usersCollectionRef, user.id);
+        batch.set(userDocRef, userProfile);
+      });
+
+      await batch.commit();
+
+      toast({
+        title: "Database Seeded!",
+        description: `${allUsers.length} users have been added to Firestore.`,
+      });
+    } catch (error) {
+      console.error("Error seeding database:", error);
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "Could not seed the database. Check the console for more information.",
+      });
+    }
+  };
+
 
   return (
     <div className="space-y-8">
@@ -248,6 +298,20 @@ export default function ProfilePage() {
                        </TooltipProvider>
                     </div>
                   </div>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Admin</CardTitle>
+                     <CardDescription>
+                        Temporary actions for development.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button onClick={seedDatabase}>
+                        <Database className="mr-2 h-4 w-4" />
+                        Seed Database
+                    </Button>
                 </CardContent>
             </Card>
         </div>
@@ -415,5 +479,7 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
 
     
