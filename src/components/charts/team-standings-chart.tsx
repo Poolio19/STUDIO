@@ -75,29 +75,12 @@ export function TeamStandingsChart({
     return config;
   }, [sortedTeams]);
 
-  const transformedData = React.useMemo(() => {
-    const weeks = [...new Set(chartData.map(d => d.week))].sort(
-      (a, b) => a - b
-    );
-    return weeks.map(week => {
-      const weekData: { [key: string]: number | string } = {
-        week: `Wk ${week}`,
-      };
-      const teamsForWeek = chartData.filter(d => d.week === week);
-      sortedTeams.forEach(team => {
-        const teamDataForWeek = teamsForWeek.find(t => t.teamId === team.id);
-        if (teamDataForWeek) {
-          weekData[team.name] = teamDataForWeek.rank;
-        }
-      });
-      return weekData;
-    });
-  }, [chartData, sortedTeams]);
-
   const legendPayload = sortedTeams.map(team => ({
     ...team,
     color: chartConfig[team.name]?.color as string,
   }));
+  
+  const allWeeks = [...new Set(chartData.map(d => d.week))].sort((a, b) => a - b);
 
   return (
     <Card>
@@ -110,9 +93,8 @@ export function TeamStandingsChart({
       <CardContent>
         <div className="relative">
           <ChartContainer config={chartConfig} className="h-[700px] w-full">
-            <ResponsiveContainer>
+             <ResponsiveContainer>
               <LineChart
-                data={transformedData}
                 margin={{
                   top: 20,
                   right: 130,
@@ -123,6 +105,10 @@ export function TeamStandingsChart({
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis
                   dataKey="week"
+                  type="number"
+                  domain={['dataMin', 'dataMax']}
+                  ticks={allWeeks}
+                  tickFormatter={val => `Wk ${val}`}
                   tickLine={false}
                   axisLine={false}
                   tickMargin={8}
@@ -140,33 +126,42 @@ export function TeamStandingsChart({
                   content={
                     <ChartTooltipContent
                       indicator="dot"
-                      formatter={(value, name) => (
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="size-2.5 rounded-sm"
-                            style={{
-                              backgroundColor: chartConfig[name as string]?.color,
-                            }}
-                          />
-                          <span className="font-medium">{name}:</span>
-                          <span className="text-muted-foreground">
-                            Rank {value}
-                          </span>
-                        </div>
-                      )}
+                       formatter={(value, name, props) => {
+                         const teamName = props.payload.teamName;
+                         return (
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="size-2.5 rounded-sm"
+                              style={{
+                                backgroundColor: chartConfig[teamName as string]?.color,
+                              }}
+                            />
+                            <span className="font-medium">{teamName}:</span>
+                            <span className="text-muted-foreground">
+                              Rank {value}
+                            </span>
+                          </div>
+                        )
+                      }}
                     />
                   }
                 />
-                {sortedTeams.map(team => (
-                  <Line
-                    key={team.id}
-                    dataKey={team.name}
-                    type="monotone"
-                    stroke={chartConfig[team.name]?.color}
-                    strokeWidth={3}
-                    dot={false}
-                  />
-                ))}
+                {sortedTeams.map(team => {
+                   const teamData = chartData
+                    .filter(d => d.teamId === team.id)
+                    .map(d => ({ ...d, teamName: team.name }));
+                  return (
+                    <Line
+                      key={team.id}
+                      data={teamData}
+                      dataKey="rank"
+                      type="monotone"
+                      stroke={chartConfig[team.name]?.color}
+                      strokeWidth={3}
+                      dot={false}
+                    />
+                  );
+                })}
               </LineChart>
             </ResponsiveContainer>
           </ChartContainer>
