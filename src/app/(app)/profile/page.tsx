@@ -155,38 +155,41 @@ export default function ProfilePage() {
         </p>
       </header>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
         <div className="lg:col-span-1 space-y-8">
-          <Card>
-            <CardContent className="pt-6 flex flex-col items-center gap-4">
-              <Avatar className="h-24 w-24 border-4 border-primary">
-                <AvatarImage
-                  src={avatarPreview || defaultAvatarUrl}
-                  alt={user.name}
-                  data-ai-hint="person portrait"
-                />
-                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div className="text-center">
-                <h2 className="text-2xl font-bold">{form.watch('name')}</h2>
-                <p className="text-muted-foreground">Rank #{user.rank}</p>
-              </div>
-               <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                  <Upload className="mr-2 h-4 w-4" />
-                  Upload Image
-                </Button>
-                <Input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  className="hidden" 
-                  accept="image/*"
-                  onChange={handleAvatarUpload}
-                />
-            </CardContent>
-          </Card>
-           <ProfilePerformanceChart chartData={chartData} yAxisDomain={yAxisDomain} />
+            <Card>
+                <CardContent className="pt-6 flex flex-col items-center gap-4">
+                <Avatar className="h-24 w-24 border-4 border-primary">
+                    <AvatarImage
+                    src={avatarPreview || defaultAvatarUrl}
+                    alt={user.name}
+                    data-ai-hint="person portrait"
+                    />
+                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold">{form.watch('name')}</h2>
+                    <p className="text-muted-foreground">Rank #{user.rank}</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload Image
+                    </Button>
+                    <Input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    />
+                </CardContent>
+            </Card>
         </div>
 
+        <div className="lg:col-span-3 space-y-8">
+            <ProfilePerformanceChart chartData={chartData} yAxisDomain={yAxisDomain} />
+        </div>
+        
         <div className="lg:col-span-2 space-y-8">
           <Card>
             <CardHeader>
@@ -310,7 +313,9 @@ export default function ProfilePage() {
               </Form>
             </CardContent>
           </Card>
-          <Card>
+        </div>
+        <div className="lg:col-span-2 space-y-8">
+            <Card>
             <CardHeader>
               <CardTitle>Email Notifications</CardTitle>
               <CardDescription>Choose which emails you want to receive.</CardDescription>
