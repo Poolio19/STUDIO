@@ -13,6 +13,10 @@ import { useMemo } from 'react';
 import { PlayerPerformanceChart } from '@/components/charts/player-performance-chart';
 
 export default function PerformancePage() {
+  const sortedUsers = useMemo(() => {
+    return [...users].sort((a, b) => a.rank - b.rank);
+  }, []);
+
   const { chartData, yAxisDomain } = useMemo(() => {
     const allScores = userHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.score));
     const minScore = Math.min(...allScores);
@@ -55,7 +59,7 @@ export default function PerformancePage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <PlayerPerformanceChart chartData={chartData} yAxisDomain={yAxisDomain} />
+          <PlayerPerformanceChart chartData={chartData} yAxisDomain={yAxisDomain} sortedUsers={sortedUsers} />
         </CardContent>
       </Card>
     </div>
