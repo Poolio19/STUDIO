@@ -90,8 +90,8 @@ export default function ConsensusPage() {
             <Table className="min-w-full border-collapse">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="sticky left-0 z-10 w-[50px] bg-card text-center">Pos</TableHead>
-                  <TableHead className="sticky left-[50px] z-10 w-[48px] bg-card"></TableHead>
+                  <TableHead className="sticky left-0 z-20 w-[50px] bg-card text-center">Pos</TableHead>
+                  <TableHead className="sticky left-[50px] z-20 w-[48px] bg-card"></TableHead>
                   <TableHead className="sticky left-[98px] z-10 w-[240px] bg-card">Team</TableHead>
                   {positions.map((pos) => (
                     <TableHead key={pos} className="w-[60px] text-center">{pos}</TableHead>
@@ -112,13 +112,13 @@ export default function ConsensusPage() {
                       className="border-b-4 border-transparent"
                     >
                       <TableCell 
-                        className={cn("sticky left-0 z-10 text-center font-medium rounded-l-md p-4")}
+                        className={cn("sticky left-0 z-20 text-center font-medium rounded-l-md p-4")}
                         style={{ backgroundColor: teamData.bgColourFaint, color: teamData.textColour }}
                       >
                         {teamData.rank}
                       </TableCell>
                        <TableCell
-                        className={cn("sticky left-[50px] z-10 p-0")}
+                        className={cn("sticky left-[50px] z-20 p-0")}
                         style={{ backgroundColor: teamData.bgColourFaint, color: teamData.textColour }}
                       >
                         <div className="flex items-center justify-center h-full">
