@@ -103,7 +103,8 @@ export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers }: PlayerR
           bottom: '60px',
           width: '130px',
           paddingLeft: '1rem',
-          fontSize: '10px',
+          transform: 'scale(0.9)',
+          transformOrigin: 'top right',
         }}
       >
         <p className="font-medium mb-2">Player, Rank</p>
