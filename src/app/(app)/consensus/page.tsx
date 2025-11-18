@@ -17,7 +17,7 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
-import { teams, predictions, previousSeasonStandings } from '@/lib/data';
+import { teams, predictions, currentStandings } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
@@ -28,15 +28,14 @@ type ConsensusData = {
 
 export default function ConsensusPage() {
   const standingsWithTeamData = useMemo(() => {
-    const previousRanks = new Map(previousSeasonStandings.map(s => [s.teamId, s.rank]));
-    return teams
-      .map(team => {
-        const rank = previousRanks.get(team.id);
-        if (rank === undefined) return null; // Exclude teams not in previous season standings
-        return { ...team, rank };
+    const teamMap = new Map(teams.map(t => [t.id, t]));
+    return currentStandings
+      .map(standing => {
+        const team = teamMap.get(standing.teamId);
+        return team ? { ...team, rank: standing.rank } : null;
       })
-      .filter(Boolean) // Remove null entries
-      .sort((a, b) => a!.rank - b!.rank);
+      .filter(Boolean)
+      .sort((a, b) => (a!.name > b!.name ? 1 : -1));
   }, []);
 
   const consensusData = useMemo((): ConsensusData => {
@@ -132,7 +131,7 @@ export default function ConsensusPage() {
                         </div>
                       </TableCell>
                       <TableCell 
-                        className={cn("sticky left-[98px] z-10 whitespace-nowrap")}
+                        className={cn("sticky left-[98px] z-10 whitespace-nowrap p-4")}
                         style={{ backgroundColor: teamData.bgColourFaint }}
                       >
                         <span className="font-medium">{teamData.name}</span>
