@@ -37,6 +37,7 @@ const formSchema = z.object({
   predictions: z.array(predictionSchema),
 });
 
+
 type Prediction = z.infer<typeof predictionSchema>;
 
 export default function PredictPage() {
@@ -97,10 +98,10 @@ export default function PredictPage() {
     <div className="flex flex-col gap-8">
        <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
           <h1 className="text-3xl font-bold tracking-tight">
-            Predict Final Standings
+            Your Pred Your Choice!
           </h1>
           <p className="text-slate-400">
-            Drag and drop the teams to create your predicted league table for the 2025-2026 season.
+            Drag and drop the teams to create your PremPred entry; then sit back and pray for glory
           </p>
         </header>
 
