@@ -180,7 +180,7 @@ export default function PredictPage() {
                                 }}
                               >
                                 <TableCell className="font-medium w-[50px] opacity-80 rounded-l-md">{team.rank}</TableCell>
-                                <TableCell className="w-[48px] p-0" style={{backgroundColor: team.bgColourFaint}}>
+                                <TableCell className="w-[48px] p-0">
                                   <div className="flex items-center justify-center h-full">
                                     <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}>
                                         <TeamIcon
