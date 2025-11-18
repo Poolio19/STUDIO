@@ -39,6 +39,7 @@ export function TeamStandingsChart({
       config[team.name] = {
         label: team.name,
         colour: team.bgColourSolid || `hsl(var(--chart-color-${team.rank}))`,
+        secondaryColour: team.iconColour || team.textColour || '#FFFFFF',
       };
       return config;
     }, {} as any);
@@ -46,10 +47,19 @@ export function TeamStandingsChart({
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      const week = `Wk ${label}`;
-      const sortedPayload = [...payload].sort(
+      // The payload will contain both lines for each team, so we need to filter them.
+      const uniquePayload = payload.reduce((acc, p) => {
+        if (!acc.some((item: any) => item.name === p.name)) {
+          acc.push(p);
+        }
+        return acc;
+      }, []);
+
+      const sortedPayload = [...uniquePayload].sort(
         (a, b) => a.value - b.value
       );
+
+      const week = `Wk ${label}`;
 
       return (
         <div className="rounded-lg border bg-background p-2.5 shadow-xl">
@@ -113,15 +123,26 @@ export function TeamStandingsChart({
                 />
                 <Tooltip content={<CustomTooltip />} />
                 {sortedTeams.map(team => (
+                  <React.Fragment key={team.id}>
                     <Line
-                      key={team.id}
                       dataKey={team.name}
                       type="monotone"
                       stroke={chartConfig[team.name]?.colour}
-                      strokeWidth={3}
+                      strokeWidth={4}
+                      dot={false}
+                      name={team.name}
+                      legendType="none"
+                    />
+                     <Line
+                      dataKey={team.name}
+                      type="monotone"
+                      stroke={chartConfig[team.name]?.secondaryColour}
+                      strokeWidth={2}
+                      strokeDasharray="3 3"
                       dot={false}
                       name={team.name}
                     />
+                  </React.Fragment>
                 ))}
               </LineChart>
             </ResponsiveContainer>
@@ -152,5 +173,3 @@ export function TeamStandingsChart({
     </Card>
   );
 }
-
-    
