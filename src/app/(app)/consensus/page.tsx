@@ -87,7 +87,7 @@ export default function ConsensusPage() {
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <Table className="min-w-full border-separate border-spacing-y-1">
+            <Table className="min-w-full border-collapse">
               <TableHeader>
                 <TableRow>
                   <TableHead className="sticky left-0 z-10 w-[50px] bg-card text-center">Pos</TableHead>
@@ -131,7 +131,7 @@ export default function ConsensusPage() {
                         </div>
                       </TableCell>
                       <TableCell 
-                        className={cn("sticky left-[98px] z-10 whitespace-nowrap py-4 pr-4 pl-0 overflow-hidden")}
+                        className={cn("sticky left-[98px] z-10 whitespace-nowrap py-4 pr-4 pl-4 overflow-hidden")}
                         style={{ backgroundColor: teamData.bgColourFaint, color: teamData.textColour }}
                       >
                         <span className="font-medium">{teamData.name}</span>
