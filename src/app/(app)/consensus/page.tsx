@@ -109,10 +109,9 @@ export default function ConsensusPage() {
                   return (
                     <TableRow
                       key={teamId}
-                      className="border-b-4 border-transparent"
                     >
                       <TableCell 
-                        className={cn("sticky left-0 z-20 text-center font-medium rounded-l-md p-4")}
+                        className={cn("sticky left-0 z-20 text-center font-medium p-4")}
                         style={{ backgroundColor: teamData.bgColourFaint, color: teamData.textColour }}
                       >
                         {teamData.rank}
@@ -158,8 +157,7 @@ export default function ConsensusPage() {
                           <TableCell
                             key={`${teamId}-${posIndex}`}
                             className={cn(
-                              'text-center font-medium p-0 border-l border-b border-dashed border-border',
-                              posIndex === predictionCounts.length - 1 && 'rounded-r-md'
+                              'text-center font-medium p-0 border-l border-b border-dashed border-border'
                             )}
                             style={cellStyle}
                           >
