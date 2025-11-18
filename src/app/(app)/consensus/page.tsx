@@ -92,7 +92,7 @@ export default function ConsensusPage() {
                 <TableRow>
                   <TableHead className="sticky left-0 z-20 w-[50px] bg-card text-center">Pos</TableHead>
                   <TableHead className="sticky left-[50px] z-20 w-[48px] bg-card"></TableHead>
-                  <TableHead className="sticky left-[98px] z-10 bg-card">Team</TableHead>
+                  <TableHead className="sticky left-[98px] z-10 bg-card w-[150px]">Team</TableHead>
                   {positions.map((pos) => (
                     <TableHead key={pos} className="w-[60px] text-center">{pos}</TableHead>
                   ))}
@@ -131,7 +131,7 @@ export default function ConsensusPage() {
                         </div>
                       </TableCell>
                       <TableCell 
-                        className={cn("sticky left-[98px] z-10 whitespace-nowrap py-4 pr-4 pl-4 overflow-hidden")}
+                        className={cn("sticky left-[98px] z-10 py-4 pr-4 pl-4 overflow-hidden")}
                         style={{ backgroundColor: teamData.bgColourFaint, color: teamData.textColour }}
                       >
                         <span className="font-medium">{teamData.name}</span>
