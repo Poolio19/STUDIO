@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -22,7 +21,7 @@ import { monthlyMimoM, type User } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 
@@ -85,11 +84,17 @@ export default function LeaderboardPage() {
 
   const isLoading = isAuthUserLoading || areUsersLoading;
 
-  const { sortedUsers, currentWeek } = useMemo(() => {
+  const [currentWeek, setCurrentWeek] = useState(1);
+
+  useEffect(() => {
+    // This effect runs only on the client, after hydration
+    const week = Math.floor(Math.random() * 10) + 1;
+    setCurrentWeek(week);
+  }, []);
+
+  const { sortedUsers } = useMemo(() => {
     const sorted = users ? [...users].sort((a, b) => (a.rank || 0) - (b.rank || 0)) : [];
-    // This is a temporary way to get week number. Will be replaced with real data.
-    const week = Math.floor(Math.random() * 10) + 1; 
-    return { sortedUsers: sorted, currentWeek: week };
+    return { sortedUsers: sorted };
   }, [users]);
   
   const proPlayers = useMemo(() => sortedUsers.filter(u => u.isPro), [sortedUsers]);

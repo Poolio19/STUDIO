@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Upload, Trophy, Award, ShieldCheck, Database } from 'lucide-react';
+import { Calendar as CalendarIcon, Upload, Trophy, Award, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -41,7 +41,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { teams, users as allUsers, monthlyMimoM, currentStandings, userHistories as staticUserHistories } from '@/lib/data';
+import { teams, users as allUsers, monthlyMimoM, userHistories as staticUserHistories } from '@/lib/data';
 import { ProfilePerformanceChart } from '@/components/charts/profile-performance-chart';
 import React from 'react';
 import { Label } from '@/components/ui/label';
@@ -53,8 +53,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useFirestore, FirestorePermissionError, errorEmitter, useUser } from '@/firebase';
-import { collection, doc, setDoc, Firestore } from 'firebase/firestore';
+import { useUser } from '@/firebase';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -89,9 +88,7 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
-  const { user: authUser } = useUser();
-  const firestore = useFirestore();
-  const [isSeeding, setIsSeeding] = React.useState(false);
+  const { user: authUser, isUserLoading } = useUser();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -136,86 +133,6 @@ export default function ProfilePage() {
 
     return { chartData: transformedData, yAxisDomain };
   }, [user.id]);
-
-  const seedDatabase = async (firestore: Firestore) => {
-    setIsSeeding(true);
-
-    const handleError = (error: FirestorePermissionError) => {
-      errorEmitter.emit('permission-error', error);
-      toast({
-        variant: 'destructive',
-        title: 'Permission Error',
-        description: 'Failed to seed database. Check console for details.',
-      });
-    };
-
-    try {
-      // Seed Users
-      const usersCollectionRef = collection(firestore, 'users');
-      for (const user of allUsers) {
-        const userDocRef = doc(usersCollectionRef, user.id);
-        setDoc(userDocRef, user).catch(serverError => {
-          handleError(new FirestorePermissionError({
-            path: userDocRef.path,
-            operation: 'write',
-            requestResourceData: user
-          }));
-        });
-      }
-
-      // Seed Teams
-      const teamsCollectionRef = collection(firestore, 'teams');
-      for (const team of teams) {
-        const teamDocRef = doc(teamsCollectionRef, team.id);
-        setDoc(teamDocRef, team).catch(serverError => {
-          handleError(new FirestorePermissionError({
-            path: teamDocRef.path,
-            operation: 'write',
-            requestResourceData: team
-          }));
-        });
-      }
-
-      // Seed Standings
-      const standingsCollectionRef = collection(firestore, 'standings');
-      for (const standing of currentStandings) {
-        const standingDocRef = doc(standingsCollectionRef, standing.teamId);
-        setDoc(standingDocRef, standing).catch(serverError => {
-          handleError(new FirestorePermissionError({
-            path: standingDocRef.path,
-            operation: 'write',
-            requestResourceData: standing
-          }));
-        });
-      }
-
-      toast({
-        title: 'Database Seeding Initiated!',
-        description: 'Users, teams, and standings are being added to Firestore.',
-      });
-
-    } catch (error: any) {
-       handleError(new FirestorePermissionError({
-          path: '(unknown path)',
-          operation: 'write',
-          requestResourceData: { info: 'Error during database seeding.' }
-        }));
-    } finally {
-      setIsSeeding(false);
-    }
-  };
-
-  const handleSeedClick = () => {
-    if (firestore) {
-      seedDatabase(firestore);
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Firestore not available',
-        description: 'Please wait for Firestore to initialize.',
-      });
-    }
-  };
 
   function onSubmit(data: ProfileFormValues) {
     toast({
@@ -334,15 +251,6 @@ export default function ProfilePage() {
                   </TooltipProvider>
                 </div>
               </div>
-              <Separator />
-              <Button
-                onClick={handleSeedClick}
-                disabled={isSeeding || !firestore || !authUser}
-                className="w-full"
-              >
-                <Database className="mr-2 h-4 w-4" />
-                {isSeeding ? 'Seeding...' : 'Seed Database'}
-              </Button>
             </CardContent>
           </Card>
         </div>
