@@ -161,14 +161,14 @@ export default function MostImprovedPage() {
   return (
     <div className="flex flex-col gap-8">
       <header>
-          <h1 className="text-3xl font-bold tracking-tight">MostImprovedManagerOfTheMonth</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Most Improved Manager Of The Month</h1>
           <p className="text-muted-foreground">Celebrating the meek, rarely-vaunted, mid-season heroes of the PremPred - with cash!</p>
       </header>
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
             <div className="flex flex-col gap-8 lg:col-span-2">
                 <Card>
                     <CardHeader className="bg-gradient-to-r from-yellow-400/20 via-yellow-400/5 to-slate-400/20">
-                    <CardTitle>InMonthMiMoMStandings</CardTitle>
+                    <CardTitle>In-Month MiMoM Standings</CardTitle>
                     <CardDescription>Current standings for SEPT</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -177,9 +177,9 @@ export default function MostImprovedPage() {
                         <TableRow>
                             <TableHead className="w-[50px] text-center">Rank</TableHead>
                             <TableHead>Player</TableHead>
-                            <TableHead className="text-center">PositionChange</TableHead>
-                            <TableHead className="text-center">PointsChange</TableHead>
-                            <TableHead className="text-center">CurrentScore</TableHead>
+                            <TableHead className="text-center">Position Change</TableHead>
+                            <TableHead className="text-center">Points Change</TableHead>
+                            <TableHead className="text-center">Current Score</TableHead>
                         </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -217,7 +217,7 @@ export default function MostImprovedPage() {
             <div className="lg:col-span-3">
                  <Card>
                     <CardHeader className="bg-gradient-to-r from-yellow-400/20 via-yellow-400/5 to-slate-400/20">
-                        <CardTitle>MiMoMHallOfFame</CardTitle>
+                        <CardTitle>MiMoM Hall Of Fame</CardTitle>
                         <CardDescription>Previous winners and runners-up.</CardDescription>
                     </CardHeader>
                     <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -250,7 +250,7 @@ export default function MostImprovedPage() {
                                                 <div className="text-left">
                                                     <p className="text-sm font-bold">{winner.name} - £{winnerPrize % 1 === 0 ? winnerPrize : winnerPrize.toFixed(2)}</p>
                                                     {monthlyAward.winners && <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">{(winners.length > 1 ? 'JoMiMoM' : 'MiMoM')}</p>}
-                                                    {monthlyAward.currentLeaders && <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">CurrentLeader</p>}
+                                                    {monthlyAward.currentLeaders && <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">Current Leader</p>}
                                                 </div>
                                             </div>
                                         ))}

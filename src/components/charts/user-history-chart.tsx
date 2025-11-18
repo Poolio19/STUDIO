@@ -47,7 +47,7 @@ export function UserHistoryChart({ chartData }: UserHistoryChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>SeasonPerformance</CardTitle>
+        <CardTitle>Season Performance</CardTitle>
         <CardDescription>
           Your weekly score and rank progress.
         </CardDescription>

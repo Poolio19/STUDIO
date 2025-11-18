@@ -20,7 +20,7 @@ export default function RulesAndScoringPage() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">RulesAndScoring</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Rules And Scoring</h1>
         <p className="text-muted-foreground">
           Understand how scores are calculated and other important rules.
         </p>
@@ -28,7 +28,7 @@ export default function RulesAndScoringPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>ScoringSystem</CardTitle>
+          <CardTitle>Scoring System</CardTitle>
           <CardDescription>
             Points are awarded based on the accuracy of your predictions for each
             of the 20 teams' final league positions.
@@ -37,7 +37,7 @@ export default function RulesAndScoringPage() {
         <CardContent className="space-y-4">
           <div className="rounded-lg border p-4">
             <h3 className="font-semibold text-lg mb-2">
-              ForEachTeamPrediction:
+              For Each Team Prediction:
             </h3>
             <ul className="list-disc space-y-2 pl-5 text-muted-foreground">
               <li>
@@ -59,7 +59,7 @@ export default function RulesAndScoringPage() {
             </ul>
           </div>
           <div className="rounded-lg border p-4">
-            <h3 className="font-semibold text-lg mb-2">ExampleCalculation</h3>
+            <h3 className="font-semibold text-lg mb-2">Example Calculation</h3>
             <p className="text-muted-foreground mb-2">
               Let's say a team finishes in 1st place:
             </p>
@@ -71,7 +71,7 @@ export default function RulesAndScoringPage() {
             </ul>
           </div>
           <div className="rounded-lg border p-4">
-            <h3 className="font-semibold text-lg mb-2">TotalScore</h3>
+            <h3 className="font-semibold text-lg mb-2">Total Score</h3>
             <p className="text-muted-foreground">
               Your total score for the season is the sum of the points you've
               earned for all 20 teams. This can be a positive or negative number.

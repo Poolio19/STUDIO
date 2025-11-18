@@ -35,14 +35,14 @@ export default function StatsPage() {
   return (
     <div className="flex flex-col gap-8">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">PredictionStatsMatrix</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Prediction Stats Matrix</h1>
         <p className="text-muted-foreground">
           A detailed breakdown of each player's prediction scores for every team.
         </p>
       </header>
       <Card>
         <CardHeader>
-            <CardTitle>StatsMatrix</CardTitle>
+            <CardTitle>Stats Matrix</CardTitle>
             <CardDescription>
                 Player scores per predicted team. Green indicates a good prediction, red indicates a poor one.
             </CardDescription>
