@@ -17,7 +17,7 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
-import { teams, predictions, currentStandings } from '@/lib/data';
+import { teams, predictions, currentStandings, Team } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
@@ -34,8 +34,8 @@ export default function ConsensusPage() {
         const team = teamMap.get(standing.teamId);
         return team ? { ...team, rank: standing.rank } : null;
       })
-      .filter(Boolean)
-      .sort((a, b) => (a!.name > b!.name ? 1 : -1));
+      .filter((team): team is Team & { rank: number } => !!team)
+      .sort((a, b) => a.rank - b.rank);
   }, []);
 
   const consensusData = useMemo((): ConsensusData => {
@@ -96,7 +96,7 @@ export default function ConsensusPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {standingsWithTeamData.map((teamData, index) => {
+                {standingsWithTeamData.map((teamData) => {
                   if (!teamData) return null;
                   const TeamIcon = Icons[teamData.logo as IconName] || Icons.match;
                   const teamId = teamData.id;
@@ -112,10 +112,10 @@ export default function ConsensusPage() {
                       }}
                     >
                       <TableCell 
-                        className={cn("sticky left-0 z-10 text-center font-medium rounded-l-md")}
+                        className={cn("sticky left-0 z-10 text-center font-medium rounded-l-md p-4")}
                         style={{ backgroundColor: teamData.bgColourFaint }}
                       >
-                        {index + 1}
+                        {teamData.rank}
                       </TableCell>
                        <TableCell
                         className={cn("sticky left-[50px] z-10 p-0")}
