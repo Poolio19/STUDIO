@@ -21,13 +21,13 @@ const navItems = [
   { href: '/standings', icon: 'standings', label: 'Premier League' },
   { href: '/leaderboard', icon: 'leaderboard', label: 'PremPred League' },
   { href: '/most-improved', icon: 'award', label: 'MiMoM' },
-  { href: '/predict', icon: 'predict', label: 'Your Prediction' },
   { href: '/stats', icon: 'stats', label: 'PredStats' },
   { href: '/consensus', icon: 'consensus', label: 'Consensus' },
   { href: '/performance', icon: 'performance', label: 'Player Performance' },
   { href: '/rankings', icon: 'rankings', label: 'Player Rankings' },
   { href: '/scoring', icon: 'scoring', label: 'Rules & Scoring' },
-  { href: '/profile', icon: 'profile', label: 'Profile' },
+  { href: '/profile', icon: 'profile', label: 'Your Profile' },
+  { href: '/predict', icon: 'predict', label: 'Your Prediction' },
   { href: '/notifications', icon: 'notifications', label: 'Notifications' },
 ];
 
