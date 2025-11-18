@@ -34,7 +34,7 @@ interface TeamStandingsChartProps {
 const CustomLegend = ({
   payload,
 }: {
-  payload: { value: string; color: string }[];
+  payload: (Team & { rank: number; color: string })[];
 }) => {
   return (
     <ul
@@ -53,7 +53,7 @@ const CustomLegend = ({
             className="size-2 rounded-full"
             style={{ backgroundColor: entry.color }}
           ></span>
-          <span>{entry.value}</span>
+          <span>{entry.name}</span>
         </li>
       ))}
     </ul>
@@ -95,9 +95,8 @@ export function TeamStandingsChart({
   }, [chartData, sortedTeams]);
 
   const legendPayload = sortedTeams.map(team => ({
-    value: team.name,
-    type: 'line',
-    color: chartConfig[team.name].color,
+    ...team,
+    color: chartConfig[team.name].color as string,
   }));
 
   return (
