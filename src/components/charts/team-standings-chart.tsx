@@ -127,7 +127,8 @@ export function TeamStandingsChart({
                     <ChartTooltipContent
                       indicator="dot"
                        formatter={(value, name, props) => {
-                         const teamName = props.payload.teamName;
+                         const teamFromPayload = sortedTeams.find(t => t.id === props.payload.teamId)
+                         const teamName = teamFromPayload?.name || 'Unknown';
                          return (
                           <div className="flex items-center gap-2">
                             <div
@@ -149,7 +150,6 @@ export function TeamStandingsChart({
                 {sortedTeams.map(team => {
                    const teamData = chartData
                     .filter(d => d.teamId === team.id)
-                    .map(d => ({ ...d, teamName: team.name }));
                   return (
                     <Line
                       key={team.id}
@@ -159,6 +159,7 @@ export function TeamStandingsChart({
                       stroke={chartConfig[team.name]?.color}
                       strokeWidth={3}
                       dot={false}
+                      name={team.name}
                     />
                   );
                 })}
