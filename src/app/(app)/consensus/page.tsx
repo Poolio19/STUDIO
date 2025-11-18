@@ -131,7 +131,7 @@ export default function ConsensusPage() {
                         </div>
                       </TableCell>
                       <TableCell 
-                        className={cn("sticky left-[98px] z-10 whitespace-nowrap p-4")}
+                        className={cn("sticky left-[98px] z-10 whitespace-nowrap py-4 pr-4 pl-0 overflow-hidden")}
                         style={{ backgroundColor: teamData.bgColourFaint, color: teamData.textColour }}
                       >
                         <span className="font-medium">{teamData.name}</span>
@@ -159,7 +159,7 @@ export default function ConsensusPage() {
                             key={`${teamId}-${posIndex}`}
                             className={cn(
                               'text-center font-medium p-0',
-                              posIndex === predictionCounts.length - 1 && 'rounded-r-md p-0'
+                              posIndex === predictionCounts.length - 1 && 'rounded-r-md'
                             )}
                             style={cellStyle}
                           >
