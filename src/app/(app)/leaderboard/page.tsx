@@ -47,22 +47,37 @@ const formatPointsChange = (change: number) => {
     return change;
 }
 
-const getRankColor = (user: User, hasWinnings: boolean) => {
+const getRankColor = (user: User, allUsers: User[], hasWinnings: boolean) => {
     if (user.isPro) {
         return 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-200/80 dark:hover:bg-gray-700/80';
     }
-    if (user.rank <= 5) {
-        switch (user.rank) {
-            case 1:
-                return 'bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-100/80 dark:hover:bg-yellow-900/40';
-            case 2:
-                return 'bg-slate-100 dark:bg-slate-800/30 hover:bg-slate-100/80 dark:hover:bg-slate-800/40';
-            case 3:
-                return 'bg-orange-100 dark:bg-orange-900/30 hover:bg-orange-100/80 dark:hover:bg-orange-900/40';
-            default:
-                return 'bg-green-100 dark:bg-green-900/30 hover:bg-green-100/80 dark:hover:bg-green-900/40';
-        }
+
+    const previousUser = allUsers.find(u => u.rank === user.rank - 1);
+
+    if (user.rank === 1) {
+        return 'bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-100/80 dark:hover:bg-yellow-900/40';
     }
+    if (user.rank === 2 && (!previousUser || previousUser.rank !== 1)) {
+        return 'bg-slate-100 dark:bg-slate-800/30 hover:bg-slate-100/80 dark:hover:bg-slate-800/40';
+    }
+    const nonProUsers = allUsers.filter(u => !u.isPro);
+    const userNonProRank = nonProUsers.findIndex(u => u.id === user.id) + 1;
+
+    if (userNonProRank > 0 && userNonProRank <= 3) {
+      const rankToCompare = user.rank;
+      const usersAtSameRank = nonProUsers.filter(u => u.rank === rankToCompare);
+      const ranksOccupied = usersAtSameRank.map(u => nonProUsers.findIndex(nu => nu.id === u.id) + 1);
+      const minRank = Math.min(...ranksOccupied);
+
+      if (minRank === 1) return 'bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-100/80 dark:hover:bg-yellow-900/40';
+      if (minRank === 2) return 'bg-slate-100 dark:bg-slate-800/30 hover:bg-slate-100/80 dark:hover:bg-slate-800/40';
+      if (minRank === 3) return 'bg-orange-100 dark:bg-orange-900/30 hover:bg-orange-100/80 dark:hover:bg-orange-900/40';
+    }
+
+    if (userNonProRank > 0 && userNonProRank <= 5) {
+        return 'bg-green-100 dark:bg-green-900/30 hover:bg-green-100/80 dark:hover:bg-green-900/40';
+    }
+
     if (hasWinnings) {
         return 'bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-100/80 dark:hover:bg-blue-900/40';
     }
@@ -110,48 +125,48 @@ export default function LeaderboardPage() {
     
     // 2. Calculate Leaderboard Winnings
     const leaderboardWinnings = new Map<string, number>();
-    const prizeTiers = [45, 36, 28, 23, 18];
+    const prizeTiers = [50, 41, 33, 26, 20];
     
     let userIndex = 0;
     while (userIndex < regularPlayers.length) {
       const currentUser = regularPlayers[userIndex];
       const currentRank = currentUser.rank;
 
-      // Stop if we are past the prize-winning ranks
-      if (currentRank > prizeTiers.length) {
-        break;
-      }
+      const nonProPlayers = regularPlayers.filter(u => !u.isPro);
+      const playerNonProRank = nonProPlayers.findIndex(u => u.id === currentUser.id) + 1;
       
-      const tiedUsers = regularPlayers.filter(u => u.rank === currentRank);
+      const tiedUsers = nonProPlayers.filter(u => u.rank === currentRank);
       
       if (tiedUsers.length > 0) {
-        const ranksCovered = Array.from({ length: tiedUsers.length }, (_, i) => currentRank + i);
-        
-        let prizePool = 0;
-        ranksCovered.forEach(rank => {
-          if (rank > 0 && rank - 1 < prizeTiers.length) {
-            prizePool += prizeTiers[rank - 1];
-          }
-        });
-        
-        const individualWinnings = prizePool / tiedUsers.length;
-        
-        tiedUsers.forEach(user => {
-          leaderboardWinnings.set(user.id, individualWinnings);
-        });
-        
-        userIndex += tiedUsers.length;
+          const firstTiedUserRankIndex = nonProPlayers.findIndex(u => u.id === tiedUsers[0].id);
+          const ranksCovered = Array.from({ length: tiedUsers.length }, (_, i) => firstTiedUserRankIndex + i);
+          
+          let prizePool = 0;
+          ranksCovered.forEach(rankIndex => {
+              if (rankIndex < prizeTiers.length) {
+                  prizePool += prizeTiers[rankIndex];
+              }
+          });
+          
+          const individualWinnings = prizePool / tiedUsers.length;
+          
+          tiedUsers.forEach(user => {
+              leaderboardWinnings.set(user.id, individualWinnings);
+          });
+          
+          userIndex += tiedUsers.length;
       } else {
-        userIndex++;
+          userIndex++;
       }
     }
+
 
     // 3. "Beat THE PROs" Prize
     const proWinnings = new Map<string, number>();
     if (proPlayers.length > 0) {
       const bestProRank = Math.min(...proPlayers.map(p => p.rank));
       regularPlayers.forEach(player => {
-          if (player.rank > 0 && player.rank <= bestProRank) {
+          if (player.rank > 0 && player.rank < bestProRank) {
               proWinnings.set(player.id, 5);
           }
       });
@@ -167,7 +182,7 @@ export default function LeaderboardPage() {
     });
 
     return totalWinnings;
-  }, [sortedUsers, regularPlayers, proPlayers]);
+  }, [regularPlayers, proPlayers]);
 
 
   return (
@@ -182,7 +197,7 @@ export default function LeaderboardPage() {
           <Table>
             <TableHeader>
                <TableRow>
-                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r">Prem Pred 2025-2026 League</TableHead>
+                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r">PremPred Standings</TableHead>
                 <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r">Changes in the past week</TableHead>
                 <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground">Seasons Highs & Lows</TableHead>
               </TableRow>
@@ -209,13 +224,13 @@ export default function LeaderboardPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedUsers.map((user) => {
+              {sortedUsers.map((user, index) => {
                 const RankIcon = getRankChangeIcon(user.rankChange);
                 const ScoreIcon = getRankChangeIcon(user.scoreChange);
                 const userWinnings = totalWinningsMap.get(user.id) || 0;
                 
                 return (
-                    <TableRow key={user.id} className={cn(getRankColor(user, userWinnings > 0))}>
+                    <TableRow key={user.id} className={cn(getRankColor(user, sortedUsers, userWinnings > 0))}>
                         <TableCell className="font-medium text-center">{user.rank}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">

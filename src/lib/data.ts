@@ -189,10 +189,9 @@ export const previousSeasonStandings: PreviousSeasonStanding[] = [
     { teamId: 'team_8', rank: 15, points: 40, goalDifference: -11 },
     { teamId: 'team_4', rank: 16, points: 39, goalDifference: -9 },
     { teamId: 'team_16', rank: 17, points: 32, goalDifference: -18 },
-    // Fill in missing teams to ensure all 20 are present
-    { teamId: 'team_11', rank: 18, points: 31, goalDifference: -20 }, // Leicester
-    { teamId: 'team_10', rank: 19, points: 26, goalDifference: -35 }, // Ipswich
-    { teamId: 'team_17', rank: 20, points: 25, goalDifference: -37 }, // Southampton
+    { teamId: 'team_11', rank: 18, points: 31, goalDifference: -20 },
+    { teamId: 'team_10', rank: 19, points: 26, goalDifference: -35 },
+    { teamId: 'team_17', rank: 20, points: 25, goalDifference: -37 },
 ];
 
 
@@ -235,6 +234,7 @@ export const seasonMonths: SeasonMonth[] = [
 
 export const monthlyMimoM: MonthlyMimoM[] = [
     { month: 'August', year: 2025, userId: 'usr_12', type: 'winner' },
+    { month: 'August', year: 2025, userId: 'usr_3', type: 'runner-up' },
 ];
 
 // --- DYNAMIC & DETERMINISTIC DATA GENERATION ---
@@ -278,9 +278,9 @@ const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed:
         if (personality === 'pessimist') bias = 0.1;
 
 
-        if (originalRank <= 4) maxPerturbation = 2;
-        else if (originalRank <= 10) maxPerturbation = 4;
-        else maxPerturbation = 6;
+        if (originalRank <= 4) maxPerturbation = 3;
+        else if (originalRank <= 10) maxPerturbation = 5;
+        else maxPerturbation = 7;
         
         perturbation = Math.round((bellCurveRandom + bias) * maxPerturbation);
 
@@ -299,44 +299,33 @@ const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed:
     // Resolve rank collisions
     perturbedStandings.sort((a, b) => a.predictedRank - b.predictedRank || a.tieBreaker - b.tieBreaker);
     
-    const finalTeamIds = new Array(20).fill(null);
+    const finalTeamIds = new Array(20);
     const assignedRanks = new Set<number>();
-    const unplacedTeams: any[] = [];
-
+    
     perturbedStandings.forEach(p => {
         let proposedRank = p.predictedRank;
         while(assignedRanks.has(proposedRank) && proposedRank <= 20) {
             proposedRank++;
         }
-        if (proposedRank <= 20) {
+         if (proposedRank <= 20) {
             p.predictedRank = proposedRank;
             assignedRanks.add(p.predictedRank);
-        } else {
-            unplacedTeams.push(p);
         }
     });
 
-    perturbedStandings.sort((a, b) => a.predictedRank - b.predictedRank);
-    const finalRanks = perturbedStandings.map(p => p.predictedRank);
-    const finalIds = perturbedStandings.map(p => p.teamId);
-
     for (let i = 1; i <= 20; i++) {
-        if (!finalRanks.includes(i)) {
-            const unplaced = unplacedTeams.shift();
-            if(unplaced) {
-                const insertIndex = finalRanks.findIndex(r => r > i);
-                if (insertIndex !== -1) {
-                    finalRanks.splice(insertIndex, 0, i);
-                    finalIds.splice(insertIndex, 0, unplaced.teamId);
-                } else {
-                    finalRanks.push(i);
-                    finalIds.push(unplaced.teamId);
-                }
+        if (!assignedRanks.has(i)) {
+            const unplacedTeam = perturbedStandings.find(p => p.predictedRank > 20 || !finalTeamIds.includes(p.teamId));
+             if (unplacedTeam) {
+                unplacedTeam.predictedRank = i;
+                assignedRanks.add(i);
             }
         }
     }
     
-    return finalIds.slice(0, 20);
+    perturbedStandings.sort((a, b) => a.predictedRank - b.predictedRank);
+
+    return perturbedStandings.map(p => p.teamId);
 };
 
 export const predictions: Prediction[] = usersData.map((user, index) => {
@@ -384,15 +373,16 @@ export const userHistories: UserHistory[] = usersData.map(user => {
     const random = mulberry32(seed);
 
     let weeklyScores: WeeklyScore[] = [];
-    weeklyScores.push({ week: 0, score: 0, rank: previousSeasonPlayerRanks[user.id] || seed % 40 });
+    let initialScore = (random() - 0.5) * 10;
+    weeklyScores.push({ week: 0, score: Math.round(initialScore), rank: previousSeasonPlayerRanks[user.id] || seed % 40 });
 
-    let cumulativeScore = 0;
+    let cumulativeScore = initialScore;
 
     for (let week = 1; week <= NUM_WEEKS; week++) {
         // Generate a more realistic weekly score addition
-        const weeklyPerf = random() * 15; // Max points per week
+        const weeklyPerf = (random() * 20) - 5; // Weekly scores can range from -5 to +15
         cumulativeScore += weeklyPerf;
-        weeklyScores.push({ week, score: Math.floor(cumulativeScore), rank: 0 }); 
+        weeklyScores.push({ week, score: Math.round(cumulativeScore), rank: 0 }); 
     }
     return { userId: user.id, weeklyScores };
 });
@@ -477,7 +467,7 @@ const finalUsers: User[] = usersData.map(userStub => {
     return {
         ...userStub,
         score: currentWeekData.score,
-        rank: currentWeekData.rank, 
+        rank: currentWeekData.rank, rickroll: 'never gonna give you up',
         previousRank: previousWeekData.rank,
         previousScore: previousWeekData.score,
         rankChange,
@@ -519,3 +509,11 @@ export const weeklyTeamStandings: WeeklyTeamStanding[] = teams.flatMap(team => {
     }
     return weeklyRanks.reverse();
 });
+
+// A little easter egg
+if (typeof window !== 'undefined') {
+    const user = users.find(u => u.rickroll);
+    if (user) {
+      console.log(user.rickroll);
+    }
+}
