@@ -24,7 +24,7 @@ import {
 import { users, monthlyMimoM, currentStandings, seasonMonths, type User } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Icons, IconName } from '@/components/icons';
-import { Award, Star, CalendarClock, Trophy } from 'lucide-react';
+import { Award, Star, CalendarClock, Trophy, ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -33,10 +33,16 @@ const getAvatarUrl = (avatarId: string) => {
 };
 
 const getRankChangeIcon = (change: number) => {
-  if (change > 0) return 'rankUp'; // rank number went down = improvement
-  if (change < 0) return 'rankDown';
-  return 'rankSame';
+  if (change > 0) return ArrowUp;
+  if (change < 0) return ArrowDown;
+  return Minus;
 };
+
+const getRankChangeColor = (change: number) => {
+    if (change > 0) return 'text-green-500';
+    if (change < 0) return 'text-red-500';
+    return 'text-gray-500';
+}
 
 const formatPointsChange = (change: number) => {
     if (change > 0) return <span className="text-green-500">+{change}</span>;
@@ -54,7 +60,7 @@ export default function MostImprovedPage() {
   const ladderData = useMemo(() => {
     // Rank change is previous - current. A positive number is an improvement.
     const regularPlayersSorted = users
-      .filter(u => !u.isPro && u.rankChange > 0)
+      .filter(u => !u.isPro)
       .sort((a, b) => b.rankChange - a.rankChange || a.rank - b.rank);
       
     let rank = 0;
@@ -67,8 +73,9 @@ export default function MostImprovedPage() {
       return { ...user, displayRank: rank };
     });
     
-    const firstPlaceRankChange = rankedUsers[0]?.rankChange;
-    const secondPlaceRankChange = rankedUsers.find(u => u.rankChange < firstPlaceRankChange!)?.rankChange;
+    const improvers = rankedUsers.filter(u => u.rankChange > 0);
+    const firstPlaceRankChange = improvers[0]?.rankChange;
+    const secondPlaceRankChange = improvers.find(u => u.rankChange < firstPlaceRankChange!)?.rankChange;
 
     return { ladderWithRanks: rankedUsers, firstPlaceRankChange, secondPlaceRankChange };
   }, [users]);
@@ -177,7 +184,7 @@ export default function MostImprovedPage() {
                         </TableHeader>
                         <TableBody>
                         {ladderData.ladderWithRanks.map((user) => {
-                            const RankIcon = Icons[getRankChangeIcon(user.rankChange) as IconName];
+                            const RankIcon = getRankChangeIcon(user.rankChange);
                             const rankColor = getLadderRankColor(user);
                             return (
                                 <TableRow key={user.id} className="border-b-4 border-transparent">
@@ -191,10 +198,10 @@ export default function MostImprovedPage() {
                                         <span>{user.name}</span>
                                     </div>
                                     </TableCell>
-                                    <TableCell className={cn("p-2 text-center", rankColor)}>
-                                        <div className="flex items-center justify-center gap-1 font-bold text-lg">
-                                        <RankIcon className="size-5" />
-                                        <span>{Math.abs(user.rankChange)}</span>
+                                    <TableCell className={cn("p-2 text-center font-bold text-lg", rankColor, getRankChangeColor(user.rankChange))}>
+                                        <div className="flex items-center justify-center gap-1">
+                                            <RankIcon className="size-5" />
+                                            <span>{Math.abs(user.rankChange)}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell className={cn("p-2 text-center font-medium", rankColor)}>{formatPointsChange(user.scoreChange)}</TableCell>
@@ -280,5 +287,7 @@ export default function MostImprovedPage() {
     </div>
   );
 }
+
+    
 
     
