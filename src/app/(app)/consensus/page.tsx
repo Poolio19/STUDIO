@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -81,7 +82,7 @@ export default function ConsensusPage() {
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <Table className="min-w-full">
+            <Table className="min-w-full border-separate border-spacing-y-1">
               <TableHeader>
                 <TableRow>
                   <TableHead className="sticky left-0 z-10 w-[50px] bg-card text-center">Pos</TableHead>
@@ -105,13 +106,13 @@ export default function ConsensusPage() {
                   return (
                     <TableRow
                       key={teamId}
-                      className="border-b-white/20"
+                      className="border-b-4 border-transparent"
                       style={{
                         backgroundColor: teamData.bgColourFaint,
                         color: teamData.textColour,
                       }}
                     >
-                      <TableCell className={cn("sticky left-0 z-10 text-center font-medium")}>{index + 1}</TableCell>
+                      <TableCell className={cn("sticky left-0 z-10 text-center font-medium rounded-l-md")}>{index + 1}</TableCell>
                        <TableCell
                         className={cn("sticky left-[50px] z-10 p-0")}
                         style={{ backgroundColor: teamData.bgColourFaint }}
@@ -136,7 +137,7 @@ export default function ConsensusPage() {
                           {count > 0 ? count : ''}
                         </TableCell>
                       ))}
-                      <TableCell className="text-center font-bold">
+                      <TableCell className="text-center font-bold rounded-r-md">
                         {totalPredictions}
                       </TableCell>
                     </TableRow>
@@ -150,4 +151,3 @@ export default function ConsensusPage() {
     </div>
   );
 }
-

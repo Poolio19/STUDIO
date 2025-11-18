@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -84,7 +85,7 @@ export default function StandingsPage() {
           <CardDescription>Live standings updated weekly.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
+          <Table className="border-separate border-spacing-y-1">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[50px]">#</TableHead>
@@ -108,13 +109,12 @@ export default function StandingsPage() {
                 return (
                   <TableRow
                     key={team.id}
-                    className="border-b-white/20"
                     style={{
                       backgroundColor: team.bgColourFaint,
                       color: team.textColour,
                     }}
                   >
-                    <TableCell className="font-medium">{team.rank}</TableCell>
+                    <TableCell className="font-medium rounded-l-md">{team.rank}</TableCell>
                     <TableCell
                       className="p-0"
                       style={{ backgroundColor: team.bgColourFaint }}
@@ -141,7 +141,7 @@ export default function StandingsPage() {
                     <TableCell className="text-center">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
                     <TableCell className="text-center">{team.goalsFor}</TableCell>
                     <TableCell className="text-center">{team.goalsAgainst}</TableCell>
-                    <TableCell className="text-right font-bold">{team.points}</TableCell>
+                    <TableCell className="text-right font-bold rounded-r-md">{team.points}</TableCell>
                   </TableRow>
                 );
               })}
