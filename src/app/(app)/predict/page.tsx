@@ -125,7 +125,7 @@ export default function PredictPage() {
                           key={item.teamId}
                           value={item}
                           className={cn(
-                            "flex items-center h-[53px] cursor-grab active:cursor-grabbing rounded-md mb-1",
+                            "flex items-center h-[53px] cursor-grab active:cursor-grabbing rounded-md mb-1 shadow-sm",
                           )}
                            style={{
                             backgroundColor: item.bgColourFaint,
@@ -173,7 +173,7 @@ export default function PredictPage() {
                             return (
                               <TableRow
                                 key={team.id}
-                                className="h-[53px]"
+                                className="h-[53px] shadow-sm"
                                 style={{
                                   backgroundColor: team.bgColourFaint,
                                   color: team.textColour,
