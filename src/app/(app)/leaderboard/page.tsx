@@ -18,13 +18,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { monthlyMimoM, type User } from '@/lib/data';
+import { monthlyMimoM, type User, users } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { useMemo } from 'react';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useUser } from '@/firebase';
+
 
 const getAvatarUrl = (avatarId: string) => {
   return PlaceHolderImages.find((img) => img.id === avatarId)?.imageUrl || '';
@@ -77,25 +77,16 @@ const prizeTiers = [50, 41, 33, 26, 20];
 const totalWinningsMap = new Map<string, number>();
 
 export default function LeaderboardPage() {
-  const firestore = useFirestore();
-  const { user: authUser, isUserLoading: isAuthUserLoading } = useUser();
+  const { isUserLoading: isAuthUserLoading } = useUser();
   
-  const usersCollection = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'users');
-  }, [firestore]);
-
-  const { data: users, isLoading } = useCollection<User>(usersCollection);
+  const isLoading = isAuthUserLoading;
 
   const { sortedUsers, currentWeek } = useMemo(() => {
-    if (!users) {
-      return { sortedUsers: [], currentWeek: 1 };
-    }
     const sorted = [...users].sort((a, b) => (a.rank || 0) - (b.rank || 0));
     // This is a temporary way to get week number. Will be replaced with real data.
     const week = Math.floor(Math.random() * 10) + 1; 
     return { sortedUsers: sorted, currentWeek: week };
-  }, [users]);
+  }, []);
   
   const proPlayers = useMemo(() => sortedUsers.filter(u => u.isPro), [sortedUsers]);
   const regularPlayers = useMemo(() => sortedUsers.filter(u => !u.isPro), [sortedUsers]);
@@ -224,7 +215,7 @@ export default function LeaderboardPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading || isAuthUserLoading ? (
+              {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={12} className="text-center">Loading leaderboard...</TableCell>
                 </TableRow>
@@ -279,4 +270,3 @@ export default function LeaderboardPage() {
     </div>
   );
 }
-

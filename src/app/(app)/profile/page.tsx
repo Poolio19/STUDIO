@@ -52,8 +52,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, doc, setDoc, Firestore } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -84,81 +83,10 @@ const defaultValues: Partial<ProfileFormValues> = {
   favouriteTeam: 'team_1',
 };
 
-
-const seedDatabase = (firestore: Firestore | null, toast: (options: any) => void) => {
-    if (!firestore) {
-      toast({
-        variant: 'destructive',
-        title: 'Firestore not available',
-        description: 'Unable to connect to the database. Please try again in a moment.',
-      });
-      return;
-    }
-
-    let hasError = false;
-    
-    const handleError = (permissionError: FirestorePermissionError) => {
-      if (hasError) return;
-      hasError = true;
-      errorEmitter.emit('permission-error', permissionError);
-    };
-
-    // Seed Users
-    const usersCollectionRef = collection(firestore, 'users');
-    allUsers.forEach(user => {
-      const userDocRef = doc(usersCollectionRef, user.id);
-      setDoc(userDocRef, user).catch(serverError => {
-        handleError(new FirestorePermissionError({
-          path: userDocRef.path,
-          operation: 'write',
-          requestResourceData: user
-        }));
-      });
-    });
-
-    // Seed Teams
-    const teamsCollectionRef = collection(firestore, 'teams');
-    teams.forEach(team => {
-      const teamDocRef = doc(teamsCollectionRef, team.id);
-      setDoc(teamDocRef, team).catch(serverError => {
-        handleError(new FirestorePermissionError({
-          path: teamDocRef.path,
-          operation: 'write',
-          requestResourceData: team
-        }));
-      });
-    });
-
-    // Seed Standings
-    const standingsCollectionRef = collection(firestore, 'standings');
-    currentStandings.forEach(standing => {
-      const standingDocRef = doc(standingsCollectionRef, standing.teamId);
-      setDoc(standingDocRef, standing).catch(serverError => {
-        handleError(new FirestorePermissionError({
-          path: standingDocRef.path,
-          operation: 'write',
-          requestResourceData: standing
-        }));
-      });
-    });
-    
-    // Using a timeout to allow Firestore operations to begin and potentially fail
-    setTimeout(() => {
-        if (!hasError) {
-             toast({
-                title: 'Database Seeding Initiated!',
-                description: `Started adding ${allUsers.length} users, ${teams.length} teams, and ${currentStandings.length} standings.`,
-            });
-        }
-    }, 2000);
-};
-
-
 export default function ProfilePage() {
   const { toast } = useToast();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
-  const firestore = useFirestore();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -321,20 +249,6 @@ export default function ProfilePage() {
                        </TooltipProvider>
                     </div>
                   </div>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Admin</CardTitle>
-                     <CardDescription>
-                        Temporary actions for development.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Button onClick={() => seedDatabase(firestore, toast)} disabled={!firestore}>
-                        <Database className="mr-2 h-4 w-4" />
-                        Seed Database
-                    </Button>
                 </CardContent>
             </Card>
         </div>

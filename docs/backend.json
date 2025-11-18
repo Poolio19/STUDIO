@@ -179,22 +179,6 @@
         }
       },
       {
-        "path": "/teams/{teamId}",
-        "definition": {
-            "entityName": "Team",
-            "schema": { "$ref": "#/backend/entities/Team" },
-            "description": "Stores information about each team."
-        }
-      },
-       {
-        "path": "/standings/{teamId}",
-        "definition": {
-            "entityName": "TeamStanding",
-            "schema": { "$ref": "#/backend/entities/TeamStanding" },
-            "description": "Stores the current league standings for each team."
-        }
-      },
-      {
         "path": "/events/{eventId}",
         "definition": {
           "entityName": "Event",
