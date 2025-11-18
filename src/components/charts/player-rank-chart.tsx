@@ -96,14 +96,13 @@ export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers }: PlayerR
         </ResponsiveContainer>
       </ChartContainer>
        <ul
-        className="absolute flex flex-col justify-between text-xs"
+        className="absolute flex h-full flex-col justify-between text-xs"
         style={{
           right: 0,
           top: '-25px',
           bottom: '30px',
           width: '130px',
           paddingLeft: '1rem',
-          border: '1px solid red',
         }}
       >
         <p className="text-xs font-medium mb-2">Player, Rank</p>
