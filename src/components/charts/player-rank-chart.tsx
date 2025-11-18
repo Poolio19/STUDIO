@@ -100,7 +100,7 @@ export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers }: PlayerR
         style={{
           right: 0,
           top: '-25px',
-          bottom: '60px',
+          bottom: '20px',
           width: '130px',
           paddingLeft: '1rem',
           transform: 'scale(0.9)',
