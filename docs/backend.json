@@ -1,36 +1,28 @@
 {
   "entities": {
     "UserProfile": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "UserProfile",
+      "title": "User Profile",
       "type": "object",
       "description": "Represents a user profile in the Predictatron application.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the user profile."
-        },
-        "username": {
-          "type": "string",
-          "description": "The username of the user."
-        },
-        "email": {
-          "type": "string",
-          "description": "The email address of the user.",
-          "format": "email"
-        },
-        "joinDate": {
-          "type": "string",
-          "description": "The date and time the user joined the platform.",
-          "format": "date-time"
-        }
+        "id": { "type": "string", "description": "Unique identifier for the user profile." },
+        "name": { "type": "string", "description": "The name of the user." },
+        "avatar": { "type": "string", "description": "URL or ID for the user's avatar." },
+        "score": { "type": "number", "description": "The user's current score." },
+        "rank": { "type": "number", "description": "The user's current rank." },
+        "previousRank": { "type": "number", "description": "The user's rank from the previous week." },
+        "previousScore": { "type": "number", "description": "The user's score from the previous week." },
+        "maxRank": { "type": "number", "description": "The user's highest rank this season." },
+        "minRank": { "type": "number", "description": "The user's lowest rank this season." },
+        "maxScore": { "type": "number", "description": "The user's highest score this season." },
+        "minScore": { "type": "number", "description": "The user's lowest score this season." },
+        "rankChange": { "type": "number", "description": "The change in rank from the previous week." },
+        "scoreChange": { "type": "number", "description": "The change in score from the previous week." },
+        "isPro": { "type": "boolean", "description": "Whether the user is a pro player." },
+        "email": { "type": "string", "description": "The email address of the user.", "format": "email" },
+        "joinDate": { "type": "string", "description": "The date and time the user joined.", "format": "date-time" }
       },
-      "required": [
-        "id",
-        "username",
-        "email",
-        "joinDate"
-      ]
+      "required": ["id", "name", "email"]
     },
     "Event": {
       "$schema": "http://json-schema.org/draft-07/schema#",

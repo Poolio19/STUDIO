@@ -3,14 +3,14 @@
  * @description This ruleset enforces a strict user-ownership model for user profiles and predictions, while allowing public read access to events and leaderboard entries.
  *
  * Data Structure:
- * - /users/{userId}: User profile data, accessible only by the user themselves.
+ * - /users/{userId}: User profile data. Publicly readable for leaderboards, but only the owner can write.
  * - /events/{eventId}: Event data, publicly readable, but write access is not defined in the current rule set and thus defaults to none.
  * - /users/{userId}/predictions/{predictionId}: User-specific predictions, accessible only by the user themselves.
  * - /leaderboard/{leaderboardEntryId}: Leaderboard entries, publicly readable, but write access is not defined in the current rule set and thus defaults to none.
  *
  * Key Security Decisions:
- * - User data is strictly private and accessible only to the owning user.
- * - Listing user profiles is disallowed to prevent information leakage.
+ * - User data is publicly readable to populate leaderboards and profiles.
+ * - User data write access is strictly private and accessible only to the owning user.
  * - Events and leaderboard data are publicly readable to facilitate app functionality.
  *
  * Denormalization for Authorization:
@@ -21,21 +21,19 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to user profile data. Only the user can read, update, or delete their own profile.
+     * @description Controls access to user profile data. Profiles are publicly readable for leaderboards, but only the authenticated user can modify their own profile.
      * @path /users/{userId}
-     * @allow (get) User 'user123' can get their own profile.
+     * @allow (get, list) Any user can read any user profile for leaderboards.
      * @allow (create) User 'user123' can create their own profile if request.auth.uid == 'user123'.
      * @allow (update) User 'user123' can update their own profile.
      * @allow (delete) User 'user123' can delete their own profile.
-     * @deny (get) User 'user456' cannot get User 'user123' profile.
      * @deny (create) User 'user123' cannot create User 'user456' profile.
      * @deny (update) User 'user456' cannot update User 'user123' profile.
      * @deny (delete) User 'user456' cannot delete User 'user123' profile.
-     * @principle Enforces document ownership for all operations.
+     * @principle Separates read access (public) from write access (owner-only).
      */
     match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if false; // Listing users is not permitted.
+      allow get, list: if true; 
 
       allow create: if isSignedIn() && isSelfCreation(userId);
       allow update: if isExistingOwner(userId);

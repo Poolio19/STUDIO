@@ -18,13 +18,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { users, currentStandings, monthlyMimoM, type User } from '@/lib/data';
+import { monthlyMimoM, type User } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { useMemo } from 'react';
-
-const currentWeek = currentStandings[0]?.gamesPlayed || 1;
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
 
 const getAvatarUrl = (avatarId: string) => {
   return PlaceHolderImages.find((img) => img.id === avatarId)?.imageUrl || '';
@@ -77,7 +77,25 @@ const prizeTiers = [50, 41, 33, 26, 20];
 const totalWinningsMap = new Map<string, number>();
 
 export default function LeaderboardPage() {
-  const sortedUsers = useMemo(() => [...users].sort((a, b) => a.rank - b.rank), []);
+  const firestore = useFirestore();
+  
+  const usersCollection = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'users');
+  }, [firestore]);
+
+  const { data: users, isLoading } = useCollection<User>(usersCollection);
+
+  const { sortedUsers, currentWeek } = useMemo(() => {
+    if (!users) {
+      return { sortedUsers: [], currentWeek: 1 };
+    }
+    const sorted = [...users].sort((a, b) => (a.rank || 0) - (b.rank || 0));
+    // This is a temporary way to get week number. Will be replaced with real data.
+    const week = Math.floor(Math.random() * 10) + 1; 
+    return { sortedUsers: sorted, currentWeek: week };
+  }, [users]);
+  
   const proPlayers = useMemo(() => sortedUsers.filter(u => u.isPro), [sortedUsers]);
   const regularPlayers = useMemo(() => sortedUsers.filter(u => !u.isPro), [sortedUsers]);
 
@@ -199,54 +217,60 @@ export default function LeaderboardPage() {
                 <TableHead className="text-center bg-green-50/50 dark:bg-green-900/10">Was</TableHead>
                 <TableHead className="w-[130px] text-center border-r bg-green-50/50 dark:bg-green-900/10">Change</TableHead>
                 <TableHead className="text-center bg-purple-50/50 dark:bg-purple-900/10">High</TableHead>
-                <TableHead className="text-center border-r bg-purple-50/50 dark:bg-purple-900/10">Low</TableHead>
+                <TableHead className="text-center border-r bg-purple-5-50/50 dark:bg-purple-900/10">Low</TableHead>
                 <TableHead className="text-center bg-purple-50/50 dark:bg-purple-900/10">High</TableHead>
                 <TableHead className="text-center bg-purple-50/50 dark:bg-purple-900/10">Low</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedUsers.map((user, index) => {
-                const RankIcon = getRankChangeIcon(user.rankChange);
-                const ScoreIcon = getRankChangeIcon(user.scoreChange);
-                const userWinnings = localTotalWinningsMap.get(user.id) || 0;
-                
-                return (
-                    <TableRow key={user.id} className={cn(getRankColour(user, sortedUsers))}>
-                        <TableCell className="font-medium text-center">{user.rank}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                              <Avatar className="h-9 w-9">
-                              <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
-                              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                              <span>{user.isPro ? user.name.toUpperCase() : user.name}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center font-bold text-lg">{user.score}</TableCell>
-                        <TableCell className="text-center font-medium border-r">
-                           {user.isPro ? '-' : (userWinnings > 0 ? `£${userWinnings.toFixed(2)}` : '£0.00')}
-                        </TableCell>
-                        <TableCell className="text-center font-medium">{user.previousRank}</TableCell>
-                        <TableCell className={cn("font-bold text-center border-r", getRankChangeColour(user.rankChange))}>
-                            <div className="flex items-center justify-center gap-2">
-                                <span>{Math.abs(user.rankChange)}</span>
-                                <RankIcon className="size-5" />
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={12} className="text-center">Loading leaderboard...</TableCell>
+                </TableRow>
+              ) : (
+                sortedUsers.map((user, index) => {
+                  const RankIcon = getRankChangeIcon(user.rankChange);
+                  const ScoreIcon = getRankChangeIcon(user.scoreChange);
+                  const userWinnings = localTotalWinningsMap.get(user.id) || 0;
+                  
+                  return (
+                      <TableRow key={user.id} className={cn(getRankColour(user, sortedUsers))}>
+                          <TableCell className="font-medium text-center">{user.rank}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                                <Avatar className="h-9 w-9">
+                                <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
+                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <span>{user.isPro ? user.name.toUpperCase() : user.name}</span>
                             </div>
-                        </TableCell>
-                        <TableCell className="text-center font-medium">{user.previousScore}</TableCell>
-                        <TableCell className={cn("font-bold text-center border-r", getRankChangeColour(user.scoreChange))}>
-                            <div className="flex items-center justify-center gap-2">
-                                <span>{formatPointsChange(user.scoreChange)}</span>
-                                <ScoreIcon className="size-5" />
-                            </div>
-                        </TableCell>
-                        <TableCell className="text-center font-medium">{user.maxRank}</TableCell>
-                        <TableCell className="text-center font-medium border-r">{user.minRank}</TableCell>
-                        <TableCell className="text-center font-medium">{user.maxScore}</TableCell>
-                        <TableCell className="text-center font-medium">{user.minScore}</TableCell>
-                    </TableRow>
-                );
-              })}
+                          </TableCell>
+                          <TableCell className="text-center font-bold text-lg">{user.score}</TableCell>
+                          <TableCell className="text-center font-medium border-r">
+                            {user.isPro ? '-' : (userWinnings > 0 ? `£${userWinnings.toFixed(2)}` : '£0.00')}
+                          </TableCell>
+                          <TableCell className="text-center font-medium">{user.previousRank}</TableCell>
+                          <TableCell className={cn("font-bold text-center border-r", getRankChangeColour(user.rankChange))}>
+                              <div className="flex items-center justify-center gap-2">
+                                  <span>{Math.abs(user.rankChange)}</span>
+                                  <RankIcon className="size-5" />
+                              </div>
+                          </TableCell>
+                          <TableCell className="text-center font-medium">{user.previousScore}</TableCell>
+                          <TableCell className={cn("font-bold text-center border-r", getRankChangeColour(user.scoreChange))}>
+                              <div className="flex items-center justify-center gap-2">
+                                  <span>{formatPointsChange(user.scoreChange)}</span>
+                                  <ScoreIcon className="size-5" />
+                              </div>
+                          </TableCell>
+                          <TableCell className="text-center font-medium">{user.maxRank}</TableCell>
+                          <TableCell className="text-center font-medium border-r">{user.minRank}</TableCell>
+                          <TableCell className="text-center font-medium">{user.maxScore}</TableCell>
+                          <TableCell className="text-center font-medium">{user.minScore}</TableCell>
+                      </TableRow>
+                  );
+                })
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -254,5 +278,3 @@ export default function LeaderboardPage() {
     </div>
   );
 }
-
-    
