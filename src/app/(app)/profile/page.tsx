@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -40,7 +41,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { teams, userHistories, users as allUsers, monthlyMimoM, playerTeamScores, currentStandings } from '@/lib/data';
+import { teams, users as allUsers, monthlyMimoM, currentStandings, userHistories as staticUserHistories } from '@/lib/data';
 import { ProfilePerformanceChart } from '@/components/charts/profile-performance-chart';
 import React from 'react';
 import { Label } from '@/components/ui/label';
@@ -52,7 +53,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useFirestore } from '@/firebase';
+import { useFirestore, FirestorePermissionError, errorEmitter, useUser } from '@/firebase';
+import { collection, doc, setDoc, writeBatch } from 'firebase/firestore';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -87,13 +89,16 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
+  const { user: authUser } = useUser();
+  const firestore = useFirestore();
+  const [isSeeding, setIsSeeding] = React.useState(false);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues,
     mode: 'onChange',
   });
-  
+
   // Hardcoded user for now
   const user = allUsers.find(u => u.id === 'usr_1')!;
 
@@ -107,18 +112,18 @@ export default function ProfilePage() {
     PlaceHolderImages.find(img => img.id === user.avatar)?.imageUrl || '';
 
   const { chartData, yAxisDomain } = React.useMemo(() => {
-    const allScores = userHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.score));
+    const allScores = staticUserHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.score));
     const minScore = Math.min(...allScores);
     const maxScore = Math.max(...allScores);
     const yAxisDomain: [number, number] = [minScore - 5, maxScore + 5];
 
-    const weeks = [...new Set(userHistories.flatMap(h => h.weeklyScores.map(w => w.week)))].sort((a,b) => a-b);
-    
+    const weeks = [...new Set(staticUserHistories.flatMap(h => h.weeklyScores.map(w => w.week)))].sort((a, b) => a - b);
+
     const transformedData = weeks.map(week => {
       const weekData: { [key: string]: number | string } = { week: `Wk ${week}` };
-      const weeklyScores = userHistories.map(h => h.weeklyScores.find(w => w.week === week)?.score).filter(s => s !== undefined) as number[];
+      const weeklyScores = staticUserHistories.map(h => h.weeklyScores.find(w => w.week === week)?.score).filter(s => s !== undefined) as number[];
 
-      const currentUserHistory = userHistories.find(h => h.userId === user.id);
+      const currentUserHistory = staticUserHistories.find(h => h.userId === user.id);
       const currentUserScore = currentUserHistory?.weeklyScores.find(w => w.week === week)?.score;
 
       weekData['Min Score'] = Math.min(...weeklyScores);
@@ -131,7 +136,69 @@ export default function ProfilePage() {
 
     return { chartData: transformedData, yAxisDomain };
   }, [user.id]);
-  
+
+  const seedDatabase = async () => {
+    if (!firestore) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Firestore is not available. Please try again later.",
+      });
+      return;
+    }
+    setIsSeeding(true);
+
+    const handleError = (error: FirestorePermissionError) => {
+      errorEmitter.emit('permission-error', error);
+      toast({
+        variant: 'destructive',
+        title: 'Permission Error',
+        description: 'Failed to seed database. Check console for details.',
+      });
+    };
+
+    try {
+      const batch = writeBatch(firestore);
+
+      // Seed Users
+      const usersCollectionRef = collection(firestore, 'users');
+      allUsers.forEach(user => {
+        const userDocRef = doc(usersCollectionRef, user.id);
+        batch.set(userDocRef, user);
+      });
+
+      // Seed Teams
+      const teamsCollectionRef = collection(firestore, 'teams');
+      teams.forEach(team => {
+        const teamDocRef = doc(teamsCollectionRef, team.id);
+        batch.set(teamDocRef, team);
+      });
+
+      // Seed Standings
+      const standingsCollectionRef = collection(firestore, 'standings');
+      currentStandings.forEach(standing => {
+        const standingDocRef = doc(standingsCollectionRef, standing.teamId);
+        batch.set(standingDocRef, standing);
+      });
+
+      await batch.commit();
+
+      toast({
+        title: 'Database Seeded!',
+        description: 'Users, teams, and standings have been added to Firestore.',
+      });
+
+    } catch (error: any) {
+      handleError(new FirestorePermissionError({
+        path: '(batch write)',
+        operation: 'write',
+        requestResourceData: { info: 'Batch write for users, teams, and standings.' }
+      }));
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
   function onSubmit(data: ProfileFormValues) {
     toast({
       title: 'Profile Updated!',
@@ -139,7 +206,7 @@ export default function ProfilePage() {
     });
     console.log(data);
   }
-  
+
   const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -148,7 +215,7 @@ export default function ProfilePage() {
         setAvatarPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
-       toast({
+      toast({
         title: 'Avatar Updated!',
         description: 'Your new avatar has been set.',
       });
@@ -167,96 +234,105 @@ export default function ProfilePage() {
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
         <div className="lg:col-span-1 space-y-8">
-            <Card>
-                <CardContent className="pt-6 flex flex-col items-center gap-4">
-                  <Avatar className="h-24 w-24 border-4 border-primary">
-                      <AvatarImage
-                      src={avatarPreview || defaultAvatarUrl}
-                      alt={user.name}
-                      data-ai-hint="person portrait"
-                      />
-                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="text-center">
-                      <h2 className="text-2xl font-bold">{form.watch('name')}</h2>
-                      <p className="text-muted-foreground font-semibold">Rank: #{user.rank}</p>
+          <Card>
+            <CardContent className="pt-6 flex flex-col items-center gap-4">
+              <Avatar className="h-24 w-24 border-4 border-primary">
+                <AvatarImage
+                  src={avatarPreview || defaultAvatarUrl}
+                  alt={user.name}
+                  data-ai-hint="person portrait"
+                />
+                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div className="text-center">
+                <h2 className="text-2xl font-bold">{form.watch('name')}</h2>
+                <p className="text-muted-foreground font-semibold">Rank: #{user.rank}</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                <Upload className="mr-2 h-4 w-4" />
+                Upload Image
+              </Button>
+              <Input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleAvatarUpload}
+              />
+              <Separator className="my-4" />
+              <div className="w-full text-center">
+                <h3 className="text-lg font-semibold mb-2">Season Stats</h3>
+                <div className="flex justify-around text-sm">
+                  <div className="flex flex-col">
+                    <span className="font-bold text-lg">{user.maxRank}</span>
+                    <span className="text-muted-foreground">High</span>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                      <Upload className="mr-2 h-4 w-4" />
-                      Upload Image
-                  </Button>
-                  <Input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      className="hidden" 
-                      accept="image/*"
-                      onChange={handleAvatarUpload}
-                  />
-                  <Separator className="my-4" />
-                   <div className="w-full text-center">
-                      <h3 className="text-lg font-semibold mb-2">Season Stats</h3>
-                      <div className="flex justify-around text-sm">
-                          <div className="flex flex-col">
-                              <span className="font-bold text-lg">{user.maxRank}</span>
-                              <span className="text-muted-foreground">High</span>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-lg">{user.minRank}</span>
+                    <span className="text-muted-foreground">Low</span>
+                  </div>
+                </div>
+              </div>
+              <Separator className="my-4" />
+              <div className="w-full text-center">
+                <h3 className="text-lg font-semibold mb-2">Trophy Cabinet</h3>
+                <div className="flex justify-center gap-4 text-muted-foreground">
+                  <TooltipProvider>
+                    {pastChampionships > 0 && (
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <div className="flex flex-col items-center">
+                            <Trophy className="text-yellow-500" />
+                            <span className="text-xs font-bold">{pastChampionships}</span>
                           </div>
-                           <div className="flex flex-col">
-                              <span className="font-bold text-lg">{user.minRank}</span>
-                              <span className="text-muted-foreground">Low</span>
-                          </div>
-                      </div>
-                  </div>
-                   <Separator className="my-4" />
-                  <div className="w-full text-center">
-                    <h3 className="text-lg font-semibold mb-2">Trophy Cabinet</h3>
-                    <div className="flex justify-center gap-4 text-muted-foreground">
-                       <TooltipProvider>
-                        {pastChampionships > 0 && (
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <div className="flex flex-col items-center">
-                                <Trophy className="text-yellow-500" />
-                                <span className="text-xs font-bold">{pastChampionships}</span>
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>{pastChampionships}x Past Champion</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
-                         <Tooltip>
-                            <TooltipTrigger>
-                              <div className="flex flex-col items-center">
-                                <Award className={cn(mimoMWins > 0 ? "text-yellow-600" : "text-gray-400")} />
-                                <span className="text-xs font-bold">{mimoMWins}</span>
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>{mimoMWins}x MiMoM Winner</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        <Tooltip>
-                            <TooltipTrigger>
-                                <div className="flex flex-col items-center">
-                                    <ShieldCheck className="text-gray-400" />
-                                    <span className="text-xs font-bold">0</span>
-                                </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Past Glories - TBC</p>
-                            </TooltipContent>
-                        </Tooltip>
-                       </TooltipProvider>
-                    </div>
-                  </div>
-                </CardContent>
-            </Card>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{pastChampionships}x Past Champion</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <div className="flex flex-col items-center">
+                          <Award className={cn(mimoMWins > 0 ? "text-yellow-600" : "text-gray-400")} />
+                          <span className="text-xs font-bold">{mimoMWins}</span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{mimoMWins}x MiMoM Winner</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <div className="flex flex-col items-center">
+                          <ShieldCheck className="text-gray-400" />
+                          <span className="text-xs font-bold">0</span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Past Glories - TBC</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </div>
+              <Separator />
+              <Button
+                onClick={seedDatabase}
+                disabled={isSeeding || !firestore || !authUser}
+                className="w-full"
+              >
+                <Database className="mr-2 h-4 w-4" />
+                {isSeeding ? 'Seeding...' : 'Seed Database'}
+              </Button>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="lg:col-span-3 space-y-8">
-            <ProfilePerformanceChart chartData={chartData} yAxisDomain={yAxisDomain} />
+          <ProfilePerformanceChart chartData={chartData} yAxisDomain={yAxisDomain} />
         </div>
-        
+
         <div className="lg:col-span-2 space-y-8">
           <Card>
             <CardHeader>
@@ -351,7 +427,7 @@ export default function ProfilePage() {
                       </FormItem>
                     )}
                   />
-                   <FormField
+                  <FormField
                     control={form.control}
                     name="favouriteTeam"
                     render={({ field }) => (
@@ -365,9 +441,9 @@ export default function ProfilePage() {
                           </FormControl>
                           <SelectContent>
                             {teams.map((team) => (
-                                <SelectItem key={team.id} value={team.id}>
-                                    {team.name}
-                                </SelectItem>
+                              <SelectItem key={team.id} value={team.id}>
+                                {team.name}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -382,7 +458,7 @@ export default function ProfilePage() {
           </Card>
         </div>
         <div className="lg:col-span-2 space-y-8">
-            <Card>
+          <Card>
             <CardHeader>
               <CardTitle>Email Notifications</CardTitle>
               <CardDescription>Choose which emails you want to receive.</CardDescription>
@@ -397,15 +473,15 @@ export default function ProfilePage() {
               </div>
               <div className="flex items-center justify-between rounded-lg border p-4">
                 <div>
-                    <Label htmlFor="new-events" className="text-base font-medium">New Event Alerts</Label>
-                    <p className="text-sm text-muted-foreground">Get notified when new games are available for prediction.</p>
+                  <Label htmlFor="new-events" className="text-base font-medium">New Event Alerts</Label>
+                  <p className="text-sm text-muted-foreground">Get notified when new games are available for prediction.</p>
                 </div>
                 <Switch id="new-events" defaultChecked />
               </div>
               <div className="flex items-center justify-between rounded-lg border p-4">
                 <div>
-                    <Label htmlFor="prediction-reminders" className="text-base font-medium">Prediction Reminders</Label>
-                    <p className="text-sm text-muted-foreground">Get a reminder before the prediction deadline for a game.</p>
+                  <Label htmlFor="prediction-reminders" className="text-base font-medium">Prediction Reminders</Label>
+                  <p className="text-sm text-muted-foreground">Get a reminder before the prediction deadline for a game.</p>
                 </div>
                 <Switch id="prediction-reminders" />
               </div>
@@ -416,3 +492,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    

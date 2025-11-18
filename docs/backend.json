@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -179,6 +180,22 @@
         }
       },
       {
+        "path": "/teams/{teamId}",
+        "definition": {
+          "entityName": "Team",
+          "schema": { "$ref": "#/backend/entities/Team" },
+          "description": "Stores team information."
+        }
+      },
+      {
+        "path": "/standings/{standingId}",
+        "definition": {
+          "entityName": "TeamStanding",
+          "schema": { "$ref": "#/backend/entities/TeamStanding" },
+          "description": "Stores current team standings."
+        }
+      },
+      {
         "path": "/events/{eventId}",
         "definition": {
           "entityName": "Event",
@@ -234,3 +251,5 @@
     "reasoning": "The Firestore structure is designed to support the Predictatron application, focusing on user profiles, events, predictions, and leaderboards. The structure is optimized for security, scalability, and ease of querying.\n\n*   **User Profiles:** User profiles are stored in a `users` collection, enabling easy retrieval and management of user data. The path-based ownership `/users/{userId}` allows straightforward security rules based on `request.auth.uid`.\n*   **Teams and Standings:** Team information and current standings are stored in top-level `teams` and `standings` collections, respectively. This data is public and read by all users.\n*   **Events:** Events are stored in a top-level `events` collection. Since all users can view events, they are stored at the top level. Security rules will ensure only authorized users can create or modify events (e.g., admins).\n*   **Predictions:** Predictions are stored within user-specific subcollections `/users/{userId}/predictions/{predictionId}`. This structure ensures that predictions are directly associated with users. Security rules can easily enforce that only the user can create or modify their predictions.\n*   **Leaderboard:** Leaderboard entries are stored in a top-level `leaderboard` collection. This collection stores aggregate user scores and rankings. Security rules will control who can update the leaderboard (e.g., a server function triggered by prediction updates).\n\n**Authorization Independence:** The structure achieves authorization independence by associating predictions directly with the user's document using a subcollection. No `get()` calls are needed in rules to verify user ownership of predictions.\n\n**QAPs (Rules are not Filters):** The structure supports secure `list` operations (QAPs) as follows:\n*   Listing events, teams, and standings requires no special considerations, as all users can view them.\n*   Listing predictions is secured through path-based ownership (`/users/{userId}/predictions`), allowing rules to efficiently filter by `request.auth.uid`.\n*   The leaderboard collection is public, so any client can list the leaderboard entries."
   }
 }
+
+    
