@@ -109,7 +109,7 @@ export default function PredictPage() {
              <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
               <div className="lg:col-span-3 flex flex-col">
                  <div className="font-medium pb-2 text-muted-foreground">Your Prediction (2025-2026)</div>
-                <div className="rounded-md overflow-hidden">
+                <div className="rounded-md">
                   <Reorder.Group
                     axis="y"
                     values={items}
@@ -163,7 +163,7 @@ export default function PredictPage() {
                     <span className="w-16 text-right">GD</span>
                   </div>
                  </div>
-                    <div className="flex-1 rounded-md overflow-hidden">
+                    <div className="flex-1 rounded-md">
                       <Table className="h-full border-separate border-spacing-y-1">
                         <TableBody>
                           {standingsWithTeamData.map(team => {
