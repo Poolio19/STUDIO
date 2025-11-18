@@ -104,7 +104,7 @@ export default function StandingsPage() {
                 if (!team) return null;
                 const TeamIcon = Icons[team.logo as IconName] || Icons.match;
                 return (
-                  <TableRow key={team.id} className={cn(team.bgColour, team.textColour, 'border-b-white/20')}>
+                  <TableRow key={team.id} className={cn('border-b-white/20', team.bgColour, team.textColour)}>
                     <TableCell className="font-medium">{team.rank}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -119,7 +119,8 @@ export default function StandingsPage() {
                     <TableCell className="text-center">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
                     <TableCell className="text-center">{team.goalsFor}</TableCell>
                     <TableCell className="text-center">{team.goalsAgainst}</TableCell>
-                    <TableCell className="text-right font-bold">{team.points}</TableCell>                  </TableRow>
+                    <TableCell className="text-right font-bold">{team.points}</TableCell>
+                  </TableRow>
                 );
               })}
             </TableBody>
