@@ -86,7 +86,7 @@ export function TeamStandingsChart({
   return (
     <Card>
       <CardHeader className="items-center">
-        <CardTitle>Team Movement 2025-2026</CardTitle>
+        <CardTitle className="bg-black text-yellow-400 p-2 rounded-md">Team Movement 2025-2026</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="relative">
