@@ -42,9 +42,9 @@ export default function RankingsPage() {
 
   return (
     <div className="space-y-8">
-      <header>
+      <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
         <h1 className="text-3xl font-bold tracking-tight">Player Rankings</h1>
-        <p className="text-muted-foreground">
+        <p className="text-slate-400">
           Track player rank progression over the season.
         </p>
       </header>

@@ -95,11 +95,11 @@ export default function PredictPage() {
 
   return (
     <div className="flex flex-col gap-8">
-       <header>
+       <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
           <h1 className="text-3xl font-bold tracking-tight">
             Predict Final Standings
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-slate-400">
             Drag and drop the teams to create your predicted league table for the 2025-2026 season.
           </p>
         </header>

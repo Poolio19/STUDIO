@@ -71,9 +71,9 @@ export default function ConsensusPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header>
+      <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
         <h1 className="text-3xl font-bold tracking-tight">Prediction Consensus</h1>
-        <p className="text-muted-foreground">
+        <p className="text-slate-400">
           See how the community predicts the final league standings.
         </p>
       </header>
@@ -109,7 +109,7 @@ export default function ConsensusPage() {
                   return (
                     <TableRow
                       key={teamId}
-                      className="border-b border-transparent"
+                      className="border-b border-dashed border-border"
                     >
                       <TableCell 
                         className={cn("sticky left-0 z-20 text-center font-medium p-4 rounded-l-md")}

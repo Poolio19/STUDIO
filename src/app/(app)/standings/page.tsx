@@ -72,9 +72,9 @@ export default function StandingsPage() {
 
   return (
     <div className="space-y-8">
-      <header>
+      <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
         <h1 className="text-3xl font-bold tracking-tight">Premier League</h1>
-        <p className="text-muted-foreground">The official Premier League table and weekly position tracker.</p>
+        <p className="text-slate-400">The official Premier League table and weekly position tracker.</p>
       </header>
 
       <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData} />

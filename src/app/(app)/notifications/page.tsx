@@ -18,9 +18,9 @@ export const metadata: Metadata = {
 export default function NotificationsPage() {
   return (
     <div className="space-y-8">
-      <header>
+      <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
           <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>
-          <p className="text-muted-foreground">Manage how you receive updates from PremPred 2025-2026.</p>
+          <p className="text-slate-400">Manage how you receive updates from PremPred 2025-2026.</p>
       </header>
 
       <Card>

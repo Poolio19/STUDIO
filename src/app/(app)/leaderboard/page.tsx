@@ -168,9 +168,9 @@ export default function LeaderboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header>
+      <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
           <h1 className="text-3xl font-bold tracking-tight">Leaderboard</h1>
-          <p className="text-muted-foreground">See who's winning the prediction game.</p>
+          <p className="text-slate-400">See who's winning the prediction game.</p>
       </header>
 
       <Card>
