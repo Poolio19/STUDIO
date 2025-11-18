@@ -88,18 +88,17 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers }: 
           </LineChart>
         </ResponsiveContainer>
       </ChartContainer>
-      <div
-        className="absolute flex flex-col"
+      <ul
+        className="absolute flex flex-col justify-between text-xs"
         style={{
           right: 0,
-          top: '10px',
-          bottom: '-10px',
+          top: '0px',
+          bottom: '-20px',
           width: '130px',
           paddingLeft: '1rem',
         }}
       >
         <p className="text-xs font-medium mb-2">Player, Score</p>
-        <ul className="flex flex-col justify-between flex-1 text-xs">
           {sortedUsers.map((user: User) => {
             const userConfig = chartConfig[user.name];
             if (!userConfig) return null;
@@ -113,8 +112,7 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers }: 
               </li>
             );
           })}
-        </ul>
-      </div>
+      </ul>
     </div>
   );
 }
