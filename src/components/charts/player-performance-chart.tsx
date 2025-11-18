@@ -124,8 +124,8 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers }: 
         className="absolute"
         style={{
           right: 0,
-          top: '10px',
-          bottom: '10px',
+          top: '0px',
+          bottom: '-20px',
           width: '130px',
           paddingLeft: '1rem',
         }}
