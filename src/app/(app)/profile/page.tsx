@@ -54,7 +54,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, doc, writeBatch } from 'firebase/firestore';
+import { collection, doc, setDoc } from 'firebase/firestore';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -168,47 +168,43 @@ export default function ProfilePage() {
       return;
     }
 
-    const batch = writeBatch(firestore);
-    
-    // Seed Users
-    const usersCollectionRef = collection(firestore, 'users');
-    allUsers.forEach(user => {
-      const userDocRef = doc(usersCollectionRef, user.id);
-      batch.set(userDocRef, user);
-    });
+    try {
+      // Seed Users
+      const usersCollectionRef = collection(firestore, 'users');
+      for (const user of allUsers) {
+        const userDocRef = doc(usersCollectionRef, user.id);
+        await setDoc(userDocRef, user);
+      }
 
-    // Seed Teams
-    const teamsCollectionRef = collection(firestore, 'teams');
-    teams.forEach(team => {
-      const teamDocRef = doc(teamsCollectionRef, team.id);
-      batch.set(teamDocRef, team);
-    });
+      // Seed Teams
+      const teamsCollectionRef = collection(firestore, 'teams');
+      for (const team of teams) {
+        const teamDocRef = doc(teamsCollectionRef, team.id);
+        await setDoc(teamDocRef, team);
+      }
 
-    // Seed Standings
-    const standingsCollectionRef = collection(firestore, 'standings');
-    currentStandings.forEach(standing => {
-      const standingDocRef = doc(standingsCollectionRef, standing.teamId);
-      batch.set(standingDocRef, standing);
-    });
+      // Seed Standings
+      const standingsCollectionRef = collection(firestore, 'standings');
+      for (const standing of currentStandings) {
+        const standingDocRef = doc(standingsCollectionRef, standing.teamId);
+        await setDoc(standingDocRef, standing);
+      }
 
-    batch.commit()
-      .then(() => {
-        toast({
-          title: "Database Seeded!",
-          description: `${allUsers.length} users, ${teams.length} teams, and ${currentStandings.length} standings have been added to Firestore.`,
-        });
-      })
-      .catch((serverError) => {
+      toast({
+        title: "Database Seeded!",
+        description: `${allUsers.length} users, ${teams.length} teams, and ${currentStandings.length} standings have been added to Firestore.`,
+      });
+
+    } catch (serverError: any) {
         const permissionError = new FirestorePermissionError({
-          path: '(batch write)', // General path for batch
+          path: serverError.customData?.path || '(unknown path)',
           operation: 'write',
           requestResourceData: { 
-            info: 'Batch write for users, teams, and standings.'
+            info: 'Error during database seeding.'
           },
         });
-
         errorEmitter.emit('permission-error', permissionError);
-      });
+    }
   };
 
 
