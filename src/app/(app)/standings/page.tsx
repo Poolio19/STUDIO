@@ -105,22 +105,35 @@ export default function StandingsPage() {
                 const TeamIcon = Icons[team.logo as IconName] || Icons.match;
                 const isLiverpool = team.id === 'team_12';
                 return (
-                  <TableRow key={team.id} className={cn("border-b-white/20", team.bgColour, team.textColour)}>
-                    <TableCell className={cn("font-medium")}>{team.rank}</TableCell>
+                  <TableRow
+                    key={team.id}
+                    className="border-b-white/20"
+                    style={{
+                      backgroundColor: team.bgColour,
+                      color: team.textColour,
+                    }}
+                  >
+                    <TableCell className="font-medium">{team.rank}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <TeamIcon className={cn("size-5", team.colour, isLiverpool && "scale-x-[-1]")} />
+                        <TeamIcon
+                          className={cn(
+                            "size-5",
+                            isLiverpool && "scale-x-[-1]"
+                          )}
+                          style={{ color: team.colour }}
+                        />
                         <span className="font-medium">{team.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell className={cn("text-center")}>{team.gamesPlayed}</TableCell>
-                    <TableCell className={cn("text-center")}>{team.wins}</TableCell>
-                    <TableCell className={cn("text-center")}>{team.draws}</TableCell>
-                    <TableCell className={cn("text-center")}>{team.losses}</TableCell>
-                    <TableCell className={cn("text-center")}>{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
-                    <TableCell className={cn("text-center")}>{team.goalsFor}</TableCell>
-                    <TableCell className={cn("text-center")}>{team.goalsAgainst}</TableCell>
-                    <TableCell className={cn("text-right font-bold")}>{team.points}</TableCell>
+                    <TableCell className="text-center">{team.gamesPlayed}</TableCell>
+                    <TableCell className="text-center">{team.wins}</TableCell>
+                    <TableCell className="text-center">{team.draws}</TableCell>
+                    <TableCell className="text-center">{team.losses}</TableCell>
+                    <TableCell className="text-center">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
+                    <TableCell className="text-center">{team.goalsFor}</TableCell>
+                    <TableCell className="text-center">{team.goalsAgainst}</TableCell>
+                    <TableCell className="text-right font-bold">{team.points}</TableCell>
                   </TableRow>
                 );
               })}
@@ -131,3 +144,5 @@ export default function StandingsPage() {
     </div>
   );
 }
+
+    

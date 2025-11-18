@@ -124,15 +124,23 @@ export default function PredictPage() {
                           value={item}
                           className={cn(
                             "flex items-center gap-4 h-[53px] px-4 cursor-grab active:cursor-grabbing",
-                            item.bgColour,
-                            item.textColour,
                             index < items.length - 1 && "border-b border-white/20"
                           )}
+                           style={{
+                            backgroundColor: item.bgColour,
+                            color: item.textColour
+                          }}
                         >
                           <div className={cn("text-base font-medium w-6 text-center opacity-80")}>
                             {index + 1}
                           </div>
-                          <TeamIcon className={cn("size-5", item.teamColour, isLiverpool && "scale-x-[-1]")} />
+                           <TeamIcon
+                            className={cn(
+                              "size-5",
+                              isLiverpool && "scale-x-[-1]"
+                            )}
+                            style={{ color: item.teamColour }}
+                          />
                           <span className="font-medium text-sm">{item.teamName}</span>
                         </Reorder.Item>
                       );
@@ -156,18 +164,31 @@ export default function PredictPage() {
                             const TeamIcon = Icons[team.logo as IconName] || Icons.match;
                             const isLiverpool = team.id === 'team_12';
                             return (
-                              <TableRow key={team.id} className={cn("h-[53px] border-b-white/20", team.bgColour, team.textColour)}>
-                                <TableCell className={cn("font-medium w-[50px] opacity-80")}>{team.rank}</TableCell>
+                              <TableRow
+                                key={team.id}
+                                className="h-[53px] border-b-white/20"
+                                style={{
+                                  backgroundColor: team.bgColour,
+                                  color: team.textColour,
+                                }}
+                              >
+                                <TableCell className="font-medium w-[50px] opacity-80">{team.rank}</TableCell>
                                 <TableCell>
                                   <div className="flex items-center gap-2">
-                                    <TeamIcon className={cn("size-5", team.colour, isLiverpool && "scale-x-[-1]")} />
+                                     <TeamIcon
+                                      className={cn(
+                                        "size-5",
+                                        isLiverpool && "scale-x-[-1]"
+                                      )}
+                                      style={{ color: team.colour }}
+                                    />
                                     <span className="truncate">{team.name}</span>
                                   </div>
                                 </TableCell>
-                                <TableCell className={cn("text-right font-semibold w-16")}>
+                                <TableCell className="text-right font-semibold w-16">
                                   {team.points}
                                 </TableCell>
-                                <TableCell className={cn("text-right w-16")}>
+                                <TableCell className="text-right w-16">
                                   {team.goalDifference > 0 ? '+' : ''}{team.goalDifference}
                                 </TableCell>
                               </TableRow>
@@ -184,3 +205,5 @@ export default function PredictPage() {
     </div>
   );
 }
+
+    

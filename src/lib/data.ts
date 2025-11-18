@@ -126,29 +126,29 @@ let usersData: Omit<User, 'score' | 'rank' | 'previousRank' | 'previousScore' | 
 ];
 
 export const teams: Team[] = [
-    { id: 'team_1', name: 'Arsenal', logo: 'drill', bgColour: 'bg-red-600', textColour: 'text-white' },
-    { id: 'team_2', name: 'Aston Villa', logo: 'squirrel', bgColour: 'bg-[#670E36]', textColour: 'text-sky-300' },
-    { id: 'team_3', name: 'Bournemouth', logo: 'fingerprint', bgColour: 'bg-red-600', textColour: 'text-black' },
-    { id: 'team_4', name: 'Brentford', logo: 'bug', bgColour: 'bg-red-600', textColour: 'text-white' },
-    { id: 'team_5', name: 'Brighton', logo: 'bird', bgColour: 'bg-blue-500', textColour: 'text-white' },
-    { id: 'team_6', name: 'Chelsea', logo: 'creativeCommons', bgColour: 'bg-white', textColour: 'text-blue-600' },
-    { id: 'team_7', name: 'Crystal Palace', logo: 'rabbit', bgColour: 'bg-blue-600', textColour: 'text-red-600' },
-    { id: 'team_8', name: 'Everton', logo: 'home', bgColour: 'bg-blue-700', textColour: 'text-white' },
-    { id: 'team_9', name: 'Fulham', logo: 'shieldHalf', bgColour: 'bg-white', textColour: 'text-black' },
-    { id: 'team_10', name: 'Ipswich Town', logo: 'shield', bgColour: 'bg-blue-600', textColour: 'text-white' },
-    { id: 'team_11', name: 'Leicester City', logo: 'shield', bgColour: 'bg-blue-600', textColour: 'text-white' },
-    { id: 'team_12', name: 'Liverpool', logo: 'origami', bgColour: 'bg-red-600', textColour: 'text-white' },
-    { id: 'team_13', name: 'Man City', logo: 'sailboat', bgColour: 'bg-sky-400', textColour: 'text-yellow-300' },
-    { id: 'team_14', name: 'Man Utd', logo: 'hamburger', bgColour: 'bg-red-600', textColour: 'text-yellow-400' },
-    { id: 'team_15', name: 'Newcastle', logo: 'castle', bgColour: 'bg-black', textColour: 'text-white' },
-    { id: 'team_16', name: 'Notts Forest', logo: 'treeDeciduous', bgColour: 'bg-red-600', textColour: 'text-white' },
-    { id: 'team_17', name: 'Southampton', logo: 'flower', bgColour: 'bg-red-600', textColour: 'text-white' },
-    { id: 'team_18', name: 'Tottenham', logo: 'origami', bgColour: 'bg-blue-900', textColour: 'text-white' },
-    { id: 'team_19', name: 'West Ham', logo: 'utensilsCrossed', bgColour: 'bg-[#670E36]', textColour: 'text-yellow-300' },
-    { id: 'team_20', name: 'Wolves', logo: 'gitlab', bgColour: 'bg-orange-400', textColour: 'text-black' },
-    { id: 'team_21', name: 'Burnley', logo: 'shield', bgColour: 'bg-[#670E36]', textColour: 'text-sky-300'},
-    { id: 'team_22', name: 'Leeds', logo: 'mapPin', bgColour: 'bg-yellow-300', textColour: 'text-blue-800' },
-    { id: 'team_23', name: 'Sunderland', logo: 'theater', bgColour: 'bg-red-600', textColour: 'text-white' },
+    { id: 'team_1', name: 'Arsenal', logo: 'drill', bgColour: '#EF0107', textColour: '#FFFFFF' },
+    { id: 'team_2', name: 'Aston Villa', logo: 'squirrel', bgColour: '#95BFE5', textColour: '#670E36' },
+    { id: 'team_3', name: 'Bournemouth', logo: 'fingerprint', bgColour: '#DA291C', textColour: '#000000' },
+    { id: 'team_4', name: 'Brentford', logo: 'bug', bgColour: '#C8102E', textColour: '#FFFFFF' },
+    { id: 'team_5', name: 'Brighton', logo: 'bird', bgColour: '#0057B8', textColour: '#FFFFFF' },
+    { id: 'team_6', name: 'Chelsea', logo: 'creativeCommons', bgColour: '#034694', textColour: '#FFFFFF' },
+    { id: 'team_7', name: 'Crystal Palace', logo: 'rabbit', bgColour: '#1B458F', textColour: '#C4122E' },
+    { id: 'team_8', name: 'Everton', logo: 'home', bgColour: '#003399', textColour: '#FFFFFF' },
+    { id: 'team_9', name: 'Fulham', logo: 'shieldHalf', bgColour: '#FFFFFF', textColour: '#000000' },
+    { id: 'team_10', name: 'Ipswich Town', logo: 'shield', bgColour: '#0057B8', textColour: '#FFFFFF' },
+    { id: 'team_11', name: 'Leicester City', logo: 'shield', bgColour: '#0053A0', textColour: '#FFFFFF' },
+    { id: 'team_12', name: 'Liverpool', logo: 'origami', bgColour: '#C8102E', textColour: '#FFFFFF' },
+    { id: 'team_13', name: 'Man City', logo: 'sailboat', bgColour: '#6CABDD', textColour: '#FFFFFF' },
+    { id: 'team_14', name: 'Man Utd', logo: 'hamburger', bgColour: '#DA291C', textColour: '#FBE122' },
+    { id: 'team_15', name: 'Newcastle', logo: 'castle', bgColour: '#241F20', textColour: '#FFFFFF' },
+    { id: 'team_16', name: 'Notts Forest', logo: 'treeDeciduous', bgColour: '#DD0000', textColour: '#FFFFFF' },
+    { id: 'team_17', name: 'Southampton', logo: 'flower', bgColour: '#D71920', textColour: '#FFFFFF' },
+    { id: 'team_18', name: 'Tottenham', logo: 'origami', bgColour: '#132257', textColour: '#FFFFFF' },
+    { id: 'team_19', name: 'West Ham', logo: 'utensilsCrossed', bgColour: '#7A263A', textColour: '#FBB117' },
+    { id: 'team_20', name: 'Wolves', logo: 'gitlab', bgColour: '#FDB913', textColour: '#231F20' },
+    { id: 'team_21', name: 'Burnley', logo: 'shield', bgColour: '#6C1D45', textColour: '#99D6EA'},
+    { id: 'team_22', name: 'Leeds', logo: 'mapPin', bgColour: '#FFCD00', textColour: '#1D428A' },
+    { id: 'team_23', name: 'Sunderland', logo: 'theater', bgColour: '#EB172B', textColour: '#FFFFFF' },
 ];
 
 
@@ -530,3 +530,5 @@ export const weeklyTeamStandings: WeeklyTeamStanding[] = teams.flatMap(team => {
     }
     return weeklyRanks.reverse();
 });
+
+    

@@ -102,11 +102,21 @@ export default function ConsensusPage() {
                   const totalPredictions = predictionCounts.reduce((sum, count) => sum + count, 0);
                   const isLiverpool = teamId === 'team_12';
                   return (
-                    <TableRow key={teamId} className={cn('border-b-white/20', teamData.bgColour, teamData.textColour)}>
+                    <TableRow
+                      key={teamId}
+                      className="border-b-white/20"
+                      style={{
+                        backgroundColor: teamData.bgColour,
+                        color: teamData.textColour,
+                      }}
+                    >
                       <TableCell className={cn("sticky left-0 z-10 text-center font-medium")}>{index + 1}</TableCell>
                       <TableCell className={cn("sticky left-[50px] z-10")}>
                         <div className="flex items-center gap-3">
-                          <TeamIcon className={cn("size-5", teamData.colour, isLiverpool && "scale-x-[-1]")} />
+                          <TeamIcon
+                            className={cn("size-5", isLiverpool && "scale-x-[-1]")}
+                            style={{ color: teamData.colour }}
+                          />
                           <span className="font-medium">{teamData.name}</span>
                         </div>
                       </TableCell>
@@ -132,3 +142,5 @@ export default function ConsensusPage() {
     </div>
   );
 }
+
+    
