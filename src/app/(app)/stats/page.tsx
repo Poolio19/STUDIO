@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
-import { User, Team, PlayerTeamScore, PreviousSeasonStanding, Prediction } from '@/lib/data';
+import { User, Team, PlayerTeamScore, Prediction } from '@/lib/data';
 
 const getAvatarUrl = (avatarId: string) => {
   return PlaceHolderImages.find((img) => img.id === avatarId)?.imageUrl || '';
@@ -27,42 +27,16 @@ export default function StatsPage() {
   const usersCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
   const teamsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
   const predictionsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'predictions') : null, [firestore]);
-  const previousStandingsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'previousSeasonStandings') : null, [firestore]);
-  
+  const playerTeamScoresCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'playerTeamScores') : null, [firestore]);
+
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersCollectionRef);
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsCollectionRef);
-  const { data: userPredictions, isLoading: predictionsLoading } = useCollection<Prediction>(predictionsCollectionRef);
-  const { data: previousSeasonStandings, isLoading: prevStandingsLoading } = useCollection<PreviousSeasonStanding>(previousStandingsCollectionRef);
+  const { data: playerTeamScores, isLoading: playerTeamScoresLoading } = useCollection<PlayerTeamScore>(playerTeamScoresCollectionRef);
   
-  const { playerTeamScores } = useMemo(() => {
-    if (!userPredictions || !previousSeasonStandings) return { playerTeamScores: [] };
-    
-    const actualRanks = new Map<string, number>();
-    previousSeasonStandings.forEach((s: any) => actualRanks.set(s.teamId, s.rank));
-
-    const scores = userPredictions.flatMap((prediction: any) => {
-      return prediction.rankings.map((teamId: string, index: number) => {
-        const predictedRank = index + 1;
-        const actualRank = actualRanks.get(teamId) || 0;
-        let score = 0;
-        if (actualRank > 0) {
-            score = 5 - Math.abs(predictedRank - actualRank);
-        }
-        return {
-            userId: prediction.id, // prediction doc id is the user id
-            teamId: teamId,
-            score: score,
-        };
-      });
-    });
-    return { playerTeamScores: scores as PlayerTeamScore[] };
-  }, [userPredictions, previousSeasonStandings]);
-
-
   const sortedUsers = useMemo(() => users ? [...users].sort((a, b) => (a.rank || 0) - (b.rank || 0)) : [], [users]);
   const sortedTeams = useMemo(() => teams ? [...teams].sort((a, b) => a.name.localeCompare(b.name)) : [], [teams]);
 
-  const isLoading = usersLoading || teamsLoading || predictionsLoading || prevStandingsLoading;
+  const isLoading = usersLoading || teamsLoading || playerTeamScoresLoading;
 
   const getScoreColour = (score: number) => {
     if (score === 5) return 'bg-green-200/50 dark:bg-green-800/50 font-bold';
@@ -125,7 +99,7 @@ export default function StatsPage() {
                                         {user.score}
                                     </TableCell>
                                     {sortedTeams.map((team) => {
-                                        const score = playerTeamScores.find(
+                                        const score = playerTeamScores?.find(
                                             (s) => s.userId === user.id && s.teamId === team.id
                                         )?.score ?? 0;
                                         return (
@@ -145,5 +119,3 @@ export default function StatsPage() {
     </div>
   );
 }
-
-    

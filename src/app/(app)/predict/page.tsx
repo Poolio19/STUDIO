@@ -9,13 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { previousSeasonStandings } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
 import { Reorder } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc, setDoc } from 'firebase/firestore';
-import { Team } from '@/lib/data';
+import { Team, PreviousSeasonStanding } from '@/lib/data';
 import { useUser } from '@/firebase';
 
 const predictionSchema = z.object({
@@ -40,10 +39,15 @@ export default function PredictPage() {
   const { user } = useUser();
   const firestore = useFirestore();
   const teamsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
+  const previousStandingsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'previousSeasonStandings') : null, [firestore]);
+  
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsCollectionRef);
+  const { data: previousSeasonStandings, isLoading: prevStandingsLoading } = useCollection<PreviousSeasonStanding>(previousStandingsCollectionRef);
+
+  const isLoading = teamsLoading || prevStandingsLoading;
 
   const sortedTeamsByPreviousRank = React.useMemo(() => {
-    if (!teams) return [];
+    if (!teams || !previousSeasonStandings) return [];
     const teamMap = new Map(teams.map(t => [t.id, t]));
     return previousSeasonStandings
       .slice()
@@ -61,7 +65,7 @@ export default function PredictPage() {
           textColour: team?.textColour,
         };
       });
-  }, [teams]);
+  }, [teams, previousSeasonStandings]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -113,17 +117,17 @@ export default function PredictPage() {
   }
 
   const standingsWithTeamData = React.useMemo(() => {
-      if (!teams) return [];
+      if (!teams || !previousSeasonStandings) return [];
       return previousSeasonStandings
         .map(standing => {
           const team = teams.find(t => t.id === standing.teamId);
           return team ? { ...standing, ...team } : null;
         })
-        .filter(Boolean)
+        .filter((item): item is NonNullable<typeof item> => item !== null)
         .sort((a, b) => a!.rank - b!.rank);
-  }, [teams]);
+  }, [teams, previousSeasonStandings]);
 
-  if (teamsLoading) {
+  if (isLoading) {
     return <div className="flex justify-center items-center h-full">Loading teams...</div>;
   }
 
@@ -217,5 +221,3 @@ export default function PredictPage() {
     </div>
   );
 }
-
-    

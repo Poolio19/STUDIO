@@ -31,7 +31,8 @@ export default function RankingsPage() {
 
   const { chartData, yAxisDomain } = useMemo(() => {
     if (!users || !userHistories) return { chartData: [], yAxisDomain: [1, 20] };
-    const totalPlayers = users.length;
+    
+    const totalPlayers = users.length > 0 ? users.length : 20;
     const yAxisDomain: [number, number] = [1, totalPlayers];
 
     const weeks = [...new Set(userHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.week)))].sort((a,b) => a-b);
@@ -39,7 +40,7 @@ export default function RankingsPage() {
     const transformedData = weeks.map(week => {
       const weekData: { [key: string]: number | string } = { week: `Wk ${week}` };
       userHistories.forEach(history => {
-        const user = users.find(u => u.id === history.id); // history doc id is user id
+        const user = users.find(u => u.id === history.userId); 
         if (user) {
           const weekScore = history.weeklyScores.find(w => w.week === week);
           if (weekScore && weekScore.rank > 0) {
@@ -80,5 +81,3 @@ export default function RankingsPage() {
     </div>
   );
 }
-
-    

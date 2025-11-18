@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { monthlyMimoM, seasonMonths, type User, CurrentStanding } from '@/lib/data';
+import { type User, CurrentStanding, MonthlyMimoM, SeasonMonth } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { useMemo } from 'react';
@@ -56,11 +56,15 @@ export default function MostImprovedPage() {
   const firestore = useFirestore();
   const usersCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
   const standingsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'standings') : null, [firestore]);
+  const monthlyMimoMCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore]);
+  const seasonMonthsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'seasonMonths') : null, [firestore]);
 
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersCollectionRef);
   const { data: currentStandings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsCollectionRef);
+  const { data: monthlyMimoM, isLoading: monthlyMimoMLoading } = useCollection<MonthlyMimoM>(monthlyMimoMCollectionRef);
+  const { data: seasonMonths, isLoading: seasonMonthsLoading } = useCollection<SeasonMonth>(seasonMonthsCollectionRef);
 
-  const isLoading = usersLoading || standingsLoading;
+  const isLoading = usersLoading || standingsLoading || monthlyMimoMLoading || seasonMonthsLoading;
 
   const currentWeek = currentStandings?.[0]?.gamesPlayed || 1;
   
@@ -91,7 +95,7 @@ export default function MostImprovedPage() {
   }, [users]);
 
   const mimoMWithDetails = useMemo(() => {
-    if (!users) return [];
+    if (!users || !monthlyMimoM || !seasonMonths) return [];
     const awardsByMonth: { [key: string]: { winners: any[], runnersUp: any[] } } = {};
     const monthOrder = ['August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
     const currentMonthIndex = monthOrder.indexOf(currentMonthName);
@@ -158,7 +162,7 @@ export default function MostImprovedPage() {
       
       return 0;
     });
-  }, [users, currentMonthName, currentYear, ladderData]);
+  }, [users, monthlyMimoM, seasonMonths, currentMonthName, currentYear, ladderData]);
 
   const getLadderRankColour = (user: (typeof ladderData.ladderWithRanks)[0]) => {
     if (ladderData.firstPlaceRankChange !== undefined && user.rankChange === ladderData.firstPlaceRankChange) return 'bg-yellow-400/20';
@@ -299,5 +303,3 @@ export default function MostImprovedPage() {
     </div>
   );
 }
-
-    

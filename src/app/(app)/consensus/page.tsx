@@ -17,7 +17,7 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
-import { predictions, Team } from '@/lib/data';
+import { Team, Prediction } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
@@ -39,7 +39,7 @@ export default function ConsensusPage() {
 
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsCollectionRef);
   const { data: currentStandings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsCollectionRef);
-  const { data: userPredictions, isLoading: predictionsLoading } = useCollection<{rankings: string[]}>(predictionsCollectionRef);
+  const { data: userPredictions, isLoading: predictionsLoading } = useCollection<Prediction>(predictionsCollectionRef);
 
   const isLoading = teamsLoading || standingsLoading || predictionsLoading;
 
@@ -190,5 +190,3 @@ export default function ConsensusPage() {
     </div>
   );
 }
-
-    

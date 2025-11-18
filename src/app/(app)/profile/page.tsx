@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Upload, Trophy, Award, ShieldCheck } from 'lucide-react';
+import { Calendar as CalendarIcon, Upload, Trophy, Award, ShieldCheck, Database } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -41,7 +41,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { teams, monthlyMimoM, UserHistory } from '@/lib/data';
+import { Team, UserHistory, MonthlyMimoM } from '@/lib/data';
 import { ProfilePerformanceChart } from '@/components/charts/profile-performance-chart';
 import React from 'react';
 import { Label } from '@/components/ui/label';
@@ -53,8 +53,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, collection } from 'firebase/firestore';
+import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
+import { doc, collection, writeBatch, setDoc } from 'firebase/firestore';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
+
+import { users as staticUsers, teams as staticTeams, currentStandings as staticStandings, previousSeasonStandings as staticPrevStandings, userHistories as staticUserHistories, monthlyMimoM as staticMonthlyMimoM, teamRecentResults as staticTeamRecentResults, seasonMonths as staticSeasonMonths, weeklyTeamStandings as staticWeeklyTeamStandings, playerTeamScores as staticPlayerTeamScores, predictions as staticPredictions } from '@/lib/data';
+
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -85,9 +90,13 @@ export default function ProfilePage() {
 
   const userDocRef = useMemoFirebase(() => (firestore && authUser) ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const userHistoryDocRef = useMemoFirebase(() => (firestore && authUser) ? doc(firestore, 'userHistories', authUser.uid) : null, [firestore, authUser]);
+  const monthlyMimoMCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore]);
+  const teamsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
   
   const { data: user, isLoading: isUserLoading } = useDoc(userDocRef);
   const { data: userHistory, isLoading: isHistoryLoading } = useDoc<UserHistory>(userHistoryDocRef);
+  const { data: monthlyMimoM, isLoading: isMimoMLoading } = useCollection<MonthlyMimoM>(monthlyMimoMCollectionRef);
+  const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsCollectionRef);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -108,9 +117,9 @@ export default function ProfilePage() {
 
 
   const mimoMWins = React.useMemo(() => {
-    if (!user) return 0;
+    if (!user || !monthlyMimoM) return 0;
     return monthlyMimoM.filter(m => m.userId === user.id && m.type === 'winner').length;
-  }, [user]);
+  }, [user, monthlyMimoM]);
 
   const pastChampionships = 0;
 
@@ -120,6 +129,7 @@ export default function ProfilePage() {
     if (!userHistory) return { chartData: [], yAxisDomain: [0,0] };
     
     const allScores = userHistory.weeklyScores.filter(w => w.week > 0).map(w => w.score);
+    if (allScores.length === 0) return { chartData: [], yAxisDomain: [0,10] };
     const minScore = Math.min(...allScores);
     const maxScore = Math.max(...allScores);
     const yAxisDomain: [number, number] = [minScore - 5, maxScore + 5];
@@ -164,7 +174,7 @@ export default function ProfilePage() {
     }
   };
 
-  const isLoading = isAuthUserLoading || isUserLoading || isHistoryLoading;
+  const isLoading = isAuthUserLoading || isUserLoading || isHistoryLoading || isMimoMLoading || teamsLoading;
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-full">Loading profile...</div>;
@@ -383,7 +393,7 @@ export default function ProfilePage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {teams.map((team) => (
+                            {teams && teams.map((team) => (
                               <SelectItem key={team.id} value={team.id}>
                                 {team.name}
                               </SelectItem>
@@ -435,5 +445,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    

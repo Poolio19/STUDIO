@@ -31,7 +31,9 @@ export default function PerformancePage() {
 
   const { chartData, yAxisDomain } = useMemo(() => {
     if (!users || !userHistories) return { chartData: [], yAxisDomain: [0, 0] };
+    
     const allScores = userHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.score));
+    if (allScores.length === 0) return { chartData: [], yAxisDomain: [0, 10] };
     const minScore = Math.min(...allScores);
     const maxScore = Math.max(...allScores);
     const yAxisDomain: [number, number] = [minScore - 5, maxScore + 5];
@@ -41,7 +43,7 @@ export default function PerformancePage() {
     const transformedData = weeks.map(week => {
       const weekData: { [key: string]: number | string } = { week: `Wk ${week}` };
       userHistories.forEach(history => {
-        const user = users.find(u => u.id === history.id); // history doc id is user id
+        const user = users.find(u => u.id === history.userId); 
         if (user) {
           const weekScore = history.weeklyScores.find(w => w.week === week);
           if (weekScore) {
@@ -82,5 +84,3 @@ export default function PerformancePage() {
     </div>
   );
 }
-
-    

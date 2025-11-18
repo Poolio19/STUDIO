@@ -15,7 +15,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { weeklyTeamStandings, teamRecentResults, TeamRecentResult } from '@/lib/data';
+import { TeamRecentResult, WeeklyTeamStanding } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
 import { TeamStandingsChart } from '@/components/charts/team-standings-chart';
 import { useMemo } from 'react';
@@ -28,14 +28,18 @@ export default function StandingsPage() {
     const firestore = useFirestore();
     const teamsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
     const standingsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'standings') : null, [firestore]);
+    const weeklyTeamStandingsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'weeklyTeamStandings') : null, [firestore]);
+    const teamRecentResultsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'teamRecentResults') : null, [firestore]);
 
     const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsCollectionRef);
     const { data: currentStandings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsCollectionRef);
+    const { data: weeklyTeamStandings, isLoading: weeklyStandingsLoading } = useCollection<WeeklyTeamStanding>(weeklyTeamStandingsCollectionRef);
+    const { data: teamRecentResults, isLoading: recentResultsLoading } = useCollection<TeamRecentResult>(teamRecentResultsCollectionRef);
 
-    const isLoading = teamsLoading || standingsLoading;
+    const isLoading = teamsLoading || standingsLoading || weeklyStandingsLoading || recentResultsLoading;
 
     const { standingsWithTeamData, chartData } = useMemo(() => {
-        if (!teams || !currentStandings) {
+        if (!teams || !currentStandings || !weeklyTeamStandings || !teamRecentResults) {
             return { standingsWithTeamData: [], chartData: [] };
         }
 
@@ -53,7 +57,7 @@ export default function StandingsPage() {
                     recentResults: recentResults
                 } : null;
             })
-            .filter(Boolean);
+            .filter((item): item is NonNullable<typeof item> => item !== null);
 
         const sortedData = initialData.sort((a, b) => {
             if (!a || !b) return 0;
@@ -86,7 +90,7 @@ export default function StandingsPage() {
         });
 
         return { standingsWithTeamData: finalStandings, chartData: transformedChartData };
-    }, [teams, currentStandings]);
+    }, [teams, currentStandings, weeklyTeamStandings, teamRecentResults]);
 
     const getResultColor = (result: 'W' | 'D' | 'L' | '-') => {
         switch (result) {
@@ -210,5 +214,3 @@ export default function StandingsPage() {
     </div>
   );
 }
-
-    

@@ -15,6 +15,8 @@ export type User = {
   rankChange: number; // positive for up, negative for down, 0 for no change
   scoreChange: number;
   isPro?: boolean;
+  email?: string;
+  joinDate?: string;
 };
 
 export type Team = {
@@ -61,11 +63,13 @@ export type CurrentStanding = {
 };
 
 export type TeamRecentResult = {
+  id: string; // Add id to satisfy useCollection
   teamId: string;
   results: ('W' | 'D' | 'L' | '-')[];
 };
 
 export type MonthlyMimoM = {
+  id: string; // Add id to satisfy useCollection
   month: string;
   year: number;
   userId: string;
@@ -74,6 +78,7 @@ export type MonthlyMimoM = {
 };
 
 export type SeasonMonth = {
+    id: string; // Add id to satisfy useCollection
     month: string;
     year: number;
     special?: string;
@@ -81,6 +86,7 @@ export type SeasonMonth = {
 }
 
 export type PlayerTeamScore = {
+    id: string; // Add id to satisfy useCollection
     userId: string;
     teamId: string;
     score: number;
@@ -98,6 +104,7 @@ export type UserHistory = {
 };
 
 export type WeeklyTeamStanding = {
+    id: string; // Add id to satisfy useCollection
     week: number;
     teamId: string;
     rank: number;
@@ -205,22 +212,22 @@ export const currentStandings: CurrentStanding[] = [
 ];
 
 export const seasonMonths: SeasonMonth[] = [
-    { month: 'August', year: 2025, abbreviation: 'AUG' },
-    { month: 'September', year: 2025, abbreviation: 'SEPT' },
-    { month: 'October', year: 2025, abbreviation: 'OCT' },
-    { month: 'November', year: 2025, abbreviation: 'NOV' },
-    { month: 'December', year: 2025, abbreviation: 'DEC' },
-    { month: 'December', year: 2025, special: 'Christmas No. 1', abbreviation: 'XMAS' },
-    { month: 'January', year: 2026, abbreviation: 'JAN' },
-    { month: 'February', year: 2026, abbreviation: 'FEB' },
-    { month: 'March', year: 2026, abbreviation: 'MAR' },
-    { month: 'April', year: 2026, abbreviation: 'APR' },
-    { month: 'May', year: 2026, abbreviation: 'MAY' },
+    { id: 'sm_1', month: 'August', year: 2025, abbreviation: 'AUG' },
+    { id: 'sm_2', month: 'September', year: 2025, abbreviation: 'SEPT' },
+    { id: 'sm_3', month: 'October', year: 2025, abbreviation: 'OCT' },
+    { id: 'sm_4', month: 'November', year: 2025, abbreviation: 'NOV' },
+    { id: 'sm_5', month: 'December', year: 2025, abbreviation: 'DEC' },
+    { id: 'sm_6', month: 'December', year: 2025, special: 'Christmas No. 1', abbreviation: 'XMAS' },
+    { id: 'sm_7', month: 'January', year: 2026, abbreviation: 'JAN' },
+    { id: 'sm_8', month: 'February', year: 2026, abbreviation: 'FEB' },
+    { id: 'sm_9', month: 'March', year: 2026, abbreviation: 'MAR' },
+    { id: 'sm_10', month: 'April', year: 2026, abbreviation: 'APR' },
+    { id: 'sm_11', month: 'May', year: 2026, abbreviation: 'MAY' },
 ];
 
 export const monthlyMimoM: MonthlyMimoM[] = [
-    { month: 'August', year: 2025, userId: 'usr_12', type: 'winner' },
-    { month: 'August', year: 2025, userId: 'usr_3', type: 'runner-up' },
+    { id: 'mimo_1', month: 'August', year: 2025, userId: 'usr_12', type: 'winner' },
+    { id: 'mimo_2', month: 'August', year: 2025, userId: 'usr_3', type: 'runner-up' },
 ];
 
 // --- DYNAMIC & DETERMINISTIC DATA GENERATION ---
@@ -321,7 +328,7 @@ export const predictions: Prediction[] = usersData.map((user, index) => {
     };
 });
 
-const generateScoresForUser = (userId: string, userPredictions: string[]): PlayerTeamScore[] => {
+const generateScoresForUser = (userId: string, userPredictions: string[]): Omit<PlayerTeamScore, 'id'>[] => {
     const actualRanks = new Map<string, number>();
     previousSeasonStandings.forEach(s => actualRanks.set(s.teamId, s.rank));
     
@@ -340,7 +347,7 @@ const generateScoresForUser = (userId: string, userPredictions: string[]): Playe
     });
 };
 
-export const playerTeamScores: PlayerTeamScore[] = usersData.flatMap(user => {
+export const playerTeamScores: Omit<PlayerTeamScore, 'id'>[] = usersData.flatMap(user => {
     const userPrediction = predictions.find(p => p.userId === user.id);
     return generateScoresForUser(user.id, userPrediction?.rankings || []);
 });
@@ -512,13 +519,13 @@ export const users: User[] = sortedFinalUsers;
 const TOTAL_CHART_WEEKS = 6;
 const currentWeekNumber = currentStandings[0]?.gamesPlayed || 1;
 
-export const weeklyTeamStandings: WeeklyTeamStanding[] = teams.flatMap(team => {
+export const weeklyTeamStandings: Omit<WeeklyTeamStanding, 'id'>[] = teams.flatMap(team => {
     const seed = parseInt(team.id.replace('team_', ''), 10);
     if (isNaN(seed)) return []; // guard against invalid team IDs
     const random = mulberry32(seed);
     const finalRank = currentStandings.find(s => s.teamId === team.id)?.rank || 10;
     
-    const weeklyRanks: WeeklyTeamStanding[] = [];
+    const weeklyRanks: Omit<WeeklyTeamStanding, 'id'>[] = [];
     
     let lastRank = finalRank;
     for (let i = 0; i < TOTAL_CHART_WEEKS; i++) {
@@ -565,7 +572,7 @@ const generateRecentResults = (teamId: string, standing: CurrentStanding | undef
 };
 
 
-export const teamRecentResults: TeamRecentResult[] = teams.map((team, index) => {
+export const teamRecentResults: Omit<TeamRecentResult, 'id'>[] = teams.map((team, index) => {
     const standing = currentStandings.find(s => s.teamId === team.id);
     return {
         teamId: team.id,
