@@ -87,7 +87,7 @@ export default function ConsensusPage() {
                 <TableRow>
                   <TableHead className="sticky left-0 z-10 w-[50px] bg-card text-center">Pos</TableHead>
                   <TableHead className="sticky left-[50px] z-10 w-[48px] bg-card"></TableHead>
-                  <TableHead className="sticky left-[98px] z-10 w-[200px] bg-card">Team</TableHead>
+                  <TableHead className="sticky left-[98px] z-10 w-[240px] bg-card">Team</TableHead>
                   {positions.map((pos) => (
                     <TableHead key={pos} className="w-[60px] text-center">{pos}</TableHead>
                   ))}
@@ -126,7 +126,7 @@ export default function ConsensusPage() {
                             </div>
                         </div>
                       </TableCell>
-                      <TableCell className={cn("sticky left-[98px] z-10")} style={{ backgroundColor: teamData.bgColourFaint }}>
+                      <TableCell className={cn("sticky left-[98px] z-10 whitespace-nowrap")} style={{ backgroundColor: teamData.bgColourFaint }}>
                         <span className="font-medium">{teamData.name}</span>
                       </TableCell>
                       {predictionCounts.map((count, posIndex) => (
