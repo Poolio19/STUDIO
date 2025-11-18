@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -27,8 +28,8 @@ import { WeeklyTeamStanding, Team } from '@/lib/data';
 import * as React from 'react';
 
 type TransformedChartData = {
-  week: number;
-  [teamName: string]: number;
+  week: string;
+  [teamName: string]: number | string;
 }
 
 interface TeamStandingsChartProps {
@@ -85,7 +86,7 @@ export function TeamStandingsChart({
     color: chartConfig[team.name]?.color as string,
   }));
   
-  const allWeeks = [...new Set(chartData.map(d => d.week))].sort((a, b) => a - b);
+  const allWeeks = [...new Set(chartData.map(d => d.week))];
 
   return (
     <Card>
@@ -111,10 +112,8 @@ export function TeamStandingsChart({
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis
                   dataKey="week"
-                  type="number"
-                  domain={['dataMin', 'dataMax']}
+                  type="category"
                   ticks={allWeeks}
-                  tickFormatter={val => `Wk ${val}`}
                   tickLine={false}
                   axisLine={false}
                   tickMargin={8}

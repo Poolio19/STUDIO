@@ -57,19 +57,19 @@ export default function StandingsPage() {
     }, []);
 
     const chartData = useMemo(() => {
-        const dataByWeek: { [week: number]: { week: number; [teamName: string]: number } } = {};
+        const dataByWeek: { [week: number]: { week: string; [teamName: string]: number | string } } = {};
 
         weeklyTeamStandings.forEach(standing => {
             const team = teams.find(t => t.id === standing.teamId);
             if (!team) return;
 
             if (!dataByWeek[standing.week]) {
-                dataByWeek[standing.week] = { week: standing.week };
+                dataByWeek[standing.week] = { week: `Wk ${standing.week}` };
             }
             dataByWeek[standing.week][team.name] = standing.rank;
         });
 
-        return Object.values(dataByWeek).sort((a, b) => a.week - b.week);
+        return Object.values(dataByWeek).sort((a, b) => parseInt(a.week.substring(3)) - parseInt(b.week.substring(3)));
     }, []);
 
 
