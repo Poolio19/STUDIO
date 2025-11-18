@@ -8,6 +8,16 @@ service cloud.firestore {
       allow write: if true; // Allow writes for seeding
     }
 
+    match /teams/{teamId} {
+      allow read: if true;
+      allow write: if true; // Allow writes for seeding
+    }
+
+    match /standings/{teamId} {
+      allow read: if true;
+      allow write: if true; // Allow writes for seeding
+    }
+
     match /events/{eventId} {
       allow read: if true;
       allow write: if false; 

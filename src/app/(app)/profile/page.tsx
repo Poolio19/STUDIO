@@ -41,7 +41,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { teams, userHistories, users as allUsers, monthlyMimoM, playerTeamScores } from '@/lib/data';
+import { teams, userHistories, users as allUsers, monthlyMimoM, playerTeamScores, currentStandings } from '@/lib/data';
 import { ProfilePerformanceChart } from '@/components/charts/profile-performance-chart';
 import React from 'react';
 import { Label } from '@/components/ui/label';
@@ -170,29 +170,37 @@ export default function ProfilePage() {
 
     try {
       const batch = writeBatch(firestore);
+      
+      // Seed Users
       const usersCollectionRef = collection(firestore, 'users');
-
       allUsers.forEach(user => {
-        // Find the total score for the user
         const totalScore = playerTeamScores
           .filter(s => s.userId === user.id)
           .reduce((acc, s) => acc + s.score, 0);
-
-        // Create a new user profile object with the calculated score
-        const userProfile = {
-          ...user,
-          score: totalScore, // Add the calculated total score
-        };
-
+        const userProfile = { ...user, score: totalScore };
         const userDocRef = doc(usersCollectionRef, user.id);
         batch.set(userDocRef, userProfile);
+      });
+
+      // Seed Teams
+      const teamsCollectionRef = collection(firestore, 'teams');
+      teams.forEach(team => {
+        const teamDocRef = doc(teamsCollectionRef, team.id);
+        batch.set(teamDocRef, team);
+      });
+
+      // Seed Standings
+      const standingsCollectionRef = collection(firestore, 'standings');
+      currentStandings.forEach(standing => {
+        const standingDocRef = doc(standingsCollectionRef, standing.teamId);
+        batch.set(standingDocRef, standing);
       });
 
       await batch.commit();
 
       toast({
         title: "Database Seeded!",
-        description: `${allUsers.length} users have been added to Firestore.`,
+        description: `${allUsers.length} users, ${teams.length} teams, and ${currentStandings.length} standings have been added to Firestore.`,
       });
     } catch (error) {
       console.error("Error seeding database:", error);
@@ -479,7 +487,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
-
-    
