@@ -51,7 +51,7 @@ export default function MostImprovedPage() {
   const currentMonthName = 'September';
   const currentYear = 2025;
 
-  const ladderWithRanks = useMemo(() => {
+  const ladderData = useMemo(() => {
     const regularPlayersSorted = users
       .filter(u => !u.isPro && u.rankChange > 0)
       .sort((a, b) => b.rankChange - a.rankChange || a.rank - b.rank);
@@ -67,7 +67,7 @@ export default function MostImprovedPage() {
     });
     
     const firstPlaceRankChange = rankedUsers[0]?.rankChange;
-    const secondPlaceRankChange = rankedUsers.find(u => u.rankChange < firstPlaceRankChange)?.rankChange;
+    const secondPlaceRankChange = rankedUsers.find(u => u.rankChange < firstPlaceRankChange!)?.rankChange;
 
     return { ladderWithRanks: rankedUsers, firstPlaceRankChange, secondPlaceRankChange };
   }, [users]);
@@ -106,7 +106,7 @@ export default function MostImprovedPage() {
         let currentRunnersUp: User[] | null = null;
         
         if (isCurrentMonth && (!awards || awards.winners.length === 0)) {
-            const { ladderWithRanks, firstPlaceRankChange, secondPlaceRankChange } = ladderWithRanks;
+            const { ladderWithRanks, firstPlaceRankChange, secondPlaceRankChange } = ladderData;
             if(firstPlaceRankChange) {
                 currentLeaders = ladderWithRanks.filter(u => u.rankChange === firstPlaceRankChange);
             }
@@ -141,11 +141,11 @@ export default function MostImprovedPage() {
       
       return 0;
     });
-  }, [users, currentMonthName, currentYear, ladderWithRanks]);
+  }, [users, currentMonthName, currentYear, ladderData]);
 
-  const getLadderRankColor = (user: (typeof ladderWithRanks.ladderWithRanks)[0]) => {
-    if (user.rankChange > 0 && user.rankChange === ladderWithRanks.firstPlaceRankChange) return 'bg-yellow-400/20';
-    if (user.rankChange > 0 && user.rankChange === ladderWithRanks.secondPlaceRankChange) return 'bg-slate-400/20';
+  const getLadderRankColor = (user: (typeof ladderData.ladderWithRanks)[0]) => {
+    if (user.rankChange > 0 && user.rankChange === ladderData.firstPlaceRankChange) return 'bg-yellow-400/20';
+    if (user.rankChange > 0 && user.rankChange === ladderData.secondPlaceRankChange) return 'bg-slate-400/20';
     return '';
   };
 
@@ -175,7 +175,7 @@ export default function MostImprovedPage() {
                         </TableRow>
                         </TableHeader>
                         <TableBody>
-                        {ladderWithRanks.ladderWithRanks.map((user) => {
+                        {ladderData.ladderWithRanks.map((user) => {
                             const RankIcon = Icons[getRankChangeIcon(user.rankChange) as IconName];
                             const rankColor = getLadderRankColor(user);
                             return (
