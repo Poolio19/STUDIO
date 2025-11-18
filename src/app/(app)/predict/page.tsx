@@ -157,17 +157,17 @@ export default function PredictPage() {
                             const isLiverpool = team.id === 'team_12';
                             return (
                               <TableRow key={team.id} className={cn("h-[53px] border-b-white/20", team.bgColour, team.textColour)}>
-                                <TableCell className={cn("font-medium w-[50px] opacity-80", !team.bgColour && "bg-transparent", team.bgColour, team.textColour)}>{team.rank}</TableCell>
-                                <TableCell className={cn(!team.bgColour && "bg-transparent", team.bgColour, team.textColour)}>
+                                <TableCell className={cn("font-medium w-[50px] opacity-80")}>{team.rank}</TableCell>
+                                <TableCell>
                                   <div className="flex items-center gap-2">
                                     <TeamIcon className={cn("size-5", team.colour, isLiverpool && "scale-x-[-1]")} />
                                     <span className="truncate">{team.name}</span>
                                   </div>
                                 </TableCell>
-                                <TableCell className={cn("text-right font-semibold w-16", !team.bgColour && "bg-transparent", team.bgColour, team.textColour)}>
+                                <TableCell className={cn("text-right font-semibold w-16")}>
                                   {team.points}
                                 </TableCell>
-                                <TableCell className={cn("text-right w-16", !team.bgColour && "bg-transparent", team.bgColour, team.textColour)}>
+                                <TableCell className={cn("text-right w-16")}>
                                   {team.goalDifference > 0 ? '+' : ''}{team.goalDifference}
                                 </TableCell>
                               </TableRow>

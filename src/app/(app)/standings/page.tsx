@@ -80,7 +80,7 @@ export default function StandingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Premier League Table 2025-2026</CardTitle>
+          <CardTitle className="bg-black text-yellow-400 p-2 rounded-md">Premier League Table 2025-2026</CardTitle>
           <CardDescription>Live standings updated weekly.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -106,21 +106,21 @@ export default function StandingsPage() {
                 const isLiverpool = team.id === 'team_12';
                 return (
                   <TableRow key={team.id} className={cn("border-b-white/20", team.bgColour, team.textColour)}>
-                    <TableCell className={cn("font-medium", !team.bgColour && "bg-transparent", team.bgColour, team.textColour)}>{team.rank}</TableCell>
-                    <TableCell className={cn(!team.bgColour && "bg-transparent", team.bgColour, team.textColour)}>
+                    <TableCell className={cn("font-medium")}>{team.rank}</TableCell>
+                    <TableCell>
                       <div className="flex items-center gap-3">
                         <TeamIcon className={cn("size-5", team.colour, isLiverpool && "scale-x-[-1]")} />
                         <span className="font-medium">{team.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell className={cn("text-center", !team.bgColour && "bg-transparent", team.bgColour, team.textColour)}>{team.gamesPlayed}</TableCell>
-                    <TableCell className={cn("text-center", !team.bgColour && "bg-transparent", team.bgColour, team.textColour)}>{team.wins}</TableCell>
-                    <TableCell className={cn("text-center", !team.bgColour && "bg-transparent", team.bgColour, team.textColour)}>{team.draws}</TableCell>
-                    <TableCell className={cn("text-center", !team.bgColour && "bg-transparent", team.bgColour, team.textColour)}>{team.losses}</TableCell>
-                    <TableCell className={cn("text-center", !team.bgColour && "bg-transparent", team.bgColour, team.textColour)}>{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
-                    <TableCell className={cn("text-center", !team.bgColour && "bg-transparent", team.bgColour, team.textColour)}>{team.goalsFor}</TableCell>
-                    <TableCell className={cn("text-center", !team.bgColour && "bg-transparent", team.bgColour, team.textColour)}>{team.goalsAgainst}</TableCell>
-                    <TableCell className={cn("text-right font-bold", !team.bgColour && "bg-transparent", team.bgColour, team.textColour)}>{team.points}</TableCell>
+                    <TableCell className={cn("text-center")}>{team.gamesPlayed}</TableCell>
+                    <TableCell className={cn("text-center")}>{team.wins}</TableCell>
+                    <TableCell className={cn("text-center")}>{team.draws}</TableCell>
+                    <TableCell className={cn("text-center")}>{team.losses}</TableCell>
+                    <TableCell className={cn("text-center")}>{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
+                    <TableCell className={cn("text-center")}>{team.goalsFor}</TableCell>
+                    <TableCell className={cn("text-center")}>{team.goalsAgainst}</TableCell>
+                    <TableCell className={cn("text-right font-bold")}>{team.points}</TableCell>
                   </TableRow>
                 );
               })}

@@ -103,8 +103,8 @@ export default function ConsensusPage() {
                   const isLiverpool = teamId === 'team_12';
                   return (
                     <TableRow key={teamId} className={cn('border-b-white/20', teamData.bgColour, teamData.textColour)}>
-                      <TableCell className={cn("sticky left-0 z-10 text-center font-medium", teamData.bgColour, teamData.textColour)}>{index + 1}</TableCell>
-                      <TableCell className={cn("sticky left-[50px] z-10", teamData.bgColour, teamData.textColour)}>
+                      <TableCell className={cn("sticky left-0 z-10 text-center font-medium")}>{index + 1}</TableCell>
+                      <TableCell className={cn("sticky left-[50px] z-10")}>
                         <div className="flex items-center gap-3">
                           <TeamIcon className={cn("size-5", teamData.colour, isLiverpool && "scale-x-[-1]")} />
                           <span className="font-medium">{teamData.name}</span>
