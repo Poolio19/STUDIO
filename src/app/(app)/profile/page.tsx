@@ -53,7 +53,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, doc, setDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, Firestore } from 'firebase/firestore';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -83,6 +83,74 @@ const defaultValues: Partial<ProfileFormValues> = {
   dob: new Date('1990-05-20'),
   favouriteTeam: 'team_1',
 };
+
+
+const seedDatabase = (firestore: Firestore | null, toast: (options: any) => void) => {
+    if (!firestore) {
+      toast({
+        variant: 'destructive',
+        title: 'Firestore not available',
+        description: 'Unable to connect to the database.',
+      });
+      return;
+    }
+
+    let hasError = false;
+    const handleError = (permissionError: FirestorePermissionError) => {
+      if (hasError) return;
+      hasError = true;
+      errorEmitter.emit('permission-error', permissionError);
+    };
+
+    // Seed Users
+    const usersCollectionRef = collection(firestore, 'users');
+    allUsers.forEach(user => {
+      const userDocRef = doc(usersCollectionRef, user.id);
+      setDoc(userDocRef, user).catch(serverError => {
+        handleError(new FirestorePermissionError({
+          path: userDocRef.path,
+          operation: 'write',
+          requestResourceData: user
+        }));
+      });
+    });
+
+    // Seed Teams
+    const teamsCollectionRef = collection(firestore, 'teams');
+    teams.forEach(team => {
+      const teamDocRef = doc(teamsCollectionRef, team.id);
+      setDoc(teamDocRef, team).catch(serverError => {
+        handleError(new FirestorePermissionError({
+          path: teamDocRef.path,
+          operation: 'write',
+          requestResourceData: team
+        }));
+      });
+    });
+
+    // Seed Standings
+    const standingsCollectionRef = collection(firestore, 'standings');
+    currentStandings.forEach(standing => {
+      const standingDocRef = doc(standingsCollectionRef, standing.teamId);
+      setDoc(standingDocRef, standing).catch(serverError => {
+        handleError(new FirestorePermissionError({
+          path: standingDocRef.path,
+          operation: 'write',
+          requestResourceData: standing
+        }));
+      });
+    });
+    
+    setTimeout(() => {
+        if (!hasError) {
+             toast({
+                title: 'Database Seeding Initiated!',
+                description: `Started adding ${allUsers.length} users, ${teams.length} teams, and ${currentStandings.length} standings.`,
+            });
+        }
+    }, 2000); // Give time for errors to potentially be caught
+};
+
 
 export default function ProfilePage() {
   const { toast } = useToast();
@@ -155,65 +223,6 @@ export default function ProfilePage() {
         description: 'Your new avatar has been set.',
       });
     }
-  };
-
-  const seedDatabase = () => {
-    if (!firestore) {
-      toast({
-        variant: 'destructive',
-        title: 'Firestore not available',
-        description: 'Unable to connect to the database.',
-      });
-      return;
-    }
-
-    let hasError = false;
-    const handleError = (error: any, path: string, data: any) => {
-      if (hasError) return;
-      hasError = true;
-      const permissionError = new FirestorePermissionError({
-        path: path,
-        operation: 'write',
-        requestResourceData: data,
-      });
-      errorEmitter.emit('permission-error', permissionError);
-    };
-
-    // Seed Users
-    const usersCollectionRef = collection(firestore, 'users');
-    for (const user of allUsers) {
-      const userDocRef = doc(usersCollectionRef, user.id);
-      setDoc(userDocRef, user).catch(error =>
-        handleError(error, userDocRef.path, user)
-      );
-    }
-
-    // Seed Teams
-    const teamsCollectionRef = collection(firestore, 'teams');
-    for (const team of teams) {
-      const teamDocRef = doc(teamsCollectionRef, team.id);
-      setDoc(teamDocRef, team).catch(error =>
-        handleError(error, teamDocRef.path, team)
-      );
-    }
-
-    // Seed Standings
-    const standingsCollectionRef = collection(firestore, 'standings');
-    for (const standing of currentStandings) {
-      const standingDocRef = doc(standingsCollectionRef, standing.teamId);
-      setDoc(standingDocRef, standing).catch(error =>
-        handleError(error, standingDocRef.path, standing)
-      );
-    }
-    
-    setTimeout(() => {
-        if (!hasError) {
-             toast({
-                title: 'Database Seeding Initiated!',
-                description: `Started adding ${allUsers.length} users, ${teams.length} teams, and ${currentStandings.length} standings.`,
-            });
-        }
-    }, 1000);
   };
 
 
@@ -320,7 +329,7 @@ export default function ProfilePage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Button onClick={seedDatabase}>
+                    <Button onClick={() => seedDatabase(firestore, toast)}>
                         <Database className="mr-2 h-4 w-4" />
                         Seed Database
                     </Button>
