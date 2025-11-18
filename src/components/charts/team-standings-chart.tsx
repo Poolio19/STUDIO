@@ -24,68 +24,23 @@ import {
   ChartTooltipContent,
   ChartConfig,
 } from '@/components/ui/chart';
-import { WeeklyTeamStanding, Team } from '@/lib/data';
+import { Team } from '@/lib/data';
 import * as React from 'react';
 
 type TransformedChartData = {
   week: string;
   [teamName: string]: number | string;
-}
+};
 
 interface TeamStandingsChartProps {
   chartData: TransformedChartData[];
   sortedTeams: (Team & { rank: number })[];
 }
 
-const CustomLegend = ({
-  payload,
-}: {
-  payload: (Team & { rank: number; color: string })[];
-}) => {
-  return (
-    <ul
-      className="absolute flex flex-col justify-between text-xs"
-      style={{
-        right: 0,
-        top: '12.5px',
-        bottom: '42.5px',
-        width: '120px',
-        paddingLeft: '1rem',
-      }}
-    >
-      {payload.map((entry: any, index: number) => (
-        <li key={`item-${index}`} className="flex items-center space-x-2">
-          <span
-            className="size-2 rounded-full"
-            style={{ backgroundColor: entry.color }}
-          ></span>
-          <span>{entry.name}</span>
-        </li>
-      ))}
-    </ul>
-  );
-};
-
 export function TeamStandingsChart({
   chartData,
   sortedTeams,
 }: TeamStandingsChartProps) {
-  const chartConfig = React.useMemo(() => {
-    const config: ChartConfig = {};
-    sortedTeams.forEach(team => {
-      config[team.name] = {
-        label: team.name,
-        color: `hsl(var(--chart-color-${team.rank}))`,
-      };
-    });
-    return config;
-  }, [sortedTeams]);
-
-  const legendPayload = sortedTeams.map(team => ({
-    ...team,
-    color: chartConfig[team.name]?.color as string,
-  }));
-  
   const allWeeks = [...new Set(chartData.map(d => d.week))];
 
   return (
@@ -98,8 +53,8 @@ export function TeamStandingsChart({
       </CardHeader>
       <CardContent>
         <div className="relative">
-          <ChartContainer config={chartConfig} className="h-[700px] w-full">
-             <ResponsiveContainer>
+          <ChartContainer config={{}} className="h-[700px] w-full">
+            <ResponsiveContainer>
               <LineChart
                 data={chartData}
                 margin={{
@@ -131,13 +86,16 @@ export function TeamStandingsChart({
                   content={
                     <ChartTooltipContent
                       indicator="dot"
-                       formatter={(value, name) => {
-                         return (
+                      formatter={(value, name, props) => {
+                        const team = sortedTeams.find(t => t.name === name);
+                        if (!team) return null;
+                        const color = `hsl(var(--chart-color-${team.rank}))`;
+                        return (
                           <div className="flex items-center gap-2">
                             <div
                               className="size-2.5 rounded-sm"
                               style={{
-                                backgroundColor: chartConfig[name as string]?.color,
+                                backgroundColor: color,
                               }}
                             />
                             <span className="font-medium">{name}:</span>
@@ -145,28 +103,49 @@ export function TeamStandingsChart({
                               Rank {value}
                             </span>
                           </div>
-                        )
+                        );
                       }}
                     />
                   }
                 />
-                {sortedTeams.map(team => {
-                  return (
-                    <Line
-                      key={team.id}
-                      dataKey={team.name}
-                      type="monotone"
-                      stroke={chartConfig[team.name]?.color}
-                      strokeWidth={3}
-                      dot={false}
-                      name={team.name}
-                    />
-                  );
-                })}
+                {sortedTeams.map(team => (
+                  <Line
+                    key={team.id}
+                    dataKey={team.name}
+                    type="monotone"
+                    stroke={`hsl(var(--chart-color-${team.rank}))`}
+                    strokeWidth={3}
+                    dot={false}
+                    name={team.name}
+                  />
+                ))}
               </LineChart>
             </ResponsiveContainer>
           </ChartContainer>
-          <CustomLegend payload={legendPayload} />
+          {/* Custom Legend */}
+          <ul
+            className="absolute flex flex-col justify-between text-xs"
+            style={{
+              right: 0,
+              top: '12.5px',
+              bottom: '42.5px',
+              width: '120px',
+              paddingLeft: '1rem',
+            }}
+          >
+            {sortedTeams.map(team => (
+              <li
+                key={team.id}
+                className="flex items-center space-x-2"
+              >
+                <span
+                  className="size-2 rounded-full"
+                  style={{ backgroundColor: `hsl(var(--chart-color-${team.rank}))` }}
+                ></span>
+                <span>{team.name}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </CardContent>
     </Card>
