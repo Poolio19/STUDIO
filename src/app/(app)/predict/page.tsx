@@ -109,7 +109,7 @@ export default function PredictPage() {
              <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-stretch">
               <div className="lg:col-span-3 flex flex-col">
                  <div className="font-medium pb-2 text-muted-foreground">Your Prediction (2025-2026)</div>
-                <div className="border rounded-md overflow-hidden">
+                <div className="rounded-md overflow-hidden">
                   <Reorder.Group
                     axis="y"
                     values={items}
@@ -125,7 +125,8 @@ export default function PredictPage() {
                           key={item.teamId}
                           value={item}
                           className={cn(
-                            "flex items-center h-[53px] cursor-grab active:cursor-grabbing border-b-4 border-transparent rounded-md"
+                            "flex items-center h-[53px] cursor-grab active:cursor-grabbing rounded-md mb-1",
+                            "border-b-4 border-transparent"
                           )}
                            style={{
                             backgroundColor: item.bgColourFaint,
@@ -163,7 +164,7 @@ export default function PredictPage() {
                     <span className="w-16 text-right">GD</span>
                   </div>
                  </div>
-                    <div className="flex-1 border rounded-md overflow-hidden">
+                    <div className="flex-1 rounded-md overflow-hidden">
                       <Table className="h-full border-separate border-spacing-y-1">
                         <TableBody>
                           {standingsWithTeamData.map(team => {
