@@ -53,12 +53,12 @@ export default function StatsPage() {
                     <TableHeader>
                         <TableRow className="h-40">
                             <TableHead className="sticky left-0 z-10 bg-card whitespace-nowrap w-[250px]">Player</TableHead>
-                             <TableHead className="text-center p-0 w-[40px]">
+                             <TableHead className="text-center p-0 w-[40px] border-l border-dashed border-border">
                                 <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-bold h-[140px] flex items-center justify-center">TOTAL</div>
                             </TableHead>
                             {sortedTeams.map((team) => {
                                 return (
-                                <TableHead key={team.id} className="text-center p-0 w-[40px]">
+                                <TableHead key={team.id} className="text-center p-0 w-[40px] border-l border-dashed border-border">
                                      <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium h-[140px] flex items-center justify-center">{team.name}</div>
                                 </TableHead>
                             )})}
@@ -78,7 +78,7 @@ export default function StatsPage() {
                                         </div>
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-center font-bold text-lg">
+                                <TableCell className="text-center font-bold text-lg border-l border-dashed border-border">
                                     {user.score}
                                 </TableCell>
                                 {sortedTeams.map((team) => {
@@ -86,7 +86,7 @@ export default function StatsPage() {
                                         (s) => s.userId === user.id && s.teamId === team.id
                                     )?.score ?? 0;
                                     return (
-                                        <TableCell key={`${user.id}-${team.id}`} className={cn("text-center font-medium p-0", getScoreColour(score))}>
+                                        <TableCell key={`${user.id}-${team.id}`} className={cn("text-center font-medium p-0 border-l border-dashed border-border", getScoreColour(score))}>
                                             {score}
                                         </TableCell>
                                     );
