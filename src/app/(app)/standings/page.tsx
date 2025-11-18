@@ -78,9 +78,8 @@ export default function StandingsPage() {
       <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData} />
 
       <Card>
-        <CardHeader>
-          <CardTitle className="bg-black text-yellow-400 p-2 rounded-md">Premier League Table 2025-2026</CardTitle>
-          <CardDescription>Live standings updated weekly.</CardDescription>
+        <CardHeader className="items-center">
+          <CardTitle className="bg-black text-yellow-400 p-2 rounded-md">Team Standings 2025-2026</CardTitle>
         </CardHeader>
         <CardContent>
           <Table className="border-separate border-spacing-y-1">
