@@ -143,7 +143,7 @@ export function TeamStandingsChart({
                     type="monotone"
                     stroke={chartConfig[team.name]?.secondaryColour}
                     strokeWidth={2}
-                    strokeDasharray="3 4"
+                    strokeDasharray="9 12"
                     dot={false}
                     name={team.name}
                   />
