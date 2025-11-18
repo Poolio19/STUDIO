@@ -19,32 +19,6 @@ import {
 import { User } from '@/lib/data';
 import * as React from 'react';
 
-const CustomLegend = ({ sortedUsers, chartConfig }: any) => {
-  return (
-    <div className="h-full flex flex-col justify-between">
-      <div>
-        <p className="text-xs font-medium mb-2">Player, Rank</p>
-        <ul className="flex flex-col space-y-1 text-xs">
-          {sortedUsers.map((user: User) => {
-            const userConfig = chartConfig[user.name];
-            if (!userConfig) return null;
-            return (
-              <li key={user.id} className="flex items-center space-x-2">
-                <span
-                  className="inline-block h-2 w-2 rounded-sm"
-                  style={{ backgroundColor: userConfig.colour }}
-                ></span>
-                <span>{`${user.name}, ${user.rank}`}</span>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    </div>
-  );
-};
-
-
 export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers }: PlayerRankChartProps) {
   const chartConfig = React.useMemo(() => {
     return sortedUsers.reduce((config, user, index) => {
@@ -116,7 +90,7 @@ export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers }: PlayerR
         </ResponsiveContainer>
       </ChartContainer>
        <div
-        className="absolute"
+        className="absolute flex flex-col"
         style={{
           right: 0,
           top: '10px',
@@ -125,7 +99,22 @@ export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers }: PlayerR
           paddingLeft: '1rem',
         }}
       >
-        <CustomLegend sortedUsers={sortedUsers} chartConfig={chartConfig} />
+        <p className="text-xs font-medium mb-2">Player, Rank</p>
+        <ul className="flex flex-col justify-between flex-1 text-xs">
+          {sortedUsers.map((user: User) => {
+            const userConfig = chartConfig[user.name];
+            if (!userConfig) return null;
+            return (
+              <li key={user.id} className="flex items-center space-x-2">
+                <span
+                  className="inline-block h-2 w-2 rounded-sm"
+                  style={{ backgroundColor: userConfig.colour }}
+                ></span>
+                <span>{`${user.name}, ${user.rank}`}</span>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </div>
   );
