@@ -19,6 +19,13 @@ import {
 import { User } from '@/lib/data';
 import * as React from 'react';
 
+interface PlayerPerformanceChartProps {
+    chartData: any[];
+    yAxisDomain: [number, number];
+    sortedUsers: User[];
+}
+
+
 export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers }: PlayerPerformanceChartProps) {
   
   const chartConfig = React.useMemo(() => {
@@ -92,10 +99,11 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers }: 
         className="absolute flex flex-col justify-between text-xs"
         style={{
           right: 0,
-          top: '0px',
-          bottom: '-20px',
+          top: '-10px',
+          bottom: '10px',
           width: '130px',
           paddingLeft: '1rem',
+          border: '1px solid red',
         }}
       >
         <p className="text-xs font-medium mb-2">Player, Score</p>
