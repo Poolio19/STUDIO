@@ -159,7 +159,7 @@ export default function ConsensusPage() {
                             key={`${teamId}-${posIndex}`}
                             className={cn(
                               'text-center font-medium p-0',
-                              posIndex === predictionCounts.length - 1 && 'rounded-r-md'
+                              posIndex === predictionCounts.length - 1 && 'rounded-r-md p-0'
                             )}
                             style={cellStyle}
                           >
