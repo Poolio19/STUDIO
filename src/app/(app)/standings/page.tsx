@@ -26,17 +26,19 @@ export default function StandingsPage() {
         const initialData = currentStandings
             .map(standing => {
                 const team = teams.find(t => t.id === standing.teamId);
-                return team ? { ...standing, ...team } : null;
+                return team ? { 
+                    ...standing, 
+                    ...team,
+                    // The user's brilliant sorting trick!
+                    sortValue: standing.points + (standing.goalDifference / 100) + (standing.goalsFor / 1000)
+                } : null;
             })
             .filter(Boolean);
 
-        // Correctly sort the teams
+        // Sort based on the new composite sortValue
         const sortedData = initialData.sort((a, b) => {
             if (!a || !b) return 0;
-            if (a.points !== b.points) return b.points - a.points;
-            if (a.goalDifference !== b.goalDifference) return b.goalDifference - a.goalDifference;
-            if (a.goalsFor !== b.goalsFor) return b.goalsFor - a.goalsFor;
-            return a.name.localeCompare(b.name);
+            return b.sortValue - a.sortValue;
         });
         
         // Correctly assign ranks, handling ties
