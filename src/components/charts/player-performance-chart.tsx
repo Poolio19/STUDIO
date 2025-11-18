@@ -96,17 +96,18 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers }: 
         </ResponsiveContainer>
       </ChartContainer>
       <ul
-        className="absolute flex flex-col justify-between"
+        className="absolute flex flex-col justify-between text-xs"
         style={{
           right: 0,
           top: '-25px',
           bottom: '40px',
           width: '130px',
           paddingLeft: '1rem',
-          fontSize: '9px',
+          transform: 'scale(0.9)',
+          transformOrigin: 'top right',
         }}
       >
-        <p className="text-xs font-medium mb-2">Player, Score</p>
+        <p className="font-medium mb-2">Player, Score</p>
           {sortedUsers.map((user: User) => {
             const userConfig = chartConfig[user.name];
             if (!userConfig) return null;
