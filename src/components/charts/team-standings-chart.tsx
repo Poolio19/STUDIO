@@ -87,7 +87,7 @@ export function TeamStandingsChart({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Weekly Standings Tracker</CardTitle>
+        <CardTitle>Team Movement 2025-2026</CardTitle>
         <CardDescription>Team positions over the last {chartData.length} weeks.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -112,7 +112,6 @@ export function TeamStandingsChart({
                   tickLine={false}
                   axisLine={false}
                   tickMargin={8}
-                  orientation="top"
                 />
                 <YAxis
                   tickLine={false}

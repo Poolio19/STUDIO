@@ -72,8 +72,9 @@ export default function StandingsPage() {
 
   return (
     <div className="space-y-8">
-      <header className="bg-slate-900 text-slate-50 p-4 rounded-lg text-center">
-        <h1 className="text-3xl font-bold tracking-tight">Team Movement 2025-2026</h1>
+       <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
+          <h1 className="text-3xl font-bold tracking-tight">Premier League Standings</h1>
+          <p className="text-slate-400">Live standings updated weekly based on the latest results.</p>
       </header>
 
       <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData} />
