@@ -21,7 +21,7 @@ import * as React from 'react';
 
 const CustomLegend = ({ sortedUsers, chartConfig }: any) => {
   return (
-    <div className="flex flex-col justify-between">
+    <div className="h-full flex flex-col justify-between">
       <div>
         <p className="text-xs font-medium mb-2">Player, Rank</p>
         <ul className="flex flex-col space-y-1 text-xs">
