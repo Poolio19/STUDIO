@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -16,7 +15,7 @@ import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
-import { User, Team, PlayerTeamScore, Prediction } from '@/lib/data';
+import { User, Team, PlayerTeamScore } from '@/lib/data';
 
 const getAvatarUrl = (avatarId: string) => {
   return PlaceHolderImages.find((img) => img.id === avatarId)?.imageUrl || '';
@@ -26,7 +25,6 @@ export default function StatsPage() {
   const firestore = useFirestore();
   const usersCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
   const teamsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
-  const predictionsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'predictions') : null, [firestore]);
   const playerTeamScoresCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'playerTeamScores') : null, [firestore]);
 
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersCollectionRef);
