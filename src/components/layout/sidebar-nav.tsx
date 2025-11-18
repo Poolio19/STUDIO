@@ -23,7 +23,7 @@ const navItems = [
   { href: '/most-improved', icon: 'award', label: 'MiMoM' },
   { href: '/stats', icon: 'stats', label: 'PredStats' },
   { href: '/consensus', icon: 'consensus', label: 'Consensus' },
-  { href: '/performance', icon: 'performance', label: 'Player Performance' },
+  { href: '/performance', icon: 'performance', label: 'Player Score Graph' },
   { href: '/rankings', icon: 'rankings', label: 'Player Rankings' },
   { href: '/scoring', icon: 'scoring', label: 'Rules & Scoring' },
   { href: '/profile', icon: 'profile', label: 'Your Profile' },
