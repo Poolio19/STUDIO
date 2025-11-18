@@ -26,8 +26,13 @@ import {
 import { WeeklyTeamStanding, Team } from '@/lib/data';
 import * as React from 'react';
 
+type TransformedChartData = {
+  week: number;
+  [teamName: string]: number;
+}
+
 interface TeamStandingsChartProps {
-  chartData: WeeklyTeamStanding[];
+  chartData: TransformedChartData[];
   sortedTeams: (Team & { rank: number })[];
 }
 
@@ -95,6 +100,7 @@ export function TeamStandingsChart({
           <ChartContainer config={chartConfig} className="h-[700px] w-full">
              <ResponsiveContainer>
               <LineChart
+                data={chartData}
                 margin={{
                   top: 20,
                   right: 130,
@@ -126,18 +132,16 @@ export function TeamStandingsChart({
                   content={
                     <ChartTooltipContent
                       indicator="dot"
-                       formatter={(value, name, props) => {
-                         const teamFromPayload = sortedTeams.find(t => t.id === props.payload.teamId)
-                         const teamName = teamFromPayload?.name || 'Unknown';
+                       formatter={(value, name) => {
                          return (
                           <div className="flex items-center gap-2">
                             <div
                               className="size-2.5 rounded-sm"
                               style={{
-                                backgroundColor: chartConfig[teamName as string]?.color,
+                                backgroundColor: chartConfig[name as string]?.color,
                               }}
                             />
-                            <span className="font-medium">{teamName}:</span>
+                            <span className="font-medium">{name}:</span>
                             <span className="text-muted-foreground">
                               Rank {value}
                             </span>
@@ -148,13 +152,10 @@ export function TeamStandingsChart({
                   }
                 />
                 {sortedTeams.map(team => {
-                   const teamData = chartData
-                    .filter(d => d.teamId === team.id)
                   return (
                     <Line
                       key={team.id}
-                      data={teamData}
-                      dataKey="rank"
+                      dataKey={team.name}
                       type="monotone"
                       stroke={chartConfig[team.name]?.color}
                       strokeWidth={3}

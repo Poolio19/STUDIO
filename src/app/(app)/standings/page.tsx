@@ -38,20 +38,40 @@ export default function StandingsPage() {
 
         const sortedData = initialData.sort((a, b) => {
             if (!a || !b) return 0;
-            if (a.points !== b.points) {
-                return b.points - a.points;
-            }
-            if (a.goalDifference !== b.goalDifference) {
-                return b.goalDifference - a.goalDifference;
-            }
-            if (a.goalsFor !== b.goalsFor) {
-                return b.goalsFor - a.goalsFor;
-            }
+            if (a.points !== b.points) return b.points - a.points;
+            if (a.goalDifference !== b.goalDifference) return b.goalDifference - a.goalDifference;
+            if (a.goalsFor !== b.goalsFor) return b.goalsFor - a.goalsFor;
             return a.name.localeCompare(b.name);
         });
-
-        return sortedData.map((team, index) => ({ ...team!, rank: index + 1 }));
+        
+        let rank = 1;
+        return sortedData.map((team, index) => {
+            if (index > 0) {
+                const prevTeam = sortedData[index - 1]!;
+                if (team!.points !== prevTeam.points || team!.goalDifference !== prevTeam.goalDifference || team!.goalsFor !== prevTeam.goalsFor) {
+                    rank = index + 1;
+                }
+            }
+            return { ...team!, rank: rank };
+        });
     }, []);
+
+    const chartData = useMemo(() => {
+        const dataByWeek: { [week: number]: { week: number; [teamName: string]: number } } = {};
+
+        weeklyTeamStandings.forEach(standing => {
+            const team = teams.find(t => t.id === standing.teamId);
+            if (!team) return;
+
+            if (!dataByWeek[standing.week]) {
+                dataByWeek[standing.week] = { week: standing.week };
+            }
+            dataByWeek[standing.week][team.name] = standing.rank;
+        });
+
+        return Object.values(dataByWeek).sort((a, b) => a.week - b.week);
+    }, []);
+
 
   return (
     <div className="space-y-8">
@@ -60,7 +80,7 @@ export default function StandingsPage() {
         <p className="text-muted-foreground">The official Premier League table and weekly position tracker.</p>
       </header>
 
-      <TeamStandingsChart chartData={weeklyTeamStandings} sortedTeams={standingsWithTeamData} />
+      <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData} />
 
       <Card>
         <CardHeader>
