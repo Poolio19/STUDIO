@@ -157,7 +157,7 @@ export default function PredictPage() {
                                 <TableCell className={cn("font-medium w-[50px]", team.textColour ? `${team.textColour}/80` : '')}>{team.rank}</TableCell>
                                 <TableCell>
                                   <div className="flex items-center gap-2">
-                                    <TeamIcon className={cn("size-5", team.teamColour)} />
+                                    <TeamIcon className={cn("size-5", team.colour)} />
                                     <span className="truncate">{team.name}</span>
                                   </div>
                                 </TableCell>
