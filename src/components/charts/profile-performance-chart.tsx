@@ -1,7 +1,6 @@
 
 'use client';
 
-import { TrendingUp } from 'lucide-react';
 import {
   Line,
   LineChart,
@@ -17,7 +16,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -26,30 +24,36 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { UserChartData } from '@/lib/user-history';
+import * as React from 'react';
 
-interface UserHistoryChartProps {
-  chartData: UserChartData[];
+interface ProfilePerformanceChartProps {
+  chartData: any[];
+  yAxisDomain: [number, number];
 }
 
 const chartConfig = {
-  Score: {
-    label: 'Score',
-    colour: 'hsl(var(--chart-1))',
+  'Your Score': {
+    label: 'Your Score',
+    colour: 'hsl(var(--chart-color-1))',
   },
-  Rank: {
-    label: 'Rank',
-    colour: 'hsl(var(--chart-2))',
+  'Max Score': {
+    label: 'Max Score',
+    colour: 'hsl(var(--chart-color-2))',
+  },
+  'Min Score': {
+    label: 'Min Score',
+    colour: 'hsl(var(--chart-color-3))',
   },
 };
 
-export function UserHistoryChart({ chartData }: UserHistoryChartProps) {
+
+export function ProfilePerformanceChart({ chartData, yAxisDomain }: ProfilePerformanceChartProps) {
   return (
-    <Card>
+     <Card>
       <CardHeader>
         <CardTitle>Season Performance</CardTitle>
         <CardDescription>
-          Your weekly score and rank progress.
+          Your weekly score compared to the max and min scores in the league.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -70,22 +74,9 @@ export function UserHistoryChart({ chartData }: UserHistoryChartProps) {
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                tickFormatter={(value) => `Wk ${value}`}
               />
               <YAxis
-                yAxisId="left"
-                stroke="var(--colour-Score)"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                orientation="left"
-              />
-              <YAxis
-                yAxisId="right"
-                stroke="var(--colour-Rank)"
-                orientation="right"
-                reversed
-                domain={['dataMin', 'dataMax']}
+                domain={yAxisDomain}
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
@@ -96,37 +87,32 @@ export function UserHistoryChart({ chartData }: UserHistoryChartProps) {
               />
               <Legend />
               <Line
-                yAxisId="left"
-                dataKey="Score"
+                dataKey="Your Score"
                 type="monotone"
-                stroke="var(--colour-Score)"
+                stroke="var(--colour-Your Score)"
+                strokeWidth={3}
+                dot={true}
+              />
+               <Line
+                dataKey="Max Score"
+                type="monotone"
+                stroke="var(--colour-Max Score)"
                 strokeWidth={2}
+                strokeDasharray="3 4"
                 dot={false}
               />
-              <Line
-                yAxisId="right"
-                dataKey="Rank"
+               <Line
+                dataKey="Min Score"
                 type="monotone"
-                stroke="var(--colour-Rank)"
+                stroke="var(--colour-Min Score)"
                 strokeWidth={2}
+                strokeDasharray="3 4"
                 dot={false}
               />
             </LineChart>
           </ResponsiveContainer>
         </ChartContainer>
       </CardContent>
-      <CardFooter>
-        <div className="flex w-full items-start gap-2 text-sm">
-          <div className="grid gap-2">
-            <div className="flex items-center gap-2 font-medium leading-none">
-              Your performance has been trending up! <TrendingUp className="h-4 w-4" />
-            </div>
-            <div className="flex items-center gap-2 leading-none text-muted-foreground">
-              Showing your score and rank for the past 5 weeks.
-            </div>
-          </div>
-        </div>
-      </CardFooter>
     </Card>
   );
 }

@@ -28,7 +28,7 @@ interface PlayerPerformanceChartProps {
 const chartConfig = users.reduce((config, user, index) => {
   config[user.name] = {
     label: user.name,
-    color: `hsl(var(--chart-color-${index + 1}))`,
+    colour: `hsl(var(--chart-color-${index + 1}))`,
   };
   return config;
 }, {} as any);
@@ -68,7 +68,7 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain }: PlayerPerform
                     indicator="dot"
                     formatter={(value, name) => (
                        <div className="flex items-center gap-2">
-                        <div className="size-2.5 rounded-sm" style={{ backgroundColor: `var(--color-${name})` }}/>
+                        <div className="size-2.5 rounded-sm" style={{ backgroundColor: `var(--colour-${name})` }}/>
                         <span className="font-medium">{name}:</span>
                         <span className="text-muted-foreground">{value} pts</span>
                        </div>
@@ -82,7 +82,7 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain }: PlayerPerform
                 key={user.id}
                 dataKey={user.name}
                 type="monotone"
-                stroke={`var(--color-${user.name})`}
+                stroke={`var(--colour-${user.name})`}
                 strokeWidth={2}
                 dot={false}
                 />
@@ -92,3 +92,5 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain }: PlayerPerform
     </ChartContainer>
   );
 }
+
+    

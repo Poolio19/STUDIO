@@ -38,7 +38,7 @@ const getRankChangeIcon = (change: number) => {
   return Minus;
 };
 
-const getRankChangeColor = (change: number) => {
+const getRankChangeColour = (change: number) => {
     if (change > 0) return 'text-green-500';
     if (change < 0) return 'text-red-500';
     return 'text-gray-500';
@@ -58,7 +58,6 @@ export default function MostImprovedPage() {
   const currentYear = 2025;
 
   const ladderData = useMemo(() => {
-    // Rank change is previous - current. A positive number is an improvement.
     const regularPlayersSorted = users
       .filter(u => !u.isPro)
       .sort((a, b) => b.rankChange - a.rankChange || a.rank - b.rank);
@@ -74,7 +73,7 @@ export default function MostImprovedPage() {
     });
 
     const allRankChanges = [...new Set(rankedUsers.map(u => u.rankChange))].sort((a, b) => b - a);
-    const firstPlaceRankChange = allRankChanges[0];
+    const firstPlaceRankChange = allRankChanges.length > 0 ? allRankChanges[0] : undefined;
     const secondPlaceRankChange = allRankChanges.length > 1 ? allRankChanges[1] : undefined;
 
     return { ladderWithRanks: rankedUsers, firstPlaceRankChange, secondPlaceRankChange };
@@ -84,8 +83,6 @@ export default function MostImprovedPage() {
     const awardsByMonth: { [key: string]: { winners: any[], runnersUp: any[] } } = {};
     const monthOrder = ['August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
     const currentMonthIndex = monthOrder.indexOf(currentMonthName);
-
-    const proPlayerIds = new Set(users.filter(u => u.isPro).map(u => u.id));
 
     monthlyMimoM.forEach(m => {
       const key = m.special ? m.special : `${m.month}-${m.year}`;
@@ -118,7 +115,7 @@ export default function MostImprovedPage() {
             if(firstPlaceRankChange !== undefined) {
                 currentLeaders = ladderWithRanks.filter(u => u.rankChange === firstPlaceRankChange);
             }
-            if(secondPlaceRankChange !== undefined) {
+            if(secondPlaceRankChange !== undefined && secondPlaceRankChange !== firstPlaceRankChange) {
                 currentRunnersUp = ladderWithRanks.filter(u => u.rankChange === secondPlaceRankChange);
             }
         }
@@ -151,9 +148,9 @@ export default function MostImprovedPage() {
     });
   }, [users, currentMonthName, currentYear, ladderData]);
 
-  const getLadderRankColor = (user: (typeof ladderData.ladderWithRanks)[0]) => {
+  const getLadderRankColour = (user: (typeof ladderData.ladderWithRanks)[0]) => {
     if (ladderData.firstPlaceRankChange !== undefined && user.rankChange === ladderData.firstPlaceRankChange) return 'bg-yellow-400/20';
-    if (ladderData.secondPlaceRankChange !== undefined && user.rankChange === ladderData.secondPlaceRankChange) return 'bg-slate-400/20';
+    if (ladderData.secondPlaceRankChange !== undefined && user.rankChange === ladderData.secondPlaceRankChange && ladderData.secondPlaceRankChange !== ladderData.firstPlaceRankChange) return 'bg-slate-400/20';
     return '';
   };
 
@@ -185,11 +182,11 @@ export default function MostImprovedPage() {
                         <TableBody>
                         {ladderData.ladderWithRanks.map((user) => {
                             const RankIcon = getRankChangeIcon(user.rankChange);
-                            const rankColor = getLadderRankColor(user);
+                            const rankColour = getLadderRankColour(user);
                             return (
                                 <TableRow key={user.id} className="border-b-4 border-transparent">
-                                    <TableCell className={cn("p-2 font-medium text-center", rankColor, rankColor && 'rounded-l-md')}>{user.displayRank}</TableCell>
-                                    <TableCell className={cn("p-2", rankColor)}>
+                                    <TableCell className={cn("p-2 font-medium text-center", rankColour, rankColour && 'rounded-l-md')}>{user.displayRank}</TableCell>
+                                    <TableCell className={cn("p-2", rankColour)}>
                                     <div className="flex items-center gap-3">
                                         <Avatar className="h-9 w-9">
                                         <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
@@ -198,14 +195,14 @@ export default function MostImprovedPage() {
                                         <span>{user.name}</span>
                                     </div>
                                     </TableCell>
-                                    <TableCell className={cn("p-2 text-center font-bold text-lg", rankColor, getRankChangeColor(user.rankChange))}>
+                                    <TableCell className={cn("p-2 text-center font-bold text-lg", rankColour, getRankChangeColour(user.rankChange))}>
                                         <div className="flex items-center justify-center gap-1">
                                             <RankIcon className="size-5" />
                                             <span>{Math.abs(user.rankChange)}</span>
                                         </div>
                                     </TableCell>
-                                    <TableCell className={cn("p-2 text-center font-medium", rankColor)}>{formatPointsChange(user.scoreChange)}</TableCell>
-                                    <TableCell className={cn("p-2 text-center font-bold", rankColor, rankColor && 'rounded-r-md')}>{user.score}</TableCell>
+                                    <TableCell className={cn("p-2 text-center font-medium", rankColour)}>{formatPointsChange(user.scoreChange)}</TableCell>
+                                    <TableCell className={cn("p-2 text-center font-bold", rankColour, rankColour && 'rounded-r-md')}>{user.score}</TableCell>
                                 </TableRow>
                             );
                         })}
@@ -287,7 +284,5 @@ export default function MostImprovedPage() {
     </div>
   );
 }
-
-    
 
     

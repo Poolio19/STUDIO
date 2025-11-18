@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -41,10 +41,9 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import type { Metadata } from 'next';
-import { teams } from '@/lib/data';
-import { UserHistoryChart } from '@/components/charts/user-history-chart';
-import { defaultUserHistory } from '@/lib/user-history';
+import { teams, userHistories } from '@/lib/data';
+import { ProfilePerformanceChart } from '@/components/charts/profile-performance-chart';
+import React from 'react';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -59,7 +58,7 @@ const profileFormSchema = z.object({
   country: z.string().min(2, {
     message: 'Country must be at least 2 characters.',
   }),
-  favoriteTeam: z.string({
+  favouriteTeam: z.string({
     required_error: 'Please select a team.',
   }),
 });
@@ -72,11 +71,14 @@ const defaultValues: Partial<ProfileFormValues> = {
   email: 'alex@example.com',
   country: 'United Kingdom',
   dob: new Date('1990-05-20'),
-  favoriteTeam: 'team_1',
+  favouriteTeam: 'team_1',
 };
 
 export default function ProfilePage() {
   const { toast } = useToast();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
+
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues,
@@ -98,8 +100,49 @@ export default function ProfilePage() {
     rank: 1,
   };
 
-  const avatarUrl =
+  const defaultAvatarUrl =
     PlaceHolderImages.find(img => img.id === user.avatarId)?.imageUrl || '';
+
+  const { chartData, yAxisDomain } = React.useMemo(() => {
+    const allScores = userHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.score));
+    const minScore = Math.min(...allScores);
+    const maxScore = Math.max(...allScores);
+    const yAxisDomain: [number, number] = [minScore - 5, maxScore + 5];
+
+    const weeks = [...new Set(userHistories.flatMap(h => h.weeklyScores.map(w => w.week)))].sort((a,b) => a-b);
+    
+    const transformedData = weeks.map(week => {
+      const weekData: { [key: string]: number | string } = { week: `Wk ${week}` };
+      const weeklyScores = userHistories.map(h => h.weeklyScores.find(w => w.week === week)?.score).filter(s => s !== undefined) as number[];
+
+      const currentUserHistory = userHistories.find(h => h.userId === user.id);
+      const currentUserScore = currentUserHistory?.weeklyScores.find(w => w.week === week)?.score;
+
+      weekData['Min Score'] = Math.min(...weeklyScores);
+      weekData['Max Score'] = Math.max(...weeklyScores);
+      if (currentUserScore !== undefined) {
+        weekData['Your Score'] = currentUserScore;
+      }
+      return weekData;
+    });
+
+    return { chartData: transformedData, yAxisDomain };
+  }, [user.id]);
+  
+  const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+       toast({
+        title: 'Avatar Updated!',
+        description: 'Your new avatar has been set.',
+      });
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -116,7 +159,7 @@ export default function ProfilePage() {
             <CardContent className="pt-6 flex flex-col items-center gap-4">
               <Avatar className="h-24 w-24 border-4 border-primary">
                 <AvatarImage
-                  src={avatarUrl}
+                  src={avatarPreview || defaultAvatarUrl}
                   alt={user.name}
                   data-ai-hint="person portrait"
                 />
@@ -126,9 +169,20 @@ export default function ProfilePage() {
                 <h2 className="text-2xl font-bold">{form.watch('name')}</h2>
                 <p className="text-muted-foreground">Rank #{user.rank}</p>
               </div>
+               <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Upload Image
+                </Button>
+                <Input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                />
             </CardContent>
           </Card>
-           <UserHistoryChart chartData={defaultUserHistory} />
+           <ProfilePerformanceChart chartData={chartData} yAxisDomain={yAxisDomain} />
         </div>
 
         <div className="lg:col-span-2 space-y-8">
@@ -224,14 +278,14 @@ export default function ProfilePage() {
                   />
                    <FormField
                     control={form.control}
-                    name="favoriteTeam"
+                    name="favouriteTeam"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Favorite Premier League Team</FormLabel>
+                        <FormLabel>Favourite Premier League Team</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select your favorite team" />
+                              <SelectValue placeholder="Select your favourite team" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -256,3 +310,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    

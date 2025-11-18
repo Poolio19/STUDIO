@@ -38,7 +38,7 @@ export function TeamStandingsChart({
     return sortedTeams.reduce((config, team) => {
       config[team.name] = {
         label: team.name,
-        color: `hsl(var(--chart-color-${team.rank}))`,
+        colour: `hsl(var(--chart-color-${team.rank}))`,
       };
       return config;
     }, {} as any);
@@ -60,7 +60,7 @@ export function TeamStandingsChart({
                 <div key={index} className="flex items-center gap-2">
                   <div
                     className="size-2.5 rounded-sm"
-                    style={{ backgroundColor: chartConfig[pld.name]?.color }}
+                    style={{ backgroundColor: chartConfig[pld.name]?.colour }}
                   ></div>
                   <span className="font-medium">{pld.name}:</span>
                   <span className="text-muted-foreground">Rank {pld.value}</span>
@@ -117,7 +117,7 @@ export function TeamStandingsChart({
                       key={team.id}
                       dataKey={team.name}
                       type="monotone"
-                      stroke={chartConfig[team.name]?.color}
+                      stroke={chartConfig[team.name]?.colour}
                       strokeWidth={3}
                       dot={false}
                       name={team.name}
@@ -141,7 +141,7 @@ export function TeamStandingsChart({
               <li key={team.id} className="flex items-center space-x-2">
                 <span
                   className="size-2 rounded-full"
-                  style={{ backgroundColor: chartConfig[team.name]?.color }}
+                  style={{ backgroundColor: chartConfig[team.name]?.colour }}
                 ></span>
                 <span>{team.name}</span>
               </li>
@@ -152,3 +152,5 @@ export function TeamStandingsChart({
     </Card>
   );
 }
+
+    

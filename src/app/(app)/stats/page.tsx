@@ -24,7 +24,7 @@ export default function StatsPage() {
   const sortedUsers = useMemo(() => [...users].sort((a, b) => a.rank - b.rank), []);
   const sortedTeams = useMemo(() => [...teams].sort((a, b) => a.name.localeCompare(b.name)), []);
 
-  const getScoreColor = (score: number) => {
+  const getScoreColour = (score: number) => {
     if (score === 5) return 'bg-green-200/50 dark:bg-green-800/50 font-bold';
     if (score >= 3) return 'bg-green-100/50 dark:bg-green-900/40';
     if (score <= 0) return 'bg-red-100/50 dark:bg-red-900/40 text-red-500';
@@ -86,7 +86,7 @@ export default function StatsPage() {
                                         (s) => s.userId === user.id && s.teamId === team.id
                                     )?.score ?? 0;
                                     return (
-                                        <TableCell key={`${user.id}-${team.id}`} className={cn("text-center font-medium p-0", getScoreColor(score))}>
+                                        <TableCell key={`${user.id}-${team.id}`} className={cn("text-center font-medium p-0", getScoreColour(score))}>
                                             {score}
                                         </TableCell>
                                     );
@@ -101,3 +101,5 @@ export default function StatsPage() {
     </div>
   );
 }
+
+    

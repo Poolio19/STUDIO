@@ -36,7 +36,7 @@ const getRankChangeIcon = (change: number) => {
   return Minus;
 };
 
-const getRankChangeColor = (change: number) => {
+const getRankChangeColour = (change: number) => {
     if (change > 0) return 'text-green-500';
     if (change < 0) return 'text-red-500';
     return 'text-gray-500';
@@ -47,9 +47,9 @@ const formatPointsChange = (change: number) => {
     return change;
 }
 
-const getRankColor = (user: User, allUsers: User[], hasWinnings: boolean) => {
-    const userNonProRank = users.filter(u => !u.isPro).findIndex(u => u.id === user.id);
-    const nonProUsers = allUsers.filter(u => !u.isPro);
+const getRankColour = (user: User, sortedUsers: User[]) => {
+    const nonProUsers = sortedUsers.filter(u => !u.isPro);
+    const userNonProRank = nonProUsers.findIndex(u => u.id === user.id);
     const tiedUsers = nonProUsers.filter(u => u.rank === user.rank);
     const firstTiedUserIndex = nonProUsers.findIndex(u => u.id === tiedUsers[0]?.id);
 
@@ -65,18 +65,23 @@ const getRankColor = (user: User, allUsers: User[], hasWinnings: boolean) => {
         return 'bg-green-100 dark:bg-green-900/30 hover:bg-green-100/80 dark:hover:bg-green-900/40';
     }
 
-    if (hasWinnings) {
+    const totalWinnings = (totalWinningsMap.get(user.id) || 0);
+    if (totalWinnings > 0) {
         return 'bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-100/80 dark:hover:bg-blue-900/40';
     }
     return '';
 }
+
+const prizeTiers = [50, 41, 33, 26, 20];
+
+const totalWinningsMap = new Map<string, number>();
 
 export default function LeaderboardPage() {
   const sortedUsers = useMemo(() => [...users].sort((a, b) => a.rank - b.rank), []);
   const proPlayers = useMemo(() => sortedUsers.filter(u => u.isPro), [sortedUsers]);
   const regularPlayers = useMemo(() => sortedUsers.filter(u => !u.isPro), [sortedUsers]);
 
-  const totalWinningsMap = useMemo(() => {
+  const localTotalWinningsMap = useMemo(() => {
     const mimoMWinnings = new Map<string, number>();
     const monthlyAwards: { [key: string]: { winners: string[], runnersUp: string[] } } = {};
 
@@ -109,7 +114,6 @@ export default function LeaderboardPage() {
     });
     
     const leaderboardWinnings = new Map<string, number>();
-    const prizeTiers = [50, 41, 33, 26, 20];
     
     let playerIndex = 0;
     while(playerIndex < regularPlayers.length) {
@@ -117,6 +121,7 @@ export default function LeaderboardPage() {
         const playersAtSameRank = regularPlayers.filter(p => p.rank === player.rank);
         
         const prizePoolRanks = Array.from({ length: playersAtSameRank.length }, (_, i) => playerIndex + i);
+        
         const prizePool = prizePoolRanks.reduce((sum, rankIndex) => {
             return sum + (prizeTiers[rankIndex] || 0);
         }, 0);
@@ -140,19 +145,24 @@ export default function LeaderboardPage() {
       });
     }
 
-    const totalWinnings = new Map<string, number>();
+    const calculatedTotalWinnings = new Map<string, number>();
     [...regularPlayers, ...proPlayers].forEach(user => {
       if (user.isPro) {
-        totalWinnings.set(user.id, 0);
+        calculatedTotalWinnings.set(user.id, 0);
       } else {
         const lbWinnings = leaderboardWinnings.get(user.id) || 0;
         const mmWinnings = mimoMWinnings.get(user.id) || 0;
         const pWinnings = proWinnings.get(user.id) || 0;
-        totalWinnings.set(user.id, lbWinnings + mmWinnings + pWinnings);
+        calculatedTotalWinnings.set(user.id, lbWinnings + mmWinnings + pWinnings);
       }
     });
+    
+    // Update global map
+    calculatedTotalWinnings.forEach((value, key) => {
+        totalWinningsMap.set(key, value);
+    });
 
-    return totalWinnings;
+    return calculatedTotalWinnings;
   }, [regularPlayers, proPlayers]);
 
 
@@ -198,10 +208,10 @@ export default function LeaderboardPage() {
               {sortedUsers.map((user, index) => {
                 const RankIcon = getRankChangeIcon(user.rankChange);
                 const ScoreIcon = getRankChangeIcon(user.scoreChange);
-                const userWinnings = totalWinningsMap.get(user.id) || 0;
+                const userWinnings = localTotalWinningsMap.get(user.id) || 0;
                 
                 return (
-                    <TableRow key={user.id} className={cn(getRankColor(user, sortedUsers, userWinnings > 0))}>
+                    <TableRow key={user.id} className={cn(getRankColour(user, sortedUsers))}>
                         <TableCell className="font-medium text-center">{user.rank}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
@@ -217,14 +227,14 @@ export default function LeaderboardPage() {
                            {user.isPro ? '-' : (userWinnings > 0 ? `£${userWinnings.toFixed(2)}` : '£0.00')}
                         </TableCell>
                         <TableCell className="text-center font-medium">{user.previousRank}</TableCell>
-                        <TableCell className={cn("font-bold text-center border-r", getRankChangeColor(user.rankChange))}>
+                        <TableCell className={cn("font-bold text-center border-r", getRankChangeColour(user.rankChange))}>
                             <div className="flex items-center justify-center gap-2">
                                 <span>{Math.abs(user.rankChange)}</span>
                                 <RankIcon className="size-5" />
                             </div>
                         </TableCell>
                         <TableCell className="text-center font-medium">{user.previousScore}</TableCell>
-                        <TableCell className={cn("font-bold text-center border-r", getRankChangeColor(user.scoreChange))}>
+                        <TableCell className={cn("font-bold text-center border-r", getRankChangeColour(user.scoreChange))}>
                             <div className="flex items-center justify-center gap-2">
                                 <span>{formatPointsChange(user.scoreChange)}</span>
                                 <ScoreIcon className="size-5" />
