@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -95,13 +96,14 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers }: 
         </ResponsiveContainer>
       </ChartContainer>
       <ul
-        className="absolute flex flex-col justify-between text-[10px]"
+        className="absolute flex flex-col justify-between"
         style={{
           right: 0,
           top: '-25px',
           bottom: '40px',
           width: '130px',
           paddingLeft: '1rem',
+          fontSize: '9px',
         }}
       >
         <p className="text-xs font-medium mb-2">Player, Score</p>
