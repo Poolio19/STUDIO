@@ -98,6 +98,7 @@ export default function ConsensusPage() {
                   const TeamIcon = Icons[teamData.logo as IconName] || Icons.match;
                   const teamId = teamData.id;
                   const predictionCounts = consensusData[teamId];
+                  if (!predictionCounts) return null; // guard against missing data
                   const totalPredictions = predictionCounts.reduce((sum, count) => sum + count, 0);
                   return (
                     <TableRow key={teamId}>

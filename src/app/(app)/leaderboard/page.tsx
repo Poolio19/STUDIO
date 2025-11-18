@@ -129,7 +129,7 @@ export default function LeaderboardPage() {
         
         let prizePool = 0;
         ranksCovered.forEach(rank => {
-          if (rank - 1 < prizeTiers.length) {
+          if (rank > 0 && rank - 1 < prizeTiers.length) {
             prizePool += prizeTiers[rank - 1];
           }
         });
@@ -151,7 +151,7 @@ export default function LeaderboardPage() {
     if (proPlayers.length > 0) {
       const bestProRank = Math.min(...proPlayers.map(p => p.rank));
       regularPlayers.forEach(player => {
-          if (player.rank <= bestProRank) {
+          if (player.rank > 0 && player.rank <= bestProRank) {
               proWinnings.set(player.id, 5);
           }
       });
@@ -258,5 +258,3 @@ export default function LeaderboardPage() {
     </div>
   );
 }
-
-    

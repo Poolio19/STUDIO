@@ -47,13 +47,15 @@ const formatPointsChange = (change: number) => {
 const currentWeek = currentStandings[0]?.gamesPlayed || 1;
 
 export default function MostImprovedPage() {
-  const sortedByImprovement = [...users].sort((a, b) => b.rankChange - a.rankChange);
   
   const currentMonthName = 'September';
   const currentYear = 2025;
 
   const ladderWithRanks = useMemo(() => {
-    const regularPlayersSorted = sortedByImprovement.filter(u => !u.isPro);
+    const regularPlayersSorted = users
+      .filter(u => !u.isPro && u.rankChange > 0)
+      .sort((a, b) => b.rankChange - a.rankChange || a.rank - b.rank);
+      
     let rank = 0;
     let lastRankChange = Infinity;
     const rankedUsers = regularPlayersSorted.map((user, index) => {
@@ -64,11 +66,11 @@ export default function MostImprovedPage() {
       return { ...user, displayRank: rank };
     });
     
-    const firstPlaceRankChange = rankedUsers.find(u => u.displayRank === 1)?.rankChange;
-    const secondPlaceRankChange = rankedUsers.find(u => u.displayRank === 2)?.rankChange;
+    const firstPlaceRankChange = rankedUsers[0]?.rankChange;
+    const secondPlaceRankChange = rankedUsers.find(u => u.rankChange < firstPlaceRankChange)?.rankChange;
 
     return { ladderWithRanks: rankedUsers, firstPlaceRankChange, secondPlaceRankChange };
-  }, [sortedByImprovement]);
+  }, [users]);
 
   const mimoMWithDetails = useMemo(() => {
     const awardsByMonth: { [key: string]: { winners: any[], runnersUp: any[] } } = {};
@@ -104,19 +106,12 @@ export default function MostImprovedPage() {
         let currentRunnersUp: User[] | null = null;
         
         if (isCurrentMonth && (!awards || awards.winners.length === 0)) {
-            const regularPlayersSorted = sortedByImprovement.filter(u => !u.isPro && u.rankChange > 0);
-            
-            if (regularPlayersSorted.length > 0) {
-                const maxRankChange = regularPlayersSorted[0].rankChange;
-                currentLeaders = regularPlayersSorted.filter(u => u.rankChange === maxRankChange);
-
-                const remainingPlayers = regularPlayersSorted.filter(u => u.rankChange < maxRankChange);
-                if (remainingPlayers.length > 0) {
-                    const secondMaxRankChange = remainingPlayers[0].rankChange;
-                    if (secondMaxRankChange > 0) {
-                        currentRunnersUp = remainingPlayers.filter(u => u.rankChange === secondMaxRankChange);
-                    }
-                }
+            const { ladderWithRanks, firstPlaceRankChange, secondPlaceRankChange } = ladderWithRanks;
+            if(firstPlaceRankChange) {
+                currentLeaders = ladderWithRanks.filter(u => u.rankChange === firstPlaceRankChange);
+            }
+            if(secondPlaceRankChange) {
+                currentRunnersUp = ladderWithRanks.filter(u => u.rankChange === secondPlaceRankChange);
             }
         }
         
@@ -146,7 +141,7 @@ export default function MostImprovedPage() {
       
       return 0;
     });
-  }, [sortedByImprovement, currentMonthName, currentYear]);
+  }, [users, currentMonthName, currentYear, ladderWithRanks]);
 
   const getLadderRankColor = (user: (typeof ladderWithRanks.ladderWithRanks)[0]) => {
     if (user.rankChange > 0 && user.rankChange === ladderWithRanks.firstPlaceRankChange) return 'bg-yellow-400/20';
