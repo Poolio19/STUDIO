@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -158,53 +157,63 @@ export default function ProfilePage() {
     }
   };
 
-  const seedDatabase = async () => {
+  const seedDatabase = () => {
     if (!firestore) {
       toast({
-        variant: "destructive",
-        title: "Firestore not available",
-        description: "Unable to connect to the database.",
+        variant: 'destructive',
+        title: 'Firestore not available',
+        description: 'Unable to connect to the database.',
       });
       return;
     }
 
-    try {
-      // Seed Users
-      const usersCollectionRef = collection(firestore, 'users');
-      for (const user of allUsers) {
-        const userDocRef = doc(usersCollectionRef, user.id);
-        await setDoc(userDocRef, user);
-      }
-
-      // Seed Teams
-      const teamsCollectionRef = collection(firestore, 'teams');
-      for (const team of teams) {
-        const teamDocRef = doc(teamsCollectionRef, team.id);
-        await setDoc(teamDocRef, team);
-      }
-
-      // Seed Standings
-      const standingsCollectionRef = collection(firestore, 'standings');
-      for (const standing of currentStandings) {
-        const standingDocRef = doc(standingsCollectionRef, standing.teamId);
-        await setDoc(standingDocRef, standing);
-      }
-
-      toast({
-        title: "Database Seeded!",
-        description: `${allUsers.length} users, ${teams.length} teams, and ${currentStandings.length} standings have been added to Firestore.`,
+    let hasError = false;
+    const handleError = (error: any, path: string, data: any) => {
+      if (hasError) return;
+      hasError = true;
+      const permissionError = new FirestorePermissionError({
+        path: path,
+        operation: 'write',
+        requestResourceData: data,
       });
+      errorEmitter.emit('permission-error', permissionError);
+    };
 
-    } catch (serverError: any) {
-        const permissionError = new FirestorePermissionError({
-          path: serverError.customData?.path || '(unknown path)',
-          operation: 'write',
-          requestResourceData: { 
-            info: 'Error during database seeding.'
-          },
-        });
-        errorEmitter.emit('permission-error', permissionError);
+    // Seed Users
+    const usersCollectionRef = collection(firestore, 'users');
+    for (const user of allUsers) {
+      const userDocRef = doc(usersCollectionRef, user.id);
+      setDoc(userDocRef, user).catch(error =>
+        handleError(error, userDocRef.path, user)
+      );
     }
+
+    // Seed Teams
+    const teamsCollectionRef = collection(firestore, 'teams');
+    for (const team of teams) {
+      const teamDocRef = doc(teamsCollectionRef, team.id);
+      setDoc(teamDocRef, team).catch(error =>
+        handleError(error, teamDocRef.path, team)
+      );
+    }
+
+    // Seed Standings
+    const standingsCollectionRef = collection(firestore, 'standings');
+    for (const standing of currentStandings) {
+      const standingDocRef = doc(standingsCollectionRef, standing.teamId);
+      setDoc(standingDocRef, standing).catch(error =>
+        handleError(error, standingDocRef.path, standing)
+      );
+    }
+    
+    setTimeout(() => {
+        if (!hasError) {
+             toast({
+                title: 'Database Seeding Initiated!',
+                description: `Started adding ${allUsers.length} users, ${teams.length} teams, and ${currentStandings.length} standings.`,
+            });
+        }
+    }, 1000);
   };
 
 
