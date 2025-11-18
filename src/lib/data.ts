@@ -137,7 +137,7 @@ export const teams: Team[] = [
     { id: 'team_9', name: 'Fulham', logo: 'shieldHalf', bgColour: 'bg-white', textColour: 'text-black' },
     { id: 'team_10', name: 'Ipswich Town', logo: 'shield', bgColour: 'bg-blue-600', textColour: 'text-white' },
     { id: 'team_11', name: 'Leicester City', logo: 'shield', bgColour: 'bg-blue-600', textColour: 'text-white' },
-    { id: 'team_12', name: 'Liverpool', logo: 'ship', bgColour: 'bg-red-600', textColour: 'text-white' },
+    { id: 'team_12', name: 'Liverpool', logo: 'origami', bgColour: 'bg-red-600', textColour: 'text-white' },
     { id: 'team_13', name: 'Man City', logo: 'sailboat', bgColour: 'bg-sky-400', textColour: 'text-yellow-300' },
     { id: 'team_14', name: 'Man Utd', logo: 'hamburger', bgColour: 'bg-red-600', textColour: 'text-yellow-400' },
     { id: 'team_15', name: 'Newcastle', logo: 'castle', bgColour: 'bg-black', textColour: 'text-white' },

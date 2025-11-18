@@ -117,6 +117,7 @@ export default function PredictPage() {
                     {items.map((item, index) => {
                       const TeamIcon =
                         Icons[item.teamLogo as IconName] || Icons.match;
+                      const isLiverpool = item.id === 'team_12';
                       return (
                         <Reorder.Item
                           key={item.teamId}
@@ -131,7 +132,7 @@ export default function PredictPage() {
                           <div className={cn("text-base font-medium w-6 text-center opacity-80")}>
                             {index + 1}
                           </div>
-                          <TeamIcon className={cn("size-5 transform-gpu scale-x-[-1]", item.teamColour)} />
+                          <TeamIcon className={cn("size-5", item.teamColour, isLiverpool && "scale-x-[-1]")} />
                           <span className="font-medium text-sm">{item.teamName}</span>
                         </Reorder.Item>
                       );
@@ -153,19 +154,20 @@ export default function PredictPage() {
                           {standingsWithTeamData.map(team => {
                             if (!team) return null;
                             const TeamIcon = Icons[team.logo as IconName] || Icons.match;
+                            const isLiverpool = team.id === 'team_12';
                             return (
                               <TableRow key={team.id} className={cn("h-[53px] border-b-white/20", team.bgColour, team.textColour)}>
-                                <TableCell className={cn("font-medium w-[50px] opacity-80")}>{team.rank}</TableCell>
-                                <TableCell>
+                                <TableCell className={cn("font-medium w-[50px] opacity-80", !team.bgColour && "bg-transparent", team.bgColour, team.textColour)}>{team.rank}</TableCell>
+                                <TableCell className={cn(!team.bgColour && "bg-transparent", team.bgColour, team.textColour)}>
                                   <div className="flex items-center gap-2">
-                                    <TeamIcon className={cn("size-5 transform-gpu scale-x-[-1]", team.colour)} />
+                                    <TeamIcon className={cn("size-5", team.colour, isLiverpool && "scale-x-[-1]")} />
                                     <span className="truncate">{team.name}</span>
                                   </div>
                                 </TableCell>
-                                <TableCell className="text-right font-semibold w-16">
+                                <TableCell className={cn("text-right font-semibold w-16", !team.bgColour && "bg-transparent", team.bgColour, team.textColour)}>
                                   {team.points}
                                 </TableCell>
-                                <TableCell className="text-right w-16">
+                                <TableCell className={cn("text-right w-16", !team.bgColour && "bg-transparent", team.bgColour, team.textColour)}>
                                   {team.goalDifference > 0 ? '+' : ''}{team.goalDifference}
                                 </TableCell>
                               </TableRow>
