@@ -80,7 +80,7 @@ const totalWinningsMap = new Map<string, number>();
 export default function LeaderboardPage() {
   const { isUserLoading: isAuthUserLoading } = useUser();
   const firestore = useFirestore();
-  const usersCollectionRef = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
+  const usersCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
   const { data: users, isLoading: areUsersLoading } = useCollection<User>(usersCollectionRef);
 
   const isLoading = isAuthUserLoading || areUsersLoading;
@@ -96,6 +96,7 @@ export default function LeaderboardPage() {
   const regularPlayers = useMemo(() => sortedUsers.filter(u => !u.isPro), [sortedUsers]);
 
   const localTotalWinningsMap = useMemo(() => {
+    if (!users) return new Map();
     const mimoMWinnings = new Map<string, number>();
     const monthlyAwards: { [key: string]: { winners: string[], runnersUp: string[] } } = {};
 
@@ -177,7 +178,7 @@ export default function LeaderboardPage() {
     });
 
     return calculatedTotalWinnings;
-  }, [regularPlayers, proPlayers]);
+  }, [regularPlayers, proPlayers, users]);
 
 
   return (
@@ -274,6 +275,3 @@ export default function LeaderboardPage() {
     </div>
   );
 }
-
-
-    

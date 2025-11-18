@@ -54,7 +54,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useFirestore, FirestorePermissionError, errorEmitter, useUser } from '@/firebase';
-import { collection, doc, setDoc, writeBatch } from 'firebase/firestore';
+import { collection, doc, setDoc, Firestore } from 'firebase/firestore';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -137,15 +137,7 @@ export default function ProfilePage() {
     return { chartData: transformedData, yAxisDomain };
   }, [user.id]);
 
-  const seedDatabase = async () => {
-    if (!firestore) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Firestore is not available. Please try again later.",
-      });
-      return;
-    }
+  const seedDatabase = async (firestore: Firestore) => {
     setIsSeeding(true);
 
     const handleError = (error: FirestorePermissionError) => {
@@ -158,44 +150,70 @@ export default function ProfilePage() {
     };
 
     try {
-      const batch = writeBatch(firestore);
-
       // Seed Users
       const usersCollectionRef = collection(firestore, 'users');
-      allUsers.forEach(user => {
+      for (const user of allUsers) {
         const userDocRef = doc(usersCollectionRef, user.id);
-        batch.set(userDocRef, user);
-      });
+        setDoc(userDocRef, user).catch(serverError => {
+          handleError(new FirestorePermissionError({
+            path: userDocRef.path,
+            operation: 'write',
+            requestResourceData: user
+          }));
+        });
+      }
 
       // Seed Teams
       const teamsCollectionRef = collection(firestore, 'teams');
-      teams.forEach(team => {
+      for (const team of teams) {
         const teamDocRef = doc(teamsCollectionRef, team.id);
-        batch.set(teamDocRef, team);
-      });
+        setDoc(teamDocRef, team).catch(serverError => {
+          handleError(new FirestorePermissionError({
+            path: teamDocRef.path,
+            operation: 'write',
+            requestResourceData: team
+          }));
+        });
+      }
 
       // Seed Standings
       const standingsCollectionRef = collection(firestore, 'standings');
-      currentStandings.forEach(standing => {
+      for (const standing of currentStandings) {
         const standingDocRef = doc(standingsCollectionRef, standing.teamId);
-        batch.set(standingDocRef, standing);
-      });
-
-      await batch.commit();
+        setDoc(standingDocRef, standing).catch(serverError => {
+          handleError(new FirestorePermissionError({
+            path: standingDocRef.path,
+            operation: 'write',
+            requestResourceData: standing
+          }));
+        });
+      }
 
       toast({
-        title: 'Database Seeded!',
-        description: 'Users, teams, and standings have been added to Firestore.',
+        title: 'Database Seeding Initiated!',
+        description: 'Users, teams, and standings are being added to Firestore.',
       });
 
     } catch (error: any) {
-      handleError(new FirestorePermissionError({
-        path: '(batch write)',
-        operation: 'write',
-        requestResourceData: { info: 'Batch write for users, teams, and standings.' }
-      }));
+       handleError(new FirestorePermissionError({
+          path: '(unknown path)',
+          operation: 'write',
+          requestResourceData: { info: 'Error during database seeding.' }
+        }));
     } finally {
       setIsSeeding(false);
+    }
+  };
+
+  const handleSeedClick = () => {
+    if (firestore) {
+      seedDatabase(firestore);
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Firestore not available',
+        description: 'Please wait for Firestore to initialize.',
+      });
     }
   };
 
@@ -318,7 +336,7 @@ export default function ProfilePage() {
               </div>
               <Separator />
               <Button
-                onClick={seedDatabase}
+                onClick={handleSeedClick}
                 disabled={isSeeding || !firestore || !authUser}
                 className="w-full"
               >
@@ -492,5 +510,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
