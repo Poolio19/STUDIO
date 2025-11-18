@@ -4,7 +4,6 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // Allow read access to all users, but write access only to authenticated users.
-    // This is a temporary, permissive rule for seeding.
     match /users/{userId} {
       allow read: if true;
       allow write: if request.auth != null;
