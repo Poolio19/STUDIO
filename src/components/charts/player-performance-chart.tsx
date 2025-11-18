@@ -96,7 +96,7 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers }: 
         </ResponsiveContainer>
       </ChartContainer>
       <ul
-        className="absolute flex flex-col justify-between text-xs"
+        className="absolute flex flex-col justify-between"
         style={{
           right: 0,
           top: '-25px',
