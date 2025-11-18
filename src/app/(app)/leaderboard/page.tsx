@@ -23,7 +23,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { useMemo } from 'react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection } from 'firebase/firestore';
 
 const getAvatarUrl = (avatarId: string) => {
@@ -78,6 +78,7 @@ const totalWinningsMap = new Map<string, number>();
 
 export default function LeaderboardPage() {
   const firestore = useFirestore();
+  const { user: authUser, isUserLoading: isAuthUserLoading } = useUser();
   
   const usersCollection = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -223,7 +224,7 @@ export default function LeaderboardPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
+              {isLoading || isAuthUserLoading ? (
                 <TableRow>
                   <TableCell colSpan={12} className="text-center">Loading leaderboard...</TableCell>
                 </TableRow>
@@ -278,3 +279,4 @@ export default function LeaderboardPage() {
     </div>
   );
 }
+

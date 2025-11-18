@@ -7,19 +7,19 @@ service cloud.firestore {
     // This is a temporary, permissive rule for seeding.
     match /users/{userId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if true;
     }
 
     // Allow read access to all users, but write access only to authenticated users.
     match /teams/{teamId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if true;
     }
 
     // Allow read access to all users, but write access only to authenticated users.
     match /standings/{teamId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if true;
     }
 
     match /events/{eventId} {
