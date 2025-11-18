@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Upload } from 'lucide-react';
+import { Calendar as CalendarIcon, Upload, Trophy, Award, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -41,11 +41,18 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { teams, userHistories } from '@/lib/data';
+import { teams, userHistories, users as allUsers, monthlyMimoM } from '@/lib/data';
 import { ProfilePerformanceChart } from '@/components/charts/profile-performance-chart';
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -86,24 +93,18 @@ export default function ProfilePage() {
     defaultValues,
     mode: 'onChange',
   });
+  
+  // Hardcoded user for now
+  const user = allUsers.find(u => u.id === 'usr_1')!;
 
-  function onSubmit(data: ProfileFormValues) {
-    toast({
-      title: 'Profile Updated!',
-      description: 'Your profile information has been saved.',
-    });
-    console.log(data);
-  }
+  const mimoMWins = React.useMemo(() => {
+    return monthlyMimoM.filter(m => m.userId === user.id && m.type === 'winner').length;
+  }, [user.id]);
 
-  const user = {
-    id: 'usr_1',
-    name: 'Alex',
-    avatarId: '1',
-    rank: 1,
-  };
+  const pastChampionships = 0; // Replace with actual data if available
 
   const defaultAvatarUrl =
-    PlaceHolderImages.find(img => img.id === user.avatarId)?.imageUrl || '';
+    PlaceHolderImages.find(img => img.id === user.avatar)?.imageUrl || '';
 
   const { chartData, yAxisDomain } = React.useMemo(() => {
     const allScores = userHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.score));
@@ -130,6 +131,14 @@ export default function ProfilePage() {
 
     return { chartData: transformedData, yAxisDomain };
   }, [user.id]);
+  
+  function onSubmit(data: ProfileFormValues) {
+    toast({
+      title: 'Profile Updated!',
+      description: 'Your profile information has been saved.',
+    });
+    console.log(data);
+  }
   
   const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -159,29 +168,86 @@ export default function ProfilePage() {
         <div className="lg:col-span-1 space-y-8">
             <Card>
                 <CardContent className="pt-6 flex flex-col items-center gap-4">
-                <Avatar className="h-24 w-24 border-4 border-primary">
-                    <AvatarImage
-                    src={avatarPreview || defaultAvatarUrl}
-                    alt={user.name}
-                    data-ai-hint="person portrait"
-                    />
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="text-center">
-                    <h2 className="text-2xl font-bold">{form.watch('name')}</h2>
-                    <p className="text-muted-foreground">Rank #{user.rank}</p>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload Image
-                    </Button>
-                    <Input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    className="hidden" 
-                    accept="image/*"
-                    onChange={handleAvatarUpload}
-                    />
+                  <Avatar className="h-24 w-24 border-4 border-primary">
+                      <AvatarImage
+                      src={avatarPreview || defaultAvatarUrl}
+                      alt={user.name}
+                      data-ai-hint="person portrait"
+                      />
+                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div className="text-center">
+                      <h2 className="text-2xl font-bold">{form.watch('name')}</h2>
+                      <p className="text-muted-foreground font-semibold">Rank: #{user.rank}</p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload Image
+                  </Button>
+                  <Input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      className="hidden" 
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                  />
+                  <Separator className="my-4" />
+                   <div className="w-full text-center">
+                      <h3 className="text-lg font-semibold mb-2">Season Stats</h3>
+                      <div className="flex justify-around text-sm">
+                          <div className="flex flex-col">
+                              <span className="font-bold text-lg">{user.maxRank}</span>
+                              <span className="text-muted-foreground">High</span>
+                          </div>
+                           <div className="flex flex-col">
+                              <span className="font-bold text-lg">{user.minRank}</span>
+                              <span className="text-muted-foreground">Low</span>
+                          </div>
+                      </div>
+                  </div>
+                   <Separator className="my-4" />
+                  <div className="w-full text-center">
+                    <h3 className="text-lg font-semibold mb-2">Trophy Cabinet</h3>
+                    <div className="flex justify-center gap-4 text-muted-foreground">
+                       <TooltipProvider>
+                        {pastChampionships > 0 && (
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <div className="flex flex-col items-center">
+                                <Trophy className="text-yellow-500" />
+                                <span className="text-xs font-bold">{pastChampionships}</span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{pastChampionships}x Past Champion</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                         <Tooltip>
+                            <TooltipTrigger>
+                              <div className="flex flex-col items-center">
+                                <Award className={cn(mimoMWins > 0 ? "text-yellow-600" : "text-gray-400")} />
+                                <span className="text-xs font-bold">{mimoMWins}</span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{mimoMWins}x MiMoM Winner</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger>
+                                <div className="flex flex-col items-center">
+                                    <ShieldCheck className="text-gray-400" />
+                                    <span className="text-xs font-bold">0</span>
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Past Glories - TBC</p>
+                            </TooltipContent>
+                        </Tooltip>
+                       </TooltipProvider>
+                    </div>
+                  </div>
                 </CardContent>
             </Card>
         </div>
@@ -349,3 +415,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
