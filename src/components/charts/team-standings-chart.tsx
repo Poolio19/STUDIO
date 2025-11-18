@@ -95,10 +95,10 @@ export function TeamStandingsChart({
               <LineChart
                 data={chartData}
                 margin={{
-                  top: 0,
+                  top: -10,
                   right: 130,
                   left: -20,
-                  bottom: 5,
+                  bottom: 40,
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
