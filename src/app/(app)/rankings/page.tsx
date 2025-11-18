@@ -13,6 +13,10 @@ import { useMemo } from 'react';
 import { PlayerRankChart } from '@/components/charts/player-rank-chart';
 
 export default function RankingsPage() {
+  const sortedUsers = useMemo(() => {
+    return [...users].sort((a, b) => a.rank - b.rank);
+  }, []);
+
   const { chartData, yAxisDomain } = useMemo(() => {
     const totalPlayers = users.length;
     const yAxisDomain: [number, number] = [1, totalPlayers];
@@ -53,7 +57,7 @@ export default function RankingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <PlayerRankChart chartData={chartData} yAxisDomain={yAxisDomain} />
+          <PlayerRankChart chartData={chartData} yAxisDomain={yAxisDomain} sortedUsers={sortedUsers} />
         </CardContent>
       </Card>
     </div>
