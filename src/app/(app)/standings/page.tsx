@@ -6,7 +6,6 @@ import {
     CardContent,
     CardHeader,
     CardTitle,
-    CardDescription
 } from '@/components/ui/card';
 import {
     Table,
@@ -16,7 +15,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { teams, currentStandings, weeklyTeamStandings } from '@/lib/data';
+import { teams, currentStandings, weeklyTeamStandings, teamRecentResults, TeamRecentResult } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
 import { TeamStandingsChart } from '@/components/charts/team-standings-chart';
 import { useMemo } from 'react';
@@ -24,13 +23,17 @@ import { cn } from '@/lib/utils';
 
 export default function StandingsPage() {
     const { standingsWithTeamData, chartData } = useMemo(() => {
+        const recentResultsMap = new Map(teamRecentResults.map(r => [r.teamId, r.results]));
+
         const initialData = currentStandings
             .map(standing => {
                 const team = teams.find(t => t.id === standing.teamId);
+                const recentResults = recentResultsMap.get(standing.teamId) || Array(6).fill('-');
                 return team ? { 
                     ...standing, 
                     ...team,
-                    sortValue: standing.points + (standing.goalDifference / 100) + (standing.goalsFor / 1000)
+                    sortValue: standing.points + (standing.goalDifference / 100) + (standing.goalsFor / 1000),
+                    recentResults: recentResults
                 } : null;
             })
             .filter(Boolean);
@@ -69,6 +72,19 @@ export default function StandingsPage() {
         return { standingsWithTeamData: finalStandings, chartData: transformedChartData };
     }, []);
 
+    const getResultColor = (result: 'W' | 'D' | 'L' | '-') => {
+        switch (result) {
+            case 'W': return 'bg-green-500 text-white';
+            case 'D': return 'bg-blue-300 text-white';
+            case 'L': return 'bg-red-500 text-white';
+            default: return 'bg-gray-200 text-gray-500';
+        }
+    };
+
+    const gamesPlayed = currentStandings[0]?.gamesPlayed || 0;
+    const weekHeaders = Array.from({ length: 6 }, (_, i) => `WK${gamesPlayed - 5 + i}`);
+
+
   return (
     <div className="space-y-8">
        <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
@@ -95,7 +111,12 @@ export default function StandingsPage() {
                 <TableHead className="text-center">GD</TableHead>
                 <TableHead className="text-center">GF</TableHead>
                 <TableHead className="text-center">GA</TableHead>
-                <TableHead className="text-right">Pts</TableHead>
+                <TableHead className="text-center">Pts</TableHead>
+                <TableHead colSpan={6} className="text-center">Form</TableHead>
+              </TableRow>
+               <TableRow>
+                 <TableHead colSpan={11}></TableHead>
+                {weekHeaders.map(header => <TableHead key={header} className="text-center w-12">{header}</TableHead>)}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -138,7 +159,14 @@ export default function StandingsPage() {
                     <TableCell className="text-center">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
                     <TableCell className="text-center">{team.goalsFor}</TableCell>
                     <TableCell className="text-center">{team.goalsAgainst}</TableCell>
-                    <TableCell className="text-right font-bold rounded-r-md">{team.points}</TableCell>
+                    <TableCell className="text-center font-bold">{team.points}</TableCell>
+                    {team.recentResults.map((result, index) => (
+                      <TableCell key={index} className={cn("text-center font-bold p-0 w-12", index === 5 && 'rounded-r-md')}>
+                         <div className={cn("flex items-center justify-center h-10 w-full", getResultColor(result))}>
+                          {result}
+                        </div>
+                      </TableCell>
+                    ))}
                   </TableRow>
                 );
               })}
@@ -149,4 +177,3 @@ export default function StandingsPage() {
     </div>
   );
 }
-

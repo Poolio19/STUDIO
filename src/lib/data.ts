@@ -60,6 +60,11 @@ export type CurrentStanding = {
     goalsAgainst: number;
 };
 
+export type TeamRecentResult = {
+  teamId: string;
+  results: ('W' | 'D' | 'L' | '-')[];
+};
+
 export type MonthlyMimoM = {
   month: string;
   year: number;
@@ -260,8 +265,8 @@ const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed:
 
 
         if (originalRank <= 4) maxPerturbation = 3;
-        else if (originalRank <= 12) maxPerturbation = 9;
-        else maxPerturbation = 12;
+        else if (originalRank <= 12) maxPerturbation = 12;
+        else maxPerturbation = 18;
         
         perturbation = Math.round((bellCurveRandom + bias) * maxPerturbation);
 
@@ -530,4 +535,29 @@ export const weeklyTeamStandings: WeeklyTeamStanding[] = teams.flatMap(team => {
         }
     }
     return weeklyRanks.reverse();
+});
+
+const generateRecentResults = (teamId: string, gamesPlayed: number, seed: number): ('W' | 'D' | 'L' | '-')[] => {
+    const random = mulberry32(seed);
+    const results: ('W' | 'D' | 'L' | '-')[] = [];
+    const possibleResults: ('W' | 'D' | 'L')[] = ['W', 'D', 'L'];
+    
+    for (let i = 0; i < 6; i++) {
+        const week = gamesPlayed - 5 + i;
+        if (week >= 0) {
+            results.push(possibleResults[Math.floor(random() * 3)]);
+        } else {
+            results.push('-');
+        }
+    }
+    return results;
+};
+
+
+export const teamRecentResults: TeamRecentResult[] = teams.map((team, index) => {
+    const standing = currentStandings.find(s => s.teamId === team.id);
+    return {
+        teamId: team.id,
+        results: generateRecentResults(team.id, standing?.gamesPlayed ?? 0, index + 500)
+    };
 });
