@@ -25,7 +25,6 @@ import {
   Trees,
   Flower,
   Hammer,
-  Wolf,
 } from 'lucide-react';
 
 export const Icons = {
@@ -55,7 +54,7 @@ export const Icons = {
   tree: Trees,
   flower: Flower,
   hammer: Hammer,
-wolf: Wolf,
+  wolf: Shield,
   match: Swords,
   rankUp: (props: LucideProps) => <ChevronUp {...props} className="text-green-500" />,
   rankDown: (props: LucideProps) => <ChevronDown {...props} className="text-red-500" />,
