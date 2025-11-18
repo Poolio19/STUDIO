@@ -72,10 +72,10 @@ export default function MostImprovedPage() {
       }
       return { ...user, displayRank: rank };
     });
-    
-    const improvers = rankedUsers.filter(u => u.rankChange > 0);
-    const firstPlaceRankChange = improvers[0]?.rankChange;
-    const secondPlaceRankChange = improvers.find(u => u.rankChange < firstPlaceRankChange!)?.rankChange;
+
+    const allRankChanges = [...new Set(rankedUsers.map(u => u.rankChange))].sort((a, b) => b - a);
+    const firstPlaceRankChange = allRankChanges[0];
+    const secondPlaceRankChange = allRankChanges.length > 1 ? allRankChanges[1] : undefined;
 
     return { ladderWithRanks: rankedUsers, firstPlaceRankChange, secondPlaceRankChange };
   }, [users]);
@@ -115,10 +115,10 @@ export default function MostImprovedPage() {
         
         if (isCurrentMonth && (!awards || awards.winners.length === 0)) {
             const { ladderWithRanks, firstPlaceRankChange, secondPlaceRankChange } = ladderData;
-            if(firstPlaceRankChange) {
+            if(firstPlaceRankChange !== undefined) {
                 currentLeaders = ladderWithRanks.filter(u => u.rankChange === firstPlaceRankChange);
             }
-            if(secondPlaceRankChange) {
+            if(secondPlaceRankChange !== undefined) {
                 currentRunnersUp = ladderWithRanks.filter(u => u.rankChange === secondPlaceRankChange);
             }
         }
@@ -152,8 +152,8 @@ export default function MostImprovedPage() {
   }, [users, currentMonthName, currentYear, ladderData]);
 
   const getLadderRankColor = (user: (typeof ladderData.ladderWithRanks)[0]) => {
-    if (user.rankChange > 0 && user.rankChange === ladderData.firstPlaceRankChange) return 'bg-yellow-400/20';
-    if (user.rankChange > 0 && user.rankChange === ladderData.secondPlaceRankChange) return 'bg-slate-400/20';
+    if (ladderData.firstPlaceRankChange !== undefined && user.rankChange === ladderData.firstPlaceRankChange) return 'bg-yellow-400/20';
+    if (ladderData.secondPlaceRankChange !== undefined && user.rankChange === ladderData.secondPlaceRankChange) return 'bg-slate-400/20';
     return '';
   };
 
