@@ -4,6 +4,7 @@ import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from '@/compon
 import { SidebarNav } from './sidebar-nav';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '../ui/button';
+import { cn } from '@/lib/utils';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
@@ -13,12 +14,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <SidebarNav />
       </Sidebar>
       <SidebarInset className="flex flex-col">
-        {!isMobile && (
-          <header className="flex h-14 items-center gap-4 border-b bg-card px-6">
-            <SidebarTrigger />
-            <h1 className="text-lg font-semibold">PremPred 2025-2026</h1>
-          </header>
-        )}
+        <header className={cn("flex h-14 items-center gap-4 border-b bg-card px-6", { "hidden": isMobile })}>
+          <SidebarTrigger />
+          <h1 className="text-lg font-semibold">PremPred 2025-2026</h1>
+        </header>
         <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">{children}</main>
       </SidebarInset>
     </SidebarProvider>
