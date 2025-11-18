@@ -44,6 +44,8 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { teams, userHistories } from '@/lib/data';
 import { ProfilePerformanceChart } from '@/components/charts/profile-performance-chart';
 import React from 'react';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -250,6 +252,9 @@ export default function ProfilePage() {
                           <PopoverContent className="w-auto p-0" align="start">
                             <Calendar
                               mode="single"
+                              captionLayout="dropdown-buttons"
+                              fromYear={1930}
+                              toYear={new Date().getFullYear() - 10}
                               selected={field.value}
                               onSelect={field.onChange}
                               disabled={(date) =>
@@ -305,10 +310,37 @@ export default function ProfilePage() {
               </Form>
             </CardContent>
           </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Email Notifications</CardTitle>
+              <CardDescription>Choose which emails you want to receive.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div>
+                  <Label htmlFor="weekly-progress" className="text-base font-medium">Weekly Progress Emails</Label>
+                  <p className="text-sm text-muted-foreground">Receive a summary of your performance and rank every week.</p>
+                </div>
+                <Switch id="weekly-progress" defaultChecked />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div>
+                    <Label htmlFor="new-events" className="text-base font-medium">New Event Alerts</Label>
+                    <p className="text-sm text-muted-foreground">Get notified when new games are available for prediction.</p>
+                </div>
+                <Switch id="new-events" defaultChecked />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div>
+                    <Label htmlFor="prediction-reminders" className="text-base font-medium">Prediction Reminders</Label>
+                    <p className="text-sm text-muted-foreground">Get a reminder before the prediction deadline for a game.</p>
+                </div>
+                <Switch id="prediction-reminders" />
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
   );
 }
-
-    

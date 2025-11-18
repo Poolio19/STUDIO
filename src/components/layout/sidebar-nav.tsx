@@ -28,7 +28,6 @@ const navItems = [
   { href: '/scoring', icon: 'scoring', label: 'Rules & Scoring' },
   { href: '/profile', icon: 'profile', label: 'Your Profile' },
   { href: '/predict', icon: 'predict', label: 'Your Prediction' },
-  { href: '/notifications', icon: 'notifications', label: 'Notifications' },
 ];
 
 export function SidebarNav() {
