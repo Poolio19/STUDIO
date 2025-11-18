@@ -99,8 +99,8 @@ export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers }: PlayerR
         className="absolute flex flex-col justify-between text-xs"
         style={{
           right: 0,
-          top: '-20px',
-          bottom: '0px',
+          top: '-25px',
+          bottom: '15px',
           width: '130px',
           paddingLeft: '1rem',
           border: '1px solid red',
