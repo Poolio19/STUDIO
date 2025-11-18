@@ -537,19 +537,30 @@ export const weeklyTeamStandings: WeeklyTeamStanding[] = teams.flatMap(team => {
     return weeklyRanks.reverse();
 });
 
-const generateRecentResults = (teamId: string, gamesPlayed: number, seed: number): ('W' | 'D' | 'L' | '-')[] => {
+const generateRecentResults = (teamId: string, standing: CurrentStanding | undefined, seed: number): ('W' | 'D' | 'L' | '-')[] => {
     const random = mulberry32(seed);
-    const results: ('W' | 'D' | 'L' | '-')[] = [];
-    const possibleResults: ('W' | 'D' | 'L')[] = ['W', 'D', 'L'];
+    const results: ('W' | 'D' | 'L' | '-')[] = Array(6).fill('-');
     
-    for (let i = 0; i < 6; i++) {
-        const week = gamesPlayed - 5 + i;
-        if (week >= 0) {
-            results.push(possibleResults[Math.floor(random() * 3)]);
-        } else {
-            results.push('-');
-        }
+    if (!standing) return results;
+
+    const { gamesPlayed, wins, draws, losses } = standing;
+
+    let matchResults: ('W' | 'D' | 'L')[] = [];
+    for (let i = 0; i < wins; i++) matchResults.push('W');
+    for (let i = 0; i < draws; i++) matchResults.push('D');
+    for (let i = 0; i < losses; i++) matchResults.push('L');
+
+    // Shuffle the results to make them appear in a random order
+    for (let i = matchResults.length - 1; i > 0; i--) {
+        const j = Math.floor(random() * (i + 1));
+        [matchResults[i], matchResults[j]] = [matchResults[j], matchResults[i]];
     }
+
+    const startIndex = Math.max(0, 6 - gamesPlayed);
+    for (let i = 0; i < gamesPlayed && i < 6; i++) {
+        results[startIndex + i] = matchResults[i];
+    }
+    
     return results;
 };
 
@@ -558,6 +569,6 @@ export const teamRecentResults: TeamRecentResult[] = teams.map((team, index) => 
     const standing = currentStandings.find(s => s.teamId === team.id);
     return {
         teamId: team.id,
-        results: generateRecentResults(team.id, standing?.gamesPlayed ?? 0, index + 500)
+        results: generateRecentResults(team.id, standing, index + 500)
     };
 });

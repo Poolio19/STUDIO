@@ -82,7 +82,10 @@ export default function StandingsPage() {
     };
 
     const gamesPlayed = currentStandings[0]?.gamesPlayed || 0;
-    const weekHeaders = Array.from({ length: 6 }, (_, i) => `WK${gamesPlayed - 5 + i}`);
+    const weekHeaders = Array.from({ length: 6 }, (_, i) => {
+        const week = gamesPlayed - 5 + i;
+        return week > 0 ? `WK${week}` : '';
+    }).filter(Boolean);
 
 
   return (
@@ -116,6 +119,7 @@ export default function StandingsPage() {
               </TableRow>
                <TableRow>
                  <TableHead colSpan={11}></TableHead>
+                {Array(6-weekHeaders.length).fill(0).map((_, i) => <TableHead key={`empty-${i}`} className="w-12"></TableHead>)}
                 {weekHeaders.map(header => <TableHead key={header} className="text-center w-12">{header}</TableHead>)}
               </TableRow>
             </TableHeader>
@@ -124,6 +128,8 @@ export default function StandingsPage() {
                 if (!team) return null;
                 const TeamIcon = Icons[team.logo as IconName] || Icons.match;
                 const isLiverpool = team.id === 'team_12';
+                const resultsToDisplay = team.recentResults.slice(-weekHeaders.length);
+
                 return (
                   <TableRow
                     key={team.id}
@@ -160,9 +166,16 @@ export default function StandingsPage() {
                     <TableCell className="text-center">{team.goalsFor}</TableCell>
                     <TableCell className="text-center">{team.goalsAgainst}</TableCell>
                     <TableCell className="text-center font-bold">{team.points}</TableCell>
-                    {team.recentResults.map((result, index) => (
-                      <TableCell key={index} className={cn("text-center font-bold p-0 w-12", index === 5 && 'rounded-r-md')}>
-                         <div className={cn("flex items-center justify-center h-10 w-full", getResultColor(result))}>
+                    {Array(6-resultsToDisplay.length).fill('-').map((_, index) => (
+                      <TableCell key={index} className={cn("text-center font-bold p-0 w-12")}>
+                         <div className={cn("flex items-center justify-center h-10 w-full", getResultColor('-'))}>
+                          -
+                        </div>
+                      </TableCell>
+                    ))}
+                    {resultsToDisplay.map((result, index) => (
+                      <TableCell key={index} className={cn("text-center font-bold p-0 w-12", index === resultsToDisplay.length - 1 && 'rounded-r-md')}>
+                         <div className={cn("flex items-center justify-center h-10 w-full", getResultColor(result), index === resultsToDisplay.length - 1 && 'rounded-r-md')}>
                           {result}
                         </div>
                       </TableCell>
