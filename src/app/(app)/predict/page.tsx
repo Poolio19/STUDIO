@@ -173,7 +173,7 @@ export default function PredictPage() {
                             return (
                               <TableRow
                                 key={team.id}
-                                className="h-[53px] border-b-4 border-transparent"
+                                className="h-[53px]"
                                 style={{
                                   backgroundColor: team.bgColourFaint,
                                   color: team.textColour,
