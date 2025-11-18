@@ -260,8 +260,8 @@ const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed:
 
 
         if (originalRank <= 4) maxPerturbation = 3;
-        else if (originalRank <= 10) maxPerturbation = 5;
-        else maxPerturbation = 7;
+        else if (originalRank <= 12) maxPerturbation = 9;
+        else maxPerturbation = 12;
         
         perturbation = Math.round((bellCurveRandom + bias) * maxPerturbation);
 
