@@ -53,13 +53,13 @@ export default function MostImprovedPage() {
 
   const ladderData = useMemo(() => {
     const regularPlayersSorted = users
-      .filter(u => !u.isPro && u.rankChange > 0)
-      .sort((a, b) => b.rankChange - a.rankChange || a.rank - b.rank);
+      .filter(u => !u.isPro && u.rankChange < 0)
+      .sort((a, b) => a.rankChange - b.rankChange || a.rank - b.rank);
       
     let rank = 0;
-    let lastRankChange = Infinity;
+    let lastRankChange = -Infinity;
     const rankedUsers = regularPlayersSorted.map((user, index) => {
-      if (user.rankChange < lastRankChange) {
+      if (user.rankChange > lastRankChange) {
         rank = index + 1;
         lastRankChange = user.rankChange;
       }
@@ -67,7 +67,7 @@ export default function MostImprovedPage() {
     });
     
     const firstPlaceRankChange = rankedUsers[0]?.rankChange;
-    const secondPlaceRankChange = rankedUsers.find(u => u.rankChange < firstPlaceRankChange!)?.rankChange;
+    const secondPlaceRankChange = rankedUsers.find(u => u.rankChange > firstPlaceRankChange!)?.rankChange;
 
     return { ladderWithRanks: rankedUsers, firstPlaceRankChange, secondPlaceRankChange };
   }, [users]);
@@ -144,8 +144,8 @@ export default function MostImprovedPage() {
   }, [users, currentMonthName, currentYear, ladderData]);
 
   const getLadderRankColor = (user: (typeof ladderData.ladderWithRanks)[0]) => {
-    if (user.rankChange > 0 && user.rankChange === ladderData.firstPlaceRankChange) return 'bg-yellow-400/20';
-    if (user.rankChange > 0 && user.rankChange === ladderData.secondPlaceRankChange) return 'bg-slate-400/20';
+    if (user.rankChange < 0 && user.rankChange === ladderData.firstPlaceRankChange) return 'bg-yellow-400/20';
+    if (user.rankChange < 0 && user.rankChange === ladderData.secondPlaceRankChange) return 'bg-slate-400/20';
     return '';
   };
 
