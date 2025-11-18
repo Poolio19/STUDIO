@@ -22,39 +22,50 @@ import { TeamStandingsChart } from '@/components/charts/team-standings-chart';
 import { useMemo } from 'react';
 
 export default function StandingsPage() {
-    const standingsWithTeamData = useMemo(() => {
+    const { standingsWithTeamData, chartData } = useMemo(() => {
         const initialData = currentStandings
             .map(standing => {
                 const team = teams.find(t => t.id === standing.teamId);
                 return team ? { 
                     ...standing, 
                     ...team,
-                    // The user's brilliant sorting trick!
                     sortValue: standing.points + (standing.goalDifference / 100) + (standing.goalsFor / 1000)
                 } : null;
             })
             .filter(Boolean);
 
-        // Sort based on the new composite sortValue
         const sortedData = initialData.sort((a, b) => {
             if (!a || !b) return 0;
             return b.sortValue - a.sortValue;
         });
         
-        // Correctly assign ranks, handling ties
         let rank = 1;
         const finalStandings = sortedData.map((team, index) => {
             if (index > 0) {
                 const prevTeam = sortedData[index - 1]!;
-                // Increment rank only if there's a difference in points, GD, or GF
-                if (team!.points !== prevTeam.points || team!.goalDifference !== prevTeam.goalDifference || team!.goalsFor !== prevTeam.goalsFor) {
+                if (team!.sortValue !== prevTeam.sortValue) {
                     rank = index + 1;
                 }
             }
             return { ...team!, rank: rank };
         });
 
-        return finalStandings;
+        // Transform data for the chart
+        const weeks = [...new Set(weeklyTeamStandings.map(d => d.week))].sort((a, b) => a - b);
+        const transformedChartData = weeks.map(week => {
+            const weekData: { [key: string]: any } = { week };
+            weeklyTeamStandings
+                .filter(d => d.week === week)
+                .forEach(standing => {
+                    const team = teams.find(t => t.id === standing.teamId);
+                    if (team) {
+                        weekData[team.name] = standing.rank;
+                    }
+                });
+            return weekData;
+        });
+
+        return { standingsWithTeamData: finalStandings, chartData: transformedChartData };
     }, []);
 
   return (
@@ -64,7 +75,7 @@ export default function StandingsPage() {
         <p className="text-muted-foreground">The official Premier League table and weekly position tracker.</p>
       </header>
 
-      <TeamStandingsChart chartData={weeklyTeamStandings} sortedTeams={standingsWithTeamData} />
+      <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData} />
 
       <Card>
         <CardHeader>

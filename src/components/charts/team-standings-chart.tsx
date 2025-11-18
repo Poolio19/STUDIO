@@ -19,17 +19,13 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
+  ChartContainer
 } from '@/components/ui/chart';
-import { Team, WeeklyTeamStanding } from '@/lib/data';
+import { Team } from '@/lib/data';
 import * as React from 'react';
 
-type ChartData = WeeklyTeamStanding;
-
 interface TeamStandingsChartProps {
-  chartData: ChartData[];
+  chartData: any[];
   sortedTeams: (Team & { rank: number })[];
 }
 
@@ -37,13 +33,22 @@ export function TeamStandingsChart({
   chartData,
   sortedTeams,
 }: TeamStandingsChartProps) {
-  const allWeeks = [...new Set(chartData.map(d => d.week))].sort((a, b) => a - b);
+
+  const chartConfig = React.useMemo(() => {
+    return sortedTeams.reduce((config, team) => {
+      config[team.name] = {
+        label: team.name,
+        color: `hsl(var(--chart-color-${team.rank}))`,
+      };
+      return config;
+    }, {} as any);
+  }, [sortedTeams]);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const week = `Wk ${label}`;
       const sortedPayload = [...payload].sort(
-        (a, b) => a.payload.rank - b.payload.rank
+        (a, b) => a.value - b.value
       );
 
       return (
@@ -51,15 +56,13 @@ export function TeamStandingsChart({
           <p className="mb-2 font-medium">{week}</p>
           <div className="grid grid-cols-1 gap-1.5">
             {sortedPayload.map((pld: any, index: number) => {
-              const team = sortedTeams.find(t => t.id === pld.payload.teamId);
-              if (!team) return null;
               return (
                 <div key={index} className="flex items-center gap-2">
                   <div
                     className="size-2.5 rounded-sm"
-                    style={{ backgroundColor: `hsl(var(--chart-color-${team.rank}))` }}
+                    style={{ backgroundColor: chartConfig[pld.name]?.color }}
                   ></div>
-                  <span className="font-medium">{team.name}:</span>
+                  <span className="font-medium">{pld.name}:</span>
                   <span className="text-muted-foreground">Rank {pld.value}</span>
                 </div>
               );
@@ -75,13 +78,14 @@ export function TeamStandingsChart({
     <Card>
       <CardHeader>
         <CardTitle>Weekly Standings Tracker</CardTitle>
-        <CardDescription>Team positions over the last {allWeeks.length} weeks.</CardDescription>
+        <CardDescription>Team positions over the last {chartData.length} weeks.</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="relative">
-          <ChartContainer config={{}} className="h-[700px] w-full">
+          <ChartContainer config={chartConfig} className="h-[700px] w-full">
             <ResponsiveContainer>
               <LineChart
+                data={chartData}
                 margin={{
                   top: 20,
                   right: 130,
@@ -94,7 +98,6 @@ export function TeamStandingsChart({
                   dataKey="week"
                   type="number"
                   domain={['dataMin', 'dataMax']}
-                  ticks={allWeeks}
                   tickFormatter={value => `Wk ${value}`}
                   tickLine={false}
                   axisLine={false}
@@ -109,23 +112,17 @@ export function TeamStandingsChart({
                   tickCount={20}
                 />
                 <Tooltip content={<CustomTooltip />} />
-                {sortedTeams.map(team => {
-                  const teamData = chartData.filter(
-                    d => d.teamId === team.id
-                  );
-                  return (
+                {sortedTeams.map(team => (
                     <Line
                       key={team.id}
-                      data={teamData}
-                      dataKey="rank"
+                      dataKey={team.name}
                       type="monotone"
-                      stroke={`hsl(var(--chart-color-${team.rank}))`}
+                      stroke={chartConfig[team.name]?.color}
                       strokeWidth={3}
                       dot={false}
                       name={team.name}
                     />
-                  );
-                })}
+                ))}
               </LineChart>
             </ResponsiveContainer>
           </ChartContainer>
@@ -144,7 +141,7 @@ export function TeamStandingsChart({
               <li key={team.id} className="flex items-center space-x-2">
                 <span
                   className="size-2 rounded-full"
-                  style={{ backgroundColor: `hsl(var(--chart-color-${team.rank}))` }}
+                  style={{ backgroundColor: chartConfig[team.name]?.color }}
                 ></span>
                 <span>{team.name}</span>
               </li>
