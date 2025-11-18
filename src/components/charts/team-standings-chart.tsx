@@ -86,9 +86,8 @@ export function TeamStandingsChart({
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="items-center">
         <CardTitle>Team Movement 2025-2026</CardTitle>
-        <CardDescription>Team positions over the last {chartData.length} weeks.</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="relative">
@@ -97,10 +96,10 @@ export function TeamStandingsChart({
               <LineChart
                 data={chartData}
                 margin={{
-                  top: 20,
+                  top: 30,
                   right: 130,
                   left: -20,
-                  bottom: 20,
+                  bottom: 5,
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -112,6 +111,7 @@ export function TeamStandingsChart({
                   tickLine={false}
                   axisLine={false}
                   tickMargin={8}
+                  orientation="top"
                 />
                 <YAxis
                   tickLine={false}
