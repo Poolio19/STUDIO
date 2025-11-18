@@ -72,7 +72,7 @@ export default function StandingsPage() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Premier League Standings</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Premier League</h1>
         <p className="text-muted-foreground">The official Premier League table and weekly position tracker.</p>
       </header>
 
@@ -104,7 +104,7 @@ export default function StandingsPage() {
                 if (!team) return null;
                 const TeamIcon = Icons[team.logo as IconName] || Icons.match;
                 return (
-                  <TableRow key={team.id} className={cn(team.bgColour, team.textColour)}>
+                  <TableRow key={team.id} className={cn(team.bgColour, team.textColour, 'border-b-white/20')}>
                     <TableCell className="font-medium">{team.rank}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">

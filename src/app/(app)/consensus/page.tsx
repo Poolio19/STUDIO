@@ -101,9 +101,9 @@ export default function ConsensusPage() {
                   if (!predictionCounts) return null; // guard against missing data
                   const totalPredictions = predictionCounts.reduce((sum, count) => sum + count, 0);
                   return (
-                    <TableRow key={teamId}>
-                      <TableCell className="sticky left-0 z-10 bg-card text-center font-medium">{index + 1}</TableCell>
-                      <TableCell className="sticky left-[50px] z-10 bg-card">
+                    <TableRow key={teamId} className={cn('border-b-white/20', teamData.bgColour, teamData.textColour)}>
+                      <TableCell className={cn("sticky left-0 z-10 text-center font-medium", teamData.bgColour, teamData.textColour)}>{index + 1}</TableCell>
+                      <TableCell className={cn("sticky left-[50px] z-10", teamData.bgColour, teamData.textColour)}>
                         <div className="flex items-center gap-3">
                           <TeamIcon className={cn("size-5", teamData.colour)} />
                           <span className="font-medium">{teamData.name}</span>

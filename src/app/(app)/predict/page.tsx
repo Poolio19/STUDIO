@@ -127,7 +127,7 @@ export default function PredictPage() {
                             index < items.length - 1 && "border-b border-white/20"
                           )}
                         >
-                          <div className={cn("text-base font-medium w-6 text-center", item.textColour ? `${item.textColour}/80` : 'text-muted-foreground')}>
+                          <div className={cn("text-base font-medium w-6 text-center opacity-80")}>
                             {index + 1}
                           </div>
                           <TeamIcon className={cn("size-5", item.teamColour)} />
@@ -154,7 +154,7 @@ export default function PredictPage() {
                             const TeamIcon = Icons[team.logo as IconName] || Icons.match;
                             return (
                               <TableRow key={team.id} className={cn("h-[53px] border-b-white/20", team.bgColour, team.textColour)}>
-                                <TableCell className={cn("font-medium w-[50px]", team.textColour ? `${team.textColour}/80` : '')}>{team.rank}</TableCell>
+                                <TableCell className={cn("font-medium w-[50px] opacity-80")}>{team.rank}</TableCell>
                                 <TableCell>
                                   <div className="flex items-center gap-2">
                                     <TeamIcon className={cn("size-5", team.colour)} />
