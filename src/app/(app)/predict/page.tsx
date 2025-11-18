@@ -33,10 +33,6 @@ const predictionSchema = z.object({
   id: z.string(), // Add id to schema
 });
 
-const formSchema = z.object({
-  predictions: z.array(predictionSchema),
-});
-
 type Prediction = z.infer<typeof predictionSchema>;
 
 export default function PredictPage() {
