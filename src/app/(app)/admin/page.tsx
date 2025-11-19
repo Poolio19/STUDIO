@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore } from '@/firebase';
-import { writeBatch, doc, collection } from 'firebase/firestore';
+import { writeBatch, doc } from 'firebase/firestore';
 import { importData } from '@/ai/flows/import-data-flow';
 import { Loader2 } from 'lucide-react';
 
@@ -41,69 +41,69 @@ export default function AdminPage() {
       const batch = writeBatch(firestore);
 
       // Users
-      dataToImport.users.forEach((user) => {
+      dataToImport.users.forEach((user: any) => {
         const userRef = doc(firestore, 'users', user.id);
         batch.set(userRef, user);
       });
 
       // Teams
-      dataToImport.teams.forEach((team) => {
+      dataToImport.teams.forEach((team: any) => {
         const teamRef = doc(firestore, 'teams', team.id);
         batch.set(teamRef, team);
       });
       
       // Standings
-      dataToImport.currentStandings.forEach((standing) => {
-        const standingRef = doc(collection(firestore, 'standings'), standing.teamId);
+      dataToImport.currentStandings.forEach((standing: any) => {
+        const standingRef = doc(firestore, 'standings', standing.teamId);
         batch.set(standingRef, standing);
       });
 
       // Previous Season Standings
-      dataToImport.previousSeasonStandings.forEach((standing) => {
-        const prevStandingRef = doc(collection(firestore, 'previousSeasonStandings'), standing.teamId);
+      dataToImport.previousSeasonStandings.forEach((standing: any) => {
+        const prevStandingRef = doc(firestore, 'previousSeasonStandings', standing.teamId);
         batch.set(prevStandingRef, standing);
       });
 
       // Predictions
-      dataToImport.predictions.forEach((prediction) => {
+      dataToImport.predictions.forEach((prediction: any) => {
         const predRef = doc(firestore, 'predictions', prediction.userId);
         batch.set(predRef, prediction);
       });
 
       // Player Team Scores
-      dataToImport.playerTeamScores.forEach((score) => {
-        const scoreRef = doc(collection(firestore, 'playerTeamScores'));
-        batch.set(scoreRef, {...score, id: scoreRef.id });
+      dataToImport.playerTeamScores.forEach((score: any) => {
+        const scoreRef = doc(firestore, 'playerTeamScores', `${score.userId}_${score.teamId}`);
+        batch.set(scoreRef, score);
       });
 
       // User Histories
-      dataToImport.userHistories.forEach((history) => {
+      dataToImport.userHistories.forEach((history: any) => {
           const historyRef = doc(firestore, 'userHistories', history.userId);
           batch.set(historyRef, history);
       });
       
       // Weekly Team Standings
-      dataToImport.weeklyTeamStandings.forEach((item) => {
-          const itemRef = doc(collection(firestore, 'weeklyTeamStandings'));
-          batch.set(itemRef, {...item, id: itemRef.id});
+      dataToImport.weeklyTeamStandings.forEach((item: any) => {
+          const itemRef = doc(firestore, 'weeklyTeamStandings', `${item.teamId}_${item.week}`);
+          batch.set(itemRef, item);
       });
 
       // Team Recent Results
-      dataToImport.teamRecentResults.forEach((item) => {
-          const itemRef = doc(collection(firestore, 'teamRecentResults'));
-          batch.set(itemRef, {...item, id: itemRef.id});
+      dataToImport.teamRecentResults.forEach((item: any) => {
+          const itemRef = doc(firestore, 'teamRecentResults', item.teamId);
+          batch.set(itemRef, item);
       });
       
       // Monthly MiMoM
-      dataToImport.monthlyMimoM.forEach((item) => {
-          const itemRef = doc(collection(firestore, 'monthlyMimoM'));
-          batch.set(itemRef, {...item, id: itemRef.id});
+      dataToImport.monthlyMimoM.forEach((item: any) => {
+          const itemRef = doc(firestore, 'monthlyMimoM', item.id);
+          batch.set(itemRef, item);
       });
 
       // Season Months
-      dataToImport.seasonMonths.forEach((item) => {
-          const itemRef = doc(collection(firestore, 'seasonMonths'));
-          batch.set(itemRef, {...item, id: itemRef.id});
+      dataToImport.seasonMonths.forEach((item: any) => {
+          const itemRef = doc(firestore, 'seasonMonths', item.id);
+          batch.set(itemRef, item);
       });
 
       await batch.commit();

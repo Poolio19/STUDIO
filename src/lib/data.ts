@@ -63,13 +63,12 @@ export type CurrentStanding = {
 };
 
 export type TeamRecentResult = {
-  id: string; // Add id to satisfy useCollection
   teamId: string;
   results: ('W' | 'D' | 'L' | '-')[];
 };
 
 export type MonthlyMimoM = {
-  id: string; // Add id to satisfy useCollection
+  id: string;
   month: string;
   year: number;
   userId: string;
@@ -78,7 +77,7 @@ export type MonthlyMimoM = {
 };
 
 export type SeasonMonth = {
-    id: string; // Add id to satisfy useCollection
+    id: string;
     month: string;
     year: number;
     special?: string;
@@ -86,7 +85,6 @@ export type SeasonMonth = {
 }
 
 export type PlayerTeamScore = {
-    id: string; // Add id to satisfy useCollection
     userId: string;
     teamId: string;
     score: number;
@@ -104,7 +102,6 @@ export type UserHistory = {
 };
 
 export type WeeklyTeamStanding = {
-    id: string; // Add id to satisfy useCollection
     week: number;
     teamId: string;
     rank: number;
@@ -328,7 +325,7 @@ export const predictions: Prediction[] = usersData.map((user, index) => {
     };
 });
 
-const generateScoresForUser = (userId: string, userPredictions: string[]): Omit<PlayerTeamScore, 'id'>[] => {
+const generateScoresForUser = (userId: string, userPredictions: string[]): PlayerTeamScore[] => {
     const actualRanks = new Map<string, number>();
     previousSeasonStandings.forEach(s => actualRanks.set(s.teamId, s.rank));
     
@@ -347,7 +344,7 @@ const generateScoresForUser = (userId: string, userPredictions: string[]): Omit<
     });
 };
 
-export const playerTeamScores: Omit<PlayerTeamScore, 'id'>[] = usersData.flatMap(user => {
+export const playerTeamScores: PlayerTeamScore[] = usersData.flatMap(user => {
     const userPrediction = predictions.find(p => p.userId === user.id);
     return generateScoresForUser(user.id, userPrediction?.rankings || []);
 });
@@ -519,13 +516,13 @@ export const users: User[] = sortedFinalUsers;
 const TOTAL_CHART_WEEKS = 6;
 const currentWeekNumber = currentStandings[0]?.gamesPlayed || 1;
 
-export const weeklyTeamStandings: Omit<WeeklyTeamStanding, 'id'>[] = teams.flatMap(team => {
+export const weeklyTeamStandings: WeeklyTeamStanding[] = teams.flatMap(team => {
     const seed = parseInt(team.id.replace('team_', ''), 10);
     if (isNaN(seed)) return []; // guard against invalid team IDs
     const random = mulberry32(seed);
     const finalRank = currentStandings.find(s => s.teamId === team.id)?.rank || 10;
     
-    const weeklyRanks: Omit<WeeklyTeamStanding, 'id'>[] = [];
+    const weeklyRanks: WeeklyTeamStanding[] = [];
     
     let lastRank = finalRank;
     for (let i = 0; i < TOTAL_CHART_WEEKS; i++) {
@@ -572,7 +569,7 @@ const generateRecentResults = (teamId: string, standing: CurrentStanding | undef
 };
 
 
-export const teamRecentResults: Omit<TeamRecentResult, 'id'>[] = teams.map((team, index) => {
+export const teamRecentResults: TeamRecentResult[] = teams.map((team, index) => {
     const standing = currentStandings.find(s => s.teamId === team.id);
     return {
         teamId: team.id,
