@@ -17,12 +17,10 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
-import { Team, Prediction, CurrentStanding } from '@/lib/data';
+import { Team, Prediction, CurrentStanding, teams, currentStandings, predictions as userPredictions } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
 import { cn } from '@/lib/utils';
-import { useMemo } from 'react';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useMemo, useState, useEffect } from 'react';
 
 type ConsensusData = {
   [teamId: string]: number[];
@@ -31,16 +29,12 @@ type ConsensusData = {
 const lightTextColours = ['#FFFFFF', '#FBE122', '#99D6EA', '#FDBE11'];
 
 export default function ConsensusPage() {
-  const firestore = useFirestore();
-  const teamsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
-  const standingsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'standings') : null, [firestore]);
-  const predictionsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'predictions') : null, [firestore]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsCollectionRef);
-  const { data: currentStandings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsCollectionRef);
-  const { data: userPredictions, isLoading: predictionsLoading } = useCollection<Prediction>(predictionsCollectionRef);
-
-  const isLoading = teamsLoading || standingsLoading || predictionsLoading;
+  useEffect(() => {
+    // Simulate data loading
+    setTimeout(() => setIsLoading(false), 500);
+  }, []);
 
   const standingsWithTeamData = useMemo(() => {
     if (!teams || !currentStandings) return [];
@@ -52,7 +46,7 @@ export default function ConsensusPage() {
       })
       .filter((team): team is Team & { rank: number } => !!team)
       .sort((a, b) => a.rank - b.rank);
-  }, [teams, currentStandings]);
+  }, []);
 
   const consensusData = useMemo((): ConsensusData | null => {
     if (!teams || !userPredictions) return null;
@@ -72,7 +66,7 @@ export default function ConsensusPage() {
     });
 
     return data;
-  }, [teams, userPredictions]);
+  }, []);
 
   const positions = Array.from({ length: 20 }, (_, i) => i + 1);
 

@@ -12,29 +12,23 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
-import { useMemo } from 'react';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
-import { User, Team, PlayerTeamScore } from '@/lib/data';
+import { useMemo, useState, useEffect } from 'react';
+import { User, Team, PlayerTeamScore, users, teams, playerTeamScores } from '@/lib/data';
 
 const getAvatarUrl = (avatarId: string) => {
   return PlaceHolderImages.find((img) => img.id === avatarId)?.imageUrl || '';
 };
 
 export default function StatsPage() {
-  const firestore = useFirestore();
-  const usersCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
-  const teamsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
-  const playerTeamScoresCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'playerTeamScores') : null, [firestore]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { data: users, isLoading: usersLoading } = useCollection<User>(usersCollectionRef);
-  const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsCollectionRef);
-  const { data: playerTeamScores, isLoading: playerTeamScoresLoading } = useCollection<PlayerTeamScore>(playerTeamScoresCollectionRef);
+  useEffect(() => {
+    // Simulate data loading
+    setTimeout(() => setIsLoading(false), 500);
+  }, []);
   
   const sortedUsers = useMemo(() => users ? [...users].sort((a, b) => (a.rank || 0) - (b.rank || 0)) : [], [users]);
   const sortedTeams = useMemo(() => teams ? [...teams].sort((a, b) => a.name.localeCompare(b.name)) : [], [teams]);
-
-  const isLoading = usersLoading || teamsLoading || playerTeamScoresLoading;
 
   const getScoreColour = (score: number) => {
     if (score === 5) return 'bg-green-200/50 dark:bg-green-800/50 font-bold';

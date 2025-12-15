@@ -10,120 +10,31 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore } from '@/firebase';
-import { writeBatch, doc } from 'firebase/firestore';
-import { importData } from '@/ai/flows/import-data-flow';
 import { Loader2 } from 'lucide-react';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { ShieldAlert } from 'lucide-react';
+
 
 export default function AdminPage() {
   const { toast } = useToast();
-  const firestore = useFirestore();
   const [isLoading, setIsLoading] = React.useState(false);
 
   const handleDataImport = async () => {
-    if (!firestore) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Firestore is not available.',
-      });
-      return;
-    }
-
     setIsLoading(true);
     toast({
-      title: 'Starting Data Import...',
-      description: 'Please wait while we populate the database.',
+      title: 'Simulating Data Import...',
+      description: 'In a real app, this would populate the database.',
     });
 
-    try {
-      const dataToImport = await importData();
-      const batch = writeBatch(firestore);
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Users
-      dataToImport.users.forEach((user: any) => {
-        const userRef = doc(firestore, 'users', user.id);
-        batch.set(userRef, user);
-      });
-
-      // Teams
-      dataToImport.teams.forEach((team: any) => {
-        const teamRef = doc(firestore, 'teams', team.id);
-        batch.set(teamRef, team);
-      });
-      
-      // Standings
-      dataToImport.currentStandings.forEach((standing: any) => {
-        const standingRef = doc(firestore, 'standings', standing.teamId);
-        batch.set(standingRef, standing);
-      });
-
-      // Previous Season Standings
-      dataToImport.previousSeasonStandings.forEach((standing: any) => {
-        const prevStandingRef = doc(firestore, 'previousSeasonStandings', standing.teamId);
-        batch.set(prevStandingRef, standing);
-      });
-
-      // Predictions
-      dataToImport.predictions.forEach((prediction: any) => {
-        const predRef = doc(firestore, 'predictions', prediction.userId);
-        batch.set(predRef, prediction);
-      });
-
-      // Player Team Scores
-      dataToImport.playerTeamScores.forEach((score: any) => {
-        const scoreRef = doc(firestore, 'playerTeamScores', `${score.userId}_${score.teamId}`);
-        batch.set(scoreRef, score);
-      });
-
-      // User Histories
-      dataToImport.userHistories.forEach((history: any) => {
-          const historyRef = doc(firestore, 'userHistories', history.userId);
-          batch.set(historyRef, history);
-      });
-      
-      // Weekly Team Standings
-      dataToImport.weeklyTeamStandings.forEach((item: any) => {
-          const itemRef = doc(firestore, 'weeklyTeamStandings', `${item.teamId}_${item.week}`);
-          batch.set(itemRef, item);
-      });
-
-      // Team Recent Results
-      dataToImport.teamRecentResults.forEach((item: any) => {
-          const itemRef = doc(firestore, 'teamRecentResults', item.teamId);
-          batch.set(itemRef, item);
-      });
-      
-      // Monthly MiMoM
-      dataToImport.monthlyMimoM.forEach((item: any) => {
-          const itemRef = doc(firestore, 'monthlyMimoM', item.id);
-          batch.set(itemRef, item);
-      });
-
-      // Season Months
-      dataToImport.seasonMonths.forEach((item: any) => {
-          const itemRef = doc(firestore, 'seasonMonths', item.id);
-          batch.set(itemRef, item);
-      });
-
-      await batch.commit();
-
-      toast({
-        title: 'Import Successful!',
+    setIsLoading(false);
+    toast({
+        title: 'Simulation Complete!',
         description:
           'The database has been populated with the latest data.',
       });
-    } catch (error) {
-      console.error('Data import failed:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Import Failed',
-        description:
-          'Something went wrong during the data import. Check the console for details.',
-      });
-    } finally {
-        setIsLoading(false);
-    }
   };
 
   return (
@@ -139,19 +50,25 @@ export default function AdminPage() {
         <CardHeader>
           <CardTitle>Data Import</CardTitle>
           <CardDescription>
-            Use this tool to fetch the latest data and populate your Firestore
-            database. This action will overwrite existing data.
+            Use this tool to fetch the latest data and populate your database. This action will overwrite existing data.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Button onClick={handleDataImport} disabled={isLoading}>
+        <CardContent className="space-y-4">
+            <Alert variant="destructive">
+                <ShieldAlert className="h-4 w-4" />
+                <AlertTitle>Local Data Mode</AlertTitle>
+                <AlertDescription>
+                    The application is currently running in local data mode. The data import functionality is disabled as it requires a server connection.
+                </AlertDescription>
+            </Alert>
+          <Button onClick={handleDataImport} disabled={true}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Importing...
               </>
             ) : (
-              'Import Live Data'
+              'Import Live Data (Disabled)'
             )}
           </Button>
         </CardContent>

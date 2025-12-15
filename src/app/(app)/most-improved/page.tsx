@@ -21,13 +21,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { type User, CurrentStanding, MonthlyMimoM, SeasonMonth } from '@/lib/data';
+import { type User, CurrentStanding, MonthlyMimoM, SeasonMonth, users, currentStandings, monthlyMimoM, seasonMonths } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
 
 
 const getAvatarUrl = (avatarId: string) => {
@@ -53,18 +51,12 @@ const formatPointsChange = (change: number) => {
 }
 
 export default function MostImprovedPage() {
-  const firestore = useFirestore();
-  const usersCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
-  const standingsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'standings') : null, [firestore]);
-  const monthlyMimoMCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore]);
-  const seasonMonthsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'seasonMonths') : null, [firestore]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { data: users, isLoading: usersLoading } = useCollection<User>(usersCollectionRef);
-  const { data: currentStandings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsCollectionRef);
-  const { data: monthlyMimoM, isLoading: monthlyMimoMLoading } = useCollection<MonthlyMimoM>(monthlyMimoMCollectionRef);
-  const { data: seasonMonths, isLoading: seasonMonthsLoading } = useCollection<SeasonMonth>(seasonMonthsCollectionRef);
-
-  const isLoading = usersLoading || standingsLoading || monthlyMimoMLoading || seasonMonthsLoading;
+  useEffect(() => {
+    // Simulate data loading
+    setTimeout(() => setIsLoading(false), 500);
+  }, []);
 
   const currentWeek = currentStandings?.[0]?.gamesPlayed || 1;
   

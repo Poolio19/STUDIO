@@ -12,10 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Icons, IconName } from '@/components/icons';
 import { Reorder } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, setDoc } from 'firebase/firestore';
-import { Team, PreviousSeasonStanding } from '@/lib/data';
-import { useUser } from '@/firebase';
+import { Team, PreviousSeasonStanding, teams, previousSeasonStandings } from '@/lib/data';
 
 const predictionSchema = z.object({
   teamId: z.string(),
@@ -36,15 +33,12 @@ type Prediction = z.infer<typeof predictionSchema>;
 
 export default function PredictPage() {
   const { toast } = useToast();
-  const { user } = useUser();
-  const firestore = useFirestore();
-  const teamsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
-  const previousStandingsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'previousSeasonStandings') : null, [firestore]);
+  const [isLoading, setIsLoading] = React.useState(true);
   
-  const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsCollectionRef);
-  const { data: previousSeasonStandings, isLoading: prevStandingsLoading } = useCollection<PreviousSeasonStanding>(previousStandingsCollectionRef);
-
-  const isLoading = teamsLoading || prevStandingsLoading;
+  React.useEffect(() => {
+    // Simulate data loading
+    setTimeout(() => setIsLoading(false), 500);
+  }, []);
 
   const sortedTeamsByPreviousRank = React.useMemo(() => {
     if (!teams || !previousSeasonStandings) return [];
@@ -88,32 +82,17 @@ export default function PredictPage() {
   }, [items, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || !firestore) {
-        toast({ title: "Error", description: "You must be logged in to make a prediction."});
-        return;
-    }
-
-    const predictionData = {
-        userId: user.uid,
+    // Since we are in local mode, we'll just show a toast and log the data.
+    console.log('Prediction submitted:', {
+        userId: 'local_user',
         rankings: values.predictions.map(p => p.teamId),
         createdAt: new Date(),
-    };
+    });
 
-    try {
-        const predictionDocRef = doc(firestore, 'predictions', user.uid);
-        await setDoc(predictionDocRef, predictionData, { merge: true });
-        toast({
-            title: 'Season Predictions Submitted!',
-            description: 'Your final standings prediction has been saved. Good luck!',
-        });
-    } catch (error) {
-        console.error("Error saving prediction: ", error);
-        toast({
-            variant: "destructive",
-            title: 'Submission Failed',
-            description: 'There was an error saving your prediction. Please try again.',
-        });
-    }
+    toast({
+        title: 'Season Predictions Submitted!',
+        description: 'Your final standings prediction has been saved locally. Good luck!',
+    });
   }
 
   const standingsWithTeamData = React.useMemo(() => {

@@ -41,7 +41,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { Team, UserHistory, MonthlyMimoM } from '@/lib/data';
+import { Team, User, UserHistory, MonthlyMimoM, users, teams, userHistories, monthlyMimoM } from '@/lib/data';
 import { ProfilePerformanceChart } from '@/components/charts/profile-performance-chart';
 import React from 'react';
 import { Label } from '@/components/ui/label';
@@ -53,12 +53,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
-import { doc, collection, writeBatch, setDoc } from 'firebase/firestore';
-import { FirestorePermissionError } from '@/firebase/errors';
-import { errorEmitter } from '@/firebase/error-emitter';
-
-import { users as staticUsers, teams as staticTeams, currentStandings as staticStandings, previousSeasonStandings as staticPrevStandings, userHistories as staticUserHistories, monthlyMimoM as staticMonthlyMimoM, teamRecentResults as staticTeamRecentResults, seasonMonths as staticSeasonMonths, weeklyTeamStandings as staticWeeklyTeamStandings, playerTeamScores as staticPlayerTeamScores, predictions as staticPredictions } from '@/lib/data';
 
 
 const profileFormSchema = z.object({
@@ -81,22 +75,17 @@ const profileFormSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
+// Mock current user - in a real app this would come from an auth hook
+const currentUserId = 'usr_1';
+
 export default function ProfilePage() {
   const { toast } = useToast();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
-  const { user: authUser, isUserLoading: isAuthUserLoading } = useUser();
-  const firestore = useFirestore();
+  const [isLoading, setIsLoading] = React.useState(true);
 
-  const userDocRef = useMemoFirebase(() => (firestore && authUser) ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
-  const userHistoryDocRef = useMemoFirebase(() => (firestore && authUser) ? doc(firestore, 'userHistories', authUser.uid) : null, [firestore, authUser]);
-  const monthlyMimoMCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore]);
-  const teamsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
-  
-  const { data: user, isLoading: isUserLoading } = useDoc(userDocRef);
-  const { data: userHistory, isLoading: isHistoryLoading } = useDoc<UserHistory>(userHistoryDocRef);
-  const { data: monthlyMimoM, isLoading: isMimoMLoading } = useCollection<MonthlyMimoM>(monthlyMimoMCollectionRef);
-  const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsCollectionRef);
+  const user = React.useMemo(() => users.find(u => u.id === currentUserId), []);
+  const userHistory = React.useMemo(() => userHistories.find(h => h.userId === currentUserId), []);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -104,15 +93,19 @@ export default function ProfilePage() {
   });
 
   React.useEffect(() => {
-    if (user) {
-      form.reset({
-        name: user.name || '',
-        email: user.email || '',
-        dob: user.joinDate ? new Date(user.joinDate) : new Date(),
-        country: 'United Kingdom', // Example value
-        favouriteTeam: 'team_1' // Example value
-      });
-    }
+    // Simulate loading
+    setTimeout(() => {
+        if (user) {
+          form.reset({
+            name: user.name || '',
+            email: user.email || 'alex@example.com',
+            dob: user.joinDate ? new Date(user.joinDate) : new Date('1990-01-01'),
+            country: 'United Kingdom', // Example value
+            favouriteTeam: 'team_1' // Example value
+          });
+        }
+        setIsLoading(false);
+    }, 500);
   }, [user, form]);
 
 
@@ -173,8 +166,6 @@ export default function ProfilePage() {
       });
     }
   };
-
-  const isLoading = isAuthUserLoading || isUserLoading || isHistoryLoading || isMimoMLoading || teamsLoading;
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-full">Loading profile...</div>;

@@ -15,28 +15,20 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { TeamRecentResult, WeeklyTeamStanding } from '@/lib/data';
+import { TeamRecentResult, WeeklyTeamStanding, teams, currentStandings, weeklyTeamStandings, teamRecentResults } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
 import { TeamStandingsChart } from '@/components/charts/team-standings-chart';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
 import { Team, CurrentStanding } from '@/lib/data';
 
 export default function StandingsPage() {
-    const firestore = useFirestore();
-    const teamsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
-    const standingsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'standings') : null, [firestore]);
-    const weeklyTeamStandingsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'weeklyTeamStandings') : null, [firestore]);
-    const teamRecentResultsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'teamRecentResults') : null, [firestore]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsCollectionRef);
-    const { data: currentStandings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsCollectionRef);
-    const { data: weeklyTeamStandings, isLoading: weeklyStandingsLoading } = useCollection<WeeklyTeamStanding>(weeklyTeamStandingsCollectionRef);
-    const { data: teamRecentResults, isLoading: recentResultsLoading } = useCollection<TeamRecentResult>(teamRecentResultsCollectionRef);
-
-    const isLoading = teamsLoading || standingsLoading || weeklyStandingsLoading || recentResultsLoading;
+    useEffect(() => {
+        // Simulate data loading
+        setTimeout(() => setIsLoading(false), 500);
+    }, []);
 
     const { standingsWithTeamData, chartData } = useMemo(() => {
         if (!teams || !currentStandings || !weeklyTeamStandings || !teamRecentResults) {

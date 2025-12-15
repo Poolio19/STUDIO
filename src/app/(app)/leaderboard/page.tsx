@@ -17,13 +17,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { monthlyMimoM, type User } from '@/lib/data';
+import { monthlyMimoM, type User, users } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { useMemo, useEffect, useState } from 'react';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
 
 
 const getAvatarUrl = (avatarId: string) => {
@@ -77,12 +75,7 @@ const prizeTiers = [50, 41, 33, 26, 20];
 const totalWinningsMap = new Map<string, number>();
 
 export default function LeaderboardPage() {
-  const { isUserLoading: isAuthUserLoading } = useUser();
-  const firestore = useFirestore();
-  const usersCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
-  const { data: users, isLoading: areUsersLoading } = useCollection<User>(usersCollectionRef);
-
-  const isLoading = isAuthUserLoading || areUsersLoading;
+  const [isLoading, setIsLoading] = useState(true);
 
   const [currentWeek, setCurrentWeek] = useState(1);
 
@@ -90,6 +83,7 @@ export default function LeaderboardPage() {
     // This effect runs only on the client, after hydration
     const week = Math.floor(Math.random() * 10) + 1;
     setCurrentWeek(week);
+    setIsLoading(false);
   }, []);
 
   const { sortedUsers } = useMemo(() => {
