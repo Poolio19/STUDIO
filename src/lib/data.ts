@@ -118,7 +118,7 @@ export type WeeklyTeamStanding = {
 // --- STATIC DATA ---
 
 let usersData: Omit<User, 'score' | 'rank' | 'previousRank' | 'previousScore' | 'maxRank' | 'minRank' | 'maxScore' | 'minScore' | 'rankChange' | 'scoreChange'>[] = [
-    { id: 'usr_1', name: 'Alex', avatar: '1' },
+    { id: 'usr_1', name: 'Alex', avatar: '1', email: 'alex@example.com', joinDate: '2023-08-10T10:00:00Z' },
     { id: 'usr_2', name: 'Maria', avatar: '2' },
     { id: 'usr_3', name: 'David', avatar: '3' },
     { id: 'usr_4', name: 'Sophia', avatar: '4' },
@@ -164,7 +164,7 @@ export const teams: Team[] = [
     { id: 'team_18', name: 'Tottenham', logo: 'ship', bgColourFaint: 'rgba(19, 34, 87, 0.3)', bgColourSolid: '#132257', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_19', name: 'West Ham', logo: 'utensilsCrossed', bgColourFaint: 'rgba(122, 38, 58, 0.3)', bgColourSolid: '#7A263A', textColour: '#132257', iconColour: '#FBB117' },
     { id: 'team_20', name: 'Wolves', logo: 'gitlab', bgColourFaint: 'rgba(253, 185, 19, 0.3)', bgColourSolid: '#FDB913', textColour: '#231F20', iconColour: '#231F20' },
-    // Relegated teams, needed for previous season standings context
+    // Relegated teams from last season, kept for historical context
     { id: 'team_21', name: 'Luton Town', logo: 'theater', bgColourFaint: 'rgba(247, 143, 30, 0.3)', bgColourSolid: '#F78F1E', textColour: '#000000', iconColour: '#000000' },
     { id: 'team_22', name: 'Burnley', logo: 'shield', bgColourFaint: 'rgba(108, 29, 69, 0.3)', bgColourSolid: '#6C1D45', textColour: '#99D6EA', iconColour: '#99D6EA' },
     { id: 'team_23', name: 'Sheffield Utd', logo: 'swords', bgColourFaint: 'rgba(238, 39, 55, 0.3)', bgColourSolid: '#EE2737', textColour: '#000000', iconColour: '#FFFFFF' },
@@ -424,7 +424,7 @@ const calculateScoresForUser = (userPredictions: string[], actualStandings: Curr
     userPredictions.forEach((teamId, index) => {
         const predictedRank = index + 1;
         const actualRank = actualRanks.get(teamId);
-        if (actualRank) {
+        if (actualRank !== undefined) {
             totalScore += 5 - Math.abs(predictedRank - actualRank);
         }
     });
@@ -449,7 +449,7 @@ export const playerTeamScores: PlayerTeamScore[] = usersData.flatMap(user => {
         const predictedRank = index + 1;
         const actualRank = actualRanks.get(teamId);
         let score = 0;
-        if (actualRank) {
+        if (actualRank !== undefined) {
             score = 5 - Math.abs(predictedRank - actualRank);
         }
         return { userId: user.id, teamId, score };
@@ -490,14 +490,16 @@ for (let week = 1; week <= 38; week++) {
       .sort((a, b) => b.score - a.score || a.tieBreaker - b.tieBreaker);
 
     let currentRank = 1;
+    let rankCounter = 1;
     weeklyPlayerStandings.forEach((player, index) => {
         if (!player.isPro) {
             if (index > 0 && player.score < weeklyPlayerStandings[index - 1].score) {
-                currentRank = index + 1;
+                currentRank = rankCounter;
             }
             const userHistory = userHistories.find(h => h.userId === player.userId)!;
             const weekData = userHistory.weeklyScores.find(w => w.week === week)!;
             weekData.rank = currentRank;
+            rankCounter++;
         }
     });
 
@@ -582,12 +584,13 @@ export const teamRecentResults: TeamRecentResult[] = CURRENT_SEASON_TEAMS.map((t
 });
 
 // --- DYNAMICALLY GENERATE MIMO AWARDS ---
-const monthWeekRanges: { [key: string]: { start: number; end: number; year: number } } = {
+const monthWeekRanges: { [key: string]: { start: number; end: number; year: number, special?: string } } = {
     'August': { start: 1, end: 3, year: 2025 },
     'September': { start: 4, end: 7, year: 2025 },
     'October': { start: 8, end: 11, year: 2025 },
     'November': { start: 12, end: 15, year: 2025 },
     'December': { start: 16, end: 20, year: 2025 },
+    'Christmas No. 1': { start: 16, end: 19, year: 2025, special: 'Christmas No. 1' }, // Christmas is around week 19
     'January': { start: 21, end: 24, year: 2026 },
     'February': { start: 25, end: 28, year: 2026 },
     'March': { start: 29, end: 32, year: 2026 },
@@ -598,8 +601,8 @@ const monthWeekRanges: { [key: string]: { start: number; end: number; year: numb
 const generatedMimoM: MonthlyMimoM[] = [];
 let mimoIdCounter = 1;
 
-for (const month in monthWeekRanges) {
-    const { start, end, year } = monthWeekRanges[month];
+for (const monthOrSpecial in monthWeekRanges) {
+    const { start, end, year, special } = monthWeekRanges[monthOrSpecial];
     const startWeekForCalc = start - 1;
 
     if (WEEKS_TO_SHOW >= end) {
@@ -612,7 +615,6 @@ for (const month in monthWeekRanges) {
                 const startRank = userHistory.weeklyScores.find(ws => ws.week === startWeekForCalc)?.rank || 0;
                 const endRank = userHistory.weeklyScores.find(ws => ws.week === end)?.rank || 0;
 
-                // We want to reward rank *improvement*, so a higher start rank and lower end rank is good.
                 const rankChange = (startRank > 0 && endRank > 0) ? startRank - endRank : -Infinity;
                 return { userId: user.id, rankChange };
             })
@@ -623,16 +625,16 @@ for (const month in monthWeekRanges) {
             const winners = monthlyRankChanges.filter(u => u.rankChange === bestRankChange);
 
             winners.forEach(winner => {
-                generatedMimoM.push({ id: `mimo_${mimoIdCounter++}`, month, year, userId: winner.userId, type: 'winner' });
+                generatedMimoM.push({ id: `mimo_${mimoIdCounter++}`, month: monthOrSpecial, year, userId: winner.userId, type: 'winner', special });
             });
 
-            // Only award runner-up if there wasn't a tie for first place
-            if (winners.length === 1) {
+            // Only award runner-up if it's NOT a special award and there wasn't a tie for first place
+            if (!special && winners.length === 1) {
                 const nextBestChange = monthlyRankChanges.find(u => u.rankChange < bestRankChange);
                 if (nextBestChange && nextBestChange.rankChange > -Infinity) {
                     const runnersUp = monthlyRankChanges.filter(u => u.rankChange === nextBestChange.rankChange);
                     runnersUp.forEach(runnerUp => {
-                        generatedMimoM.push({ id: `mimo_${mimoIdCounter++}`, month, year, userId: runnerUp.userId, type: 'runner-up' });
+                        generatedMimoM.push({ id: `mimo_${mimoIdCounter++}`, month: monthOrSpecial, year, userId: runnerUp.userId, type: 'runner-up', special });
                     });
                 }
             }
