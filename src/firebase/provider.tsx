@@ -78,14 +78,15 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     const unsubscribe = onAuthStateChanged(
       auth,
       (firebaseUser) => { // Auth state determined
-        if (!firebaseUser) {
-          // If no user, automatically sign in as 'alex@example.com'
-          // This user needs to exist in your Firebase Auth users.
-          // For initial setup, we can try to create it if it doesn't exist.
+        if (firebaseUser && firebaseUser.email === 'alex@example.com') {
+             // If Alex is already signed in, we are good.
+             setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+        } else {
+          // If no user, or a different user is logged in, sign in as 'alex@example.com'
           signInWithEmailAndPassword(auth, 'alex@example.com', 'password123')
             .catch((error) => {
-              if (error.code === 'auth/user-not-found') {
-                // If user doesn't exist, create it.
+              if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                // If user doesn't exist or credentials fail, create it.
                 return createUserWithEmailAndPassword(auth, 'alex@example.com', 'password123');
               }
               return Promise.reject(error);
@@ -98,9 +99,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
               console.error("FirebaseProvider: Automatic sign-in/sign-up failed:", error);
               setUserAuthState({ user: null, isUserLoading: false, userError: error });
             });
-        } else {
-            // A user is already signed in (could be from a previous session)
-            setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
         }
       },
       (error) => { // Auth listener error
@@ -208,5 +206,3 @@ export const useUser = (): UserHookResult => { // Renamed from useAuthUser
   }
   return { user: context.user, isUserLoading: context.isUserLoading, userError: context.userError };
 };
-
-    
