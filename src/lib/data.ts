@@ -177,16 +177,16 @@ export const previousSeasonStandings: PreviousSeasonStanding[] = [
     { teamId: 'team_14', rank: 8, points: 60, goalDifference: -1 },
     { teamId: 'team_19', rank: 9, points: 52, goalDifference: -14 },
     { teamId: 'team_7', rank: 10, points: 49, goalDifference: -1 },
-    { id: 'team_5', name: 'Brighton', rank: 11, points: 48, goalDifference: -7 },
-    { id: 'team_3', name: 'Bournemouth', rank: 12, points: 48, goalDifference: -13 },
-    { id: 'team_9', name: 'Fulham', rank: 13, points: 47, goalDifference: -6 },
-    { id: 'team_20', name: 'Wolves', rank: 14, points: 46, goalDifference: -15 },
-    { id: 'team_8', name: 'Everton', rank: 15, points: 40, goalDifference: -11 },
-    { id: 'team_4', name: 'Brentford', rank: 16, points: 39, goalDifference: -9 },
-    { id: 'team_16', name: 'Notts Forest', rank: 17, points: 32, goalDifference: -18 },
-    { teamId: 'team_10', rank: 18, points: 96, goalDifference: 35 }, // Promoted from Championship (Ipswich)
-    { teamId: 'team_11', rank: 19, points: 97, goalDifference: 41 }, // Promoted from Championship (Leicester)
-    { teamId: 'team_17', rank: 20, points: 87, goalDifference: 24 }, // Promoted from Championship (Southampton)
+    { teamId: 'team_5', rank: 11, points: 48, goalDifference: -7 },
+    { teamId: 'team_3', rank: 12, points: 48, goalDifference: -13 },
+    { teamId: 'team_9', rank: 13, points: 47, goalDifference: -6 },
+    { teamId: 'team_20', rank: 14, points: 46, goalDifference: -15 },
+    { teamId: 'team_8', rank: 15, points: 40, goalDifference: -11 },
+    { teamId: 'team_4', rank: 16, points: 39, goalDifference: -9 },
+    { teamId: 'team_16', rank: 17, points: 32, goalDifference: -18 },
+    { teamId: 'team_10', rank: 18, points: 96, goalDifference: 35 },
+    { teamId: 'team_11', rank: 19, points: 97, goalDifference: 41 },
+    { teamId: 'team_17', rank: 20, points: 87, goalDifference: 24 },
 ];
 
 export const seasonMonths: SeasonMonth[] = [
@@ -474,9 +474,10 @@ for (let week = 1; week <= 38; week++) {
     const weeklyPlayerStandings = userHistories
       .map(h => {
           const user = usersData.find(u => u.id === h.userId)!;
+          const weeklyScore = h.weeklyScores.find(w => w.week === week);
           return {
               userId: h.userId,
-              score: h.weeklyScores.find(w => w.week === week)!.score,
+              score: weeklyScore ? weeklyScore.score : -Infinity,
               tieBreaker: parseInt(user.id.replace('usr_', ''))
           }
       })
