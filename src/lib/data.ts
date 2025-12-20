@@ -34,6 +34,14 @@ export type Prediction = {
   rankings: string[]; // Array of team IDs in predicted order
 };
 
+export type Match = {
+    week: number;
+    homeTeamId: string;
+    awayTeamId: string;
+    homeScore: number;
+    awayScore: number;
+};
+
 export type UserPredictionHistory = {
   game: string;
   prediction: string;
@@ -159,6 +167,64 @@ export const teams: Team[] = [
     { id: 'team_21', name: 'Burnley', logo: 'shield', bgColourFaint: 'rgba(108, 29, 69, 0.3)', bgColourSolid: '#6C1D45', textColour: '#99D6EA', iconColour: '#99D6EA'},
     { id: 'team_22', name: 'Leeds', logo: 'mapPin', bgColourFaint: 'rgba(255, 205, 0, 0.3)', bgColourSolid: '#FFCD00', textColour: '#1D428A', iconColour: '#1D428A' },
     { id: 'team_23', name: 'Sunderland', logo: 'theater', bgColourFaint: 'rgba(235, 23, 43, 0.3)', bgColourSolid: '#EB172B', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
+];
+
+export const matches: Match[] = [
+    // Week 1
+    { week: 1, homeTeamId: 'team_13', awayTeamId: 'team_22', homeScore: 3, awayScore: 0 },
+    { week: 1, homeTeamId: 'team_1', awayTeamId: 'team_21', homeScore: 2, awayScore: 0 },
+    { week: 1, homeTeamId: 'team_12', awayTeamId: 'team_23', homeScore: 4, awayScore: 1 },
+    { week: 1, homeTeamId: 'team_18', awayTeamId: 'team_16', homeScore: 2, awayScore: 1 },
+    { week: 1, homeTeamId: 'team_2', awayTeamId: 'team_8', homeScore: 2, awayScore: 0 },
+    { week: 1, homeTeamId: 'team_6', awayTeamId: 'team_4', homeScore: 1, awayScore: 1 },
+    { week: 1, homeTeamId: 'team_19', awayTeamId: 'team_9', homeScore: 1, awayScore: 0 },
+    { week: 1, homeTeamId: 'team_14', awayTeamId: 'team_7', homeScore: 1, awayScore: 1 },
+    { week: 1, homeTeamId: 'team_5', awayTeamId: 'team_20', homeScore: 0, awayScore: 0 },
+    { week: 1, homeTeamId: 'team_15', awayTeamId: 'team_3', homeScore: 1, awayScore: 0 },
+    // Week 2
+    { week: 2, homeTeamId: 'team_13', awayTeamId: 'team_1', homeScore: 2, awayScore: 2 },
+    { week: 2, homeTeamId: 'team_12', awayTeamId: 'team_18', homeScore: 2, awayScore: 1 },
+    { week: 2, homeTeamId: 'team_2', awayTeamId: 'team_6', homeScore: 1, awayScore: 0 },
+    { week: 2, homeTeamId: 'team_19', awayTeamId: 'team_14', homeScore: 1, awayScore: 1 },
+    { week: 2, homeTeamId: 'team_5', awayTeamId: 'team_15', homeScore: 1, awayScore: 2 },
+    { week: 2, homeTeamId: 'team_7', awayTeamId: 'team_22', homeScore: 1, awayScore: 0 },
+    { week: 2, homeTeamId: 'team_20', awayTeamId: 'team_21', homeScore: 2, awayScore: 0 },
+    { week: 2, homeTeamId: 'team_8', awayTeamId: 'team_23', homeScore: 0, awayScore: 0 },
+    { week: 2, homeTeamId: 'team_9', awayTeamId: 'team_16', homeScore: 1, awayScore: 1 },
+    { week: 2, homeTeamId: 'team_4', awayTeamId: 'team_3', homeScore: 0, awayScore: 0 },
+    // Week 3
+    { week: 3, homeTeamId: 'team_13', awayTeamId: 'team_12', homeScore: 2, awayScore: 0 },
+    { week: 3, homeTeamId: 'team_1', awayTeamId: 'team_18', homeScore: 3, awayScore: 1 },
+    { week: 3, homeTeamId: 'team_2', awayTeamId: 'team_14', homeScore: 2, awayScore: 0 },
+    { week: 3, homeTeamId: 'team_6', awayTeamId: 'team_19', homeScore: 2, awayScore: 2 },
+    { week: 3, homeTeamId: 'team_5', awayTeamId: 'team_7', homeScore: 1, awayScore: 1 },
+    { week: 3, homeTeamId: 'team_15', awayTeamId: 'team_20', homeScore: 1, awayScore: 0 },
+    { week: 3, homeTeamId: 'team_8', awayTeamId: 'team_22', homeScore: 1, awayScore: 1 },
+    { week: 3, homeTeamId: 'team_9', awayTeamId: 'team_21', homeScore: 0, awayScore: 0 },
+    { week: 3, homeTeamId: 'team_4', awayTeamId: 'team_23', homeScore: 1, awayScore: 0 },
+    { week: 3, homeTeamId: 'team_3', awayTeamId: 'team_16', homeScore: 1, awayScore: 2 },
+    // Week 4
+    { week: 4, homeTeamId: 'team_13', awayTeamId: 'team_18', homeScore: 3, awayScore: 0 },
+    { week: 4, homeTeamId: 'team_1', awayTeamId: 'team_14', homeScore: 2, awayScore: 1 },
+    { week: 4, homeTeamId: 'team_12', awayTeamId: 'team_2', homeScore: 3, awayScore: 1 },
+    { week: 4, homeTeamId: 'team_6', awayTeamId: 'team_5', homeScore: 1, awayScore: 0 },
+    { week: 4, homeTeamId: 'team_19', awayTeamId: 'team_15', homeScore: 1, awayScore: 0 },
+    { week: 4, homeTeamId: 'team_7', awayTeamId: 'team_8', homeScore: 0, awayScore: 0 },
+    { week: 4, homeTeamId: 'team_20', awayTeamId: 'team_9', homeScore: 1, awayScore: 1 },
+    { week: 4, homeTeamId: 'team_4', awayTeamId: 'team_22', homeScore: 2, awayScore: 0 },
+    { week: 4, homeTeamId: 'team_3', awayTeamId: 'team_21', homeScore: 2, awayScore: 1 },
+    { week: 4, homeTeamId: 'team_16', awayTeamId: 'team_23', homeScore: 0, awayScore: 0 },
+    // Week 5
+    { week: 5, homeTeamId: 'team_13', awayTeamId: 'team_6', homeScore: 2, awayScore: 0 },
+    { week: 5, homeTeamId: 'team_1', awayTeamId: 'team_19', homeScore: 1, awayScore: 0 },
+    { week: 5, homeTeamId: 'team_12', awayTeamId: 'team_14', homeScore: 1, awayScore: 1 },
+    { week: 5, homeTeamId: 'team_18', awayTeamId: 'team_5', homeScore: 2, awayScore: 1 },
+    { week: 5, homeTeamId: 'team_2', awayTeamId: 'team_15', homeScore: 3, awayScore: 0 },
+    { week: 5, homeTeamId: 'team_7', awayTeamId: 'team_20', homeScore: 1, awayScore: 2 },
+    { week: 5, homeTeamId: 'team_8', awayTeamId: 'team_4', homeScore: 0, awayScore: 3 },
+    { week: 5, homeTeamId: 'team_9', awayTeamId: 'team_3', homeScore: 1, awayScore: 2 },
+    { week: 5, homeTeamId: 'team_16', awayTeamId: 'team_22', homeScore: 1, awayScore: 0 },
+    { week: 5, homeTeamId: 'team_21', awayTeamId: 'team_23', homeScore: 1, awayScore: 1 },
 ];
 
 

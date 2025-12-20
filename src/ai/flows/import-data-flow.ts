@@ -18,7 +18,8 @@ import {
   playerTeamScores,
   userHistories,
   weeklyTeamStandings,
-  teamRecentResults
+  teamRecentResults,
+  matches
 } from '@/lib/data';
 
 // Note: We don't define a Zod schema for the output because the data types
@@ -49,7 +50,8 @@ const importDataFlow = ai.defineFlow(
       playerTeamScores,
       userHistories,
       weeklyTeamStandings,
-      teamRecentResults
+      teamRecentResults,
+      matches
     };
   }
 );
