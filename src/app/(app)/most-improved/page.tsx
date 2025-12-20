@@ -237,8 +237,9 @@ export default function MostImprovedPage() {
                             const winners = monthlyAward.winners || monthlyAward.currentLeaders;
                             const runnersUp = monthlyAward.runnersUp || monthlyAward.currentRunnersUp;
 
-                            const winnerPrize = 10 / (winners?.length || 1);
-                            const runnerUpPrize = (winners?.length === 1 && runnersUp?.length) ? (5 / runnersUp.length) : 0;
+                            const isTie = winners && winners.length > 1;
+                            const winnerPrize = isTie ? 15 / winners.length : 10 / (winners?.length || 1);
+                            const runnerUpPrize = isTie ? 0 : (winners?.length === 1 && runnersUp?.length ? 5 / runnersUp.length : 0);
 
                             return (
                             <div key={index} className={cn("p-3 border rounded-lg flex flex-col items-center justify-start text-center", {
@@ -257,8 +258,8 @@ export default function MostImprovedPage() {
                                                 </Avatar>
                                                 <div className="text-left">
                                                     <p className="text-sm font-bold">{winner.name} - £{winnerPrize % 1 === 0 ? winnerPrize : winnerPrize.toFixed(2)}</p>
-                                                    {monthlyAward.winners && <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">{(winners.length > 1 ? 'JoMiMoM' : 'MiMoM')}</p>}
-                                                    {monthlyAward.currentLeaders && <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">Current Leader</p>}
+                                                    {monthlyAward.winners && <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">{isTie ? 'JoMiMoM' : 'MiMoM'}</p>}
+                                                    {monthlyAward.currentLeaders && <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">{isTie ? 'Current JoMiMoM' : 'Current Leader'}</p>}
                                                 </div>
                                             </div>
                                         ))}
