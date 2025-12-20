@@ -15,12 +15,19 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { TeamRecentResult, WeeklyTeamStanding, teams, currentStandings, weeklyTeamStandings, teamRecentResults } from '@/lib/data';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+import { TeamRecentResult, WeeklyTeamStanding, teams, currentStandings, weeklyTeamStandings, teamRecentResults, matches, Match } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
 import { TeamStandingsChart } from '@/components/charts/team-standings-chart';
 import { useMemo, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Team, CurrentStanding } from '@/lib/data';
+import { Separator } from '@/components/ui/separator';
 
 export default function StandingsPage() {
     const [isLoading, setIsLoading] = useState(true);
@@ -30,14 +37,15 @@ export default function StandingsPage() {
         setTimeout(() => setIsLoading(false), 500);
     }, []);
 
-    const { standingsWithTeamData, chartData } = useMemo(() => {
-        if (!teams || !currentStandings || !weeklyTeamStandings || !teamRecentResults) {
-            return { standingsWithTeamData: [], chartData: [] };
+    const { standingsWithTeamData, chartData, weeklyResults } = useMemo(() => {
+        if (!teams || !currentStandings || !weeklyTeamStandings || !teamRecentResults || !matches) {
+            return { standingsWithTeamData: [], chartData: [], weeklyResults: new Map() };
         }
 
-        const recentResultsMap = new Map(teamRecentResults.map(r => [r.teamId, r.results]));
         const teamMap = new Map(teams.map(t => [t.id, t]));
 
+        // Standings Table Data
+        const recentResultsMap = new Map(teamRecentResults.map(r => [r.teamId, r.results]));
         const initialData = currentStandings
             .map(standing => {
                 const team = teamMap.get(standing.teamId);
@@ -51,38 +59,45 @@ export default function StandingsPage() {
             })
             .filter((item): item is NonNullable<typeof item> => item !== null);
 
-        const sortedData = initialData.sort((a, b) => {
-            if (!a || !b) return 0;
-            return b.sortValue - a.sortValue;
-        });
-
+        const sortedData = initialData.sort((a, b) => b.sortValue - a.sortValue);
         let rank = 1;
         const finalStandings = sortedData.map((team, index) => {
-            if (index > 0) {
-                const prevTeam = sortedData[index - 1]!;
-                if (team!.sortValue !== prevTeam.sortValue) {
-                    rank = index + 1;
-                }
+            if (index > 0 && team.sortValue !== sortedData[index - 1]!.sortValue) {
+                rank = index + 1;
             }
-            return { ...team!, rank: rank };
+            return { ...team, rank: rank };
         });
 
+        // Chart Data
         const weeks = [...new Set(weeklyTeamStandings.map(d => d.week))].sort((a, b) => a - b);
         const transformedChartData = weeks.map(week => {
             const weekData: { [key: string]: any } = { week };
             weeklyTeamStandings
                 .filter(d => d.week === week)
                 .forEach(standing => {
-                    const team = teams.find(t => t.id === standing.teamId);
+                    const team = teamMap.get(standing.teamId);
                     if (team) {
                         weekData[team.name] = standing.rank;
                     }
                 });
             return weekData;
         });
+        
+        // Weekly Results Data
+        const resultsByWeek = new Map<number, (Match & {homeTeam: Team, awayTeam: Team})[]>();
+        matches.forEach(match => {
+            const weekMatches = resultsByWeek.get(match.week) || [];
+            const homeTeam = teamMap.get(match.homeTeamId);
+            const awayTeam = teamMap.get(match.awayTeamId);
+            if (homeTeam && awayTeam) {
+                weekMatches.push({ ...match, homeTeam, awayTeam });
+            }
+            resultsByWeek.set(match.week, weekMatches);
+        });
 
-        return { standingsWithTeamData: finalStandings, chartData: transformedChartData };
-    }, [teams, currentStandings, weeklyTeamStandings, teamRecentResults]);
+
+        return { standingsWithTeamData: finalStandings, chartData: transformedChartData, weeklyResults: resultsByWeek };
+    }, [teams, currentStandings, weeklyTeamStandings, teamRecentResults, matches]);
 
     const getResultColor = (result: 'W' | 'D' | 'L' | '-') => {
         switch (result) {
@@ -203,6 +218,56 @@ export default function StandingsPage() {
           </Table>
         </CardContent>
       </Card>
+      
+      <Separator />
+
+      <Card>
+        <CardHeader className="items-center">
+            <CardTitle className="bg-black text-yellow-400 p-2 rounded-md">Week by Week Results</CardTitle>
+        </CardHeader>
+        <CardContent>
+            {isLoading ? (
+                <div className="text-center">Loading results...</div>
+            ) : (
+                <Accordion type="single" collapsible defaultValue={`week-${gamesPlayed}`}>
+                    {[...weeklyResults.keys()].sort((a,b) => b-a).map(weekNumber => (
+                        <AccordionItem value={`week-${weekNumber}`} key={weekNumber}>
+                            <AccordionTrigger className="text-lg font-bold">Week {weekNumber}</AccordionTrigger>
+                            <AccordionContent>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {weeklyResults.get(weekNumber)?.map((match, index) => {
+                                        const HomeIcon = Icons[match.homeTeam.logo as IconName] || Icons.match;
+                                        const AwayIcon = Icons[match.awayTeam.logo as IconName] || Icons.match;
+                                        return (
+                                            <div key={index} className="flex items-center justify-between p-3 rounded-lg border">
+                                                <div className="flex items-center gap-3 w-2/5 justify-end">
+                                                    <span className="font-medium text-right">{match.homeTeam.name}</span>
+                                                    <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.homeTeam.bgColourSolid }}>
+                                                        <HomeIcon className="size-5" style={{ color: match.homeTeam.iconColour }} />
+                                                    </div>
+                                                </div>
+                                                <div className="font-bold text-lg px-2 rounded-md" style={{ backgroundColor: match.homeTeam.bgColourFaint, color: match.homeTeam.textColour }}>
+                                                    {match.homeScore} - {match.awayScore}
+                                                </div>
+                 
+                                                <div className="flex items-center gap-3 w-2/5">
+                                                    <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.awayTeam.bgColourSolid }}>
+                                                        <AwayIcon className="size-5" style={{ color: match.awayTeam.iconColour }} />
+                                                    </div>
+                                                    <span className="font-medium">{match.awayTeam.name}</span>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </AccordionContent>
+                        </AccordionItem>
+                    ))}
+                </Accordion>
+            )}
+        </CardContent>
+      </Card>
     </div>
   );
-}
+
+    
