@@ -35,9 +35,6 @@ export default function ConsensusPage() {
 
   const teamsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'teams')) : null, [firestore]);
   const predictionsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'predictions') : null, [firestore]);
-  // We need a stable standings query. Let's assume we sort by rank.
-  // This depends on a 'rank' field existing in the 'standings' documents.
-  // If not, we might need to adjust or sort client-side.
   const standingsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'standings'), orderBy('rank', 'asc')) : null, [firestore]);
 
 
@@ -53,11 +50,9 @@ export default function ConsensusPage() {
     return currentStandings
       .map(standing => {
         const team = teamMap.get(standing.teamId);
-        // The rank is directly from the sorted standing doc now
         return team ? { ...team, rank: standing.rank } : null;
       })
       .filter((team): team is Team & { rank: number } => !!team);
-      // No client-side sort needed as the query handles it
   }, [teams, currentStandings]);
 
   const consensusData = useMemo((): ConsensusData | null => {
