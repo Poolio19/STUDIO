@@ -78,22 +78,24 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     const unsubscribe = onAuthStateChanged(
       auth,
       (firebaseUser) => { // Auth state determined
-        if (firebaseUser && firebaseUser.email === 'alex@example.com') {
-             // If Alex is already signed in, we are good.
+        if (firebaseUser) {
+             // If any user is signed in, we are good.
              setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
         } else {
-          // If no user, or a different user is logged in, sign in as 'alex@example.com'
+          // If no user, sign in as 'alex@example.com'
           signInWithEmailAndPassword(auth, 'alex@example.com', 'password123')
             .catch((error) => {
+              // If user doesn't exist, create it.
               if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-                // If user doesn't exist or credentials fail, create it.
                 return createUserWithEmailAndPassword(auth, 'alex@example.com', 'password123');
               }
+              // For other errors, re-throw them to be caught by the final catch block.
               return Promise.reject(error);
             })
             .then(userCredential => {
               // This block will run after successful sign-in or sign-up
-               setUserAuthState({ user: userCredential.user, isUserLoading: false, userError: null });
+              // The onAuthStateChanged listener will fire again with the new user,
+              // so we don't need to setUserAuthState here.
             })
             .catch((error) => {
               console.error("FirebaseProvider: Automatic sign-in/sign-up failed:", error);
