@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils';
 type MatchWithTeamData = Match & {
   homeTeam: Team;
   awayTeam: Team;
+  id: string;
 };
 
 
@@ -129,11 +130,14 @@ export default function AdminPage() {
         description: `Submitting scores for week ${selectedWeek}.`,
     });
 
-    const resultsToUpdate = Object.entries(scores).map(([matchId, score]) => ({
-        matchId,
-        homeScore: parseInt(score.homeScore, 10),
-        awayScore: parseInt(score.awayScore, 10),
-    }));
+    const resultsToUpdate = Object.entries(scores)
+      .map(([matchId, score]) => ({
+          matchId,
+          homeScore: parseInt(score.homeScore, 10),
+          awayScore: parseInt(score.awayScore, 10),
+      }))
+      // Filter out matches where scores are not valid numbers (i.e., postponed)
+      .filter(result => !isNaN(result.homeScore) && !isNaN(result.awayScore));
 
     const input: UpdateMatchResultsInput = {
         week: parseInt(selectedWeek, 10),
@@ -236,6 +240,7 @@ export default function AdminPage() {
                                             value={scores[match.id]?.homeScore || ''}
                                             onChange={(e) => handleScoreChange(match.id, 'home', e.target.value)}
                                             disabled={isUpdating}
+                                            placeholder="P"
                                         />
                                         <span>-</span>
                                         <Input 
@@ -244,6 +249,7 @@ export default function AdminPage() {
                                             value={scores[match.id]?.awayScore || ''}
                                             onChange={(e) => handleScoreChange(match.id, 'away', e.target.value)}
                                             disabled={isUpdating}
+                                            placeholder="P"
                                         />
                                     </div>
                                     <div className="flex items-center gap-2 w-2/5">

@@ -57,11 +57,11 @@ const updateMatchResultsFlow = ai.defineFlow(
     const batch = writeBatch(db);
     const matchesCollectionRef = collection(db, 'matches');
 
-    results.forEach(result => {
-        if (isNaN(result.homeScore) || isNaN(result.awayScore)) {
-            console.warn(`Skipping match ${result.matchId} due to invalid score.`);
-            return; // Skip if scores are not valid numbers
-        }
+    const validResults = results.filter(result => 
+        !isNaN(result.homeScore) && !isNaN(result.awayScore)
+    );
+
+    validResults.forEach(result => {
       const docRef = doc(matchesCollectionRef, result.matchId);
       batch.update(docRef, { 
           homeScore: result.homeScore, 
@@ -71,7 +71,7 @@ const updateMatchResultsFlow = ai.defineFlow(
 
     try {
       await batch.commit();
-      return { success: true, updatedCount: results.length };
+      return { success: true, updatedCount: validResults.length };
     } catch (error) {
       console.error(`Error updating match results for week ${week}:`, error);
       throw new Error('Failed to update match results.');
