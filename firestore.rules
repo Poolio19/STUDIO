@@ -4,6 +4,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // Allow public read access for foundational data.
+    // This allows listing the entire collection, which is needed by the app.
     match /teams/{teamId} {
       allow read: if true;
       allow write: if false;
@@ -68,6 +69,7 @@ service cloud.firestore {
     }
     
     // Default deny for any other path not explicitly matched.
+    // This is a security best practice.
     match /{document=**} {
       allow read, write: if false;
     }
