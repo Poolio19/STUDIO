@@ -94,10 +94,12 @@ export default function ProfilePage() {
   }, [firestore, currentUserId]);
 
   const userHistoryDocRef = useMemoFirebase(() => {
+    // CRITICAL: Wait for firestore AND a valid currentUserId before creating the ref
     if (firestore && currentUserId) {
       return doc(firestore, 'userHistories', currentUserId);
     }
-    return null;
+    // Return null if we are not ready, the useDoc hook will wait.
+    return null; 
   }, [firestore, currentUserId]);
 
   const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
@@ -108,6 +110,7 @@ export default function ProfilePage() {
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
   const { data: monthlyMimoM, isLoading: mimoMLoading } = useCollection<MonthlyMimoM>(mimoMQuery);
 
+  // Combine all loading states
   const isLoading = isAuthUserLoading || userLoading || historyLoading || teamsLoading || mimoMLoading;
 
   const form = useForm<ProfileFormValues>({
@@ -186,10 +189,12 @@ export default function ProfilePage() {
     }
   };
 
+  // Show a loading screen while auth is happening or initial data is fetching
   if (isLoading) {
     return <div className="flex justify-center items-center h-full">Loading profile...</div>;
   }
 
+  // Show a message if the user isn't logged in after loading
   if (!user || !authUser) {
     return <div className="flex justify-center items-center h-full">Please log in to view your profile.</div>;
   }
@@ -455,5 +460,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
