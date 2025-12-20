@@ -46,7 +46,7 @@ async function ensureDefaultUser() {
     const displayName = 'Alex';
 
     try {
-        // Attempt to create the user. If the user already exists, this will fail.
+        // Attempt to create the user.
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         // If creation is successful, update the profile with the display name.
         await updateProfile(userCredential.user, { displayName });
@@ -54,6 +54,8 @@ async function ensureDefaultUser() {
     } catch (error: any) {
         if (error.code === 'auth/email-already-in-use') {
             // This is expected if the user has already been created.
+            // We don't need to update the profile here, as the login flow in the provider
+            // will handle ensuring the user state is correct for the app session.
             console.log(`User ${displayName} already exists.`);
         } else {
             // For other errors, log them.
@@ -76,7 +78,7 @@ const importDataFlow = ai.defineFlow(
     const { firestore: db } = initializeFirebase();
 
     try {
-      // Ensure the default user exists and has a displayName before importing data
+      // Ensure the default user exists and has a displayName before importing data that might rely on it.
       await ensureDefaultUser();
 
       await batchWrite(db, 'teams', teams, 'id');
@@ -85,6 +87,7 @@ const importDataFlow = ai.defineFlow(
       const predBatch = writeBatch(db);
       const predCollectionRef = collection(db, 'predictions');
       staticPredictions.forEach(item => {
+          // Use the userId as the document ID for predictions
           const docRef = doc(predCollectionRef, item.userId);
           predBatch.set(docRef, item);
       });
@@ -93,6 +96,7 @@ const importDataFlow = ai.defineFlow(
       const matchesBatch = writeBatch(db);
       const matchesCollectionRef = collection(db, 'matches');
       staticMatches.forEach(item => {
+        // Create a unique ID based on the home and away team IDs
         const matchId = `${item.homeTeamId.replace('team_', '')}.${item.awayTeamId.replace('team_', '')}`;
         const docRef = doc(matchesCollectionRef, matchId);
         matchesBatch.set(docRef, item);
