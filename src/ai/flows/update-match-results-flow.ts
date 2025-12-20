@@ -3,12 +3,15 @@
  * @fileOverview A flow to update match results in Firestore.
  *
  * - updateMatchResults - A function that updates match scores for a given week.
- * - UpdateMatchResultsInput - The input type for the updateMatchResults function.
- * - UpdateMatchResultsOutput - The return type for the updateMatchResults function.
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'zod';
+import {
+  UpdateMatchResultsInputSchema,
+  UpdateMatchResultsOutputSchema,
+  type UpdateMatchResultsInput,
+  type UpdateMatchResultsOutput,
+} from './update-match-results-flow-types';
 import {
   getFirestore,
   writeBatch,
@@ -16,29 +19,6 @@ import {
   collection,
 } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
-
-const MatchResultSchema = z.object({
-    matchId: z.string(),
-    homeScore: z.number().int(),
-    awayScore: z.number().int(),
-});
-
-export const UpdateMatchResultsInputSchema = z.object({
-  week: z.number().int(),
-  results: z.array(MatchResultSchema),
-});
-export type UpdateMatchResultsInput = z.infer<
-  typeof UpdateMatchResultsInputSchema
->;
-
-export const UpdateMatchResultsOutputSchema = z.object({
-  success: z.boolean(),
-  updatedCount: z.number().int(),
-});
-export type UpdateMatchResultsOutput = z.infer<
-  typeof UpdateMatchResultsOutputSchema
->;
-
 
 export async function updateMatchResults(
   input: UpdateMatchResultsInput

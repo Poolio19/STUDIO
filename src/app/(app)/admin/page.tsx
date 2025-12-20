@@ -20,7 +20,8 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { importData } from '@/ai/flows/import-data-flow';
-import { updateMatchResults, UpdateMatchResultsInput } from '@/ai/flows/update-match-results-flow';
+import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
+import { type UpdateMatchResultsInput } from '@/ai/flows/update-match-results-flow-types';
 import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs, Query } from 'firebase/firestore';
 import type { Match, Team } from '@/lib/data';
@@ -144,11 +145,12 @@ export default function AdminPage() {
     };
 
     try {
-      await updateMatchResults(input);
+      const response = await updateMatchResults(input);
       toast({
         title: 'Update Complete!',
-        description: `Match results for week ${selectedWeek} have been updated.`,
+        description: `${response.updatedCount} match results for week ${selectedWeek} have been updated.`,
       });
+      // No need to re-fetch, the local state is the source of truth for the form
     } catch (error) {
       console.error('Match result update failed:', error);
       toast({
