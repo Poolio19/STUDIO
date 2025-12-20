@@ -8,17 +8,22 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { PlayerPerformanceChart } from '@/components/charts/player-performance-chart';
-import { User, UserHistory, users, userHistories } from '@/lib/data';
+import type { User, UserHistory } from '@/lib/data';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
 
 export default function PerformancePage() {
-  const [isLoading, setIsLoading] = useState(true);
+  const firestore = useFirestore();
 
-  useEffect(() => {
-    // Simulate data loading
-    setTimeout(() => setIsLoading(false), 500);
-  }, []);
+  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+  const userHistoriesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'userHistories') : null, [firestore]);
+
+  const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
+  const { data: userHistories, isLoading: historiesLoading } = useCollection<UserHistory>(userHistoriesQuery);
+  
+  const isLoading = usersLoading || historiesLoading;
 
   const sortedUsers = useMemo(() => {
     if (!users) return [];

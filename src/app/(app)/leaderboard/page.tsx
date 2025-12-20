@@ -18,11 +18,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { monthlyMimoM, type User, users, currentStandings } from '@/lib/data';
+import type { User, CurrentStanding, MonthlyMimoM } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo } from 'react';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy } from 'firebase/firestore';
 
 
 const getAvatarUrl = (avatarId: string) => {
@@ -76,23 +78,24 @@ const prizeTiers = [50, 41, 33, 26, 20];
 const totalWinningsMap = new Map<string, number>();
 
 export default function LeaderboardPage() {
-  const [isLoading, setIsLoading] = useState(true);
+  const firestore = useFirestore();
+
+  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+  const standingsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'standings') : null, [firestore]);
+  const mimoMQuery = useMemoFirebase(() => firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore]);
+
+  const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
+  const { data: currentStandings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsQuery);
+  const { data: monthlyMimoM, isLoading: mimoMLoading } = useCollection<MonthlyMimoM>(mimoMQuery);
+
+  const isLoading = usersLoading || standingsLoading || mimoMLoading;
 
   const currentWeek = useMemo(() => {
-    // Derive the current week from the number of games played in the standings data.
-    // This ensures it's always in sync with the data source.
     if (currentStandings && currentStandings.length > 0) {
       return currentStandings[0].gamesPlayed;
     }
-    return 1; // Default to 1 if standings aren't available yet
+    return 1;
   }, [currentStandings]);
-
-
-  useEffect(() => {
-    // This effect can be used for things that need to run after initial render,
-    // but the currentWeek is now derived directly from data.
-    setIsLoading(false);
-  }, []);
 
   const { sortedUsers } = useMemo(() => {
     const sorted = users ? [...users].sort((a, b) => (a.rank || 0) - (b.rank || 0)) : [];
@@ -103,7 +106,7 @@ export default function LeaderboardPage() {
   const regularPlayers = useMemo(() => sortedUsers.filter(u => !u.isPro), [sortedUsers]);
 
   const localTotalWinningsMap = useMemo(() => {
-    if (!users) return new Map();
+    if (!users || !monthlyMimoM) return new Map();
     const mimoMWinnings = new Map<string, number>();
     const monthlyAwards: { [key: string]: { winners: string[], runnersUp: string[] } } = {};
 
@@ -185,7 +188,7 @@ export default function LeaderboardPage() {
     });
 
     return calculatedTotalWinnings;
-  }, [regularPlayers, proPlayers, users]);
+  }, [regularPlayers, proPlayers, users, monthlyMimoM]);
 
 
   return (
@@ -229,7 +232,7 @@ export default function LeaderboardPage() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={12} className="text-center">Loading leaderboard...</TableCell>
+                  <TableCell colSpan={12} className="text-center h-48">Loading leaderboard...</TableCell>
                 </TableRow>
               ) : (
                 sortedUsers.map((user, index) => {
@@ -282,5 +285,3 @@ export default function LeaderboardPage() {
     </div>
   );
 }
-
-    

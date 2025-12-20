@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -12,20 +13,27 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
-import { useMemo, useState, useEffect } from 'react';
-import { User, Team, PlayerTeamScore, users, teams, playerTeamScores } from '@/lib/data';
+import { useMemo } from 'react';
+import type { User, Team, PlayerTeamScore } from '@/lib/data';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
 
 const getAvatarUrl = (avatarId: string) => {
   return PlaceHolderImages.find((img) => img.id === avatarId)?.imageUrl || '';
 };
 
 export default function StatsPage() {
-  const [isLoading, setIsLoading] = useState(true);
+  const firestore = useFirestore();
 
-  useEffect(() => {
-    // Simulate data loading
-    setTimeout(() => setIsLoading(false), 500);
-  }, []);
+  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+  const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
+  const scoresQuery = useMemoFirebase(() => firestore ? collection(firestore, 'playerTeamScores') : null, [firestore]);
+  
+  const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
+  const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
+  const { data: playerTeamScores, isLoading: scoresLoading } = useCollection<PlayerTeamScore>(scoresQuery);
+
+  const isLoading = usersLoading || teamsLoading || scoresLoading;
   
   const sortedUsers = useMemo(() => users ? [...users].sort((a, b) => (a.rank || 0) - (b.rank || 0)) : [], [users]);
   const sortedTeams = useMemo(() => teams ? [...teams].sort((a, b) => a.name.localeCompare(b.name)) : [], [teams]);
@@ -56,7 +64,7 @@ export default function StatsPage() {
         <CardContent>
             <div className="overflow-x-auto">
                 {isLoading ? (
-                    <div className="flex justify-center items-center h-64">Loading stats...</div>
+                    <div className="flex justify-center items-center h-96">Loading stats...</div>
                 ) : (
                     <Table className="min-w-full border-collapse">
                         <TableHeader>

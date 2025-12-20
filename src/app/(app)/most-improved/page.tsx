@@ -21,11 +21,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { type User, CurrentStanding, MonthlyMimoM, SeasonMonth, users, currentStandings, monthlyMimoM, seasonMonths } from '@/lib/data';
+import type { User, CurrentStanding, MonthlyMimoM, SeasonMonth } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
 
 
 const getAvatarUrl = (avatarId: string) => {
@@ -65,12 +67,19 @@ const getMonthForWeek = (week: number): { month: string; year: number } => {
 
 
 export default function MostImprovedPage() {
-  const [isLoading, setIsLoading] = useState(true);
+  const firestore = useFirestore();
 
-  useEffect(() => {
-    // Simulate data loading
-    setTimeout(() => setIsLoading(false), 500);
-  }, []);
+  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+  const standingsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'standings') : null, [firestore]);
+  const mimoMQuery = useMemoFirebase(() => firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore]);
+  const seasonMonthsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'seasonMonths') : null, [firestore]);
+
+  const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
+  const { data: currentStandings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsQuery);
+  const { data: monthlyMimoM, isLoading: mimoMLoading } = useCollection<MonthlyMimoM>(mimoMQuery);
+  const { data: seasonMonths, isLoading: seasonMonthsLoading } = useCollection<SeasonMonth>(seasonMonthsQuery);
+
+  const isLoading = usersLoading || standingsLoading || mimoMLoading || seasonMonthsLoading;
 
   const currentWeek = currentStandings?.[0]?.gamesPlayed || 1;
   const { month: currentMonthName, year: currentYear } = getMonthForWeek(currentWeek);
@@ -175,11 +184,20 @@ export default function MostImprovedPage() {
   };
 
   const currentMonthAbbreviation = useMemo(() => {
+    if (!seasonMonths) return currentMonthName.slice(0, 4).toUpperCase();
     return seasonMonths.find(sm => sm.month === currentMonthName && sm.year === currentYear)?.abbreviation || currentMonthName.slice(0, 4).toUpperCase();
   }, [currentMonthName, currentYear, seasonMonths]);
 
   if (isLoading) {
-    return <div className="flex justify-center items-center h-full">Loading page...</div>;
+    return (
+        <div className="flex flex-col gap-8">
+            <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
+                <h1 className="text-3xl font-bold tracking-tight">Most Improved Manager Of The Month</h1>
+                <p className="text-slate-400">Celebrating the meek, rarely-vaunted, mid-season heroes of the PremPred - with cash!</p>
+            </header>
+            <div className="flex justify-center items-center h-96">Loading page...</div>
+        </div>
+    );
   }
 
   return (

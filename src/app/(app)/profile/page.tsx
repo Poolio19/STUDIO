@@ -41,7 +41,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { Team, User, UserHistory, MonthlyMimoM, users, teams, userHistories, monthlyMimoM } from '@/lib/data';
+import type { Team, User, UserHistory, MonthlyMimoM } from '@/lib/data';
 import { ProfilePerformanceChart } from '@/components/charts/profile-performance-chart';
 import React from 'react';
 import { Label } from '@/components/ui/label';
@@ -53,6 +53,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
 
 
 const profileFormSchema = z.object({
@@ -75,17 +77,27 @@ const profileFormSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
-// Mock current user - in a real app this would come from an auth hook
-const currentUserId = 'usr_1';
-
 export default function ProfilePage() {
   const { toast } = useToast();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const { user: authUser } = useUser();
+  const firestore = useFirestore();
+  
+  // This should ideally be the logged-in user's ID
+  const currentUserId = authUser ? authUser.uid : 'usr_1';
 
-  const user = React.useMemo(() => users.find(u => u.id === currentUserId), []);
-  const userHistory = React.useMemo(() => userHistories.find(h => h.userId === currentUserId), []);
+  const userDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'users', currentUserId) : null, [firestore, currentUserId]);
+  const userHistoryDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'userHistories', currentUserId) : null, [firestore, currentUserId]);
+  const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
+  const mimoMQuery = useMemoFirebase(() => firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore]);
+
+  const { data: user, isLoading: userLoading } = useDoc<User>(userDocRef);
+  const { data: userHistory, isLoading: historyLoading } = useDoc<UserHistory>(userHistoryDocRef);
+  const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
+  const { data: monthlyMimoM, isLoading: mimoMLoading } = useCollection<MonthlyMimoM>(mimoMQuery);
+
+  const isLoading = userLoading || historyLoading || teamsLoading || mimoMLoading;
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -93,19 +105,15 @@ export default function ProfilePage() {
   });
 
   React.useEffect(() => {
-    // Simulate loading
-    setTimeout(() => {
-        if (user) {
-          form.reset({
-            name: user.name || '',
-            email: user.email || 'alex@example.com',
-            dob: user.joinDate ? new Date(user.joinDate) : new Date('1990-01-01'),
-            country: 'United Kingdom', // Example value
-            favouriteTeam: 'team_1' // Example value
-          });
-        }
-        setIsLoading(false);
-    }, 500);
+    if (user) {
+      form.reset({
+        name: user.name || '',
+        email: user.email || '',
+        dob: user.joinDate ? new Date(user.joinDate) : new Date('1990-01-01'),
+        country: 'United Kingdom', // Example value
+        favouriteTeam: 'team_1' // Example value
+      });
+    }
   }, [user, form]);
 
 

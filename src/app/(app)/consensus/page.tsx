@@ -17,10 +17,12 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
-import { Team, Prediction, CurrentStanding, teams, currentStandings, predictions as userPredictions } from '@/lib/data';
+import type { Team, Prediction } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
 import { cn } from '@/lib/utils';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo } from 'react';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy } from 'firebase/firestore';
 
 type ConsensusData = {
   [teamId: string]: number[];
@@ -29,12 +31,21 @@ type ConsensusData = {
 const lightTextColours = ['#FFFFFF', '#FBE122', '#99D6EA', '#FDBE11'];
 
 export default function ConsensusPage() {
-  const [isLoading, setIsLoading] = useState(true);
+  const firestore = useFirestore();
 
-  useEffect(() => {
-    // Simulate data loading
-    setTimeout(() => setIsLoading(false), 500);
-  }, []);
+  const teamsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'teams')) : null, [firestore]);
+  const predictionsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'predictions') : null, [firestore]);
+  // We need a stable standings query. Let's assume we sort by rank.
+  // This depends on a 'rank' field existing in the 'standings' documents.
+  // If not, we might need to adjust or sort client-side.
+  const standingsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'standings'), orderBy('rank', 'asc')) : null, [firestore]);
+
+
+  const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
+  const { data: userPredictions, isLoading: predictionsLoading } = useCollection<Prediction>(predictionsQuery);
+  const { data: currentStandings, isLoading: standingsLoading } = useCollection<any>(standingsQuery);
+
+  const isLoading = teamsLoading || predictionsLoading || standingsLoading;
 
   const standingsWithTeamData = useMemo(() => {
     if (!teams || !currentStandings) return [];
@@ -42,11 +53,12 @@ export default function ConsensusPage() {
     return currentStandings
       .map(standing => {
         const team = teamMap.get(standing.teamId);
+        // The rank is directly from the sorted standing doc now
         return team ? { ...team, rank: standing.rank } : null;
       })
-      .filter((team): team is Team & { rank: number } => !!team)
-      .sort((a, b) => a.rank - b.rank);
-  }, []);
+      .filter((team): team is Team & { rank: number } => !!team);
+      // No client-side sort needed as the query handles it
+  }, [teams, currentStandings]);
 
   const consensusData = useMemo((): ConsensusData | null => {
     if (!teams || !userPredictions) return null;
@@ -66,7 +78,7 @@ export default function ConsensusPage() {
     });
 
     return data;
-  }, []);
+  }, [teams, userPredictions]);
 
   const positions = Array.from({ length: 20 }, (_, i) => i + 1);
 
@@ -79,7 +91,28 @@ export default function ConsensusPage() {
   };
 
   if (isLoading) {
-    return <div className="flex justify-center items-center h-full">Loading consensus data...</div>;
+    return (
+       <div className="space-y-8">
+         <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
+           <h1 className="text-3xl font-bold tracking-tight">Prediction Consensus</h1>
+           <p className="text-slate-400">
+             See how the community predicts the final league standings.
+           </p>
+         </header>
+         <Card>
+            <CardHeader>
+                <CardTitle>Consensus Matrix</CardTitle>
+                <CardDescription>
+                The grid shows the number of players who have predicted each team to
+                finish in a specific position.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="h-96 flex items-center justify-center">
+              <div>Loading consensus data...</div>
+            </CardContent>
+         </Card>
+      </div>
+    )
   }
 
   return (
