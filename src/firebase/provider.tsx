@@ -4,7 +4,7 @@
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
+import { Auth, User, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseProviderProps {
@@ -79,13 +79,27 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       auth,
       (firebaseUser) => { // Auth state determined
         if (!firebaseUser) {
-          // If no user, sign in anonymously. This prevents permission errors
-          // for apps that allow read access to authenticated users.
-          signInAnonymously(auth).catch((error) => {
-             console.error("FirebaseProvider: Anonymous sign-in failed:", error);
-             setUserAuthState({ user: null, isUserLoading: false, userError: error });
-          });
+          // If no user, automatically sign in as 'alex@example.com'
+          // This user needs to exist in your Firebase Auth users.
+          // For initial setup, we can try to create it if it doesn't exist.
+          signInWithEmailAndPassword(auth, 'alex@example.com', 'password123')
+            .catch((error) => {
+              if (error.code === 'auth/user-not-found') {
+                // If user doesn't exist, create it.
+                return createUserWithEmailAndPassword(auth, 'alex@example.com', 'password123');
+              }
+              return Promise.reject(error);
+            })
+            .then(userCredential => {
+              // This block will run after successful sign-in or sign-up
+               setUserAuthState({ user: userCredential.user, isUserLoading: false, userError: null });
+            })
+            .catch((error) => {
+              console.error("FirebaseProvider: Automatic sign-in/sign-up failed:", error);
+              setUserAuthState({ user: null, isUserLoading: false, userError: error });
+            });
         } else {
+            // A user is already signed in (could be from a previous session)
             setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
         }
       },

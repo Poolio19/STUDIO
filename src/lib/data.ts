@@ -380,7 +380,7 @@ const calculateStandings = (matchesToProcess: Match[]): CurrentStanding[] => {
             homeTeam.goalsAgainst += match.awayScore;
             awayTeam.goalsAgainst += match.homeScore;
 
-            if (match.homeScore > match.awayScore) {
+            if (match.homeScore > match.homeScore) {
                 homeTeam.wins += 1; homeTeam.points += 3; awayTeam.losses += 1;
             } else if (match.homeScore < match.awayScore) {
                 awayTeam.wins += 1; awayTeam.points += 3; homeTeam.losses += 1;
@@ -642,3 +642,5 @@ for (const monthOrSpecial in monthWeekRanges) {
     }
 }
 monthlyMimoM = generatedMimoM;
+
+    
