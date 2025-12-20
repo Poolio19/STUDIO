@@ -37,16 +37,15 @@ service cloud.firestore {
       allow read: if true;
       allow write: if false;
     }
-
-    // AUTHENTICATED READS / RESTRICTED WRITES
-    
-    // ANY authenticated user can read player scores and user profiles.
-    // This is needed for leaderboards, stats pages, etc.
-    // Writes remain blocked.
     match /playerTeamScores/{document=**} {
       allow read: if request.auth != null;
       allow write: if false;
     }
+
+    // AUTHENTICATED READS / RESTRICTED WRITES
+    
+    // ANY authenticated user can read user profiles for leaderboards, etc.
+    // Writes remain blocked.
     match /users/{document=**} {
       allow read: if request.auth != null;
       allow write: if false; 
