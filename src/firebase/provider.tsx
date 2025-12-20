@@ -194,3 +194,5 @@ export const useUser = (): UserHookResult => { // Renamed from useAuthUser
   }
   return { user: context.user, isUserLoading: context.isUserLoading, userError: context.userError };
 };
+
+    

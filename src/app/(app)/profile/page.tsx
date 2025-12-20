@@ -81,14 +81,13 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
-  const { user: authUser } = useUser();
+  const { user: authUser, isUserLoading: isAuthUserLoading } = useUser();
   const firestore = useFirestore();
   
-  // This should ideally be the logged-in user's ID
-  const currentUserId = authUser ? authUser.uid : 'usr_1';
+  const currentUserId = authUser ? authUser.uid : null;
 
-  const userDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'users', currentUserId) : null, [firestore, currentUserId]);
-  const userHistoryDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'userHistories', currentUserId) : null, [firestore, currentUserId]);
+  const userDocRef = useMemoFirebase(() => (firestore && currentUserId) ? doc(firestore, 'users', currentUserId) : null, [firestore, currentUserId]);
+  const userHistoryDocRef = useMemoFirebase(() => (firestore && currentUserId) ? doc(firestore, 'userHistories', currentUserId) : null, [firestore, currentUserId]);
   const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
   const mimoMQuery = useMemoFirebase(() => firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore]);
 
@@ -97,7 +96,7 @@ export default function ProfilePage() {
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
   const { data: monthlyMimoM, isLoading: mimoMLoading } = useCollection<MonthlyMimoM>(mimoMQuery);
 
-  const isLoading = userLoading || historyLoading || teamsLoading || mimoMLoading;
+  const isLoading = isAuthUserLoading || userLoading || historyLoading || teamsLoading || mimoMLoading;
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -180,7 +179,7 @@ export default function ProfilePage() {
   }
 
   if (!user) {
-    return <div className="flex justify-center items-center h-full">User not found.</div>;
+    return <div className="flex justify-center items-center h-full">Please log in to view your profile.</div>;
   }
 
 
@@ -444,3 +443,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
