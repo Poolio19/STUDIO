@@ -177,13 +177,13 @@ export const previousSeasonStandings: PreviousSeasonStanding[] = [
     { teamId: 'team_14', rank: 8, points: 60, goalDifference: -1 },
     { teamId: 'team_19', rank: 9, points: 52, goalDifference: -14 },
     { teamId: 'team_7', rank: 10, points: 49, goalDifference: -1 },
-    { teamId: 'team_5', rank: 11, points: 48, goalDifference: -7 },
-    { teamId: 'team_3', rank: 12, points: 48, goalDifference: -13 },
-    { teamId: 'team_9', rank: 13, points: 47, goalDifference: -6 },
-    { teamId: 'team_20', rank: 14, points: 46, goalDifference: -15 },
-    { teamId: 'team_8', rank: 15, points: 40, goalDifference: -11 },
-    { teamId: 'team_4', rank: 16, points: 39, goalDifference: -9 },
-    { teamId: 'team_16', rank: 17, points: 32, goalDifference: -18 },
+    { id: 'team_5', name: 'Brighton', rank: 11, points: 48, goalDifference: -7 },
+    { id: 'team_3', name: 'Bournemouth', rank: 12, points: 48, goalDifference: -13 },
+    { id: 'team_9', name: 'Fulham', rank: 13, points: 47, goalDifference: -6 },
+    { id: 'team_20', name: 'Wolves', rank: 14, points: 46, goalDifference: -15 },
+    { id: 'team_8', name: 'Everton', rank: 15, points: 40, goalDifference: -11 },
+    { id: 'team_4', name: 'Brentford', rank: 16, points: 39, goalDifference: -9 },
+    { id: 'team_16', name: 'Notts Forest', rank: 17, points: 32, goalDifference: -18 },
     { teamId: 'team_10', rank: 18, points: 96, goalDifference: 35 }, // Promoted from Championship (Ipswich)
     { teamId: 'team_11', rank: 19, points: 97, goalDifference: 41 }, // Promoted from Championship (Leicester)
     { teamId: 'team_17', rank: 20, points: 87, goalDifference: 24 }, // Promoted from Championship (Southampton)
@@ -209,6 +209,8 @@ export const monthlyMimoM: MonthlyMimoM[] = [
 ];
 
 // --- DYNAMIC & DETERMINISTIC DATA GENERATION ---
+
+const WEEKS_TO_SHOW = 10;
 
 // Simple seeded random number generator for consistency
 const mulberry32 = (seed: number) => {
@@ -354,13 +356,6 @@ const simulateMatchScores = (fixtures: Omit<Match, 'homeScore' | 'awayScore'>[])
     });
 };
 
-const allFixtures = generateSeasonFixtures();
-export const allMatches: Match[] = simulateMatchScores(allFixtures);
-
-const WEEKS_TO_SHOW = 10;
-export const matches: Match[] = allMatches.filter(m => m.week <= WEEKS_TO_SHOW);
-
-
 const calculateStandings = (matchesToProcess: Match[]): CurrentStanding[] => {
     const standingsMap: Map<string, Omit<CurrentStanding, 'rank' | 'teamId'>> = new Map();
 
@@ -416,27 +411,44 @@ const calculateStandings = (matchesToProcess: Match[]): CurrentStanding[] => {
     });
 };
 
+const calculateScoresForUser = (userPredictions: string[], actualStandings: CurrentStanding[]): number => {
+    const actualRanks = new Map<string, number>();
+    actualStandings.forEach(s => actualRanks.set(s.teamId, s.rank));
+    
+    let totalScore = 0;
+    userPredictions.forEach((teamId, index) => {
+        const predictedRank = index + 1;
+        const actualRank = actualRanks.get(teamId);
+        if (actualRank) {
+            totalScore += 5 - Math.abs(predictedRank - actualRank);
+        }
+    });
+    return totalScore;
+};
+
+const allFixtures = generateSeasonFixtures();
+export const allMatches: Match[] = simulateMatchScores(allFixtures);
+export const matches: Match[] = allMatches.filter(m => m.week <= WEEKS_TO_SHOW);
 export const currentStandings: CurrentStanding[] = calculateStandings(matches);
 const finalStandings: CurrentStanding[] = calculateStandings(allMatches);
 
-const calculateScoresForUser = (userId: string, userPredictions: string[], actualFinalStandings: CurrentStanding[]): PlayerTeamScore[] => {
+
+export const playerTeamScores: PlayerTeamScore[] = usersData.flatMap(user => {
+    const userPrediction = predictions.find(p => p.userId === user.id);
+    if (!userPrediction) return [];
+
     const actualRanks = new Map<string, number>();
-    actualFinalStandings.forEach(s => actualRanks.set(s.teamId, s.rank));
+    finalStandings.forEach(s => actualRanks.set(s.teamId, s.rank));
     
-    return userPredictions.map((teamId, index) => {
+    return userPrediction.rankings.map((teamId, index) => {
         const predictedRank = index + 1;
         const actualRank = actualRanks.get(teamId);
         let score = 0;
         if (actualRank) {
             score = 5 - Math.abs(predictedRank - actualRank);
         }
-        return { userId, teamId, score };
+        return { userId: user.id, teamId, score };
     });
-};
-
-export const playerTeamScores: PlayerTeamScore[] = usersData.flatMap(user => {
-    const userPrediction = predictions.find(p => p.userId === user.id);
-    return calculateScoresForUser(user.id, userPrediction?.rankings || [], finalStandings);
 });
 
 const previousSeasonPlayerRanks: {[key: string]: number} = {};
@@ -444,67 +456,58 @@ const previousSeasonPlayerRanks: {[key: string]: number} = {};
   .forEach((user, index) => { previousSeasonPlayerRanks[user.id] = index + 1; });
 
 export const userHistories: UserHistory[] = usersData.map(user => {
-    const seed = parseInt(user.id.replace('usr_', ''), 10);
-    const random = mulberry32(seed);
+    let weeklyScores: WeeklyScore[] = [{ week: 0, score: 0, rank: previousSeasonPlayerRanks[user.id] || parseInt(user.id.replace('usr_', '')) % 20 }];
+    const userPrediction = predictions.find(p => p.userId === user.id);
 
-    const finalScore = playerTeamScores
-        .filter(s => s.userId === user.id)
-        .reduce((acc, s) => acc + s.score, 0);
-
-    let weeklyScores: WeeklyScore[] = [{ week: 0, score: 0, rank: previousSeasonPlayerRanks[user.id] || seed % 20 }];
-    
-    let scoreProgression = [0];
-    for (let i = 1; i < WEEKS_TO_SHOW; i++) { scoreProgression.push(random()); }
-    scoreProgression.sort();
-
-    for (let week = 1; week <= WEEKS_TO_SHOW; week++) {
-        let cumulativeScore;
-        if (week === WEEKS_TO_SHOW) {
-            const matchesForCurrentWeek = allMatches.filter(m => m.week <= week);
-            const standingsForCurrentWeek = calculateStandings(matchesForCurrentWeek);
-            const scoresForCurrentWeek = calculateScoresForUser(user.id, predictions.find(p => p.userId === user.id)!.rankings, standingsForCurrentWeek);
-            cumulativeScore = scoresForCurrentWeek.reduce((acc, s) => acc + s.score, 0);
-        } else {
-            cumulativeScore = Math.round(finalScore * (week / 38) * (0.8 + random() * 0.4));
+    if (userPrediction) {
+        for (let week = 1; week <= 38; week++) {
+             const matchesForWeek = allMatches.filter(m => m.week <= week);
+             const standingsForWeek = calculateStandings(matchesForWeek);
+             const score = calculateScoresForUser(userPrediction.rankings, standingsForWeek);
+             weeklyScores.push({ week, score, rank: 0 }); // Rank will be calculated later
         }
-        weeklyScores.push({ week, score: cumulativeScore, rank: 0 }); 
     }
     return { userId: user.id, weeklyScores };
 });
 
-for (let week = 1; week <= WEEKS_TO_SHOW; week++) {
-    const weeklyStandings = userHistories
-      .map(h => ({
-          userId: h.userId,
-          score: h.weeklyScores.find(w => w.week === week)!.score,
-          tieBreaker: parseInt(h.userId.replace('usr_',''))
-      }))
+for (let week = 1; week <= 38; week++) {
+    const weeklyPlayerStandings = userHistories
+      .map(h => {
+          const user = usersData.find(u => u.id === h.userId)!;
+          return {
+              userId: h.userId,
+              score: h.weeklyScores.find(w => w.week === week)!.score,
+              tieBreaker: parseInt(user.id.replace('usr_', ''))
+          }
+      })
       .sort((a, b) => b.score - a.score || a.tieBreaker - b.tieBreaker);
 
-    weeklyStandings.forEach((player, index) => {
-        const rank = index + 1;
+    let currentRank = 1;
+    weeklyPlayerStandings.forEach((player, index) => {
+        if (index > 0 && player.score < weeklyPlayerStandings[index - 1].score) {
+            currentRank = index + 1;
+        }
         const userHistory = userHistories.find(h => h.userId === player.userId)!;
         const weekData = userHistory.weeklyScores.find(w => w.week === week)!;
-        weekData.rank = rank;
+        weekData.rank = currentRank;
     });
 }
 
+
 const finalUsers: User[] = usersData.map(userStub => {
     const history = userHistories.find(h => h.userId === userStub.id);
-    const totalScore = playerTeamScores
-        .filter(s => s.userId === userStub.id)
-        .reduce((acc, s) => acc + s.score, 0);
     
     if (!history || history.weeklyScores.length === 0) {
-        return { ...userStub, score: totalScore, rank: 0, previousRank: 0, previousScore: 0, rankChange: 0, scoreChange: 0, maxScore: 0, minScore: 0, maxRank: 0, minRank: 0, };
+        return { ...userStub, score: 0, rank: 0, previousRank: 0, previousScore: 0, rankChange: 0, scoreChange: 0, maxScore: 0, minScore: 0, maxRank: 0, minRank: 0, };
     }
     
-    const currentWeekData = history.weeklyScores.find(w => w.week === WEEKS_TO_SHOW) || { score: totalScore, rank: 0 };
+    const currentWeekData = history.weeklyScores.find(w => w.week === WEEKS_TO_SHOW) || { score: 0, rank: 0 };
     const previousWeekNumber = WEEKS_TO_SHOW > 1 ? WEEKS_TO_SHOW - 1 : 0;
     const previousWeekData = history.weeklyScores.find(w => w.week === previousWeekNumber) || { score: 0, rank: 0 };
     const rankChange = previousWeekData.rank && currentWeekData.rank ? previousWeekData.rank - currentWeekData.rank : 0;
     const scoreChange = currentWeekData.score - previousWeekData.score;
-    const seasonWeeklyScores = history.weeklyScores.filter(w => w.week > 0);
+    
+    const seasonWeeklyScores = history.weeklyScores.filter(w => w.week > 0 && w.week <= WEEKS_TO_SHOW);
     
     if (seasonWeeklyScores.length === 0) {
        return { ...userStub, score: currentWeekData.score, rank: currentWeekData.rank, previousRank: previousWeekData.rank, previousScore: previousWeekData.score, rankChange, scoreChange, maxScore: currentWeekData.score, minScore: currentWeekData.score, maxRank: currentWeekData.rank, minRank: currentWeekData.rank, };
@@ -520,32 +523,13 @@ const finalUsers: User[] = usersData.map(userStub => {
     return { ...userStub, score: currentWeekData.score, rank: currentWeekData.rank, previousRank: previousWeekData.rank, previousScore: previousWeekData.score, rankChange, scoreChange, maxScore, minScore, maxRank, minRank, };
 });
 
-const sortedFinalUsers = finalUsers.sort((a, b) => b.score - a.score || parseInt(a.id.replace('usr_', '')) - parseInt(b.id.replace('usr_', '')));
+export const users: User[] = finalUsers.sort((a, b) => a.rank - b.rank);
 
-let currentRank = 1;
-for (let i = 0; i < sortedFinalUsers.length; i++) {
-    if (i > 0 && sortedFinalUsers[i].score < sortedFinalUsers[i-1].score) {
-        currentRank = i + 1;
-    }
-    sortedFinalUsers[i].rank = currentRank;
-    const userHistory = userHistories.find(h => h.userId === sortedFinalUsers[i].id);
-    if(userHistory) {
-        const lastWeek = userHistory.weeklyScores.find(w => w.week === WEEKS_TO_SHOW);
-        if(lastWeek) { lastWeek.rank = currentRank; }
-    }
-}
-
-export const users: User[] = sortedFinalUsers;
-
-const currentWeekNumber = currentStandings[0]?.gamesPlayed || 1;
 
 export const weeklyTeamStandings: WeeklyTeamStanding[] = teams.flatMap(team => {
-    const seed = parseInt(team.id.replace('team_', ''), 10);
-    if (isNaN(seed)) return [];
-    const random = mulberry32(seed);
     const ranksByWeek: WeeklyTeamStanding[] = [];
 
-    for (let week = 1; week <= currentWeekNumber; week++) {
+    for (let week = 1; week <= WEEKS_TO_SHOW; week++) {
         const matchesForWeek = allMatches.filter(m => m.week <= week);
         const standingsForWeek = calculateStandings(matchesForWeek);
         const teamRank = standingsForWeek.find(s => s.teamId === team.id)?.rank || 20;
@@ -578,5 +562,3 @@ const generateRecentResults = (teamId: string): ('W' | 'D' | 'L' | '-')[] => {
 export const teamRecentResults: TeamRecentResult[] = teams.map((team) => {
     return { teamId: team.id, results: generateRecentResults(team.id) };
 });
-
-
