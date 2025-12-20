@@ -357,7 +357,7 @@ const simulateMatchScores = (fixtures: Omit<Match, 'homeScore' | 'awayScore'>[])
 const allFixtures = generateSeasonFixtures();
 export const allMatches: Match[] = simulateMatchScores(allFixtures);
 
-const WEEKS_TO_SHOW = 5;
+const WEEKS_TO_SHOW = 10;
 export const matches: Match[] = allMatches.filter(m => m.week <= WEEKS_TO_SHOW);
 
 
@@ -578,4 +578,5 @@ const generateRecentResults = (teamId: string): ('W' | 'D' | 'L' | '-')[] => {
 export const teamRecentResults: TeamRecentResult[] = teams.map((team) => {
     return { teamId: team.id, results: generateRecentResults(team.id) };
 });
+
 
