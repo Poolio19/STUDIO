@@ -3,7 +3,8 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Allow public read access for teams and previous season standings
+    // Allow public read access for several collections.
+    // Writes are generally disallowed from the client, except for predictions.
     match /teams/{teamId} {
       allow read: if true;
       allow write: if false;
@@ -14,17 +15,56 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Secure all other collections by default
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /standings/{standingId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /playerTeamScores/{scoreId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /userHistories/{userId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+    
+    match /weeklyTeamStandings/{standingId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /teamRecentResults/{resultId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+    
+    match /monthlyMimoM/{awardId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /seasonMonths/{monthId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
     // Predictions can be created/updated by the logged-in user for their own document
     match /predictions/{userId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Allow admins (not yet defined, so currently no one) to update matches
+    // Matches are readable by anyone, but only updatable via admin flows.
     match /matches/{matchId} {
        allow read: if true;
-       allow write: if false; // To be secured later
+       allow write: if false;
     }
 
     // Default deny for any other path not explicitly matched
