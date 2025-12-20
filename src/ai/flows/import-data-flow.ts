@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A flow to populate Firestore with initial data.
@@ -21,6 +22,7 @@ import {
   doc,
 } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
+import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 
 async function batchWrite(
   db: any,
@@ -37,6 +39,30 @@ async function batchWrite(
   await batch.commit();
 }
 
+async function ensureDefaultUser() {
+    const { auth } = initializeFirebase();
+    const email = 'alex@example.com';
+    const password = 'password123';
+    const displayName = 'Alex';
+
+    try {
+        // Attempt to create the user. If the user already exists, this will fail.
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        // If creation is successful, update the profile with the display name.
+        await updateProfile(userCredential.user, { displayName });
+        console.log(`Successfully created and set up user: ${displayName}`);
+    } catch (error: any) {
+        if (error.code === 'auth/email-already-in-use') {
+            // This is expected if the user has already been created.
+            console.log(`User ${displayName} already exists.`);
+        } else {
+            // For other errors, log them.
+            console.error(`Error ensuring default user exists:`, error);
+        }
+    }
+}
+
+
 export async function importData(): Promise<{ success: boolean }> {
   return importDataFlow();
 }
@@ -50,10 +76,12 @@ const importDataFlow = ai.defineFlow(
     const { firestore: db } = initializeFirebase();
 
     try {
+      // Ensure the default user exists and has a displayName before importing data
+      await ensureDefaultUser();
+
       await batchWrite(db, 'teams', teams, 'id');
       await batchWrite(db, 'users', staticUsers, 'id');
       
-      // For predictions, the document ID is the userId
       const predBatch = writeBatch(db);
       const predCollectionRef = collection(db, 'predictions');
       staticPredictions.forEach(item => {
@@ -74,7 +102,6 @@ const importDataFlow = ai.defineFlow(
       const prevStandingsBatch = writeBatch(db);
       const prevStandingsRef = collection(db, 'previousSeasonStandings');
       staticPreviousSeasonStandings.forEach(item => {
-        // Use teamId as the document ID for simplicity and to avoid duplicates
         const docRef = doc(prevStandingsRef, item.teamId);
         prevStandingsBatch.set(docRef, item);
       });
@@ -84,7 +111,6 @@ const importDataFlow = ai.defineFlow(
       return { success: true };
     } catch (error) {
       console.error("Error importing data to Firestore:", error);
-      // In a real app, you might want more robust error handling
       throw new Error('Failed to import data.');
     }
   }
