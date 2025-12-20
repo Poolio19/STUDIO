@@ -40,6 +40,7 @@ export default function AdminPage() {
 
   const [isImporting, setIsImporting] = React.useState(false);
   const [isUpdating, setIsUpdating] = React.useState(false);
+  const [isLoadingMatches, setIsLoadingMatches] = React.useState(false);
 
   const [selectedWeek, setSelectedWeek] = React.useState<string>('1');
   const [matchesForWeek, setMatchesForWeek] = React.useState<MatchWithTeamData[]>([]);
@@ -52,38 +53,37 @@ export default function AdminPage() {
     return new Map(teams.map(t => [t.id, t]));
   }, [teams]);
 
+  const fetchMatchesForWeek = React.useCallback(async (week: string) => {
+    if (!firestore || teamsLoading || teamMap.size === 0) return;
+
+    setIsLoadingMatches(true);
+    const weekNumber = parseInt(week, 10);
+    const matchesQuery = query(collection(firestore, 'matches'), where('week', '==', weekNumber));
+    const querySnapshot = await getDocs(matchesQuery);
+    
+    const matchesData: MatchWithTeamData[] = [];
+    querySnapshot.forEach(doc => {
+      const match = doc.data() as Match;
+      const homeTeam = teamMap.get(match.homeTeamId);
+      const awayTeam = teamMap.get(match.awayTeamId);
+      if (homeTeam && awayTeam) {
+          matchesData.push({ ...match, id: doc.id, homeTeam, awayTeam });
+      }
+    });
+    
+    setMatchesForWeek(matchesData);
+    
+    const initialScores: { [matchId: string]: { homeScore: string; awayScore: string } } = {};
+    matchesData.forEach(m => {
+        initialScores[m.id] = { homeScore: m.homeScore.toString(), awayScore: m.awayScore.toString() };
+    });
+    setScores(initialScores);
+    setIsLoadingMatches(false);
+  }, [firestore, teamsLoading, teamMap]);
+
   React.useEffect(() => {
-    if (!firestore || !selectedWeek || teamsLoading || teamMap.size === 0) return;
-
-    const fetchMatches = async () => {
-      setIsUpdating(true);
-      const weekNumber = parseInt(selectedWeek, 10);
-      const matchesQuery = query(collection(firestore, 'matches'), where('week', '==', weekNumber));
-      const querySnapshot = await getDocs(matchesQuery);
-      
-      const matchesData: MatchWithTeamData[] = [];
-      querySnapshot.forEach(doc => {
-        const match = doc.data() as Match;
-        const homeTeam = teamMap.get(match.homeTeamId);
-        const awayTeam = teamMap.get(match.awayTeamId);
-        if (homeTeam && awayTeam) {
-            matchesData.push({ ...match, id: doc.id, homeTeam, awayTeam });
-        }
-      });
-      
-      setMatchesForWeek(matchesData);
-      
-      // Initialize scores state
-      const initialScores: { [matchId: string]: { homeScore: string; awayScore: string } } = {};
-      matchesData.forEach(m => {
-          initialScores[m.id] = { homeScore: m.homeScore.toString(), awayScore: m.awayScore.toString() };
-      });
-      setScores(initialScores);
-      setIsUpdating(false);
-    };
-
-    fetchMatches();
-  }, [selectedWeek, firestore, teamsLoading, teamMap]);
+    fetchMatchesForWeek(selectedWeek);
+  }, [selectedWeek, fetchMatchesForWeek]);
 
   const handleScoreChange = (matchId: string, team: 'home' | 'away', value: string) => {
     setScores(prev => ({
@@ -136,7 +136,6 @@ export default function AdminPage() {
           homeScore: parseInt(score.homeScore, 10),
           awayScore: parseInt(score.awayScore, 10),
       }))
-      // Filter out matches where scores are not valid numbers (i.e., postponed)
       .filter(result => !isNaN(result.homeScore) && !isNaN(result.awayScore));
 
     const input: UpdateMatchResultsInput = {
@@ -201,11 +200,11 @@ export default function AdminPage() {
             <CardHeader>
                 <CardTitle>Update Weekly Results</CardTitle>
                 <CardDescription>
-                    Select a week and enter the scores for each match.
+                    Select a week and enter the scores for each match. You can submit partial results and update them multiple times.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                <Select onValueChange={setSelectedWeek} defaultValue={selectedWeek} disabled={isUpdating}>
+                <Select onValueChange={setSelectedWeek} defaultValue={selectedWeek} disabled={isUpdating || isLoadingMatches}>
                     <SelectTrigger>
                         <SelectValue placeholder="Select a week" />
                     </SelectTrigger>
@@ -216,7 +215,7 @@ export default function AdminPage() {
                     </SelectContent>
                 </Select>
 
-                {isUpdating && matchesForWeek.length === 0 ? (
+                {isLoadingMatches ? (
                     <div className="flex items-center justify-center p-8">
                         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                     </div>
@@ -263,7 +262,7 @@ export default function AdminPage() {
                         })}
                     </div>
                 )}
-                 <Button onClick={handleUpdateResults} disabled={isUpdating || matchesForWeek.length === 0}>
+                 <Button onClick={handleUpdateResults} disabled={isUpdating || isLoadingMatches || matchesForWeek.length === 0}>
                     {isUpdating ? (
                     <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
