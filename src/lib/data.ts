@@ -207,10 +207,7 @@ export const seasonMonths: SeasonMonth[] = [
     { id: 'sm_11', month: 'May', year: 2026, abbreviation: 'MAY' },
 ];
 
-export const monthlyMimoM: MonthlyMimoM[] = [
-    { id: 'mimo_1', month: 'August', year: 2025, userId: 'usr_12', type: 'winner' },
-    { id: 'mimo_2', month: 'August', year: 2025, userId: 'usr_3', type: 'runner-up' },
-];
+export let monthlyMimoM: MonthlyMimoM[] = [];
 
 // --- DYNAMIC & DETERMINISTIC DATA GENERATION ---
 
@@ -486,6 +483,7 @@ for (let week = 1; week <= 38; week++) {
           return {
               userId: h.userId,
               score: weeklyScore ? weeklyScore.score : -Infinity,
+              isPro: user.isPro,
               tieBreaker: parseInt(user.id.replace('usr_', ''))
           }
       })
@@ -493,13 +491,24 @@ for (let week = 1; week <= 38; week++) {
 
     let currentRank = 1;
     weeklyPlayerStandings.forEach((player, index) => {
-        if (index > 0 && player.score < weeklyPlayerStandings[index - 1].score) {
-            currentRank = index + 1;
+        if (!player.isPro) {
+            if (index > 0 && player.score < weeklyPlayerStandings[index - 1].score) {
+                currentRank = index + 1;
+            }
+            const userHistory = userHistories.find(h => h.userId === player.userId)!;
+            const weekData = userHistory.weeklyScores.find(w => w.week === week)!;
+            weekData.rank = currentRank;
         }
-        const userHistory = userHistories.find(h => h.userId === player.userId)!;
-        const weekData = userHistory.weeklyScores.find(w => w.week === week)!;
-        weekData.rank = currentRank;
     });
+
+    // Assign ranks to pro players separately without affecting non-pro ranks
+    weeklyPlayerStandings.forEach((player, index) => {
+        if(player.isPro) {
+            const userHistory = userHistories.find(h => h.userId === player.userId)!;
+            const weekData = userHistory.weeklyScores.find(w => w.week === week)!;
+            weekData.rank = index + 1;
+        }
+    })
 }
 
 
@@ -571,3 +580,63 @@ const generateRecentResults = (teamId: string): ('W' | 'D' | 'L' | '-')[] => {
 export const teamRecentResults: TeamRecentResult[] = CURRENT_SEASON_TEAMS.map((teamId) => {
     return { teamId, results: generateRecentResults(teamId) };
 });
+
+// --- DYNAMICALLY GENERATE MIMO AWARDS ---
+const monthWeekRanges: { [key: string]: { start: number; end: number; year: number } } = {
+    'August': { start: 1, end: 3, year: 2025 },
+    'September': { start: 4, end: 7, year: 2025 },
+    'October': { start: 8, end: 11, year: 2025 },
+    'November': { start: 12, end: 15, year: 2025 },
+    'December': { start: 16, end: 20, year: 2025 },
+    'January': { start: 21, end: 24, year: 2026 },
+    'February': { start: 25, end: 28, year: 2026 },
+    'March': { start: 29, end: 32, year: 2026 },
+    'April': { start: 33, end: 36, year: 2026 },
+    'May': { start: 37, end: 38, year: 2026 },
+};
+
+const generatedMimoM: MonthlyMimoM[] = [];
+let mimoIdCounter = 1;
+
+for (const month in monthWeekRanges) {
+    const { start, end, year } = monthWeekRanges[month];
+    const startWeekForCalc = start - 1;
+
+    if (WEEKS_TO_SHOW >= end) {
+        const monthlyRankChanges = usersData
+            .filter(u => !u.isPro)
+            .map(user => {
+                const userHistory = userHistories.find(h => h.userId === user.id);
+                if (!userHistory) return { userId: user.id, rankChange: -Infinity };
+
+                const startRank = userHistory.weeklyScores.find(ws => ws.week === startWeekForCalc)?.rank || 0;
+                const endRank = userHistory.weeklyScores.find(ws => ws.week === end)?.rank || 0;
+
+                // We want to reward rank *improvement*, so a higher start rank and lower end rank is good.
+                const rankChange = (startRank > 0 && endRank > 0) ? startRank - endRank : -Infinity;
+                return { userId: user.id, rankChange };
+            })
+            .sort((a, b) => b.rankChange - a.rankChange);
+
+        if (monthlyRankChanges.length > 0 && monthlyRankChanges[0].rankChange > -Infinity) {
+            const bestRankChange = monthlyRankChanges[0].rankChange;
+            const winners = monthlyRankChanges.filter(u => u.rankChange === bestRankChange);
+
+            winners.forEach(winner => {
+                generatedMimoM.push({ id: `mimo_${mimoIdCounter++}`, month, year, userId: winner.userId, type: 'winner' });
+            });
+
+            // Only award runner-up if there wasn't a tie for first place
+            if (winners.length === 1) {
+                const nextBestChange = monthlyRankChanges.find(u => u.rankChange < bestRankChange);
+                if (nextBestChange && nextBestChange.rankChange > -Infinity) {
+                    const runnersUp = monthlyRankChanges.filter(u => u.rankChange === nextBestChange.rankChange);
+                    runnersUp.forEach(runnerUp => {
+                        generatedMimoM.push({ id: `mimo_${mimoIdCounter++}`, month, year, userId: runnerUp.userId, type: 'runner-up' });
+                    });
+                }
+            }
+        }
+    }
+}
+monthlyMimoM = generatedMimoM;
