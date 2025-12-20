@@ -46,20 +46,20 @@ async function ensureDefaultUser() {
     const displayName = 'Alex';
 
     try {
-        // Attempt to create the user.
+        // Attempt to create the user. This is the primary operation.
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        // If creation is successful, update the profile with the display name.
+        // If creation is successful, immediately update the profile with the display name.
         await updateProfile(userCredential.user, { displayName });
         console.log(`Successfully created and set up user: ${displayName}`);
     } catch (error: any) {
         if (error.code === 'auth/email-already-in-use') {
-            // This is expected if the user has already been created.
-            // We don't need to update the profile here, as the login flow in the provider
-            // will handle ensuring the user state is correct for the app session.
-            console.log(`User ${displayName} already exists.`);
+            // This is not an error. It's an expected state if the setup has run before.
+            // We do not need to update the profile here, as it should have been set on creation.
+            // If the name is missing, running the import again after deleting the user is the fix.
+            console.log(`User ${displayName} already exists. No action taken.`);
         } else {
-            // For other errors, log them.
-            console.error(`Error ensuring default user exists:`, error);
+            // For any other unexpected errors, we should log them.
+            console.error(`Error during default user setup:`, error);
         }
     }
 }

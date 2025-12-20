@@ -70,7 +70,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     signInWithEmailAndPassword(auth, 'alex@example.com', 'password123')
         .catch((error) => {
             // This error is expected if the user hasn't been created yet by the importData flow.
-            // The app will function with a null user until the data is imported and the user is created.
+            // The app will appear broken until data is imported, which is the correct behavior.
             // The onAuthStateChanged listener below will pick up the user state once sign-in succeeds on a subsequent load.
             if (error.code !== 'auth/user-not-found' && error.code !== 'auth/invalid-credential') {
                 console.error("FirebaseProvider: Automatic sign-in failed:", error);
