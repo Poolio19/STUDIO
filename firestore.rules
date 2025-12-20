@@ -5,7 +5,6 @@ service cloud.firestore {
     
     // PUBLIC, READ-ONLY COLLECTIONS
     // Allow anyone to read (get and list) these collections.
-    // This is necessary for the app to load initial data without race conditions.
     match /teams/{document=**} {
       allow read: if true;
       allow write: if false;
@@ -52,10 +51,14 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if false; 
     }
-
-    // A user can read ANY user's prediction, but can only WRITE to their own.
-    match /predictions/{userId} {
+    
+    // ANY authenticated user can read predictions for the consensus page.
+    match /predictions/{document=**} {
       allow read: if request.auth != null;
+    }
+
+    // A user can only WRITE to their own prediction document.
+    match /predictions/{userId} {
       allow write: if request.auth != null && request.auth.uid == userId;
     }
     
