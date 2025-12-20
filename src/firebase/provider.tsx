@@ -4,7 +4,7 @@
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
+import { Auth, User, onAuthStateChanged, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseProviderProps {
@@ -65,22 +65,39 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       return;
     }
 
-    // Immediately try to sign in as the default user.
-    // This simplifies the logic and ensures we are always trying to be "Alex".
-    signInWithEmailAndPassword(auth, 'alex@example.com', 'password123')
-        .catch((error) => {
-            // This error is expected if the user hasn't been created yet by the importData flow.
-            // The app will appear broken until data is imported, which is the correct behavior.
-            // The onAuthStateChanged listener below will pick up the user state once sign-in succeeds on a subsequent load.
-            if (error.code !== 'auth/user-not-found' && error.code !== 'auth/invalid-credential') {
-                console.error("FirebaseProvider: Automatic sign-in failed:", error);
-            }
-        });
-
     const unsubscribe = onAuthStateChanged(
       auth,
-      (firebaseUser) => {
-        setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+      async (firebaseUser) => {
+        if (firebaseUser) {
+          // User is signed in. Check if their profile is complete.
+          if (firebaseUser.displayName !== 'Alex') {
+            // Profile is incomplete, update it.
+            try {
+              await updateProfile(firebaseUser, { displayName: 'Alex' });
+              // After updating, we need to get the fresh user object.
+              // A simple way is to force a token refresh.
+              await firebaseUser.reload();
+              const freshUser = auth.currentUser;
+              setUserAuthState({ user: freshUser, isUserLoading: false, userError: null });
+            } catch (error) {
+              console.error("FirebaseProvider: Failed to update user profile:", error);
+              setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: error as Error });
+            }
+          } else {
+            // User is signed in and profile is complete.
+            setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+          }
+        } else {
+          // No user is signed in, attempt to sign in as the default user.
+          try {
+            await signInWithEmailAndPassword(auth, 'alex@example.com', 'password123');
+            // onAuthStateChanged will be called again with the new user, so we don't set state here.
+          } catch (error) {
+             // This error is expected if the user hasn't been created yet by the importData flow.
+            console.error("FirebaseProvider: Automatic sign-in failed:", error);
+            setUserAuthState({ user: null, isUserLoading: false, userError: error as Error });
+          }
+        }
       },
       (error) => {
         console.error("FirebaseProvider: onAuthStateChanged error:", error);
