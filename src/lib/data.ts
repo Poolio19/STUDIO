@@ -214,7 +214,7 @@ export const monthlyMimoM: MonthlyMimoM[] = [
 
 // --- DYNAMIC & DETERMINISTIC DATA GENERATION ---
 
-const WEEKS_TO_SHOW = 10;
+const WEEKS_TO_SHOW = 22;
 const CURRENT_SEASON_TEAMS = teams.filter(t => !['team_21', 'team_22', 'team_23'].includes(t.id)).map(t => t.id);
 
 // Simple seeded random number generator for consistency
@@ -550,7 +550,7 @@ export const weeklyTeamStandings: WeeklyTeamStanding[] = CURRENT_SEASON_TEAMS.fl
 
 const generateRecentResults = (teamId: string): ('W' | 'D' | 'L' | '-')[] => {
     const results: ('W' | 'D' | 'L' | '-')[] = Array(6).fill('-');
-    const teamMatches = matches.filter(m => m.homeTeamId === teamId || m.awayTeamId === teamId).sort((a, b) => b.week - a.week);
+    const teamMatches = matches.filter(m => (m.homeTeamId === teamId || m.awayTeamId === teamId) && m.week <= WEEKS_TO_SHOW).sort((a, b) => b.week - a.week);
     
     for (let i = 0; i < Math.min(teamMatches.length, 6); i++) {
         const match = teamMatches[i];
