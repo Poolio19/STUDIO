@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { Team, PreviousSeasonStanding, teams, previousSeasonStandings } from '@/lib/data';
 
 const predictionSchema = z.object({
+  id: z.string(),
   teamId: z.string(),
   teamName: z.string(),
   teamLogo: z.string(),
@@ -22,7 +23,6 @@ const predictionSchema = z.object({
   bgColourFaint: z.string().optional(),
   bgColourSolid: z.string().optional(),
   textColour: z.string().optional(),
-  id: z.string(),
 });
 
 const formSchema = z.object({
@@ -40,25 +40,45 @@ export default function PredictPage() {
     setTimeout(() => setIsLoading(false), 500);
   }, []);
 
-  const sortedTeamsByPreviousRank = React.useMemo(() => {
-    if (!teams || !previousSeasonStandings) return [];
-    const teamMap = new Map(teams.map(t => [t.id, t]));
-    return previousSeasonStandings
-      .slice()
-      .sort((a, b) => a.rank - b.rank)
+  const { sortedTeamsForPrediction, standingsWithTeamData } = React.useMemo(() => {
+    if (!teams || !previousSeasonStandings) return { sortedTeamsForPrediction: [], standingsWithTeamData: [] };
+    
+    const allTeamsMap = new Map(teams.map(t => [t.id, t]));
+    
+    // For the "Last Season" table on the right
+    const fullStandingsWithData = previousSeasonStandings
       .map(standing => {
-        const team = teamMap.get(standing.teamId);
-        return {
-          id: standing.teamId,
-          teamId: standing.teamId,
-          teamName: team?.name || 'Unknown Team',
-          teamLogo: team?.logo || 'match',
-          iconColour: team?.iconColour,
-          bgColourFaint: team?.bgColourFaint,
-          bgColourSolid: team?.bgColourSolid,
-          textColour: team?.textColour,
-        };
-      });
+        const team = allTeamsMap.get(standing.teamId);
+        return team ? { ...standing, ...team } : null;
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null)
+      .sort((a, b) => a!.rank - b!.rank);
+
+    // For the draggable prediction list on the left
+    const currentSeasonTeamIds = new Set(teams.filter(t => !['team_21', 'team_22', 'team_23'].includes(t.id)).map(t => t.id));
+    
+    const teamsForPrediction = Array.from(currentSeasonTeamIds).map(teamId => {
+      const team = allTeamsMap.get(teamId);
+      const prevStanding = previousSeasonStandings.find(s => s.teamId === teamId);
+      
+      // Promoted teams won't have a PL rank, so put them at the bottom
+      const sortRank = prevStanding ? prevStanding.rank : 21; 
+
+      return {
+        id: teamId,
+        teamId: teamId,
+        teamName: team?.name || 'Unknown Team',
+        teamLogo: team?.logo || 'match',
+        iconColour: team?.iconColour,
+        bgColourFaint: team?.bgColourFaint,
+        bgColourSolid: team?.bgColourSolid,
+        textColour: team?.textColour,
+        sortRank: sortRank,
+      };
+    }).sort((a, b) => a.sortRank - b.sortRank);
+
+
+    return { sortedTeamsForPrediction: teamsForPrediction, standingsWithTeamData: fullStandingsWithData };
   }, [teams, previousSeasonStandings]);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -71,11 +91,11 @@ export default function PredictPage() {
   const [items, setItems] = React.useState<Prediction[]>([]);
 
   React.useEffect(() => {
-    if (sortedTeamsByPreviousRank.length > 0) {
-      setItems(sortedTeamsByPreviousRank);
-      form.reset({ predictions: sortedTeamsByPreviousRank });
+    if (sortedTeamsForPrediction.length > 0) {
+      setItems(sortedTeamsForPrediction);
+      form.reset({ predictions: sortedTeamsForPrediction });
     }
-  }, [sortedTeamsByPreviousRank, form]);
+  }, [sortedTeamsForPrediction, form]);
 
   React.useEffect(() => {
     form.setValue('predictions', items);
@@ -94,17 +114,6 @@ export default function PredictPage() {
         description: 'Your final standings prediction has been saved locally. Good luck!',
     });
   }
-
-  const standingsWithTeamData = React.useMemo(() => {
-      if (!teams || !previousSeasonStandings) return [];
-      return previousSeasonStandings
-        .map(standing => {
-          const team = teams.find(t => t.id === standing.teamId);
-          return team ? { ...standing, ...team } : null;
-        })
-        .filter((item): item is NonNullable<typeof item> => item !== null)
-        .sort((a, b) => a!.rank - b!.rank);
-  }, [teams, previousSeasonStandings]);
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-full">Loading teams...</div>;

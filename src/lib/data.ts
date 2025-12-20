@@ -153,17 +153,21 @@ export const teams: Team[] = [
     { id: 'team_7', name: 'Crystal Palace', logo: 'rabbit', bgColourFaint: 'rgba(27, 69, 143, 0.3)', bgColourSolid: '#1B458F', textColour: '#C4122E', iconColour: '#C4122E' },
     { id: 'team_8', name: 'Everton', logo: 'home', bgColourFaint: 'rgba(0, 51, 153, 0.3)', bgColourSolid: '#003399', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_9', name: 'Fulham', logo: 'shieldHalf', bgColourFaint: 'rgba(0, 0, 0, 0.3)', bgColourSolid: '#000000', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
-    { id: 'team_10', name: 'Ipswich Town', logo: 'shield', bgColourFaint: 'rgba(0, 87, 184, 0.3)', bgColourSolid: '#0057B8', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
-    { id: 'team_11', name: 'Leicester City', logo: 'shield', bgColourFaint: 'rgba(0, 83, 160, 0.3)', bgColourSolid: '#0053A0', textColour: '#FDBE11', iconColour: '#FDBE11' },
+    { id: 'team_10', name: 'Ipswich Town', logo: 'mapPin', bgColourFaint: 'rgba(0, 87, 184, 0.3)', bgColourSolid: '#0057B8', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
+    { id: 'team_11', name: 'Leicester City', logo: 'sparkles', bgColourFaint: 'rgba(0, 83, 160, 0.3)', bgColourSolid: '#0053A0', textColour: '#FDBE11', iconColour: '#FDBE11' },
     { id: 'team_12', name: 'Liverpool', logo: 'origami', bgColourFaint: 'rgba(200, 16, 46, 0.3)', bgColourSolid: '#C8102E', textColour: '#000000', iconColour: '#FFFFFF' },
     { id: 'team_13', name: 'Man City', logo: 'sailboat', bgColourFaint: 'rgba(108, 171, 221, 0.3)', bgColourSolid: '#6CABDD', textColour: '#00285E', iconColour: '#00285E' },
     { id: 'team_14', name: 'Man Utd', logo: 'hamburger', bgColourFaint: 'rgba(218, 41, 28, 0.3)', bgColourSolid: '#DA291C', textColour: '#FBE122', iconColour: '#FBE122' },
     { id: 'team_15', name: 'Newcastle', logo: 'castle', bgColourFaint: 'rgba(36, 31, 32, 0.3)', bgColourSolid: '#241F20', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_16', name: 'Notts Forest', logo: 'treeDeciduous', bgColourFaint: 'rgba(221, 0, 0, 0.3)', bgColourSolid: '#DD0000', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_17', name: 'Southampton', logo: 'flower', bgColourFaint: 'rgba(215, 25, 32, 0.3)', bgColourSolid: '#D71920', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
-    { id: 'team_18', name: 'Tottenham', logo: 'origami', bgColourFaint: 'rgba(19, 34, 87, 0.3)', bgColourSolid: '#132257', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
+    { id: 'team_18', name: 'Tottenham', logo: 'ship', bgColourFaint: 'rgba(19, 34, 87, 0.3)', bgColourSolid: '#132257', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_19', name: 'West Ham', logo: 'utensilsCrossed', bgColourFaint: 'rgba(122, 38, 58, 0.3)', bgColourSolid: '#7A263A', textColour: '#132257', iconColour: '#FBB117' },
     { id: 'team_20', name: 'Wolves', logo: 'gitlab', bgColourFaint: 'rgba(253, 185, 19, 0.3)', bgColourSolid: '#FDB913', textColour: '#231F20', iconColour: '#231F20' },
+    // Relegated teams, needed for previous season standings context
+    { id: 'team_21', name: 'Luton Town', logo: 'theater', bgColourFaint: 'rgba(247, 143, 30, 0.3)', bgColourSolid: '#F78F1E', textColour: '#000000', iconColour: '#000000' },
+    { id: 'team_22', name: 'Burnley', logo: 'shield', bgColourFaint: 'rgba(108, 29, 69, 0.3)', bgColourSolid: '#6C1D45', textColour: '#99D6EA', iconColour: '#99D6EA' },
+    { id: 'team_23', name: 'Sheffield Utd', logo: 'swords', bgColourFaint: 'rgba(238, 39, 55, 0.3)', bgColourSolid: '#EE2737', textColour: '#000000', iconColour: '#FFFFFF' },
 ];
 
 export const previousSeasonStandings: PreviousSeasonStanding[] = [
@@ -184,9 +188,9 @@ export const previousSeasonStandings: PreviousSeasonStanding[] = [
     { teamId: 'team_8', rank: 15, points: 40, goalDifference: -11 },
     { teamId: 'team_4', rank: 16, points: 39, goalDifference: -9 },
     { teamId: 'team_16', rank: 17, points: 32, goalDifference: -18 },
-    { teamId: 'team_10', rank: 18, points: 96, goalDifference: 35 },
-    { teamId: 'team_11', rank: 19, points: 97, goalDifference: 41 },
-    { teamId: 'team_17', rank: 20, points: 87, goalDifference: 24 },
+    { teamId: 'team_21', rank: 18, points: 26, goalDifference: -33 }, // Luton
+    { teamId: 'team_22', rank: 19, points: 24, goalDifference: -37 }, // Burnley
+    { teamId: 'team_23', rank: 20, points: 16, goalDifference: -69 }, // Sheffield
 ];
 
 export const seasonMonths: SeasonMonth[] = [
@@ -211,6 +215,7 @@ export const monthlyMimoM: MonthlyMimoM[] = [
 // --- DYNAMIC & DETERMINISTIC DATA GENERATION ---
 
 const WEEKS_TO_SHOW = 10;
+const CURRENT_SEASON_TEAMS = teams.filter(t => !['team_21', 'team_22', 'team_23'].includes(t.id)).map(t => t.id);
 
 // Simple seeded random number generator for consistency
 const mulberry32 = (seed: number) => {
@@ -275,15 +280,14 @@ export const predictions: Prediction[] = usersData.map((user, index) => {
 });
 
 const generateSeasonFixtures = (): Omit<Match, 'homeScore' | 'awayScore'>[] => {
-    const teamIds = teams.map(t => t.id);
-    const numTeams = teamIds.length;
+    const numTeams = CURRENT_SEASON_TEAMS.length;
     let fixtures: Omit<Match, 'homeScore' | 'awayScore'>[] = [];
 
     // Generate home and away fixtures for each pair of teams
     for (let i = 0; i < numTeams; i++) {
         for (let j = 0; j < numTeams; j++) {
             if (i !== j) {
-                fixtures.push({ week: 0, homeTeamId: teamIds[i], awayTeamId: teamIds[j] });
+                fixtures.push({ week: 0, homeTeamId: CURRENT_SEASON_TEAMS[i], awayTeamId: CURRENT_SEASON_TEAMS[j] });
             }
         }
     }
@@ -329,6 +333,10 @@ const simulateMatchScores = (fixtures: Omit<Match, 'homeScore' | 'awayScore'>[])
         // Simple strength from 1 to 20 (inverted rank)
         teamStrengths.set(s.teamId, 21 - s.rank);
     });
+    // Add strengths for promoted teams
+    teamStrengths.set('team_10', 5); // Ipswich
+    teamStrengths.set('team_11', 4); // Leicester
+    teamStrengths.set('team_17', 3); // Southampton
 
     return fixtures.map((fixture, index) => {
         const random = mulberry32(index);
@@ -359,8 +367,8 @@ const simulateMatchScores = (fixtures: Omit<Match, 'homeScore' | 'awayScore'>[])
 const calculateStandings = (matchesToProcess: Match[]): CurrentStanding[] => {
     const standingsMap: Map<string, Omit<CurrentStanding, 'rank' | 'teamId'>> = new Map();
 
-    teams.forEach(team => {
-        standingsMap.set(team.id, { points: 0, goalDifference: 0, gamesPlayed: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0 });
+    CURRENT_SEASON_TEAMS.forEach(teamId => {
+        standingsMap.set(teamId, { points: 0, goalDifference: 0, gamesPlayed: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0 });
     });
 
     matchesToProcess.forEach(match => {
@@ -527,14 +535,14 @@ const finalUsers: User[] = usersData.map(userStub => {
 export const users: User[] = finalUsers.sort((a, b) => a.rank - b.rank);
 
 
-export const weeklyTeamStandings: WeeklyTeamStanding[] = teams.flatMap(team => {
+export const weeklyTeamStandings: WeeklyTeamStanding[] = CURRENT_SEASON_TEAMS.flatMap(teamId => {
     const ranksByWeek: WeeklyTeamStanding[] = [];
 
     for (let week = 1; week <= WEEKS_TO_SHOW; week++) {
         const matchesForWeek = allMatches.filter(m => m.week <= week);
         const standingsForWeek = calculateStandings(matchesForWeek);
-        const teamRank = standingsForWeek.find(s => s.teamId === team.id)?.rank || 20;
-        ranksByWeek.push({ week, teamId: team.id, rank: teamRank });
+        const teamRank = standingsForWeek.find(s => s.teamId === teamId)?.rank || 20;
+        ranksByWeek.push({ week, teamId: teamId, rank: teamRank });
     }
     return ranksByWeek;
 });
@@ -560,6 +568,6 @@ const generateRecentResults = (teamId: string): ('W' | 'D' | 'L' | '-')[] => {
     return results;
 };
 
-export const teamRecentResults: TeamRecentResult[] = teams.map((team) => {
-    return { teamId: team.id, results: generateRecentResults(team.id) };
+export const teamRecentResults: TeamRecentResult[] = CURRENT_SEASON_TEAMS.map((teamId) => {
+    return { teamId, results: generateRecentResults(teamId) };
 });
