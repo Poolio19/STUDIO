@@ -234,24 +234,23 @@ export default function StandingsPage() {
                         <AccordionItem value={`week-${weekNumber}`} key={weekNumber}>
                             <AccordionTrigger className="text-lg font-bold">Week {weekNumber}</AccordionTrigger>
                             <AccordionContent>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                                     {weeklyResults.get(weekNumber)?.map((match, index) => {
                                         const HomeIcon = Icons[match.homeTeam.logo as IconName] || Icons.match;
                                         const AwayIcon = Icons[match.awayTeam.logo as IconName] || Icons.match;
                                         return (
-                                            <div key={index} className="flex items-center justify-between p-3 rounded-lg border">
-                                                <div className="flex items-center gap-3 w-2/5 justify-end">
+                                            <div key={index} className="flex items-center justify-center p-3 rounded-lg border">
+                                                <div className="flex items-center gap-3 justify-end w-2/5">
                                                     <span className="font-medium text-right">{match.homeTeam.name}</span>
-                                                    <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.homeTeam.bgColourSolid }}>
+                                                     <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.homeTeam.bgColourSolid }}>
                                                         <HomeIcon className="size-5" style={{ color: match.homeTeam.iconColour }} />
                                                     </div>
                                                 </div>
-                                                <div className="font-bold text-lg px-2 rounded-md" style={{ backgroundColor: match.homeTeam.bgColourFaint, color: match.homeTeam.textColour }}>
+                                                <div className="font-bold text-lg px-4 text-center">
                                                     {match.homeScore} - {match.awayScore}
                                                 </div>
-                 
                                                 <div className="flex items-center gap-3 w-2/5">
-                                                    <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.awayTeam.bgColourSolid }}>
+                                                     <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.awayTeam.bgColourSolid }}>
                                                         <AwayIcon className="size-5" style={{ color: match.awayTeam.iconColour }} />
                                                     </div>
                                                     <span className="font-medium">{match.awayTeam.name}</span>
