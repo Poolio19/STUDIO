@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
@@ -64,24 +63,21 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service not provided.") });
       return;
     }
-
+  
     const unsubscribe = onAuthStateChanged(
       auth,
       async (firebaseUser) => {
         if (firebaseUser) {
-          // A user is already signed in.
-          // This could be from a previous session or from our signIn call below.
+          // User is signed in.
           setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
         } else {
-          // No user is signed in, attempt to sign in as the default user.
+          // No user is signed in, attempt to sign in the default user.
+          // The `importData` flow is responsible for creating this user.
           try {
             await signInWithEmailAndPassword(auth, 'alex@example.com', 'password123');
             // onAuthStateChanged will be called again with the new user, so we don't set state here.
-            // isUserLoading remains true until the new user is confirmed.
           } catch (error) {
-             // This error is expected if the user hasn't been created yet by the importData flow.
             console.error("FirebaseProvider: Automatic sign-in failed. Run the 'Import Data' tool from the Admin page to create the default user.", error);
-            // We set loading to false here, as the auth flow is complete (even if failed).
             setUserAuthState({ user: null, isUserLoading: false, userError: error as Error });
           }
         }
