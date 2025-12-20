@@ -162,6 +162,19 @@
             "abbreviation": { "type": "string" }
         },
         "required": ["id", "month", "year", "abbreviation"]
+    },
+    "Match": {
+      "title": "Match",
+      "type": "object",
+      "description": "Represents a single match between two teams.",
+      "properties": {
+        "week": { "type": "number" },
+        "homeTeamId": { "type": "string" },
+        "awayTeamId": { "type": "string" },
+        "homeScore": { "type": "number" },
+        "awayScore": { "type": "number" }
+      },
+      "required": ["week", "homeTeamId", "awayTeamId", "homeScore", "awayScore"]
     }
   },
   "auth": {
@@ -236,6 +249,12 @@
         "path": "/seasonMonths/{monthId}",
         "definition": {
           "schema": { "$ref": "#/backend/entities/SeasonMonth" }
+        }
+      },
+      {
+        "path": "/matches/{matchId}",
+        "definition": {
+          "schema": { "$ref": "#/backend/entities/Match" }
         }
       }
     ]

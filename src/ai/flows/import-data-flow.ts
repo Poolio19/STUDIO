@@ -10,7 +10,7 @@ import {
   teams,
   predictions as staticPredictions,
   users as staticUsers,
-  matches as staticMatches,
+  allMatches as staticMatches,
   previousSeasonStandings as staticPreviousSeasonStandings,
 } from '@/lib/data';
 import { z } from 'zod';
@@ -62,7 +62,14 @@ const importDataFlow = ai.defineFlow(
       });
       await predBatch.commit();
 
-      await batchWrite(db, 'matches', staticMatches, 'week');
+      const matchesBatch = writeBatch(db);
+      const matchesCollectionRef = collection(db, 'matches');
+      staticMatches.forEach(item => {
+        const matchId = `${item.homeTeamId.replace('team_', '')}.${item.awayTeamId.replace('team_', '')}`;
+        const docRef = doc(matchesCollectionRef, matchId);
+        matchesBatch.set(docRef, item);
+      });
+      await matchesBatch.commit();
       
       const prevStandingsBatch = writeBatch(db);
       const prevStandingsRef = collection(db, 'previousSeasonStandings');
