@@ -176,7 +176,7 @@ export default function MostImprovedPage() {
 
   const currentMonthAbbreviation = useMemo(() => {
     return seasonMonths.find(sm => sm.month === currentMonthName && sm.year === currentYear)?.abbreviation || currentMonthName.slice(0, 4).toUpperCase();
-  }, [currentMonthName, currentYear]);
+  }, [currentMonthName, currentYear, seasonMonths]);
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-full">Loading page...</div>;
