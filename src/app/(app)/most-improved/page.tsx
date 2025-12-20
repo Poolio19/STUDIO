@@ -50,6 +50,20 @@ const formatPointsChange = (change: number) => {
     return <span>{change}</span>;
 }
 
+const getMonthForWeek = (week: number): { month: string; year: number } => {
+    if (week <= 3) return { month: 'August', year: 2025 };
+    if (week <= 7) return { month: 'September', year: 2025 };
+    if (week <= 11) return { month: 'October', year: 2025 };
+    if (week <= 15) return { month: 'November', year: 2025 };
+    if (week <= 20) return { month: 'December', year: 2025 };
+    if (week <= 24) return { month: 'January', year: 2026 };
+    if (week <= 28) return { month: 'February', year: 2026 };
+    if (week <= 32) return { month: 'March', year: 2026 };
+    if (week <= 36) return { month: 'April', year: 2026 };
+    return { month: 'May', year: 2026 };
+};
+
+
 export default function MostImprovedPage() {
   const [isLoading, setIsLoading] = useState(true);
 
@@ -59,9 +73,7 @@ export default function MostImprovedPage() {
   }, []);
 
   const currentWeek = currentStandings?.[0]?.gamesPlayed || 1;
-  
-  const currentMonthName = 'September';
-  const currentYear = 2025;
+  const { month: currentMonthName, year: currentYear } = getMonthForWeek(currentWeek);
 
   const ladderData = useMemo(() => {
     if (!users) return { ladderWithRanks: [], firstPlaceRankChange: undefined, secondPlaceRankChange: undefined };
@@ -162,6 +174,10 @@ export default function MostImprovedPage() {
     return '';
   };
 
+  const currentMonthAbbreviation = useMemo(() => {
+    return seasonMonths.find(sm => sm.month === currentMonthName && sm.year === currentYear)?.abbreviation || currentMonthName.slice(0, 4).toUpperCase();
+  }, [currentMonthName, currentYear]);
+
   if (isLoading) {
     return <div className="flex justify-center items-center h-full">Loading page...</div>;
   }
@@ -177,7 +193,7 @@ export default function MostImprovedPage() {
                 <Card>
                     <CardHeader className="bg-gradient-to-r from-yellow-400/20 via-yellow-400/5 to-slate-400/20">
                     <CardTitle>In-Month MiMoM Standings</CardTitle>
-                    <CardDescription>Current standings for SEPT</CardDescription>
+                    <CardDescription>Current standings for {currentMonthAbbreviation}</CardDescription>
                     </CardHeader>
                     <CardContent>
                     <Table className="border-separate border-spacing-y-1">
