@@ -84,10 +84,22 @@ export default function ProfilePage() {
   const { user: authUser, isUserLoading: isAuthUserLoading } = useUser();
   const firestore = useFirestore();
   
-  const currentUserId = authUser ? authUser.uid : null;
+  const currentUserId = authUser?.uid;
 
-  const userDocRef = useMemoFirebase(() => (firestore && currentUserId) ? doc(firestore, 'users', currentUserId) : null, [firestore, currentUserId]);
-  const userHistoryDocRef = useMemoFirebase(() => (firestore && currentUserId) ? doc(firestore, 'userHistories', currentUserId) : null, [firestore, currentUserId]);
+  const userDocRef = useMemoFirebase(() => {
+    if (firestore && currentUserId) {
+      return doc(firestore, 'users', currentUserId);
+    }
+    return null;
+  }, [firestore, currentUserId]);
+
+  const userHistoryDocRef = useMemoFirebase(() => {
+    if (firestore && currentUserId) {
+      return doc(firestore, 'userHistories', currentUserId);
+    }
+    return null;
+  }, [firestore, currentUserId]);
+
   const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
   const mimoMQuery = useMemoFirebase(() => firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore]);
 
@@ -126,7 +138,7 @@ export default function ProfilePage() {
   const defaultAvatarUrl = user ? PlaceHolderImages.find(img => img.id === user.avatar)?.imageUrl || '' : '';
 
   const { chartData, yAxisDomain } = React.useMemo(() => {
-    if (!userHistory) return { chartData: [], yAxisDomain: [0,0] };
+    if (!userHistory || !userHistory.weeklyScores) return { chartData: [], yAxisDomain: [0,0] };
     
     const allScores = userHistory.weeklyScores.filter(w => w.week > 0).map(w => w.score);
     if (allScores.length === 0) return { chartData: [], yAxisDomain: [0,10] };
@@ -178,7 +190,7 @@ export default function ProfilePage() {
     return <div className="flex justify-center items-center h-full">Loading profile...</div>;
   }
 
-  if (!user) {
+  if (!user || !authUser) {
     return <div className="flex justify-center items-center h-full">Please log in to view your profile.</div>;
   }
 
