@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -17,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { monthlyMimoM, type User, users } from '@/lib/data';
+import { monthlyMimoM, type User, users, currentStandings } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
@@ -77,12 +78,19 @@ const totalWinningsMap = new Map<string, number>();
 export default function LeaderboardPage() {
   const [isLoading, setIsLoading] = useState(true);
 
-  const [currentWeek, setCurrentWeek] = useState(1);
+  const currentWeek = useMemo(() => {
+    // Derive the current week from the number of games played in the standings data.
+    // This ensures it's always in sync with the data source.
+    if (currentStandings && currentStandings.length > 0) {
+      return currentStandings[0].gamesPlayed;
+    }
+    return 1; // Default to 1 if standings aren't available yet
+  }, [currentStandings]);
+
 
   useEffect(() => {
-    // This effect runs only on the client, after hydration
-    const week = Math.floor(Math.random() * 10) + 1;
-    setCurrentWeek(week);
+    // This effect can be used for things that need to run after initial render,
+    // but the currentWeek is now derived directly from data.
     setIsLoading(false);
   }, []);
 
@@ -274,3 +282,5 @@ export default function LeaderboardPage() {
     </div>
   );
 }
+
+    
