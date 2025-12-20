@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -12,7 +11,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Icons, IconName } from '@/components/icons';
 import { Reorder } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Team, PreviousSeasonStanding, teams, previousSeasonStandings } from '@/lib/data';
+import type { Team, PreviousSeasonStanding } from '@/lib/data';
+import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, doc, setDoc } from 'firebase/firestore';
 
 const predictionSchema = z.object({
   id: z.string(),
@@ -33,12 +34,14 @@ type Prediction = z.infer<typeof predictionSchema>;
 
 export default function PredictPage() {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = React.useState(true);
-  
-  React.useEffect(() => {
-    // Simulate data loading
-    setTimeout(() => setIsLoading(false), 500);
-  }, []);
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
+  const prevStandingsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'previousSeasonStandings') : null, [firestore]);
+
+  const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
+  const { data: previousSeasonStandings, isLoading: standingsLoading } = useCollection<PreviousSeasonStanding>(prevStandingsQuery);
 
   const { sortedTeamsForPrediction, standingsWithTeamData } = React.useMemo(() => {
     if (!teams || !previousSeasonStandings) return { sortedTeamsForPrediction: [], standingsWithTeamData: [] };
@@ -102,18 +105,39 @@ export default function PredictPage() {
   }, [items, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // Since we are in local mode, we'll just show a toast and log the data.
-    console.log('Prediction submitted:', {
-        userId: 'local_user',
-        rankings: values.predictions.map(p => p.teamId),
-        createdAt: new Date(),
-    });
+    if (!user || !firestore) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'You must be logged in to submit a prediction.',
+      });
+      return;
+    }
 
-    toast({
-        title: 'Season Predictions Submitted!',
-        description: 'Your final standings prediction has been saved locally. Good luck!',
-    });
+    const predictionData = {
+      userId: user.uid,
+      rankings: values.predictions.map(p => p.teamId),
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      const predictionRef = doc(firestore, 'predictions', user.uid);
+      await setDoc(predictionRef, predictionData);
+      toast({
+          title: 'Season Predictions Submitted!',
+          description: 'Your final standings prediction has been saved. Good luck!',
+      });
+    } catch (error) {
+        console.error("Error submitting prediction:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Submission Failed',
+            description: 'There was an error saving your prediction. Please try again.',
+        });
+    }
   }
+  
+  const isLoading = teamsLoading || standingsLoading;
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-full">Loading teams...</div>;
