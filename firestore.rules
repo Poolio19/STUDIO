@@ -5,62 +5,29 @@ service cloud.firestore {
     
     // PUBLIC, READ-ONLY COLLECTIONS
     // Allow anyone to read (get and list) these collections.
-    match /teams/{document=**} {
-      allow read: if true;
-      allow write: if false;
-    }
-    match /previousSeasonStandings/{document=**} {
-      allow read: if true;
-      allow write: if false;
-    }
-    match /matches/{document=**} {
-       allow read: if true;
-       allow write: if false;
-    }
-    match /standings/{document=**} {
-      allow read: if true;
-      allow write: if false;
-    }
-    match /weeklyTeamStandings/{document=**} {
-      allow read: if true;
-      allow write: if false;
-    }
-    match /teamRecentResults/{document=**} {
-      allow read: if true;
-      allow write: if false;
-    }
-    match /seasonMonths/{document=**} {
-      allow read: if true;
-      allow write: if false;
-    }
-     match /monthlyMimoM/{document=**} {
+    match /{collection}/{document=**} 
+      where collection in ['teams', 'previousSeasonStandings', 'matches', 'standings', 'weeklyTeamStandings', 'teamRecentResults', 'seasonMonths', 'monthlyMimoM'] {
       allow read: if true;
       allow write: if false;
     }
 
     // AUTHENTICATED-READ COLLECTIONS
-    
-    // ANY authenticated user can read from these collections.
-    // Writes remain blocked for most.
-    match /users/{document=**} {
+    // Any authenticated user can read from these collections.
+    match /users/{userId} {
       allow read: if request.auth != null;
       allow write: if false; 
     }
-    match /playerTeamScores/{document=**} {
+    match /playerTeamScores/{scoreId} {
       allow read: if request.auth != null;
       allow write: if false;
     }
-    match /predictions/{document=**} {
-      allow read: if request.auth != null;
-    }
-
-    // USER-SPECIFIC WRITES AND READS
-    
-    // A user can only WRITE to their own prediction document.
     match /predictions/{userId} {
+      allow read: if request.auth != null;
+      // A user can only WRITE to their own prediction document.
       allow write: if request.auth != null && request.auth.uid == userId;
     }
-    
+
+    // USER-SPECIFIC READS
     // A user can only READ their OWN history document.
     match /userHistories/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
