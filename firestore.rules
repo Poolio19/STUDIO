@@ -46,7 +46,7 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if false; 
     }
-    match /playerTeamScores/{document=_**} {
+    match /playerTeamScores/{document=**} {
       allow read: if request.auth != null;
       allow write: if false;
     }
