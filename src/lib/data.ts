@@ -153,17 +153,17 @@ export const teams: Team[] = [
     { id: 'team_7', name: 'Crystal Palace', logo: 'rabbit', bgColourFaint: 'rgba(27, 69, 143, 0.3)', bgColourSolid: '#1B458F', textColour: '#C4122E', iconColour: '#C4122E' },
     { id: 'team_8', name: 'Everton', logo: 'home', bgColourFaint: 'rgba(0, 51, 153, 0.3)', bgColourSolid: '#003399', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_9', name: 'Fulham', logo: 'shieldHalf', bgColourFaint: 'rgba(0, 0, 0, 0.3)', bgColourSolid: '#000000', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
-    { id: 'team_24', name: 'Leeds', logo: 'flower', bgColourFaint: 'rgba(255, 205, 0, 0.3)', bgColourSolid: '#FFCD00', textColour: '#1D428A', iconColour: '#1D428A' },
     { id: 'team_12', name: 'Liverpool', logo: 'origami', bgColourFaint: 'rgba(200, 16, 46, 0.3)', bgColourSolid: '#C8102E', textColour: '#000000', iconColour: '#FFFFFF' },
     { id: 'team_13', name: 'Man City', logo: 'sailboat', bgColourFaint: 'rgba(108, 171, 221, 0.3)', bgColourSolid: '#6CABDD', textColour: '#00285E', iconColour: '#00285E' },
     { id: 'team_14', name: 'Man Utd', logo: 'hamburger', bgColourFaint: 'rgba(218, 41, 28, 0.3)', bgColourSolid: '#DA291C', textColour: '#FBE122', iconColour: '#FBE122' },
     { id: 'team_15', name: 'Newcastle', logo: 'castle', bgColourFaint: 'rgba(36, 31, 32, 0.3)', bgColourSolid: '#241F20', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_16', name: "Nott'm Forest", logo: 'treeDeciduous', bgColourFaint: 'rgba(221, 0, 0, 0.3)', bgColourSolid: '#DD0000', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
-    { id: 'team_25', name: 'Sunderland', logo: 'database', bgColourFaint: 'rgba(235, 20, 30, 0.3)', bgColourSolid: '#EB141E', textColour: '#000000', iconColour: '#FFFFFF' },
     { id: 'team_18', name: 'Tottenham', logo: 'ship', bgColourFaint: 'rgba(19, 34, 87, 0.3)', bgColourSolid: '#132257', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_19', name: 'West Ham', logo: 'utensilsCrossed', bgColourFaint: 'rgba(122, 38, 58, 0.3)', bgColourSolid: '#7A263A', textColour: '#132257', iconColour: '#FBB117' },
     { id: 'team_20', name: 'Wolves', logo: 'gitlab', bgColourFaint: 'rgba(253, 185, 19, 0.3)', bgColourSolid: '#FDB913', textColour: '#231F20', iconColour: '#231F20' },
     { id: 'team_22', name: 'Burnley', logo: 'shield', bgColourFaint: 'rgba(108, 29, 69, 0.3)', bgColourSolid: '#6C1D45', textColour: '#99D6EA', iconColour: '#99D6EA' },
+    { id: 'team_24', name: 'Leeds', logo: 'flower', bgColourFaint: 'rgba(255, 205, 0, 0.3)', bgColourSolid: '#FFCD00', textColour: '#1D428A', iconColour: '#1D428A' },
+    { id: 'team_25', name: 'Sunderland', logo: 'database', bgColourFaint: 'rgba(235, 20, 30, 0.3)', bgColourSolid: '#EB141E', textColour: '#000000', iconColour: '#FFFFFF' },
 ];
 
 export const previousSeasonStandings: PreviousSeasonStanding[] = [
@@ -184,6 +184,9 @@ export const previousSeasonStandings: PreviousSeasonStanding[] = [
     { teamId: 'team_14', rank: 15, points: 42, goalDifference: -10 },
     { teamId: 'team_20', rank: 16, points: 42, goalDifference: -15 },
     { teamId: 'team_18', rank: 17, points: 38, goalDifference: -1 },
+    { teamId: 'team_11', rank: 18, points: 25, goalDifference: -47 }, // Leicester
+    { teamId: 'team_21', rank: 19, points: 22, goalDifference: -46 }, // Ipswich
+    { teamId: 'team_23', rank: 20, points: 12, goalDifference: -60 }, // Southampton
 ];
 
 const seasonMonths: SeasonMonth[] = [
@@ -239,7 +242,7 @@ const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed:
         perturbation = Math.round((bellCurveRandom + bias) * maxPerturbation);
         let predictedRank = originalRank + perturbation;
         predictedRank = Math.max(1, Math.min(20, predictedRank));
-        return { teamId: team.teamId, predictedRank, tieBreaker: random() };
+        return { teamId: team.id, predictedRank, tieBreaker: random() };
     });
     perturbedStandings.sort((a, b) => a.predictedRank - b.predictedRank || a.tieBreaker - b.tieBreaker);
     const finalTeamIds = new Array(20);
@@ -259,7 +262,7 @@ const generateBiasedPrediction = (baseStandings: PreviousSeasonStanding[], seed:
     return perturbedStandings.map(p => p.teamId);
 };
 
-const predictions: Prediction[] = usersData.map((user, index) => {
+export const predictions: Prediction[] = usersData.map((user, index) => {
     // We need to construct a full 20-team list for the prediction generator.
     // Get the existing 17 teams from the provided standings.
     const existingTeamIds = new Set(previousSeasonStandings.map(s => s.teamId));
@@ -270,8 +273,8 @@ const predictions: Prediction[] = usersData.map((user, index) => {
     const promotedTeams = teams.filter(t => !existingTeamIds.has(t.id));
 
     // Create a full 20-team base standing list.
-    const fullBaseStandings = [
-        ...previousSeasonStandings,
+    const fullBaseStandings: PreviousSeasonStanding[] = [
+        ...previousSeasonStandings.filter(s => existingTeamIds.has(s.teamId)),
         // Add the promoted teams at the bottom.
         ...promotedTeams.map((team, i) => ({
             teamId: team.id,
@@ -475,8 +478,6 @@ const realMatchData: { week: number; home: string; homeScore: number; away: stri
     { week: 18, home: 'Sunderland', homeScore: 1, away: 'Leeds', awayScore: 1 },
 ];
 
-const CURRENT_SEASON_TEAMS = teams.filter(t => !['team_11', 'team_21', 'team_23'].includes(t.id)).map(t => t.id);
-
 const calculateStandings = (matchesToProcess: Match[]): CurrentStanding[] => {
     const standingsMap: Map<string, Omit<CurrentStanding, 'rank' | 'teamId'>> = new Map();
 
@@ -537,8 +538,8 @@ const calculateStandings = (matchesToProcess: Match[]): CurrentStanding[] => {
 };
 
 const allMatches: Match[] = realMatchData.map(m => {
-    const homeTeamId = correctedTeamNameToIdMap.get(m.home.replace("Notts Forest", "Nott'm Forest"));
-    const awayTeamId = correctedTeamNameToIdMap.get(m.away.replace("Notts Forest", "Nott'm Forest"));
+    const homeTeamId = correctedTeamNameToIdMap.get(m.home.replace("Nott'm Forest", "Nott'm Forest"));
+    const awayTeamId = correctedTeamNameToIdMap.get(m.away.replace("Nott'm Forest", "Nott'm Forest"));
     if (!homeTeamId || !awayTeamId) {
         console.error(`Could not find team ID for match: ${m.home} vs ${m.away}`);
         return null;
@@ -547,12 +548,12 @@ const allMatches: Match[] = realMatchData.map(m => {
 }).filter((m): m is Match => m !== null);
 
 
-const matches: Match[] = allMatches.filter(m => m.week <= WEEKS_TO_SHOW);
-const currentStandings: CurrentStanding[] = calculateStandings(matches);
+export const matches: Match[] = allMatches.filter(m => m.week <= WEEKS_TO_SHOW);
+export const currentStandings: CurrentStanding[] = calculateStandings(matches);
 const finalStandings: CurrentStanding[] = calculateStandings(allMatches);
 
 
-const playerTeamScores: PlayerTeamScore[] = usersData.flatMap(user => {
+export const playerTeamScores: PlayerTeamScore[] = usersData.flatMap(user => {
     const userPrediction = predictions.find(p => p.userId === user.id);
     if (!userPrediction) return [];
 
@@ -589,7 +590,7 @@ const previousSeasonPlayerRanks: {[key: string]: number} = {};
 [...usersData].sort((a,b) => (parseInt(a.id.replace('usr_','')) % 5) - (parseInt(b.id.replace('usr_','')) % 5))
   .forEach((user, index) => { previousSeasonPlayerRanks[user.id] = index + 1; });
 
-const userHistories: UserHistory[] = usersData.map(user => {
+export const userHistories: UserHistory[] = usersData.map(user => {
     let weeklyScores: WeeklyScore[] = [{ week: 0, score: 0, rank: previousSeasonPlayerRanks[user.id] || parseInt(user.id.replace('usr_', '')) % 20 }];
     const userPrediction = predictions.find(p => p.userId === user.id);
 
@@ -672,10 +673,10 @@ const finalUsers: User[] = usersData.map(userStub => {
     return { ...userStub, score: currentWeekData.score, rank: currentWeekData.rank, previousRank: previousWeekData.rank, previousScore: previousWeekData.score, rankChange, scoreChange, maxScore, minScore, maxRank, minRank, };
 });
 
-const users: User[] = finalUsers.sort((a, b) => a.rank - b.rank);
+export const users: User[] = finalUsers.sort((a, b) => a.rank - b.rank);
 
 
-const weeklyTeamStandings: WeeklyTeamStanding[] = Array.from(new Set(allMatches.flatMap(m => [m.homeTeamId, m.awayTeamId]))).flatMap(teamId => {
+export const weeklyTeamStandings: WeeklyTeamStanding[] = Array.from(new Set(allMatches.flatMap(m => [m.homeTeamId, m.awayTeamId]))).flatMap(teamId => {
     const ranksByWeek: WeeklyTeamStanding[] = [];
 
     for (let week = 1; week <= WEEKS_TO_SHOW; week++) {
@@ -697,7 +698,7 @@ const generateRecentResults = (teamId: string): ('W' | 'D' | 'L' | '-')[] => {
         let result: 'W' | 'D' | 'L';
         if (match.homeScore === match.awayScore) {
             result = 'D';
-        } else if ((match.homeTeamId === teamId && match.homeScore > match.awayScore) || (match.awayTeamId === teamId && match.awayScore > homeScore)) {
+        } else if ((match.homeTeamId === teamId && match.homeScore > match.awayScore) || (match.awayTeamId === teamId && match.awayScore > match.homeScore)) {
             result = 'W';
         } else {
             result = 'L';
@@ -708,7 +709,7 @@ const generateRecentResults = (teamId: string): ('W' | 'D' | 'L' | '-')[] => {
     return results;
 };
 
-const teamRecentResults: TeamRecentResult[] = Array.from(new Set(allMatches.flatMap(m => [m.homeTeamId, m.awayTeamId]))).map((teamId) => {
+export const teamRecentResults: TeamRecentResult[] = Array.from(new Set(allMatches.flatMap(m => [m.homeTeamId, m.awayTeamId]))).map((teamId) => {
     return { teamId, results: generateRecentResults(teamId) };
 });
 
@@ -772,15 +773,6 @@ for (const monthOrSpecial in monthWeekRanges) {
 }
 
 export {
-    users,
-    predictions,
-    allMatches,
-    matches,
-    currentStandings,
-    playerTeamScores,
-    userHistories,
-    weeklyTeamStandings,
-    teamRecentResults,
     seasonMonths,
     monthlyMimoM
 };

@@ -11,7 +11,7 @@ import {
   teams,
   predictions as staticPredictions,
   users as staticUsers,
-  allMatches as staticMatches,
+  matches as staticMatches,
   previousSeasonStandings as staticPreviousSeasonStandings,
   seasonMonths,
   monthlyMimoM,
