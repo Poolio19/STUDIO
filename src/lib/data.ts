@@ -1,6 +1,7 @@
 
 
 
+
 export type User = {
   id: string;
   name: string;
@@ -535,10 +536,19 @@ const realMatchData2425: { home: string; away: string; homeScore: number; awaySc
 
 const teamNameToIdMap: Map<string, string> = new Map();
 allTeams.forEach(team => {
-    teamNameToIdMap.set(team.name.toLowerCase().replace(/'/g, ''), team.id);
+    teamNameToIdMap.set(team.name.toLowerCase().replace(/'/g, '').replace(' town', ''), team.id);
 });
 // Add variations for team names
 teamNameToIdMap.set('notts forest', 'team_16');
+teamNameToIdMap.set('man city', 'team_13');
+teamNameToIdMap.set('man utd', 'team_14');
+teamNameToIdMap.set('newcastle', 'team_15');
+teamNameToIdMap.set('west ham', 'team_19');
+teamNameToIdMap.set('crystal palace', 'team_7');
+teamNameToIdMap.set('leeds', 'team_24');
+teamNameToIdMap.set('burnley', 'team_22');
+teamNameToIdMap.set('sunderland', 'team_25');
+
 
 const parseTeamName = (name: string): string => {
     const lowerName = name.toLowerCase().replace(/'/g, '').trim();
@@ -822,7 +832,10 @@ export const fullPredictions: Prediction[] = [
     { userId: "usr_102", rankings: ["team_13", "team_12", "team_1", "team_6", "team_18", "team_2", "team_15", "team_14", "team_16", "team_7", "team_8", "team_19", "team_3", "team_5", "team_20", "team_9", "team_24", "team_4", "team_25", "team_22"] },
     { userId: "usr_103", rankings: ["team_1", "team_13", "team_12", "team_6", "team_2", "team_15", "team_18", "team_16", "team_7", "team_8", "team_5", "team_14", "team_19", "team_4", "team_3", "team_9", "team_24", "team_20", "team_22", "team_25"] },
     { userId: "usr_104", rankings: ["team_12", "team_1", "team_13", "team_15", "team_6", "team_2", "team_16", "team_18", "team_5", "team_9", "team_14", "team_8", "team_19", "team_3", "team_4", "team_24", "team_7", "team_20", "team_22", "team_25"] },
-    { userId: "usr_105", rankings: ["team_13", "team_1", "team_12", "team_6", "team_14", "team_2", "team_18", "team_15", "team_19", "team_8", "team_5", "team_20", "team_4", "team_9", "team_7", "team_3", "team_16", "team_22", "team_25", "team_24"] }
+    { userId: "usr_105", rankings: ["team_13", "team_1", "team_12", "team_6", "team_14", "team_2", "team_18", "team_15", "team_19", "team_8", "team_5", "team_20", "team_4", "team_9", "team_7", "team_3", "team_16", "team_22", "team_25", "team_24"] },
+    { userId: "usr_106", rankings: ["team_13", "team_1", "team_12", "team_6", "team_14", "team_2", "team_18", "team_15", "team_19", "team_8", "team_5", "team_20", "team_4", "team_9", "team_7", "team_3", "team_16", "team_22", "team_25", "team_24"] },
+    { userId: "usr_107", rankings: ["team_13", "team_1", "team_12", "team_6", "team_14", "team_2", "team_18", "team_15", "team_19", "team_8", "team_5", "team_20", "team_4", "team_9", "team_7", "team_3", "team_16", "team_22", "team_25", "team_24"] },
+    { userId: "usr_108", rankings: ["team_13", "team_1", "team_12", "team_6", "team_14", "team_2", "team_18", "team_15", "team_19", "team_8", "team_5", "team_20", "team_4", "team_9", "team_7", "team_3", "team_16", "team_22", "team_25", "team_24"] }
 ];
 
 const seasonMonths: SeasonMonth[] = [
