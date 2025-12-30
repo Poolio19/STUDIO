@@ -14,7 +14,11 @@ import {
   allMatches as staticMatches,
   previousSeasonStandings as staticPreviousSeasonStandings,
   seasonMonths,
-  monthlyMimoM
+  monthlyMimoM,
+  userHistories,
+  playerTeamScores,
+  weeklyTeamStandings,
+  teamRecentResults
 } from '@/lib/data';
 import { z } from 'zod';
 import {
@@ -22,6 +26,7 @@ import {
   collection,
   writeBatch,
   doc,
+  setDoc,
 } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
@@ -41,24 +46,34 @@ async function batchWrite(
   await batch.commit();
 }
 
-async function ensureDefaultUser() {
-    const { auth } = initializeFirebase();
+async function ensureDefaultUserAndProfile() {
+    const { auth, firestore: db } = initializeFirebase();
     const email = 'alex@example.com';
     const password = 'password123';
     const displayName = 'Alex';
+    let userId: string;
 
     try {
-        // Attempt to create the user.
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        // If creation is successful, immediately update the profile with the display name.
         await updateProfile(userCredential.user, { displayName });
+        userId = userCredential.user.uid;
         console.log(`Successfully created and set up user: ${displayName}`);
+        
+        // After creating the auth user, create their Firestore document.
+        const alexUser = staticUsers.find(u => u.id === 'usr_1');
+        if (alexUser) {
+            const userDocRef = doc(db, 'users', userId);
+            // Ensure the document ID in Firestore matches the auth UID.
+            await setDoc(userDocRef, { ...alexUser, id: userId, email: email });
+            console.log(`Created Firestore document for user: ${displayName}`);
+        } else {
+            console.error("Could not find Alex's data in staticUsers to create Firestore profile.");
+        }
+
     } catch (error: any) {
         if (error.code === 'auth/email-already-in-use') {
-            // This is not an error. It's an expected state if the setup has run before.
             console.log(`User ${displayName} already exists. No action taken.`);
         } else {
-            // For any other unexpected errors, we should log them.
             console.error(`Error during default user setup:`, error);
         }
     }
@@ -78,16 +93,16 @@ const importDataFlow = ai.defineFlow(
     const { firestore: db } = initializeFirebase();
 
     try {
-      // Ensure the default user exists and has a displayName before importing data that might rely on it.
-      await ensureDefaultUser();
+      await ensureDefaultUserAndProfile();
 
       await batchWrite(db, 'teams', teams, 'id');
-      await batchWrite(db, 'users', staticUsers, 'id');
+      // Filter out the default user 'Alex' as we've handled them separately
+      const otherUsers = staticUsers.filter(u => u.id !== 'usr_1');
+      await batchWrite(db, 'users', otherUsers, 'id');
       
       const predBatch = writeBatch(db);
       const predCollectionRef = collection(db, 'predictions');
       staticPredictions.forEach(item => {
-          // Use the userId as the document ID for predictions
           const docRef = doc(predCollectionRef, item.userId);
           predBatch.set(docRef, item);
       });
@@ -96,23 +111,38 @@ const importDataFlow = ai.defineFlow(
       const matchesBatch = writeBatch(db);
       const matchesCollectionRef = collection(db, 'matches');
       staticMatches.forEach(item => {
-        // Create a unique ID based on the home and away team IDs
-        const matchId = `${item.homeTeamId.replace('team_', '')}.${item.awayTeamId.replace('team_', '')}`;
+        const matchId = `${item.week}-${item.homeTeamId}-${item.awayTeamId}`;
         const docRef = doc(matchesCollectionRef, matchId);
         matchesBatch.set(docRef, item);
       });
       await matchesBatch.commit();
       
-      const prevStandingsBatch = writeBatch(db);
-      const prevStandingsRef = collection(db, 'previousSeasonStandings');
-      staticPreviousSeasonStandings.forEach(item => {
-        const docRef = doc(prevStandingsRef, item.teamId);
-        prevStandingsBatch.set(docRef, item);
-      });
-      await prevStandingsBatch.commit();
-
+      await batchWrite(db, 'previousSeasonStandings', staticPreviousSeasonStandings, 'teamId');
       await batchWrite(db, 'seasonMonths', seasonMonths, 'id');
       await batchWrite(db, 'monthlyMimoM', monthlyMimoM, 'id');
+
+      // Add imports for the rest of the data
+      await batchWrite(db, 'userHistories', userHistories, 'userId');
+      
+      const ptsBatch = writeBatch(db);
+      const ptsCollectionRef = collection(db, 'playerTeamScores');
+      playerTeamScores.forEach(item => {
+        const docId = `${item.userId}_${item.teamId}`;
+        const docRef = doc(ptsCollectionRef, docId);
+        ptsBatch.set(docRef, item);
+      });
+      await ptsBatch.commit();
+
+      const wtsBatch = writeBatch(db);
+      const wtsCollectionRef = collection(db, 'weeklyTeamStandings');
+      weeklyTeamStandings.forEach(item => {
+        const docId = `${item.week}_${item.teamId}`;
+        const docRef = doc(wtsCollectionRef, docId);
+        wtsBatch.set(docRef, item);
+      });
+      await wtsBatch.commit();
+
+      await batchWrite(db, 'teamRecentResults', teamRecentResults, 'teamId');
 
 
       return { success: true };
