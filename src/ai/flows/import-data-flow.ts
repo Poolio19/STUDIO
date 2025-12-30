@@ -13,6 +13,8 @@ import {
   users as staticUsers,
   allMatches as staticMatches,
   previousSeasonStandings as staticPreviousSeasonStandings,
+  seasonMonths,
+  monthlyMimoM
 } from '@/lib/data';
 import { z } from 'zod';
 import {
@@ -108,6 +110,9 @@ const importDataFlow = ai.defineFlow(
         prevStandingsBatch.set(docRef, item);
       });
       await prevStandingsBatch.commit();
+
+      await batchWrite(db, 'seasonMonths', seasonMonths, 'id');
+      await batchWrite(db, 'monthlyMimoM', monthlyMimoM, 'id');
 
 
       return { success: true };
