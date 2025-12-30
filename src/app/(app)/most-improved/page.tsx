@@ -27,7 +27,7 @@ import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, query, orderBy } from 'firebase/firestore';
 
 
 const getAvatarUrl = (avatarId: string) => {
@@ -70,9 +70,9 @@ export default function MostImprovedPage() {
   const firestore = useFirestore();
 
   const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
-  const standingsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'standings') : null, [firestore]);
+  const standingsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'standings'), orderBy('rank','asc')) : null, [firestore]);
   const mimoMQuery = useMemoFirebase(() => firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore]);
-  const seasonMonthsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'seasonMonths') : null, [firestore]);
+  const seasonMonthsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'seasonMonths'), orderBy('year', 'asc')) : null, [firestore]);
 
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
   const { data: currentStandings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsQuery);

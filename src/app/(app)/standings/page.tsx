@@ -37,7 +37,7 @@ export default function StandingsPage() {
     const standingsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'standings'), orderBy('rank', 'asc')) : null, [firestore]);
     const weeklyStandingsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'weeklyTeamStandings') : null, [firestore]);
     const recentResultsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teamRecentResults') : null, [firestore]);
-    const matchesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'matches') : null, [firestore]);
+    const matchesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'matches'), orderBy('week', 'asc')) : null, [firestore]);
     
     const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
     const { data: currentStandings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsQuery);

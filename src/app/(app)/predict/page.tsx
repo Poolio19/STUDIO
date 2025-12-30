@@ -14,7 +14,7 @@ import { Reorder } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import type { Team, PreviousSeasonStanding } from '@/lib/data';
 import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, doc, setDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
 
 const predictionSchema = z.object({
   id: z.string(),
@@ -49,7 +49,6 @@ export default function PredictPage() {
     
     const allTeamsMap = new Map(teams.map(t => [t.id, t]));
     
-    // For the "Last Season" table on the right
     const fullStandingsWithData = previousSeasonStandings
       .map(standing => {
         const team = allTeamsMap.get(standing.teamId);
@@ -58,19 +57,12 @@ export default function PredictPage() {
       .filter((item): item is NonNullable<typeof item> => item !== null)
       .sort((a, b) => a!.rank - b!.rank);
 
-    // For the draggable prediction list on the left
-    const currentSeasonTeamIds = new Set(teams.filter(t => !['team_21', 'team_22', 'team_23'].includes(t.id)).map(t => t.id));
-    
-    const teamsForPrediction = Array.from(currentSeasonTeamIds).map(teamId => {
-      const team = allTeamsMap.get(teamId);
-      const prevStanding = previousSeasonStandings.find(s => s.teamId === teamId);
-      
-      // Promoted teams won't have a PL rank, so put them at the bottom
+    const teamsForPrediction = teams.map(team => {
+      const prevStanding = previousSeasonStandings.find(s => s.teamId === team.id);
       const sortRank = prevStanding ? prevStanding.rank : 21; 
-
       return {
-        id: teamId,
-        teamId: teamId,
+        id: team.id,
+        teamId: team.id,
         teamName: team?.name || 'Unknown Team',
         teamLogo: team?.logo || 'match',
         iconColour: team?.iconColour,
@@ -80,7 +72,6 @@ export default function PredictPage() {
         sortRank: sortRank,
       };
     }).sort((a, b) => a.sortRank - b.sortRank);
-
 
     return { sortedTeamsForPrediction: teamsForPrediction, standingsWithTeamData: fullStandingsWithData };
   }, [teams, previousSeasonStandings]);
@@ -95,11 +86,28 @@ export default function PredictPage() {
   const [items, setItems] = React.useState<Prediction[]>([]);
 
   React.useEffect(() => {
-    if (sortedTeamsForPrediction.length > 0) {
-      setItems(sortedTeamsForPrediction);
-      form.reset({ predictions: sortedTeamsForPrediction });
+    if (sortedTeamsForPrediction.length > 0 && user && firestore) {
+      const fetchPrediction = async () => {
+        const predictionRef = doc(firestore, 'predictions', user.uid);
+        const predictionSnap = await getDoc(predictionRef);
+
+        if (predictionSnap.exists()) {
+          const userPrediction = predictionSnap.data();
+          const rankedTeamIds = userPrediction.rankings;
+          
+          const teamMap = new Map(sortedTeamsForPrediction.map(t => [t.teamId, t]));
+          const orderedItems = rankedTeamIds.map((teamId: string) => teamMap.get(teamId)).filter(Boolean) as Prediction[];
+          setItems(orderedItems);
+          form.reset({ predictions: orderedItems });
+        } else {
+          setItems(sortedTeamsForPrediction);
+          form.reset({ predictions: sortedTeamsForPrediction });
+        }
+      };
+      fetchPrediction();
     }
-  }, [sortedTeamsForPrediction, form]);
+  }, [sortedTeamsForPrediction, user, firestore, form]);
+
 
   React.useEffect(() => {
     form.setValue('predictions', items);

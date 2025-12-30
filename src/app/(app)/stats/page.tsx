@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
 import type { User, Team, PlayerTeamScore } from '@/lib/data';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, query, orderBy } from 'firebase/firestore';
 
 const getAvatarUrl = (avatarId: string) => {
   return PlaceHolderImages.find((img) => img.id === avatarId)?.imageUrl || '';
@@ -25,8 +25,8 @@ const getAvatarUrl = (avatarId: string) => {
 export default function StatsPage() {
   const firestore = useFirestore();
 
-  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
-  const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
+  const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('rank', 'asc')) : null, [firestore]);
+  const teamsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'teams'), orderBy('name', 'asc')) : null, [firestore]);
   const scoresQuery = useMemoFirebase(() => firestore ? collection(firestore, 'playerTeamScores') : null, [firestore]);
   
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
@@ -35,8 +35,8 @@ export default function StatsPage() {
 
   const isLoading = usersLoading || teamsLoading || scoresLoading;
   
-  const sortedUsers = useMemo(() => users ? [...users].sort((a, b) => (a.rank || 0) - (b.rank || 0)) : [], [users]);
-  const sortedTeams = useMemo(() => teams ? [...teams].sort((a, b) => a.name.localeCompare(b.name)) : [], [teams]);
+  const sortedUsers = users || [];
+  const sortedTeams = teams || [];
 
   const getScoreColour = (score: number) => {
     if (score === 5) return 'bg-green-200/50 dark:bg-green-800/50 font-bold';

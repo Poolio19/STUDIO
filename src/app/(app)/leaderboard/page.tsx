@@ -28,7 +28,8 @@ import { collection, query, orderBy } from 'firebase/firestore';
 
 
 const getAvatarUrl = (avatarId: string) => {
-  return PlaceHolderImages.find((img) => img.id === avatarId)?.imageUrl || '';
+  const image = PlaceHolderImages.find((img) => img.id === avatarId);
+  return image ? image.imageUrl : '';
 };
 
 const getRankChangeIcon = (change: number) => {
@@ -80,8 +81,8 @@ const totalWinningsMap = new Map<string, number>();
 export default function LeaderboardPage() {
   const firestore = useFirestore();
 
-  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
-  const standingsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'standings') : null, [firestore]);
+  const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('rank', 'asc')) : null, [firestore]);
+  const standingsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'standings'), orderBy('rank', 'asc')) : null, [firestore]);
   const mimoMQuery = useMemoFirebase(() => firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore]);
 
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
@@ -89,7 +90,7 @@ export default function LeaderboardPage() {
   const { data: monthlyMimoM, isLoading: mimoMLoading } = useCollection<MonthlyMimoM>(mimoMQuery);
 
   const isLoading = usersLoading || standingsLoading || mimoMLoading;
-
+  
   const currentWeek = useMemo(() => {
     if (currentStandings && currentStandings.length > 0) {
       return currentStandings[0].gamesPlayed;
@@ -97,10 +98,7 @@ export default function LeaderboardPage() {
     return 1;
   }, [currentStandings]);
 
-  const { sortedUsers } = useMemo(() => {
-    const sorted = users ? [...users].sort((a, b) => (a.rank || 0) - (b.rank || 0)) : [];
-    return { sortedUsers: sorted };
-  }, [users]);
+  const sortedUsers = users || [];
   
   const proPlayers = useMemo(() => sortedUsers.filter(u => u.isPro), [sortedUsers]);
   const regularPlayers = useMemo(() => sortedUsers.filter(u => !u.isPro), [sortedUsers]);

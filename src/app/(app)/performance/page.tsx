@@ -12,12 +12,12 @@ import { useMemo } from 'react';
 import { PlayerPerformanceChart } from '@/components/charts/player-performance-chart';
 import type { User, UserHistory } from '@/lib/data';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, query, orderBy } from 'firebase/firestore';
 
 export default function PerformancePage() {
   const firestore = useFirestore();
 
-  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+  const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('rank', 'asc')) : null, [firestore]);
   const userHistoriesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'userHistories') : null, [firestore]);
 
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
@@ -25,10 +25,7 @@ export default function PerformancePage() {
   
   const isLoading = usersLoading || historiesLoading;
 
-  const sortedUsers = useMemo(() => {
-    if (!users) return [];
-    return [...users].sort((a, b) => (a.rank || 0) - (b.rank || 0));
-  }, [users]);
+  const sortedUsers = users || [];
 
   const { chartData, yAxisDomain } = useMemo(() => {
     if (!users || !userHistories) return { chartData: [], yAxisDomain: [0, 0] };
