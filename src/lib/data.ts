@@ -159,7 +159,7 @@ export const teams: Team[] = [
     { id: 'team_13', name: 'Man City', logo: 'sailboat', bgColourFaint: 'rgba(108, 171, 221, 0.3)', bgColourSolid: '#6CABDD', textColour: '#00285E', iconColour: '#00285E' },
     { id: 'team_14', name: 'Man Utd', logo: 'hamburger', bgColourFaint: 'rgba(218, 41, 28, 0.3)', bgColourSolid: '#DA291C', textColour: '#FBE122', iconColour: '#FBE122' },
     { id: 'team_15', name: 'Newcastle', logo: 'castle', bgColourFaint: 'rgba(36, 31, 32, 0.3)', bgColourSolid: '#241F20', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
-    { id: 'team_16', name: 'Notts Forest', logo: 'treeDeciduous', bgColourFaint: 'rgba(221, 0, 0, 0.3)', bgColourSolid: '#DD0000', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
+    { id: 'team_16', name: "Nott'm Forest", logo: 'treeDeciduous', bgColourFaint: 'rgba(221, 0, 0, 0.3)', bgColourSolid: '#DD0000', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_17', name: 'Southampton', logo: 'flower', bgColourFaint: 'rgba(215, 25, 32, 0.3)', bgColourSolid: '#D71920', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_18', name: 'Tottenham', logo: 'ship', bgColourFaint: 'rgba(19, 34, 87, 0.3)', bgColourSolid: '#132257', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_19', name: 'West Ham', logo: 'utensilsCrossed', bgColourFaint: 'rgba(122, 38, 58, 0.3)', bgColourSolid: '#7A263A', textColour: '#132257', iconColour: '#FBB117' },
@@ -211,7 +211,7 @@ export let monthlyMimoM: MonthlyMimoM[] = [];
 
 // --- DYNAMIC & DETERMINISTIC DATA GENERATION ---
 
-const WEEKS_TO_SHOW = 22;
+const WEEKS_TO_SHOW = 18;
 const CURRENT_SEASON_TEAMS = teams.filter(t => !['team_21', 'team_22', 'team_23'].includes(t.id)).map(t => t.id);
 
 // Simple seeded random number generator for consistency
