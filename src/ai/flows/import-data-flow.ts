@@ -9,13 +9,13 @@
 import { ai } from '@/ai/genkit';
 import {
   teams,
-  predictions as staticPredictions,
-  users as staticUsers,
+  fullPredictions,
+  fullUsers,
   matches as staticMatches,
-  previousSeasonStandings as staticPreviousSeasonStandings,
+  previousSeasonStandings,
   seasonMonths,
   monthlyMimoM,
-  userHistories,
+  fullUserHistories,
   playerTeamScores,
   weeklyTeamStandings,
   teamRecentResults
@@ -50,7 +50,7 @@ async function ensureDefaultUserAndProfile() {
     const { auth, firestore: db } = initializeFirebase();
     const email = 'alex@example.com';
     const password = 'password123';
-    const displayName = 'Alex';
+    const displayName = 'Alex Anderson';
     let userId: string;
 
     try {
@@ -59,15 +59,13 @@ async function ensureDefaultUserAndProfile() {
         userId = userCredential.user.uid;
         console.log(`Successfully created and set up user: ${displayName}`);
         
-        // After creating the auth user, create their Firestore document.
-        const alexUser = staticUsers.find(u => u.id === 'usr_1');
+        const alexUser = fullUsers.find(u => u.id === 'usr_1');
         if (alexUser) {
             const userDocRef = doc(db, 'users', userId);
-            // Ensure the document ID in Firestore matches the auth UID.
             await setDoc(userDocRef, { ...alexUser, id: userId, email: email });
             console.log(`Created Firestore document for user: ${displayName}`);
         } else {
-            console.error("Could not find Alex's data in staticUsers to create Firestore profile.");
+            console.error("Could not find Alex's data in fullUsers to create Firestore profile.");
         }
 
     } catch (error: any) {
@@ -96,13 +94,12 @@ const importDataFlow = ai.defineFlow(
       await ensureDefaultUserAndProfile();
 
       await batchWrite(db, 'teams', teams, 'id');
-      // Filter out the default user 'Alex' as we've handled them separately
-      const otherUsers = staticUsers.filter(u => u.id !== 'usr_1');
+      const otherUsers = fullUsers.filter(u => u.id !== 'usr_1');
       await batchWrite(db, 'users', otherUsers, 'id');
       
       const predBatch = writeBatch(db);
       const predCollectionRef = collection(db, 'predictions');
-      staticPredictions.forEach(item => {
+      fullPredictions.forEach(item => {
           const docRef = doc(predCollectionRef, item.userId);
           predBatch.set(docRef, item);
       });
@@ -117,12 +114,11 @@ const importDataFlow = ai.defineFlow(
       });
       await matchesBatch.commit();
       
-      await batchWrite(db, 'previousSeasonStandings', staticPreviousSeasonStandings, 'teamId');
+      await batchWrite(db, 'previousSeasonStandings', previousSeasonStandings, 'teamId');
       await batchWrite(db, 'seasonMonths', seasonMonths, 'id');
       await batchWrite(db, 'monthlyMimoM', monthlyMimoM, 'id');
 
-      // Add imports for the rest of the data
-      await batchWrite(db, 'userHistories', userHistories, 'userId');
+      await batchWrite(db, 'userHistories', fullUserHistories, 'userId');
       
       const ptsBatch = writeBatch(db);
       const ptsCollectionRef = collection(db, 'playerTeamScores');

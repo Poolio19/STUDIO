@@ -163,7 +163,7 @@ export default function PredictPage() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
             <div className="lg:col-span-3 flex flex-col">
-              <div className="font-medium pb-2 text-muted-foreground">Your Prediction (2025-2026)</div>
+              <div className="font-medium pb-2 text-muted-foreground">Your Prediction (2025-26)</div>
               <div className="rounded-md">
                 <Reorder.Group axis="y" values={items} onReorder={setItems} className="flex-1">
                   {items.map((item, index) => {

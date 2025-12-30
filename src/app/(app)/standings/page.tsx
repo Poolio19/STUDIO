@@ -116,7 +116,7 @@ export default function StandingsPage() {
 
       <Card>
         <CardHeader className="items-center">
-          <CardTitle className="bg-black text-yellow-400 p-2 rounded-md">Team Standings 2025-2026</CardTitle>
+          <CardTitle className="bg-black text-yellow-400 p-2 rounded-md">Team Standings 2025-26</CardTitle>
         </CardHeader>
         <CardContent>
           <Table className="border-separate border-spacing-y-1">
