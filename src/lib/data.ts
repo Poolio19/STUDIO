@@ -118,7 +118,7 @@ export type WeeklyTeamStanding = {
 // --- STATIC DATA ---
 
 let usersData: Omit<User, 'score' | 'rank' | 'previousRank' | 'previousScore' | 'maxRank' | 'minRank' | 'maxScore' | 'minScore' | 'rankChange' | 'scoreChange'>[] = [
-    { id: 'usr_1', name: 'Alex', avatar: '1', email: 'alex@example.com', joinDate: '2023-08-10T10:00:00Z' },
+    { id: 'usr_1', name: 'Alex', avatar: '1', email: 'test@test.com', joinDate: '2023-08-10T10:00:00Z' },
     { id: 'usr_2', name: 'Maria', avatar: '2' },
     { id: 'usr_3', name: 'David', avatar: '3' },
     { id: 'usr_4', name: 'Sophia', avatar: '4' },
@@ -642,5 +642,3 @@ for (const monthOrSpecial in monthWeekRanges) {
     }
 }
 monthlyMimoM = generatedMimoM;
-
-    

@@ -74,7 +74,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
           // No user is signed in, attempt to sign in the default user.
           // The `importData` flow is responsible for creating this user.
           try {
-            await signInWithEmailAndPassword(auth, 'alex@example.com', 'password123');
+            await signInWithEmailAndPassword(auth, 'test@test.com', 'password123');
             // onAuthStateChanged will be called again with the new user, so we don't set state here.
           } catch (error) {
             console.error("FirebaseProvider: Automatic sign-in failed. Run the 'Import Data' tool from the Admin page to create the default user.", error);
