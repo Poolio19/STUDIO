@@ -153,14 +153,14 @@ export const teams: Team[] = [
     { id: 'team_7', name: 'Crystal Palace', logo: 'rabbit', bgColourFaint: 'rgba(27, 69, 143, 0.3)', bgColourSolid: '#1B458F', textColour: '#C4122E', iconColour: '#C4122E' },
     { id: 'team_8', name: 'Everton', logo: 'home', bgColourFaint: 'rgba(0, 51, 153, 0.3)', bgColourSolid: '#003399', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_9', name: 'Fulham', logo: 'shieldHalf', bgColourFaint: 'rgba(0, 0, 0, 0.3)', bgColourSolid: '#000000', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
-    { id: 'team_10', name: 'Ipswich Town', logo: 'mapPin', bgColourFaint: 'rgba(0, 87, 184, 0.3)', bgColourSolid: '#0057B8', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
+    { id: 'team_24', name: 'Leeds', logo: 'flower', bgColourFaint: 'rgba(255, 205, 0, 0.3)', bgColourSolid: '#FFCD00', textColour: '#1D428A', iconColour: '#1D428A' },
     { id: 'team_11', name: 'Leicester City', logo: 'sparkles', bgColourFaint: 'rgba(0, 83, 160, 0.3)', bgColourSolid: '#0053A0', textColour: '#FDBE11', iconColour: '#FDBE11' },
     { id: 'team_12', name: 'Liverpool', logo: 'origami', bgColourFaint: 'rgba(200, 16, 46, 0.3)', bgColourSolid: '#C8102E', textColour: '#000000', iconColour: '#FFFFFF' },
     { id: 'team_13', name: 'Man City', logo: 'sailboat', bgColourFaint: 'rgba(108, 171, 221, 0.3)', bgColourSolid: '#6CABDD', textColour: '#00285E', iconColour: '#00285E' },
     { id: 'team_14', name: 'Man Utd', logo: 'hamburger', bgColourFaint: 'rgba(218, 41, 28, 0.3)', bgColourSolid: '#DA291C', textColour: '#FBE122', iconColour: '#FBE122' },
     { id: 'team_15', name: 'Newcastle', logo: 'castle', bgColourFaint: 'rgba(36, 31, 32, 0.3)', bgColourSolid: '#241F20', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_16', name: "Nott'm Forest", logo: 'treeDeciduous', bgColourFaint: 'rgba(221, 0, 0, 0.3)', bgColourSolid: '#DD0000', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
-    { id: 'team_17', name: 'Southampton', logo: 'flower', bgColourFaint: 'rgba(215, 25, 32, 0.3)', bgColourSolid: '#D71920', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
+    { id: 'team_25', name: 'Sunderland', logo: 'database', bgColourFaint: 'rgba(235, 20, 30, 0.3)', bgColourSolid: '#EB141E', textColour: '#000000', iconColour: '#FFFFFF' },
     { id: 'team_18', name: 'Tottenham', logo: 'ship', bgColourFaint: 'rgba(19, 34, 87, 0.3)', bgColourSolid: '#132257', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_19', name: 'West Ham', logo: 'utensilsCrossed', bgColourFaint: 'rgba(122, 38, 58, 0.3)', bgColourSolid: '#7A263A', textColour: '#132257', iconColour: '#FBB117' },
     { id: 'team_20', name: 'Wolves', logo: 'gitlab', bgColourFaint: 'rgba(253, 185, 19, 0.3)', bgColourSolid: '#FDB913', textColour: '#231F20', iconColour: '#231F20' },
@@ -212,7 +212,7 @@ export let monthlyMimoM: MonthlyMimoM[] = [];
 // --- DYNAMIC & DETERMINISTIC DATA GENERATION ---
 
 const WEEKS_TO_SHOW = 18;
-const CURRENT_SEASON_TEAMS = teams.filter(t => !['team_21', 'team_22', 'team_23'].includes(t.id)).map(t => t.id);
+const CURRENT_SEASON_TEAMS = teams.filter(t => !['team_10', 'team_17', 'team_11', 'team_21', 'team_23'].includes(t.id)).map(t => t.id);
 
 // Simple seeded random number generator for consistency
 const mulberry32 = (seed: number) => {
@@ -276,90 +276,213 @@ export const predictions: Prediction[] = usersData.map((user, index) => {
     };
 });
 
-const generateSeasonFixtures = (): Omit<Match, 'homeScore' | 'awayScore'>[] => {
-    const numTeams = CURRENT_SEASON_TEAMS.length;
-    let fixtures: Omit<Match, 'homeScore' | 'awayScore'>[] = [];
+const teamNameToIdMap = new Map(teams.map(t => [t.name, t.id]));
+const realMatchData: Omit<Match, 'homeTeamId' | 'awayTeamId'>[] = [
+    { week: 1, home: 'Liverpool', homeScore: 4, away: 'Bournemouth', awayScore: 2 },
+    { week: 1, home: 'Wolves', homeScore: 0, away: 'Man City', awayScore: 4 },
+    { week: 1, home: 'Tottenham', homeScore: 3, away: 'Burnley', awayScore: 0 },
+    { week: 1, home: 'Sunderland', homeScore: 3, away: 'West Ham', awayScore: 0 },
+    { week: 1, home: 'Brighton', homeScore: 1, away: 'Fulham', awayScore: 1 },
+    { week: 1, home: 'Aston Villa', homeScore: 0, away: 'Newcastle', awayScore: 0 },
+    { week: 1, home: 'Man Utd', homeScore: 0, away: 'Arsenal', awayScore: 1 },
+    { week: 1, home: "Nott'm Forest", homeScore: 3, away: 'Brentford', awayScore: 1 },
+    { week: 1, home: 'Chelsea', homeScore: 0, away: 'Crystal Palace', awayScore: 0 },
+    { week: 1, home: 'Leeds', homeScore: 1, away: 'Everton', awayScore: 0 },
+    { week: 2, home: 'West Ham', homeScore: 1, away: 'Chelsea', awayScore: 5 },
+    { week: 2, home: 'Arsenal', homeScore: 5, away: 'Leeds', awayScore: 0 },
+    { week: 2, home: 'Burnley', homeScore: 2, away: 'Sunderland', awayScore: 0 },
+    { week: 2, home: 'Brentford', homeScore: 1, away: 'Aston Villa', awayScore: 0 },
+    { week: 2, home: 'Bournemouth', homeScore: 1, away: 'Wolves', awayScore: 0 },
+    { week: 2, home: 'Man City', homeScore: 0, away: 'Tottenham', awayScore: 2 },
+    { week: 2, home: 'Fulham', homeScore: 1, away: 'Man Utd', awayScore: 1 },
+    { week: 2, home: 'Everton', homeScore: 2, away: 'Brighton', awayScore: 0 },
+    { week: 2, home: 'Crystal Palace', homeScore: 1, away: "Nott'm Forest", awayScore: 1 },
+    { week: 2, home: 'Newcastle', homeScore: 2, away: 'Liverpool', awayScore: 3 },
+    { week: 3, home: 'Leeds', homeScore: 0, away: 'Newcastle', awayScore: 0 },
+    { week: 3, home: 'Wolves', homeScore: 2, away: 'Everton', awayScore: 3 },
+    { week: 3, home: 'Tottenham', homeScore: 0, away: 'Bournemouth', awayScore: 1 },
+    { week: 3, home: 'Sunderland', homeScore: 2, away: 'Brentford', awayScore: 1 },
+    { week: 3, home: 'Man Utd', homeScore: 3, away: 'Burnley', awayScore: 2 },
+    { week: 3, home: 'Chelsea', homeScore: 2, away: 'Fulham', awayScore: 0 },
+    { week: 3, home: 'Aston Villa', homeScore: 0, away: 'Crystal Palace', awayScore: 3 },
+    { week: 3, home: 'Liverpool', homeScore: 1, away: 'Arsenal', awayScore: 0 },
+    { week: 3, home: "Nott'm Forest", homeScore: 0, away: 'West Ham', awayScore: 3 },
+    { week: 3, home: 'Brighton', homeScore: 2, away: 'Man City', awayScore: 1 },
+    { week: 4, home: 'Brentford', homeScore: 2, away: 'Chelsea', awayScore: 2 },
+    { week: 4, home: 'West Ham', homeScore: 0, away: 'Tottenham', awayScore: 3 },
+    { week: 4, home: 'Newcastle', homeScore: 1, away: 'Wolves', awayScore: 0 },
+    { week: 4, home: 'Fulham', homeScore: 1, away: 'Leeds', awayScore: 0 },
+    { week: 4, home: 'Everton', homeScore: 0, away: 'Aston Villa', awayScore: 0 },
+    { week: 4, home: 'Crystal Palace', homeScore: 0, away: 'Sunderland', awayScore: 0 },
+    { week: 4, home: 'Bournemouth', homeScore: 2, away: 'Brighton', awayScore: 1 },
+    { week: 4, home: 'Arsenal', homeScore: 3, away: "Nott'm Forest", awayScore: 0 },
+    { week: 4, home: 'Man City', homeScore: 3, away: 'Man Utd', awayScore: 0 },
+    { week: 4, home: 'Burnley', homeScore: 0, away: 'Liverpool', awayScore: 1 },
+    { week: 5, home: 'Fulham', homeScore: 3, away: 'Brentford', awayScore: 1 },
+    { week: 5, home: 'Man Utd', homeScore: 2, away: 'Chelsea', awayScore: 1 },
+    { week: 5, home: 'Wolves', homeScore: 1, away: 'Leeds', awayScore: 3 },
+    { week: 5, home: 'West Ham', homeScore: 1, away: 'Crystal Palace', awayScore: 2 },
+    { week: 5, home: 'Burnley', homeScore: 1, away: "Nott'm Forest", awayScore: 1 },
+    { week: 5, home: 'Brighton', homeScore: 2, away: 'Tottenham', awayScore: 2 },
+    { week: 5, home: 'Liverpool', homeScore: 2, away: 'Everton', awayScore: 1 },
+    { week: 5, home: 'Arsenal', homeScore: 1, away: 'Man City', awayScore: 1 },
+    { week: 5, home: 'Sunderland', homeScore: 1, away: 'Aston Villa', awayScore: 1 },
+    { week: 5, home: 'Bournemouth', homeScore: 0, away: 'Newcastle', awayScore: 0 },
+    { week: 6, home: 'Tottenham', homeScore: 1, away: 'Wolves', awayScore: 1 },
+    { week: 6, home: "Nott'm Forest", homeScore: 0, away: 'Sunderland', awayScore: 1 },
+    { week: 6, home: 'Man City', homeScore: 5, away: 'Burnley', awayScore: 1 },
+    { week: 6, home: 'Leeds', homeScore: 2, away: 'Bournemouth', awayScore: 2 },
+    { week: 6, home: 'Crystal Palace', homeScore: 2, away: 'Liverpool', awayScore: 1 },
+    { week: 6, home: 'Chelsea', homeScore: 1, away: 'Brighton', awayScore: 3 },
+    { week: 6, home: 'Brentford', homeScore: 3, away: 'Man Utd', awayScore: 1 },
+    { week: 6, home: 'Newcastle', homeScore: 1, away: 'Arsenal', awayScore: 2 },
+    { week: 6, home: 'Aston Villa', homeScore: 3, away: 'Fulham', awayScore: 1 },
+    { week: 6, home: 'Everton', homeScore: 1, away: 'West Ham', awayScore: 1 },
+    { week: 7, home: 'Bournemouth', homeScore: 3, away: 'Fulham', awayScore: 1 },
+    { week: 7, home: 'Chelsea', homeScore: 2, away: 'Liverpool', awayScore: 1 },
+    { week: 7, home: 'Man Utd', homeScore: 2, away: 'Sunderland', awayScore: 0 },
+    { week: 7, home: 'Arsenal', homeScore: 2, away: 'West Ham', awayScore: 0 },
+    { week: 7, home: 'Leeds', homeScore: 1, away: 'Tottenham', awayScore: 2 },
+    { week: 7, home: 'Brentford', homeScore: 0, away: 'Man City', awayScore: 1 },
+    { week: 7, home: 'Wolves', homeScore: 1, away: 'Brighton', awayScore: 1 },
+    { week: 7, home: 'Newcastle', homeScore: 2, away: "Nott'm Forest", awayScore: 0 },
+    { week: 7, home: 'Everton', homeScore: 2, away: 'Crystal Palace', awayScore: 1 },
+    { week: 7, home: 'Aston Villa', homeScore: 2, away: 'Burnley', awayScore: 1 },
+    { week: 8, home: 'Fulham', homeScore: 0, away: 'Arsenal', awayScore: 1 },
+    { week: 8, home: 'Sunderland', homeScore: 2, away: 'Wolves', awayScore: 0 },
+    { week: 8, home: 'Man City', homeScore: 2, away: 'Everton', awayScore: 0 },
+    { week: 8, home: 'Crystal Palace', homeScore: 3, away: 'Bournemouth', awayScore: 3 },
+    { week: 8, home: 'Burnley', homeScore: 2, away: 'Leeds', awayScore: 0 },
+    { week: 8, home: 'Brighton', homeScore: 2, away: 'Newcastle', awayScore: 1 },
+    { week: 8, home: "Nott'm Forest", homeScore: 0, away: 'Chelsea', awayScore: 3 },
+    { week: 8, home: 'Liverpool', homeScore: 1, away: 'Man Utd', awayScore: 2 },
+    { week: 8, home: 'Tottenham', homeScore: 1, away: 'Aston Villa', awayScore: 2 },
+    { week: 8, home: 'West Ham', homeScore: 0, away: 'Brentford', awayScore: 2 },
+    { week: 9, home: 'Leeds', homeScore: 2, away: 'West Ham', awayScore: 1 },
+    { week: 9, home: 'Brentford', homeScore: 3, away: 'Liverpool', awayScore: 2 },
+    { week: 9, home: 'Man Utd', homeScore: 4, away: 'Brighton', awayScore: 2 },
+    { week: 9, home: 'Newcastle', homeScore: 2, away: 'Fulham', awayScore: 1 },
+    { week: 9, home: 'Chelsea', homeScore: 1, away: 'Sunderland', awayScore: 2 },
+    { week: 9, home: 'Everton', homeScore: 0, away: 'Tottenham', awayScore: 3 },
+    { week: 9, home: 'Wolves', homeScore: 2, away: 'Burnley', awayScore: 3 },
+    { week: 9, home: 'Aston Villa', homeScore: 1, away: 'Man City', awayScore: 0 },
+    { week: 9, home: 'Arsenal', homeScore: 1, away: 'Crystal Palace', awayScore: 0 },
+    { week: 9, home: 'Bournemouth', homeScore: 2, away: "Nott'm Forest", awayScore: 0 },
+    { week: 10, home: 'Liverpool', homeScore: 2, away: 'Aston Villa', awayScore: 0 },
+    { week: 10, home: 'Tottenham', homeScore: 0, away: 'Chelsea', awayScore: 1 },
+    { week: 10, home: "Nott'm Forest", homeScore: 2, away: 'Man Utd', awayScore: 2 },
+    { week: 10, home: 'Fulham', homeScore: 3, away: 'Wolves', awayScore: 0 },
+    { week: 10, home: 'Crystal Palace', homeScore: 2, away: 'Brentford', awayScore: 0 },
+    { week: 10, home: 'Burnley', homeScore: 0, away: 'Arsenal', awayScore: 2 },
+    { week: 10, home: 'Brighton', homeScore: 3, away: 'Leeds', awayScore: 0 },
+    { week: 10, home: 'Man City', homeScore: 3, away: 'Bournemouth', awayScore: 1 },
+    { week: 10, home: 'West Ham', homeScore: 3, away: 'Newcastle', awayScore: 1 },
+    { week: 10, home: 'Sunderland', homeScore: 1, away: 'Everton', awayScore: 1 },
+    { week: 11, home: 'Chelsea', homeScore: 3, away: 'Wolves', awayScore: 0 },
+    { week: 11, home: 'Sunderland', homeScore: 2, away: 'Arsenal', awayScore: 2 },
+    { week: 11, home: 'West Ham', homeScore: 3, away: 'Burnley', awayScore: 2 },
+    { week: 11, home: 'Everton', homeScore: 2, away: 'Fulham', awayScore: 0 },
+    { week: 11, home: 'Tottenham', homeScore: 2, away: 'Man Utd', awayScore: 2 },
+    { week: 11, home: 'Man City', homeScore: 3, away: 'Liverpool', awayScore: 0 },
+    { week: 11, home: "Nott'm Forest", homeScore: 3, away: 'Leeds', awayScore: 1 },
+    { week: 11, home: 'Crystal Palace', homeScore: 0, away: 'Brighton', awayScore: 0 },
+    { week: 11, home: 'Brentford', homeScore: 3, away: 'Newcastle', awayScore: 1 },
+    { week: 11, home: 'Aston Villa', homeScore: 4, away: 'Bournemouth', awayScore: 0 },
+    { week: 12, home: 'Newcastle', homeScore: 2, away: 'Man City', awayScore: 1 },
+    { week: 12, home: 'Wolves', homeScore: 0, away: 'Crystal Palace', awayScore: 2 },
+    { week: 12, home: 'Liverpool', homeScore: 0, away: "Nott'm Forest", awayScore: 3 },
+    { week: 12, home: 'Fulham', homeScore: 1, away: 'Sunderland', awayScore: 0 },
+    { week: 12, home: 'Brighton', homeScore: 2, away: 'Brentford', awayScore: 1 },
+    { week: 12, home: 'Bournemouth', homeScore: 2, away: 'West Ham', awayScore: 2 },
+    { week: 12, home: 'Burnley', homeScore: 0, away: 'Chelsea', awayScore: 2 },
+    { week: 12, home: 'Arsenal', homeScore: 4, away: 'Tottenham', awayScore: 1 },
+    { week: 12, home: 'Leeds', homeScore: 1, away: 'Aston Villa', awayScore: 2 },
+    { week: 12, home: 'Man Utd', homeScore: 0, away: 'Everton', awayScore: 1 },
+    { week: 13, home: 'Tottenham', homeScore: 1, away: 'Fulham', awayScore: 2 },
+    { week: 13, home: 'Everton', homeScore: 1, away: 'Newcastle', awayScore: 4 },
+    { week: 13, home: 'Sunderland', homeScore: 3, away: 'Bournemouth', awayScore: 2 },
+    { week: 13, home: 'Man City', homeScore: 3, away: 'Leeds', awayScore: 2 },
+    { week: 13, home: 'Brentford', homeScore: 3, away: 'Burnley', awayScore: 1 },
+    { week: 13, home: 'Chelsea', homeScore: 1, away: 'Arsenal', awayScore: 1 },
+    { week: 13, home: 'West Ham', homeScore: 0, away: 'Liverpool', awayScore: 2 },
+    { week: 13, home: "Nott'm Forest", homeScore: 0, away: 'Brighton', awayScore: 2 },
+    { week: 13, home: 'Aston Villa', homeScore: 1, away: 'Wolves', awayScore: 0 },
+    { week: 13, home: 'Crystal Palace', homeScore: 1, away: 'Man Utd', awayScore: 2 },
+    { week: 14, home: 'Newcastle', homeScore: 2, away: 'Tottenham', awayScore: 2 },
+    { week: 14, home: 'Fulham', homeScore: 4, away: 'Man City', awayScore: 5 },
+    { week: 14, home: 'Bournemouth', homeScore: 0, away: 'Everton', awayScore: 1 },
+    { week: 14, home: 'Liverpool', homeScore: 1, away: 'Sunderland', awayScore: 1 },
+    { week: 14, home: 'Leeds', homeScore: 3, away: 'Chelsea', awayScore: 1 },
+    { week: 14, home: 'Wolves', homeScore: 0, away: "Nott'm Forest", awayScore: 1 },
+    { week: 14, home: 'Burnley', homeScore: 0, away: 'Crystal Palace', awayScore: 1 },
+    { week: 14, home: 'Brighton', homeScore: 3, away: 'Aston Villa', awayScore: 4 },
+    { week: 14, home: 'Arsenal', homeScore: 2, away: 'Brentford', awayScore: 0 },
+    { week: 14, home: 'Man Utd', homeScore: 1, away: 'West Ham', awayScore: 1 },
+    { week: 15, home: 'Leeds', homeScore: 3, away: 'Liverpool', awayScore: 3 },
+    { week: 15, home: 'Tottenham', homeScore: 2, away: 'Brentford', awayScore: 0 },
+    { week: 15, home: 'Newcastle', homeScore: 2, away: 'Burnley', awayScore: 1 },
+    { week: 15, home: 'Man City', homeScore: 3, away: 'Sunderland', awayScore: 0 },
+    { week: 15, home: 'Everton', homeScore: 3, away: "Nott'm Forest", awayScore: 0 },
+    { week: 15, home: 'Bournemouth', homeScore: 0, away: 'Chelsea', awayScore: 0 },
+    { week: 15, home: 'Aston Villa', homeScore: 2, away: 'Arsenal', awayScore: 1 },
+    { week: 15, home: 'Fulham', homeScore: 1, away: 'Crystal Palace', awayScore: 2 },
+    { week: 15, home: 'Brighton', homeScore: 1, away: 'West Ham', awayScore: 1 },
+    { week: 15, home: 'Wolves', homeScore: 1, away: 'Man Utd', awayScore: 4 },
+    { week: 16, home: 'Arsenal', homeScore: 2, away: 'Wolves', awayScore: 1 },
+    { week: 16, home: 'Burnley', homeScore: 2, away: 'Fulham', awayScore: 3 },
+    { week: 16, home: 'Liverpool', homeScore: 2, away: 'Brighton', awayScore: 0 },
+    { week: 16, home: 'Chelsea', homeScore: 2, away: 'Everton', awayScore: 0 },
+    { week: 16, home: 'Brentford', homeScore: 1, away: 'Leeds', awayScore: 1 },
+    { week: 16, home: 'West Ham', homeScore: 2, away: 'Aston Villa', awayScore: 3 },
+    { week: 16, home: 'Sunderland', homeScore: 1, away: 'Newcastle', awayScore: 0 },
+    { week: 16, home: "Nott'm Forest", homeScore: 3, away: 'Tottenham', awayScore: 0 },
+    { week: 16, home: 'Crystal Palace', homeScore: 0, away: 'Man City', awayScore: 3 },
+    { week: 16, home: 'Man Utd', homeScore: 4, away: 'Bournemouth', awayScore: 4 },
+    { week: 17, home: 'Leeds', homeScore: 4, away: 'Crystal Palace', awayScore: 1 },
+    { week: 17, home: 'Everton', homeScore: 0, away: 'Arsenal', awayScore: 1 },
+    { week: 17, home: 'Tottenham', homeScore: 1, away: 'Liverpool', awayScore: 2 },
+    { week: 17, home: 'Wolves', homeScore: 0, away: 'Brentford', awayScore: 2 },
+    { week: 17, home: 'Man City', homeScore: 3, away: 'West Ham', awayScore: 0 },
+    { week: 17, home: 'Brighton', homeScore: 0, away: 'Sunderland', awayScore: 0 },
+    { week: 17, home: 'Bournemouth', homeScore: 1, away: 'Burnley', awayScore: 1 },
+    { week: 17, home: 'Newcastle', homeScore: 2, away: 'Chelsea', awayScore: 2 },
+    { week: 17, home: 'Aston Villa', homeScore: 2, away: 'Man Utd', awayScore: 1 },
+    { week: 17, home: 'Fulham', homeScore: 1, away: "Nott'm Forest", awayScore: 0 },
+    { week: 18, home: 'Man Utd', homeScore: 1, away: 'Newcastle', awayScore: 0 },
+    { week: 18, home: 'Chelsea', homeScore: 1, away: 'Aston Villa', awayScore: 2 },
+    { week: 18, home: 'West Ham', homeScore: 0, away: 'Fulham', awayScore: 1 },
+    { week: 18, home: 'Liverpool', homeScore: 2, away: 'Wolves', awayScore: 1 },
+    { week: 18, home: 'Burnley', homeScore: 0, away: 'Everton', awayScore: 0 },
+    { week: 18, home: 'Brentford', homeScore: 4, away: 'Bournemouth', awayScore: 1 },
+    { week: 18, home: 'Arsenal', homeScore: 2, away: 'Brighton', awayScore: 1 },
+    { week: 18, home: "Nott'm Forest", homeScore: 1, away: 'Man City', awayScore: 2 },
+    { week: 18, home: 'Crystal Palace', homeScore: 0, away: 'Tottenham', awayScore: 1 },
+    { week: 18, home: 'Sunderland', homeScore: 1, away: 'Leeds', awayScore: 1 },
+].map(m => ({...m, homeTeamId: teamNameToIdMap.get(m.home)!, awayTeamId: teamNameToIdMap.get(m.away)!}));
 
-    // Generate home and away fixtures for each pair of teams
-    for (let i = 0; i < numTeams; i++) {
-        for (let j = 0; j < numTeams; j++) {
-            if (i !== j) {
-                fixtures.push({ week: 0, homeTeamId: CURRENT_SEASON_TEAMS[i], awayTeamId: CURRENT_SEASON_TEAMS[j] });
-            }
+export const allMatches: Match[] = realMatchData;
+export const matches: Match[] = allMatches.filter(m => m.week <= WEEKS_TO_SHOW);
+export const currentStandings: CurrentStanding[] = calculateStandings(matches);
+const finalStandings: CurrentStanding[] = calculateStandings(allMatches);
+
+
+export const playerTeamScores: PlayerTeamScore[] = usersData.flatMap(user => {
+    const userPrediction = predictions.find(p => p.userId === user.id);
+    if (!userPrediction) return [];
+
+    const actualRanks = new Map<string, number>();
+    finalStandings.forEach(s => actualRanks.set(s.teamId, s.rank));
+    
+    return userPrediction.rankings.map((teamId, index) => {
+        const predictedRank = index + 1;
+        const actualRank = actualRanks.get(teamId);
+        let score = 0;
+        if (actualRank !== undefined) {
+            score = 5 - Math.abs(predictedRank - actualRank);
         }
-    }
-
-    // Shuffle fixtures to randomize match-ups per week
-    const random = mulberry32(123); // Fixed seed for deterministic shuffling
-    for (let i = fixtures.length - 1; i > 0; i--) {
-        const j = Math.floor(random() * (i + 1));
-        [fixtures[i], fixtures[j]] = [fixtures[j], fixtures[i]];
-    }
-
-    // Assign weeks to fixtures, ensuring no team plays more than once a week
-    let week = 1;
-    const assignedFixtures: Omit<Match, 'homeScore' | 'awayScore'>[] = [];
-    while (fixtures.length > 0 && week <= 38) {
-        const teamsInWeek: Set<string> = new Set();
-        const weekFixtures: Omit<Match, 'homeScore' | 'awayScore'>[] = [];
-        let remainingFixtures: Omit<Match, 'homeScore' | 'awayScore'>[] = [];
-
-        for (const fixture of fixtures) {
-            if (!teamsInWeek.has(fixture.homeTeamId) && !teamsInWeek.has(fixture.awayTeamId)) {
-                teamsInWeek.add(fixture.homeTeamId);
-                teamsInWeek.add(fixture.awayTeamId);
-                weekFixtures.push({ ...fixture, week });
-            } else {
-                remainingFixtures.push(fixture);
-            }
-        }
-        
-        assignedFixtures.push(...weekFixtures);
-        fixtures = remainingFixtures;
-        if (weekFixtures.length > 0) {
-            week++;
-        }
-    }
-
-    return assignedFixtures;
-};
-
-const simulateMatchScores = (fixtures: Omit<Match, 'homeScore' | 'awayScore'>[]): Match[] => {
-    const teamStrengths = new Map<string, number>();
-    previousSeasonStandings.forEach(s => {
-        // Simple strength from 1 to 20 (inverted rank)
-        teamStrengths.set(s.teamId, 21 - s.rank);
+        return { userId: user.id, teamId, score };
     });
-    // Add strengths for promoted teams
-    teamStrengths.set('team_10', 5); // Ipswich
-    teamStrengths.set('team_11', 4); // Leicester
-    teamStrengths.set('team_17', 3); // Southampton
-
-    return fixtures.map((fixture, index) => {
-        const random = mulberry32(index);
-        const homeStrength = teamStrengths.get(fixture.homeTeamId) || 10;
-        const awayStrength = teamStrengths.get(fixture.awayTeamId) || 10;
-        
-        const homeAdvantage = 0.2; // Small advantage for home team
-        
-        const homePotential = (homeStrength / 20) + homeAdvantage;
-        const awayPotential = awayStrength / 20;
-
-        let homeScore = 0;
-        let awayScore = 0;
-
-        // Simulate goals based on potential
-        if (random() < homePotential * 0.7) homeScore++;
-        if (random() < homePotential * 0.4) homeScore++;
-        if (random() < homePotential * 0.2) homeScore++;
-
-        if (random() < awayPotential * 0.6) awayScore++;
-        if (random() < awayPotential * 0.3) awayScore++;
-        if (random() < awayPotential * 0.15) awayScore++;
-        
-        return { ...fixture, homeScore, awayScore };
-    });
-};
+});
 
 const calculateStandings = (matchesToProcess: Match[]): CurrentStanding[] => {
     const standingsMap: Map<string, Omit<CurrentStanding, 'rank' | 'teamId'>> = new Map();
@@ -380,7 +503,7 @@ const calculateStandings = (matchesToProcess: Match[]): CurrentStanding[] => {
             homeTeam.goalsAgainst += match.awayScore;
             awayTeam.goalsAgainst += match.homeScore;
 
-            if (match.homeScore > match.homeScore) {
+            if (match.homeScore > match.awayScore) {
                 homeTeam.wins += 1; homeTeam.points += 3; awayTeam.losses += 1;
             } else if (match.homeScore < match.awayScore) {
                 awayTeam.wins += 1; awayTeam.points += 3; homeTeam.losses += 1;
@@ -430,31 +553,6 @@ const calculateScoresForUser = (userPredictions: string[], actualStandings: Curr
     });
     return totalScore;
 };
-
-const allFixtures = generateSeasonFixtures();
-export const allMatches: Match[] = simulateMatchScores(allFixtures);
-export const matches: Match[] = allMatches.filter(m => m.week <= WEEKS_TO_SHOW);
-export const currentStandings: CurrentStanding[] = calculateStandings(matches);
-const finalStandings: CurrentStanding[] = calculateStandings(allMatches);
-
-
-export const playerTeamScores: PlayerTeamScore[] = usersData.flatMap(user => {
-    const userPrediction = predictions.find(p => p.userId === user.id);
-    if (!userPrediction) return [];
-
-    const actualRanks = new Map<string, number>();
-    finalStandings.forEach(s => actualRanks.set(s.teamId, s.rank));
-    
-    return userPrediction.rankings.map((teamId, index) => {
-        const predictedRank = index + 1;
-        const actualRank = actualRanks.get(teamId);
-        let score = 0;
-        if (actualRank !== undefined) {
-            score = 5 - Math.abs(predictedRank - actualRank);
-        }
-        return { userId: user.id, teamId, score };
-    });
-});
 
 const previousSeasonPlayerRanks: {[key: string]: number} = {};
 [...usersData].sort((a,b) => (parseInt(a.id.replace('usr_','')) % 5) - (parseInt(b.id.replace('usr_','')) % 5))
