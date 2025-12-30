@@ -473,30 +473,6 @@ export const allMatches: Match[] = realMatchData.map(m => {
     return {...m, homeTeamId, awayTeamId};
 }).filter((m): m is Match => m !== null);
 
-
-export const matches: Match[] = allMatches.filter(m => m.week <= WEEKS_TO_SHOW);
-export const currentStandings: CurrentStanding[] = calculateStandings(matches);
-const finalStandings: CurrentStanding[] = calculateStandings(allMatches);
-
-
-export const playerTeamScores: PlayerTeamScore[] = usersData.flatMap(user => {
-    const userPrediction = predictions.find(p => p.userId === user.id);
-    if (!userPrediction) return [];
-
-    const actualRanks = new Map<string, number>();
-    finalStandings.forEach(s => actualRanks.set(s.teamId, s.rank));
-    
-    return userPrediction.rankings.map((teamId, index) => {
-        const predictedRank = index + 1;
-        const actualRank = actualRanks.get(teamId);
-        let score = 0;
-        if (actualRank !== undefined) {
-            score = 5 - Math.abs(predictedRank - actualRank);
-        }
-        return { userId: user.id, teamId, score };
-    });
-});
-
 const calculateStandings = (matchesToProcess: Match[]): CurrentStanding[] => {
     const standingsMap: Map<string, Omit<CurrentStanding, 'rank' | 'teamId'>> = new Map();
 
@@ -551,6 +527,29 @@ const calculateStandings = (matchesToProcess: Match[]): CurrentStanding[] => {
         return { ...standing, rank };
     });
 };
+
+export const matches: Match[] = allMatches.filter(m => m.week <= WEEKS_TO_SHOW);
+export const currentStandings: CurrentStanding[] = calculateStandings(matches);
+const finalStandings: CurrentStanding[] = calculateStandings(allMatches);
+
+
+export const playerTeamScores: PlayerTeamScore[] = usersData.flatMap(user => {
+    const userPrediction = predictions.find(p => p.userId === user.id);
+    if (!userPrediction) return [];
+
+    const actualRanks = new Map<string, number>();
+    finalStandings.forEach(s => actualRanks.set(s.teamId, s.rank));
+    
+    return userPrediction.rankings.map((teamId, index) => {
+        const predictedRank = index + 1;
+        const actualRank = actualRanks.get(teamId);
+        let score = 0;
+        if (actualRank !== undefined) {
+            score = 5 - Math.abs(predictedRank - actualRank);
+        }
+        return { userId: user.id, teamId, score };
+    });
+});
 
 const calculateScoresForUser = (userPredictions: string[], actualStandings: CurrentStanding[]): number => {
     const actualRanks = new Map<string, number>();
@@ -753,3 +752,5 @@ for (const monthOrSpecial in monthWeekRanges) {
     }
 }
 monthlyMimoM = generatedMimoM;
+
+    
