@@ -11,7 +11,7 @@ import {
   teams,
   fullPredictions,
   fullUsers,
-  matches as staticMatches,
+  matches,
   previousSeasonStandings,
   seasonMonths,
   monthlyMimoM,
@@ -107,7 +107,7 @@ const importDataFlow = ai.defineFlow(
 
       const matchesBatch = writeBatch(db);
       const matchesCollectionRef = collection(db, 'matches');
-      staticMatches.forEach(item => {
+      matches.forEach(item => {
         const matchId = `${item.week}-${item.homeTeamId}-${item.awayTeamId}`;
         const docRef = doc(matchesCollectionRef, matchId);
         matchesBatch.set(docRef, item);
@@ -148,3 +148,5 @@ const importDataFlow = ai.defineFlow(
     }
   }
 );
+
+    
