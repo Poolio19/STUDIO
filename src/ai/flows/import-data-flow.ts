@@ -56,8 +56,19 @@ const ensureUserFlow = ai.defineFlow(
         const email = 'alex@example.com';
         const password = 'password123';
         const displayName = 'Alex Anderson';
-        const auth = getAdminAuth();
-        const db = getAdminFirestore();
+        
+        let auth;
+        let db;
+
+        try {
+          auth = getAdminAuth();
+          db = getAdminFirestore();
+        } catch (initError: any) {
+            const errorMessage = `Firebase Admin SDK initialization failed. This is likely because Application Default Credentials are not configured correctly in your local environment. Please run 'gcloud auth application-default login' in your terminal. Original error: ${initError.message}`;
+            console.error(errorMessage);
+            return { success: false, message: errorMessage };
+        }
+
 
         try {
             // Check if user already exists
@@ -105,7 +116,15 @@ const importDataFlow = ai.defineFlow(
     outputSchema: z.object({ success: z.boolean() }),
   },
   async () => {
-    const db = getAdminFirestore();
+    let db;
+    try {
+        db = getAdminFirestore();
+    } catch (initError: any) {
+        const errorMessage = `Firebase Admin SDK initialization failed during data import. Please ensure credentials are set up. Original error: ${initError.message}`;
+        console.error(errorMessage);
+        // We can't proceed without a database connection.
+        return { success: false };
+    }
     try {
       await batchWrite(db, 'teams', teams, 'id');
       await batchWrite(db, 'users', fullUsers, 'id');
