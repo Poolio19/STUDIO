@@ -76,12 +76,13 @@ const ensureUserFlow = ai.defineFlow(
         let db;
 
         try {
+          // Default user profiles always go in the default DB, so no databaseId is passed.
           auth = getAdminAuth();
-          db = getAdminFirestore('(default)'); // Default user profiles go in the default DB
+          db = getAdminFirestore(); 
         } catch (initError: any) {
-            console.error('Firebase Admin SDK initialization failed:', initError);
-            const detailedMessage = initError.message.includes('Could not refresh access token') 
-                ? `Authentication Failed: Could not get Google Cloud credentials for project '${TARGET_PROJECT_ID}'. Please run 'gcloud auth application-default login' in your terminal, select the project containing this ID, and restart the server.`
+            console.error('Firebase Admin SDK initialization failed in ensureUserFlow:', initError);
+            const detailedMessage = initError.message.includes('FIREBASE ADMIN SDK AUTHENTICATION FAILED') 
+                ? `Authentication Failed. Please check the server logs for detailed instructions on how to fix your Application Default Credentials (ADC).`
                 : `Firebase Admin SDK initialization failed. Original error: ${initError.message}`;
             return { success: false, message: detailedMessage };
         }
@@ -135,8 +136,8 @@ const testDatabaseConnectionFlow = ai.defineFlow(
             db = getAdminFirestore(databaseId);
         } catch (initError: any) {
             console.error(`Firebase Admin SDK initialization failed for database '${databaseId}':`, initError);
-             const detailedMessage = initError.message.includes('Could not refresh access token') 
-                ? `Authentication Failed: Could not get Google Cloud credentials. Please run 'gcloud auth application-default login' in your terminal and restart the server.`
+             const detailedMessage = initError.message.includes('FIREBASE ADMIN SDK AUTHENTICATION FAILED') 
+                ? `Authentication Failed. Please check the server logs for detailed instructions on how to fix your Application Default Credentials (ADC).`
                 : `Firebase Admin SDK initialization failed: ${initError.message}.`;
             return { success: false, message: detailedMessage };
         }
@@ -145,14 +146,14 @@ const testDatabaseConnectionFlow = ai.defineFlow(
             // Attempt to read a non-existent document. This checks permissions and DB existence
             // without requiring any data to be present.
             await db.collection('__test_connection__').doc('__test_doc__').get();
-            return { success: true, message: `Successfully connected to database '${databaseId}'.` };
+            return { success: true, message: `Successfully connected to database '${databaseId}' in project '${TARGET_PROJECT_ID}'.` };
         } catch (error: any) {
             console.error(`Error connecting to Firestore database '${databaseId}':`, error);
             if (error.code === 5 || (error.message && (error.message.includes('NOT_FOUND') || error.message.includes("Could not find database")))) {
                 return { success: false, message: `Connection failed: A database with ID '${databaseId}' was not found in project '${TARGET_PROJECT_ID}'. Please create it in the Firebase console.` };
             }
             if (error.message.includes('Could not refresh access token')) {
-                return { success: false, message: `Authentication Failed: Could not get Google Cloud credentials. Please run 'gcloud auth application-default login' in your terminal and restart the server.` };
+                 return { success: false, message: `Authentication Failed. Please check the server logs for detailed instructions on how to fix your Application Default Credentials (ADC).` };
             }
             return { success: false, message: `Connection failed: An error occurred while connecting to '${databaseId}': ${error.message}` };
         }
@@ -173,8 +174,8 @@ const importDataFlow = ai.defineFlow(
         db = getAdminFirestore(databaseId);
     } catch (initError: any) {
         console.error(`Firebase Admin SDK initialization failed for database '${databaseId}':`, initError);
-        const detailedMessage = initError.message.includes('Could not refresh access token') 
-            ? `Authentication Failed: Could not get Google Cloud credentials. Please run 'gcloud auth application-default login' and restart the server.`
+        const detailedMessage = initError.message.includes('FIREBASE ADMIN SDK AUTHENTICATION FAILED') 
+            ? `Authentication Failed. Please check the server logs for detailed instructions on how to fix your Application Default Credentials (ADC).`
             : `Firebase Admin SDK initialization failed: ${initError.message}.`;
         return { success: false, message: detailedMessage };
     }
@@ -236,7 +237,7 @@ const importDataFlow = ai.defineFlow(
          return { success: false, message: `Import failed: A database with ID '${databaseId}' was not found in project '${TARGET_PROJECT_ID}'. Please create it in the Firebase console.` };
       }
       if (error.message.includes('Could not refresh access token')) {
-         return { success: false, message: `Authentication Failed: Could not get Google Cloud credentials. Please run 'gcloud auth application-default login' and restart the server.` };
+         return { success: false, message: `Authentication Failed. Please check the server logs for detailed instructions on how to fix your Application Default Credentials (ADC).` };
       }
       return { success: false, message: `An error occurred during data import to '${databaseId}': ${error.message}` };
     }
