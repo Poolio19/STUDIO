@@ -12,13 +12,7 @@ import {
   type UpdateMatchResultsInput,
   type UpdateMatchResultsOutput,
 } from './update-match-results-flow-types';
-import {
-  getFirestore,
-  writeBatch,
-  doc,
-  collection,
-} from 'firebase/firestore';
-import { initializeFirebase } from '@/firebase';
+import { adminFirestore } from '@/ai/firebase-admin';
 
 export async function updateMatchResults(
   input: UpdateMatchResultsInput
@@ -33,16 +27,16 @@ const updateMatchResultsFlow = ai.defineFlow(
     outputSchema: UpdateMatchResultsOutputSchema,
   },
   async ({ week, results }) => {
-    const { firestore: db } = initializeFirebase();
-    const batch = writeBatch(db);
-    const matchesCollectionRef = collection(db, 'matches');
+    const db = adminFirestore;
+    const batch = db.batch();
+    const matchesCollectionRef = db.collection('matches');
 
     const validResults = results.filter(result => 
         !isNaN(result.homeScore) && !isNaN(result.awayScore)
     );
 
     validResults.forEach(result => {
-      const docRef = doc(matchesCollectionRef, result.matchId);
+      const docRef = matchesCollectionRef.doc(result.matchId);
       batch.update(docRef, { 
           homeScore: result.homeScore, 
           awayScore: result.awayScore 

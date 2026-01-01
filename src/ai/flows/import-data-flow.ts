@@ -22,25 +22,18 @@ import {
   teamRecentResults
 } from '@/lib/data';
 import { z } from 'zod';
-import {
-  collection,
-  writeBatch,
-  doc,
-  setDoc,
-} from 'firebase/firestore';
-import { initializeFirebase } from '@/firebase';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { adminAuth, adminFirestore } from '@/ai/firebase-admin';
 
 async function batchWrite(
-  db: any,
+  db: FirebaseFirestore.Firestore,
   collectionName: string,
   data: any[],
   idField: string = 'id'
 ) {
-  const batch = writeBatch(db);
-  const collectionRef = collection(db, collectionName);
+  const batch = db.batch();
+  const collectionRef = db.collection(collectionName);
   data.forEach((item) => {
-    const docRef = doc(collectionRef, item[idField].toString());
+    const docRef = collectionRef.doc(item[idField].toString());
     batch.set(docRef, item);
   });
   await batch.commit();
@@ -60,32 +53,45 @@ const ensureUserFlow = ai.defineFlow(
         outputSchema: z.object({ success: z.boolean(), message: z.string() }),
     },
     async () => {
-        const { auth, firestore: db } = initializeFirebase();
         const email = 'alex@example.com';
         const password = 'password123';
         const displayName = 'Alex Anderson';
 
         try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            await updateProfile(userCredential.user, { displayName });
-            const userId = userCredential.user.uid;
-            
-            const alexUser = fullUsers.find(u => u.id === 'usr_1');
-            if (alexUser) {
-                const userDocRef = doc(db, 'users', userId);
-                const userProfileData = { ...alexUser, id: userId, email: email };
-                await setDoc(userDocRef, userProfileData);
-                return { success: true, message: `Successfully created user and profile for ${displayName}.` };
-            } else {
-                 return { success: false, message: "Could not find Alex's data in fullUsers." };
-            }
-
+            // Check if user already exists
+            const userRecord = await adminAuth.getUserByEmail(email);
+            return { success: true, message: `User ${displayName} (${email}) already exists. No action taken.` };
         } catch (error: any) {
-            if (error.code === 'auth/email-already-in-use') {
-                return { success: true, message: `User ${displayName} already exists. No action taken.`};
+            if (error.code === 'auth/user-not-found') {
+                // User does not exist, so create them
+                try {
+                    const userRecord = await adminAuth.createUser({
+                        email: email,
+                        password: password,
+                        displayName: displayName,
+                    });
+                    
+                    const userId = userRecord.uid;
+                    const alexUser = fullUsers.find(u => u.id === 'usr_1');
+
+                    if (alexUser) {
+                        const userProfileData = { ...alexUser, id: userId, email: email };
+                        await adminFirestore.collection('users').doc(userId).set(userProfileData);
+                         return { success: true, message: `Successfully created user and profile for ${displayName}.` };
+                    } else {
+                        // This case should ideally not happen if data is consistent
+                        return { success: false, message: "New user created, but Alex's profile data was not found to populate Firestore." };
+                    }
+
+                } catch (creationError: any) {
+                    console.error('Error creating user:', creationError);
+                    return { success: false, message: `Failed to create user: ${creationError.message}` };
+                }
+            } else {
+                // Other errors (e.g., network issues)
+                console.error('Error checking for user:', error);
+                return { success: false, message: `An unexpected error occurred: ${error.message}` };
             }
-            console.error(`Error during default user setup:`, error);
-            return { success: false, message: error.message || 'An unknown error occurred.' };
         }
     }
 );
@@ -97,25 +103,24 @@ const importDataFlow = ai.defineFlow(
     outputSchema: z.object({ success: z.boolean() }),
   },
   async () => {
-    const { firestore: db } = initializeFirebase();
-
+    const db = adminFirestore;
     try {
       await batchWrite(db, 'teams', teams, 'id');
       await batchWrite(db, 'users', fullUsers, 'id');
       
-      const predBatch = writeBatch(db);
-      const predCollectionRef = collection(db, 'predictions');
+      const predBatch = db.batch();
+      const predCollectionRef = db.collection('predictions');
       fullPredictions.forEach(item => {
-          const docRef = doc(predCollectionRef, item.userId);
+          const docRef = predCollectionRef.doc(item.userId);
           predBatch.set(docRef, item);
       });
       await predBatch.commit();
 
-      const matchesBatch = writeBatch(db);
-      const matchesCollectionRef = collection(db, 'matches');
+      const matchesBatch = db.batch();
+      const matchesCollectionRef = db.collection('matches');
       matches.forEach(item => {
         const matchId = `${item.week}-${item.homeTeamId}-${item.awayTeamId}`;
-        const docRef = doc(matchesCollectionRef, matchId);
+        const docRef = matchesCollectionRef.doc(matchId);
         matchesBatch.set(docRef, item);
       });
       await matchesBatch.commit();
@@ -125,20 +130,20 @@ const importDataFlow = ai.defineFlow(
       await batchWrite(db, 'monthlyMimoM', monthlyMimoM, 'id');
       await batchWrite(db, 'userHistories', fullUserHistories, 'userId');
       
-      const ptsBatch = writeBatch(db);
-      const ptsCollectionRef = collection(db, 'playerTeamScores');
+      const ptsBatch = db.batch();
+      const ptsCollectionRef = db.collection('playerTeamScores');
       playerTeamScores.forEach(item => {
         const docId = `${item.userId}_${item.teamId}`;
-        const docRef = doc(ptsCollectionRef, docId);
+        const docRef = ptsCollectionRef.doc(docId);
         ptsBatch.set(docRef, item);
       });
       await ptsBatch.commit();
 
-      const wtsBatch = writeBatch(db);
-      const wtsCollectionRef = collection(db, 'weeklyTeamStandings');
+      const wtsBatch = db.batch();
+      const wtsCollectionRef = db.collection('weeklyTeamStandings');
       weeklyTeamStandings.forEach(item => {
         const docId = `${item.week}_${item.teamId}`;
-        const docRef = doc(wtsCollectionRef, docId);
+        const docRef = wtsCollectionRef.doc(docId);
         wtsBatch.set(docRef, item);
       });
       await wtsBatch.commit();
