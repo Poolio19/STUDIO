@@ -61,11 +61,11 @@ const ensureUserFlow = ai.defineFlow(
         let db;
 
         try {
+          // This will now throw a descriptive error if initialization fails.
           auth = getAdminAuth();
           db = getAdminFirestore();
         } catch (initError: any) {
-            const errorMessage = `Firebase Admin SDK initialization failed. This is likely because Application Default Credentials are not configured correctly in your local environment. Please run 'gcloud auth application-default login' in your terminal. Original error: ${initError.message}`;
-            console.error(errorMessage);
+            const errorMessage = `Firebase Admin SDK initialization failed. Check your server console logs for a detailed error message and instructions on how to fix your local credentials.`;
             return { success: false, message: errorMessage };
         }
 
@@ -118,10 +118,10 @@ const importDataFlow = ai.defineFlow(
   async () => {
     let db;
     try {
+        // This will now throw a descriptive error if initialization fails.
         db = getAdminFirestore();
     } catch (initError: any) {
-        const errorMessage = `Firebase Admin SDK initialization failed. This is likely because Application Default Credentials are not configured correctly in your local environment. Please run 'gcloud auth application-default login' in your terminal. Original error: ${initError.message}`;
-        console.error(errorMessage);
+        const errorMessage = `Firebase Admin SDK initialization failed. Check your server console logs for a detailed error message and instructions on how to fix your local credentials.`;
         // We can't proceed without a database connection.
         return { success: false, message: errorMessage };
     }
