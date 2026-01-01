@@ -124,19 +124,24 @@ const importDataFlow = ai.defineFlow(
   },
   async ({ databaseId }) => {
     let db;
+    // Store original database ID to restore it later
     const originalDatabaseId = process.env.FIRESTORE_DATABASE_ID;
 
+    // Temporarily set the environment variable for the Admin SDK to pick up.
     if (databaseId) {
         process.env.FIRESTORE_DATABASE_ID = databaseId;
     } else {
+        // Explicitly clear it if no databaseId is provided to ensure default behavior.
         delete process.env.FIRESTORE_DATABASE_ID;
     }
 
     try {
+        // getAdminFirestore will now use the database specified by the environment variable.
         db = getAdminFirestore();
     } catch (initError: any) {
         const projectId = process.env.GOOGLE_CLOUD_PROJECT || '[UNKNOWN]';
         const errorMessage = `Firebase Admin SDK initialization failed. Project: ${projectId}. Error: ${initError.message}. Check server logs for details.`;
+        // Restore original env var in case of error
         if (originalDatabaseId) {
             process.env.FIRESTORE_DATABASE_ID = originalDatabaseId;
         } else {
@@ -191,6 +196,7 @@ const importDataFlow = ai.defineFlow(
 
       await batchWrite(db, 'teamRecentResults', teamRecentResults, 'teamId');
 
+      // Restore the original environment variable after the operation.
       if (originalDatabaseId) {
           process.env.FIRESTORE_DATABASE_ID = originalDatabaseId;
       } else {
@@ -201,6 +207,7 @@ const importDataFlow = ai.defineFlow(
       console.error("Error importing data to Firestore:", error);
       const projectId = process.env.GOOGLE_CLOUD_PROJECT || '[UNKNOWN]';
 
+      // Restore the original environment variable in case of an error during the writes.
       if (originalDatabaseId) {
           process.env.FIRESTORE_DATABASE_ID = originalDatabaseId;
       } else {
@@ -214,5 +221,4 @@ const importDataFlow = ai.defineFlow(
     }
   }
 );
-
     
