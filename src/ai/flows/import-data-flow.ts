@@ -74,6 +74,7 @@ const ensureUserFlow = ai.defineFlow(
             const alexUser = fullUsers.find(u => u.id === 'usr_1');
             if (alexUser) {
                 const userDocRef = doc(db, 'users', userId);
+                // Important: Use a new object, don't modify the original from the import
                 const userProfileData = { ...alexUser, id: userId, email: email };
                 await setDoc(userDocRef, userProfileData);
                 return { success: true, message: `Successfully created user and profile for ${displayName}.` };

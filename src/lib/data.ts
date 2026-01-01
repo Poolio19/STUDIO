@@ -116,7 +116,6 @@ export type WeeklyTeamStanding = {
 
 
 // --- MINIMAL TEST DATA ---
-const WEEKS_TO_SHOW = 2;
 
 export const teams: Team[] = [
     { id: 'team_1', name: 'Arsenal', logo: 'drill', bgColourFaint: 'rgba(239, 1, 7, 0.3)', bgColourSolid: '#EF0107', textColour: '#062657', iconColour: '#FFFFFF' },
