@@ -143,13 +143,13 @@ export default function AdminPage() {
       if (result.success) {
         toast({
             title: 'Import Complete!',
-            description: 'The Firestore database has been populated successfully.',
+            description: result.message,
         });
       } else {
         toast({
             variant: 'destructive',
             title: 'Import Failed',
-            description: 'There was an error populating the database. Check the console for details.',
+            description: result.message || 'There was an error populating the database. Check the console for details.',
         });
       }
     } catch (error: any) {

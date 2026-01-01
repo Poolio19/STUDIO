@@ -43,7 +43,7 @@ export async function ensureUser(): Promise<{ success: boolean; message: string 
     return ensureUserFlow();
 }
 
-export async function importData(): Promise<{ success: boolean }> {
+export async function importData(): Promise<{ success: boolean; message?: string }> {
   return importDataFlow();
 }
 
@@ -113,17 +113,17 @@ const ensureUserFlow = ai.defineFlow(
 const importDataFlow = ai.defineFlow(
   {
     name: 'importDataFlow',
-    outputSchema: z.object({ success: z.boolean() }),
+    outputSchema: z.object({ success: z.boolean(), message: z.string().optional() }),
   },
   async () => {
     let db;
     try {
         db = getAdminFirestore();
     } catch (initError: any) {
-        const errorMessage = `Firebase Admin SDK initialization failed during data import. Please ensure credentials are set up. Original error: ${initError.message}`;
+        const errorMessage = `Firebase Admin SDK initialization failed. This is likely because Application Default Credentials are not configured correctly in your local environment. Please run 'gcloud auth application-default login' in your terminal. Original error: ${initError.message}`;
         console.error(errorMessage);
         // We can't proceed without a database connection.
-        return { success: false };
+        return { success: false, message: errorMessage };
     }
     try {
       await batchWrite(db, 'teams', teams, 'id');
@@ -171,10 +171,10 @@ const importDataFlow = ai.defineFlow(
 
       await batchWrite(db, 'teamRecentResults', teamRecentResults, 'teamId');
 
-      return { success: true };
-    } catch (error) {
+      return { success: true, message: 'All data imported successfully.' };
+    } catch (error: any) {
       console.error("Error importing data to Firestore:", error);
-      return { success: false };
+      return { success: false, message: `An error occurred during data import: ${error.message}` };
     }
   }
 );
