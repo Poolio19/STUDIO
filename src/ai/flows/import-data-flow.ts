@@ -73,21 +73,16 @@ const testDatabaseConnectionFlow = ai.defineFlow(
     async ({ databaseId }) => {
         const targetDbId = databaseId || '(default)';
         try {
-            // Get a Firestore instance for the specified database ID.
             const db = getAdminFirestore(targetDbId);
-
-            // Attempt a lightweight operation to confirm connectivity and permissions.
-            // listCollections() is a good choice as it requires read access at the root.
             await db.listCollections();
-
             return { success: true, message: `Successfully connected to project. The import will target database '${targetDbId}'.` };
         } catch (error: any) {
-            const projectId = process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || '[UNKNOWN]';
             console.error(`Error in testDatabaseConnectionFlow for DB '${targetDbId}':`, error);
-
-            // This error code (5) is the gRPC code for NOT_FOUND.
-            // It's the most reliable indicator that the database doesn't exist or isn't accessible.
-             if (error.code === 5 || (error.message && error.message.includes('NOT_FOUND'))) {
+            if (error.message.includes('Could not refresh access token')) {
+                 return { success: false, message: `Authentication Failed: Could not get Google Cloud credentials. Please run 'gcloud auth application-default login' in your terminal and restart the server.` };
+            }
+            if (error.code === 5 || (error.message && error.message.includes('NOT_FOUND'))) {
+                 const projectId = process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || '[UNKNOWN]';
                  return { success: false, message: `Connection failed: The project '${projectId}' does not have an active Cloud Firestore database with ID '${targetDbId}'. Please verify the ID in the Firebase console or create the database.` };
             }
              return { success: false, message: `An unexpected error occurred while connecting to '${targetDbId}': ${error.message}` };
@@ -109,22 +104,20 @@ const ensureUserFlow = ai.defineFlow(
         let db;
 
         try {
-          // This will now throw a descriptive error if initialization fails.
           auth = getAdminAuth();
           db = getAdminFirestore(); // Connect to default for user creation
         } catch (initError: any) {
-            const errorMessage = `Firebase Admin SDK initialization failed. Check your server console logs for a detailed error message and instructions on how to fix your local credentials.`;
+            console.error('Firebase Admin SDK initialization failed:', initError);
+            const errorMessage = `Firebase Admin SDK initialization failed. This is likely an authentication issue. Please run 'gcloud auth application-default login' in your terminal and restart the server. Original error: ${initError.message}`;
             return { success: false, message: errorMessage };
         }
 
 
         try {
-            // Check if user already exists
             const userRecord = await auth.getUserByEmail(email);
             return { success: true, message: `User ${displayName} (${email}) already exists. No action taken.` };
         } catch (error: any) {
             if (error.code === 'auth/user-not-found') {
-                // User does not exist, so create them
                 try {
                     const userRecord = await auth.createUser({
                         email: email,
@@ -140,7 +133,6 @@ const ensureUserFlow = ai.defineFlow(
                         await db.collection('users').doc(userId).set(userProfileData);
                          return { success: true, message: `Successfully created user and profile for ${displayName}.` };
                     } else {
-                        // This case should ideally not happen if data is consistent
                         return { success: false, message: "New user created, but Alex's profile data was not found to populate Firestore." };
                     }
 
@@ -149,7 +141,6 @@ const ensureUserFlow = ai.defineFlow(
                     return { success: false, message: `Failed to create user: ${creationError.message}` };
                 }
             } else {
-                // Other errors (e.g., network issues)
                 console.error('Error checking for user:', error);
                 return { success: false, message: `An unexpected error occurred: ${error.message}` };
             }
@@ -171,8 +162,8 @@ const importDataFlow = ai.defineFlow(
     try {
         db = getAdminFirestore(targetDbId);
     } catch (initError: any) {
-        const projectId = process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || '[UNKNOWN]';
-        const errorMessage = `Firebase Admin SDK initialization failed for DB '${targetDbId}'. Project: ${projectId}. Error: ${initError.message}. Check server logs for details.`;
+        console.error(`Firebase Admin SDK initialization failed for DB '${targetDbId}':`, initError);
+        const errorMessage = `Firebase Admin SDK initialization failed: ${initError.message}. This is likely an authentication issue. Please run 'gcloud auth application-default login' in your terminal and restart the server.`;
         return { success: false, message: errorMessage };
     }
 
@@ -225,9 +216,8 @@ const importDataFlow = ai.defineFlow(
       return { success: true, message: `All data imported successfully into '${targetDbId}'.` };
     } catch (error: any) {
       console.error(`Error importing data to Firestore DB '${targetDbId}':`, error);
-      const projectId = process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || '[UNKNOWN]';
-
        if (error.code === 5 || (error.message && error.message.includes('NOT_FOUND'))) {
+        const projectId = process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || '[UNKNOWN]';
         return { success: false, message: `Import failed: The project '${projectId}' does not have an active Cloud Firestore database with ID '${targetDbId}'. Please verify the name in your Firebase Console.` };
       }
       return { success: false, message: `An error occurred during data import to '${targetDbId}': ${error.message}` };

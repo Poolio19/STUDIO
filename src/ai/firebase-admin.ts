@@ -19,57 +19,38 @@ function initializeAdminApp(databaseId: string = '(default)'): admin.app.App {
     return appInstances.get(appName)!;
   }
   
-  // If the default app is initialized but we need a specific DB, we can't reuse it.
-  // The Admin SDK supports a single app instance for multiple DBs, but our logic
-  // to dynamically select the DB at runtime has been problematic.
-  // A cleaner approach is a dedicated app instance per database when specified.
-
   try {
-    const appOptions: admin.AppOptions = {};
-
-    // IMPORTANT: The Admin SDK for Node.js doesn't let you specify a database ID
-    // during initializeApp(). The database is part of the project. We get the
-    // Firestore instance and that can handle multiple databases.
-    // The previous logic was flawed. The correct way is to initialize the app
-    // ONCE and then get the firestore service.
-    
-    // Check if the default app is already initialized.
-    if (admin.apps.length > 0 && databaseId === '(default)') {
-      const defaultApp = admin.app();
-       appInstances.set(appName, defaultApp);
-       return defaultApp;
-    }
-    
-    // If we need a specific DB, and the default app is the only one, we can't be sure
-    // it's the right context. We should create a new named instance if one doesn't exist.
     const existingApp = admin.apps.find(app => app?.name === appName);
     if (existingApp) {
         return existingApp;
     }
 
-    const app = admin.initializeApp(appOptions, appName);
+    const app = admin.initializeApp({ credential: admin.credential.applicationDefault() }, appName);
     appInstances.set(appName, app);
     return app;
 
   } catch (e: any) {
-    console.error(
+    // This is the critical error handling block for authentication issues.
+    const errorMessage = 
       '********************************************************************************\n' +
-      '** FIREBASE ADMIN SDK INITIALIZATION FAILED **\n' +
+      '** FIREBASE ADMIN SDK INITIALIZATION FAILED                                   **\n' +
       '********************************************************************************\n' +
-      'The Admin SDK could not be initialized. This is almost always due to a problem with\n' +
-      'Application Default Credentials (ADC) in your local development environment.\n\n' +
-      'POSSIBLE CAUSES:\n' +
+      'The Admin SDK could not be initialized. This is almost always due to a problem\n' +
+      'with Application Default Credentials (ADC) in your local development environment.\n\n' +
+      'THE ERROR MESSAGE:\n' +
+      `  ${e.message}\n\n` +
+      'This typically means:\n' +
       '1. You have not authenticated with the gcloud CLI.\n' +
-      '2. The gcloud credentials are not configured for the correct project.\n' +
-      '3. The Firestore database has not been enabled for this project.\n\n' +
+      '2. Your gcloud credentials have expired or are not configured for the correct project.\n\n' +
       'TO FIX THIS, RUN THE FOLLOWING COMMAND IN YOUR TERMINAL:\n' +
       'gcloud auth application-default login\n\n' +
-      'Then, ensure Firestore is enabled in your Firebase project console.\n\n' +
-      'Original Error: ' + e.message + '\n' +
-      '********************************************************************************'
-    );
-    // Re-throw the error to halt the server process, making the failure obvious.
-    throw e;
+      'After running the command, restart the development server.\n' +
+      '********************************************************************************';
+
+    console.error(errorMessage);
+    
+    // Re-throw the error with a clear message to ensure the server process fails loudly.
+    throw new Error(`Admin SDK Initialization Failed: ${e.message}. Please check your server console logs for detailed instructions.`);
   }
 }
 
@@ -92,12 +73,5 @@ export function getAdminAuth() {
  */
 export function getAdminFirestore(databaseId?: string) {
     const app = initializeAdminApp(databaseId);
-    // The Admin SDK's Firestore object can manage connections to different
-    // databases within the same project. We don't need to do anything special here.
-    // The key is that the code USING this db object will specify the collection paths.
-    // The logic to connect to a specific DB is handled by Firestore itself
-    // when using collection group queries or specifying full resource paths,
-    // but for simple collection access on a non-default DB, we must
-    // get a Firestore instance from a specifically-initialized app.
     return app.firestore();
 }
