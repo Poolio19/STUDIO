@@ -34,13 +34,20 @@ function initializeAdminApp(databaseId: string = '(default)'): admin.app.App {
     // ONCE and then get the firestore service.
     
     // Check if the default app is already initialized.
-    if (admin.apps.length > 0) {
+    if (admin.apps.length > 0 && databaseId === '(default)') {
       const defaultApp = admin.app();
        appInstances.set(appName, defaultApp);
        return defaultApp;
     }
+    
+    // If we need a specific DB, and the default app is the only one, we can't be sure
+    // it's the right context. We should create a new named instance if one doesn't exist.
+    const existingApp = admin.apps.find(app => app?.name === appName);
+    if (existingApp) {
+        return existingApp;
+    }
 
-    const app = admin.initializeApp(appOptions);
+    const app = admin.initializeApp(appOptions, appName);
     appInstances.set(appName, app);
     return app;
 
@@ -90,8 +97,7 @@ export function getAdminFirestore(databaseId?: string) {
     // The key is that the code USING this db object will specify the collection paths.
     // The logic to connect to a specific DB is handled by Firestore itself
     // when using collection group queries or specifying full resource paths,
-    // but for simple collection access on a non-default DB, we must rely
-    // on the SDK being initialized in an environment that knows the DB.
-    // The batch-write logic in the flow is what matters.
+    // but for simple collection access on a non-default DB, we must
+    // get a Firestore instance from a specifically-initialized app.
     return app.firestore();
 }

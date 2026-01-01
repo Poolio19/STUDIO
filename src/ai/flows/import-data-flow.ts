@@ -24,7 +24,6 @@ import {
 } from '@/lib/data';
 import { z } from 'zod';
 import { getAdminAuth, getAdminFirestore } from '@/ai/firebase-admin';
-import admin from 'firebase-admin';
 
 async function batchWrite(
   db: FirebaseFirestore.Firestore,
@@ -74,27 +73,22 @@ const testDatabaseConnectionFlow = ai.defineFlow(
     async ({ databaseId }) => {
         const targetDbId = databaseId || '(default)';
         try {
-            // We get a Firestore instance. The actual connection test happens
-            // by trying to perform a lightweight operation.
+            // Get a Firestore instance for the specified database ID.
             const db = getAdminFirestore(targetDbId);
 
-            // In a multi-database project, db.collection() will target the default DB
-            // unless the environment is configured correctly. The most reliable test
-            // is to attempt a write/read that would fail if the DB doesn't exist.
-            // A more direct check isn't available in the client-facing Admin SDK.
-            // Let's try to list collections, which should fail if the DB is inaccessible.
+            // Attempt a lightweight operation to confirm connectivity and permissions.
+            // listCollections() is a good choice as it requires read access at the root.
             await db.listCollections();
 
             return { success: true, message: `Successfully connected to project. The import will target database '${targetDbId}'.` };
         } catch (error: any) {
-            const projectId = process.env.GOOGLE_CLOUD_PROJECT || '[UNKNOWN]';
+            const projectId = process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || '[UNKNOWN]';
             console.error(`Error in testDatabaseConnectionFlow for DB '${targetDbId}':`, error);
 
-            if (error.message.includes('Could not find endpoint')) {
-                 return { success: false, message: `Connection failed: The specified database ID '${targetDbId}' might not exist in project '${projectId}'. Please verify the ID in the Firebase console.` };
-            }
-             if (error.code === 5 || error.message.includes('NOT_FOUND')) { // 5 is gRPC code for NOT_FOUND
-                 return { success: false, message: `Connection failed: The project '${projectId}' does not have an active Cloud Firestore database with ID '${targetDbId}'. Please create it in the Firebase console or verify the name.` };
+            // This error code (5) is the gRPC code for NOT_FOUND.
+            // It's the most reliable indicator that the database doesn't exist or isn't accessible.
+             if (error.code === 5 || (error.message && error.message.includes('NOT_FOUND'))) {
+                 return { success: false, message: `Connection failed: The project '${projectId}' does not have an active Cloud Firestore database with ID '${targetDbId}'. Please verify the ID in the Firebase console or create the database.` };
             }
              return { success: false, message: `An unexpected error occurred while connecting to '${targetDbId}': ${error.message}` };
         }
@@ -171,21 +165,13 @@ const importDataFlow = ai.defineFlow(
     outputSchema: z.object({ success: z.boolean(), message: z.string().optional() }),
   },
   async ({ databaseId }) => {
-    // This is a workaround for the fact that the Node.js Admin SDK is tricky
-    // when targeting a non-default database for standard operations.
-    // By setting this env var, we tell the SDK which database to use for
-    // the subsequent `getAdminFirestore()` call within this flow's process.
-    if (databaseId) {
-        process.env.FIRESTORE_DATABASE_ID = databaseId;
-    }
-    
     let db: FirebaseFirestore.Firestore;
     const targetDbId = databaseId || '(default)';
     
     try {
         db = getAdminFirestore(targetDbId);
     } catch (initError: any) {
-        const projectId = process.env.GOOGLE_CLOUD_PROJECT || '[UNKNOWN]';
+        const projectId = process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || '[UNKNOWN]';
         const errorMessage = `Firebase Admin SDK initialization failed for DB '${targetDbId}'. Project: ${projectId}. Error: ${initError.message}. Check server logs for details.`;
         return { success: false, message: errorMessage };
     }
@@ -239,17 +225,12 @@ const importDataFlow = ai.defineFlow(
       return { success: true, message: `All data imported successfully into '${targetDbId}'.` };
     } catch (error: any) {
       console.error(`Error importing data to Firestore DB '${targetDbId}':`, error);
-      const projectId = process.env.GOOGLE_CLOUD_PROJECT || '[UNKNOWN]';
+      const projectId = process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || '[UNKNOWN]';
 
-       if (error.code === 5 || error.message.includes('NOT_FOUND')) {
-        return { success: false, message: `Import failed: The project '${projectId}' does not have an active Cloud Firestore database with ID '${targetDbId}'. Please create it in the Firebase console or verify the name.` };
+       if (error.code === 5 || (error.message && error.message.includes('NOT_FOUND'))) {
+        return { success: false, message: `Import failed: The project '${projectId}' does not have an active Cloud Firestore database with ID '${targetDbId}'. Please verify the name in your Firebase Console.` };
       }
       return { success: false, message: `An error occurred during data import to '${targetDbId}': ${error.message}` };
-    } finally {
-        // Unset the env var to clean up.
-        if (databaseId) {
-            delete process.env.FIRESTORE_DATABASE_ID;
-        }
     }
   }
 );
