@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -19,7 +20,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { importData, ensureUser } from '@/ai/flows/import-data-flow';
+import { importData, ensureUser, testDatabaseConnection } from '@/ai/flows/import-data-flow';
 import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 import type { UpdateMatchResultsInput } from '@/ai/flows/update-match-results-flow-types';
 import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
@@ -39,11 +40,13 @@ export default function AdminPage() {
   const { toast } = useToast();
   const { firestore } = useFirebase();
 
+  const [isTestingConnection, setIsTestingConnection] = React.useState(false);
   const [isEnsuringUser, setIsEnsuringUser] = React.useState(false);
   const [isImporting, setIsImporting] = React.useState(false);
   const [isUpdating, setIsUpdating] = React.useState(false);
   const [isLoadingMatches, setIsLoadingMatches] = React.useState(false);
   
+  const [databaseId, setDatabaseId] = React.useState('prempred-master');
   const [selectedWeek, setSelectedWeek] = React.useState<string>('1');
   const [matchesForWeek, setMatchesForWeek] = React.useState<MatchWithTeamData[]>([]);
   const [scores, setScores] = React.useState<{ [matchId: string]: { homeScore: string; awayScore: string } }>({});
@@ -61,26 +64,33 @@ export default function AdminPage() {
     setIsLoadingMatches(true);
     const weekNumber = parseInt(week, 10);
     const matchesQuery = query(collection(firestore, 'matches'), where('week', '==', weekNumber));
-    const querySnapshot = await getDocs(matchesQuery);
     
-    const matchesData: MatchWithTeamData[] = [];
-    querySnapshot.forEach(doc => {
-      const match = doc.data() as Match;
-      const homeTeam = teamMap.get(match.homeTeamId);
-      const awayTeam = teamMap.get(match.awayTeamId);
-      if (homeTeam && awayTeam) {
-          matchesData.push({ ...match, id: doc.id, homeTeam, awayTeam });
-      }
-    });
-    
-    setMatchesForWeek(matchesData);
-    
-    const initialScores: { [matchId: string]: { homeScore: string; awayScore: string } } = {};
-    matchesData.forEach(m => {
-        initialScores[m.id] = { homeScore: m.homeScore.toString(), awayScore: m.awayScore.toString() };
-    });
-    setScores(initialScores);
-    setIsLoadingMatches(false);
+    try {
+      const querySnapshot = await getDocs(matchesQuery);
+      const matchesData: MatchWithTeamData[] = [];
+      querySnapshot.forEach(doc => {
+        const match = doc.data() as Match;
+        const homeTeam = teamMap.get(match.homeTeamId);
+        const awayTeam = teamMap.get(match.awayTeamId);
+        if (homeTeam && awayTeam) {
+            matchesData.push({ ...match, id: doc.id, homeTeam, awayTeam });
+        }
+      });
+      
+      setMatchesForWeek(matchesData);
+      
+      const initialScores: { [matchId: string]: { homeScore: string; awayScore: string } } = {};
+      matchesData.forEach(m => {
+          initialScores[m.id] = { homeScore: m.homeScore > -1 ? m.homeScore.toString() : '', awayScore: m.awayScore > -1 ? m.awayScore.toString() : '' };
+      });
+      setScores(initialScores);
+    } catch(e) {
+      // This will catch permission errors if the user has not imported data yet.
+      // It's safe to ignore here.
+    } finally {
+      setIsLoadingMatches(false);
+    }
+
   }, [firestore, teamsLoading, teamMap]);
 
   React.useEffect(() => {
@@ -97,6 +107,36 @@ export default function AdminPage() {
     }));
   };
 
+  const handleTestConnection = async () => {
+    if (!databaseId) {
+        toast({
+            variant: 'destructive',
+            title: 'Database ID Required',
+            description: 'Please enter a Firestore Database ID to test.',
+        });
+        return;
+    }
+    setIsTestingConnection(true);
+    toast({ title: 'Testing Connection...', description: `Pinging database '${databaseId}'...` });
+
+    try {
+        const result = await testDatabaseConnection(databaseId);
+        toast({
+            variant: result.success ? 'default' : 'destructive',
+            title: result.success ? 'Connection Successful!' : 'Connection Failed',
+            description: result.message,
+        });
+    } catch (error: any) {
+        console.error('Test connection failed:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Connection Failed',
+            description: error.message || 'An unexpected error occurred.',
+        });
+    }
+    setIsTestingConnection(false);
+  }
+
   const handleEnsureUser = async () => {
     setIsEnsuringUser(true);
     toast({
@@ -106,18 +146,11 @@ export default function AdminPage() {
 
     try {
       const result = await ensureUser();
-      if (result.success) {
-        toast({
-            title: 'User Setup Complete',
+      toast({
+            variant: result.success ? 'default' : 'destructive',
+            title: result.success ? 'User Setup Complete' : 'User Setup Failed',
             description: result.message,
-        });
-      } else {
-        toast({
-            variant: 'destructive',
-            title: 'User Setup Failed',
-            description: result.message,
-        });
-      }
+      });
     } catch (error: any) {
       console.error('Ensure user failed:', error);
       toast({
@@ -131,26 +164,27 @@ export default function AdminPage() {
   };
 
   const handleDataImport = async () => {
+     if (!databaseId) {
+        toast({
+            variant: 'destructive',
+            title: 'Database ID Required',
+            description: 'Please enter the Firestore Database ID before importing data.',
+        });
+        return;
+    }
     setIsImporting(true);
     toast({
       title: 'Importing Data...',
-      description: 'Populating the Firestore database with initial data. This may take a moment.',
+      description: `Populating database '${databaseId}' with initial data. This may take a moment.`,
     });
 
     try {
-      const result = await importData();
-      if (result.success) {
-        toast({
-            title: 'Import Complete!',
-            description: result.message,
+      const result = await importData(databaseId);
+      toast({
+            variant: result.success ? 'default' : 'destructive',
+            title: result.success ? 'Import Complete!' : 'Import Failed',
+            description: result.message || 'An unexpected error occurred during data import.',
         });
-      } else {
-        toast({
-            variant: 'destructive',
-            title: 'Import Failed',
-            description: result.message || 'There was an error populating the database. Check the console for details.',
-        });
-      }
     } catch (error: any) {
       console.error('Data import failed:', error);
       toast({
@@ -201,7 +235,7 @@ export default function AdminPage() {
   };
 
   const weeks = Array.from({ length: 38 }, (_, i) => i + 1);
-  const anyLoading = isEnsuringUser || isImporting;
+  const anyLoading = isTestingConnection || isEnsuringUser || isImporting;
 
   return (
     <div className="space-y-8">
@@ -217,9 +251,9 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card>
             <CardHeader>
-            <CardTitle>Data Import</CardTitle>
+            <CardTitle>Data Import / Testing</CardTitle>
             <CardDescription>
-                First, ensure a default user exists. Then, import all sample data into your database.
+                First, ensure a default user exists. Then, connect to your Firestore database and import all sample data.
             </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col space-y-4">
@@ -227,7 +261,7 @@ export default function AdminPage() {
             <Alert>
                 <AlertTitle>Step 1: Ensure Default User</AlertTitle>
                 <AlertDescription>
-                    This creates the 'alex@example.com' user if it doesn't already exist. This is only needed once.
+                    Creates 'alex@example.com' if it doesn't exist. This is required for the app to function.
                 </AlertDescription>
                  <Button onClick={handleEnsureUser} disabled={anyLoading} className="mt-2">
                     {isEnsuringUser ? (
@@ -242,20 +276,34 @@ export default function AdminPage() {
             </Alert>
             
             <Alert>
-                <AlertTitle>Step 2: Import All Data</AlertTitle>
+                <AlertTitle>Step 2: Connect & Import Data</AlertTitle>
                 <AlertDescription>
-                    This will populate your Firestore database with all the teams, players, and historical data needed to run the app.
+                    Enter your Firestore Database ID (e.g., "prempred-master"), test the connection, then import data.
                 </AlertDescription>
-                <Button onClick={handleDataImport} disabled={anyLoading} className="mt-2">
-                    {isImporting ? (
-                    <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Importing...
-                    </>
-                    ) : (
-                    'Import All Data'
-                    )}
-                </Button>
+                <div className="mt-2 space-y-2">
+                    <Input 
+                        placeholder="Firestore Database ID (e.g. prempred-master)"
+                        value={databaseId}
+                        onChange={(e) => setDatabaseId(e.target.value)}
+                        disabled={anyLoading}
+                    />
+                    <div className="flex gap-2">
+                        <Button onClick={handleTestConnection} disabled={anyLoading || !databaseId} className="w-1/2">
+                            {isTestingConnection ? (
+                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Testing...</>
+                            ) : (
+                                '1. Test Connection'
+                            )}
+                        </Button>
+                        <Button onClick={handleDataImport} disabled={anyLoading || !databaseId} className="w-1/2">
+                            {isImporting ? (
+                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Importing...</>
+                            ) : (
+                                '2. Import All Data'
+                            )}
+                        </Button>
+                    </div>
+                </div>
             </Alert>
            
             </CardContent>
@@ -265,7 +313,7 @@ export default function AdminPage() {
             <CardHeader>
                 <CardTitle>Update Weekly Results</CardTitle>
                 <CardDescription>
-                    Select a week and enter the scores for each match. You can submit partial results and update them multiple times.
+                    Select a week and enter the scores for each match. Scores are saved automatically in the background.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -286,7 +334,7 @@ export default function AdminPage() {
                     </div>
                 ) : (
                     <div className="space-y-2">
-                        {matchesForWeek.map(match => {
+                        {matchesForWeek.length > 0 ? matchesForWeek.map(match => {
                             const HomeIcon = Icons[match.homeTeam.logo as IconName] || Icons.match;
                             const AwayIcon = Icons[match.awayTeam.logo as IconName] || Icons.match;
                             return (
@@ -324,7 +372,7 @@ export default function AdminPage() {
                                     </div>
                                 </div>
                             )
-                        })}
+                        }) : <p className="text-sm text-muted-foreground text-center py-4">No matches found for this week. This may be because data has not been imported yet.</p>}
                     </div>
                 )}
                  <Button onClick={handleUpdateResults} disabled={isUpdating || isLoadingMatches || matchesForWeek.length === 0}>
@@ -334,7 +382,7 @@ export default function AdminPage() {
                         Updating Scores...
                     </>
                     ) : (
-                    'Submit Scores'
+                    'Submit All Scores'
                     )}
                 </Button>
             </CardContent>
