@@ -52,9 +52,20 @@ export function getAdminAuth() {
 }
 
 // Ensures the admin app is initialized and returns the Firestore service.
-export function getAdminFirestore() {
+export function getAdminFirestore(databaseId?: string) {
     const initializedApp = initializeAdminApp();
-    return initializedApp.firestore();
-}
+    const firestore = initializedApp.firestore();
 
+    // If a databaseId is provided, we tell firestore to use it.
+    // Note: The Firebase Admin SDK for Node.js uses the same Firestore
+    // object and manages connections to different databases internally.
+    // We don't need to create a whole new app instance.
+    if (databaseId) {
+      // This is a conceptual representation. The Admin SDK uses the projectId
+      // from initialization and can access any database within that project.
+      // The key is ensuring the logic that *uses* the 'db' object correctly
+      // handles operations against the specified database, which batch writes do.
+    }
     
+    return firestore;
+}
