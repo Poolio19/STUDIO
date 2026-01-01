@@ -43,8 +43,14 @@ export async function ensureUser(): Promise<{ success: boolean; message: string 
     return ensureUserFlow();
 }
 
-export async function importData(): Promise<{ success: boolean; message?: string }> {
-  return importDataFlow();
+const ImportDataInputSchema = z.object({
+  databaseId: z.string().optional(),
+});
+export type ImportDataInput = z.infer<typeof ImportDataInputSchema>;
+
+
+export async function importData(input: ImportDataInput): Promise<{ success: boolean; message?: string }> {
+  return importDataFlow(input);
 }
 
 const ensureUserFlow = ai.defineFlow(
@@ -113,18 +119,28 @@ const ensureUserFlow = ai.defineFlow(
 const importDataFlow = ai.defineFlow(
   {
     name: 'importDataFlow',
+    inputSchema: ImportDataInputSchema,
     outputSchema: z.object({ success: z.boolean(), message: z.string().optional() }),
   },
-  async () => {
+  async ({ databaseId }) => {
     let db;
+    let databaseURL: string | undefined;
+
+    if (databaseId) {
+        const projectId = process.env.GOOGLE_CLOUD_PROJECT;
+        if (projectId) {
+            databaseURL = `https://${projectId}.firebaseio.com`;
+        }
+    }
+    
     try {
-        // This will now throw a descriptive error if initialization fails.
-        db = getAdminFirestore();
+        db = getAdminFirestore(databaseURL);
     } catch (initError: any) {
-        const errorMessage = `Firebase Admin SDK initialization failed. Check your server console logs for a detailed error message and instructions on how to fix your local credentials.`;
-        // We can't proceed without a database connection.
+        const projectId = process.env.GOOGLE_CLOUD_PROJECT || '[UNKNOWN]';
+        const errorMessage = `Firebase Admin SDK initialization failed. Project: ${projectId}. Error: ${initError.message}. Check server logs for details.`;
         return { success: false, message: errorMessage };
     }
+
     try {
       await batchWrite(db, 'teams', teams, 'id');
       await batchWrite(db, 'users', fullUsers, 'id');
@@ -174,6 +190,10 @@ const importDataFlow = ai.defineFlow(
       return { success: true, message: 'All data imported successfully.' };
     } catch (error: any) {
       console.error("Error importing data to Firestore:", error);
+      const projectId = process.env.GOOGLE_CLOUD_PROJECT || '[UNKNOWN]';
+      if (error.message.includes('firestore/not-found') || error.message.includes('does not exist')) {
+        return { success: false, message: `The project '${projectId}' does not have an active Cloud Firestore database. Please enable it in the Firebase console.` };
+      }
       return { success: false, message: `An error occurred during data import: ${error.message}` };
     }
   }

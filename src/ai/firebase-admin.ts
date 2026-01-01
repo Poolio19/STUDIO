@@ -3,13 +3,14 @@ import admin from 'firebase-admin';
 
 let app: admin.app.App;
 
-function initializeAdminApp() {
+function initializeAdminApp(databaseURL?: string) {
   if (admin.apps.length === 0) {
     try {
-      // In a deployed Google Cloud environment, the SDK automatically detects project ID and credentials.
-      // For local development, GOOGLE_APPLICATION_CREDENTIALS env var would be used if set.
-      // If that's not set, it falls back to gcloud's Application Default Credentials.
-      app = admin.initializeApp();
+      const options: admin.AppOptions = {};
+      if (databaseURL) {
+        options.databaseURL = databaseURL;
+      }
+      app = admin.initializeApp(options);
     } catch (e: any) {
       console.error(
         '********************************************************************************\n' +
@@ -19,15 +20,14 @@ function initializeAdminApp() {
         'Application Default Credentials (ADC) in your local development environment.\n\n' +
         'POSSIBLE CAUSES:\n' +
         '1. You have not authenticated with the gcloud CLI.\n' +
-        '2. The gcloud credentials are not configured for the correct project.\n\n' +
+        '2. The gcloud credentials are not configured for the correct project.\n' +
+        '3. The Firestore database has not been enabled for this project.\n\n' +
         'TO FIX THIS, RUN THE FOLLOWING COMMAND IN YOUR TERMINAL:\n' +
         'gcloud auth application-default login\n\n' +
-        'This will open a browser window to authenticate and set up the necessary\n' +
-        'credential file on your local machine that the Admin SDK can find.\n\n' +
+        'Then, ensure Firestore is enabled in your Firebase project console.\n\n' +
         'Original Error: ' + e.message + '\n' +
         '********************************************************************************'
       );
-      // Re-throw the error to stop the process, as the application cannot function without it.
       throw e;
     }
   } else {
@@ -36,10 +36,10 @@ function initializeAdminApp() {
   return app;
 }
 
-export function getAdminAuth() {
-    return initializeAdminApp().auth();
+export function getAdminAuth(databaseURL?: string) {
+    return initializeAdminApp(databaseURL).auth();
 }
 
-export function getAdminFirestore() {
-    return initializeAdminApp().firestore();
+export function getAdminFirestore(databaseURL?: string) {
+    return initializeAdminApp(databaseURL).firestore();
 }

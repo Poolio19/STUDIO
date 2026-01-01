@@ -18,9 +18,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { importData, ensureUser } from '@/ai/flows/import-data-flow';
+import { importData, ensureUser, type ImportDataInput } from '@/ai/flows/import-data-flow';
 import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 import { type UpdateMatchResultsInput } from '@/ai/flows/update-match-results-flow-types';
 import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
@@ -44,6 +45,7 @@ export default function AdminPage() {
   const [isImporting, setIsImporting] = React.useState(false);
   const [isUpdating, setIsUpdating] = React.useState(false);
   const [isLoadingMatches, setIsLoadingMatches] = React.useState(false);
+  const [databaseId, setDatabaseId] = React.useState('');
 
   const [selectedWeek, setSelectedWeek] = React.useState<string>('1');
   const [matchesForWeek, setMatchesForWeek] = React.useState<MatchWithTeamData[]>([]);
@@ -138,8 +140,13 @@ export default function AdminPage() {
       description: 'Populating the Firestore database with initial data. This may take a moment.',
     });
 
+    const input: ImportDataInput = {};
+    if (databaseId) {
+      input.databaseId = databaseId;
+    }
+
     try {
-      const result = await importData();
+      const result = await importData(input);
       if (result.success) {
         toast({
             title: 'Import Complete!',
@@ -220,10 +227,23 @@ export default function AdminPage() {
             <CardHeader>
             <CardTitle>Data Import</CardTitle>
             <CardDescription>
-                Use this multi-step tool to populate your database. First, ensure the default user exists. Then, import all other data.
+                Use these tools to populate your database. Step 1 is for creating a default user. Step 2 imports all game data.
             </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col space-y-4">
+            <div className="space-y-2">
+                <Label htmlFor="databaseId">Firestore Database ID (Optional)</Label>
+                <Input 
+                    id="databaseId"
+                    placeholder="(default)"
+                    value={databaseId}
+                    onChange={(e) => setDatabaseId(e.target.value)}
+                    disabled={isImporting || isEnsuringUser}
+                />
+                 <p className="text-sm text-muted-foreground">
+                    If your project has multiple databases, enter the ID of the database you want to use here.
+                 </p>
+            </div>
             <Button onClick={handleEnsureUser} disabled={isEnsuringUser || isImporting}>
                 {isEnsuringUser ? (
                 <>
