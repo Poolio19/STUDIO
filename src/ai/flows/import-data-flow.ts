@@ -103,7 +103,6 @@ const importDataFlow = ai.defineFlow(
 
     try {
       await batchWrite(db, 'teams', teams, 'id');
-      // Import all users including Alex, in case their profile doc needs updating
       await batchWrite(db, 'users', fullUsers, 'id');
       
       const predBatch = writeBatch(db);
@@ -126,7 +125,6 @@ const importDataFlow = ai.defineFlow(
       await batchWrite(db, 'previousSeasonStandings', previousSeasonStandings, 'teamId');
       await batchWrite(db, 'seasonMonths', seasonMonths, 'id');
       await batchWrite(db, 'monthlyMimoM', monthlyMimoM, 'id');
-
       await batchWrite(db, 'userHistories', fullUserHistories, 'userId');
       
       const ptsBatch = writeBatch(db);
@@ -152,7 +150,7 @@ const importDataFlow = ai.defineFlow(
       return { success: true };
     } catch (error) {
       console.error("Error importing data to Firestore:", error);
-      throw error;
+      return { success: false };
     }
   }
 );

@@ -139,17 +139,25 @@ export default function AdminPage() {
     });
 
     try {
-      await importData();
-      toast({
-        title: 'Import Complete!',
-        description: 'The Firestore database has been populated successfully.',
-      });
-    } catch (error) {
+      const result = await importData();
+      if (result.success) {
+        toast({
+            title: 'Import Complete!',
+            description: 'The Firestore database has been populated successfully.',
+        });
+      } else {
+        toast({
+            variant: 'destructive',
+            title: 'Import Failed',
+            description: 'There was an error populating the database. Check the console for details.',
+        });
+      }
+    } catch (error: any) {
       console.error('Data import failed:', error);
       toast({
         variant: 'destructive',
         title: 'Import Failed',
-        description: 'There was an error populating the database. Check the console for details.',
+        description: error.message || 'There was an error populating the database. Check the console for details.',
       });
     }
 
@@ -282,7 +290,7 @@ export default function AdminPage() {
                                             value={scores[match.id]?.homeScore || ''}
                                             onChange={(e) => handleScoreChange(match.id, 'home', e.target.value)}
                                             disabled={isUpdating}
-                                            placeholder="P"
+                                            placeholder="-"
                                         />
                                         <span>-</span>
                                         <Input 
@@ -291,7 +299,7 @@ export default function AdminPage() {
                                             value={scores[match.id]?.awayScore || ''}
                                             onChange={(e) => handleScoreChange(match.id, 'away', e.target.value)}
                                             disabled={isUpdating}
-                                            placeholder="P"
+                                            placeholder="-"
                                         />
                                     </div>
                                     <div className="flex items-center gap-2 w-2/5">
