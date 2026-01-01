@@ -4,13 +4,14 @@
  * @fileOverview A flow to populate Firestore with initial data.
  *
  * - importData - A function that populates Firestore collections.
+ * - ensureUser - A function that creates the default user for the app.
  */
 
 import { ai } from '@/ai/genkit';
 import {
   teams,
-  fullPredictions,
   fullUsers,
+  fullPredictions,
   matches,
   previousSeasonStandings,
   seasonMonths,
@@ -46,41 +47,50 @@ async function batchWrite(
   await batch.commit();
 }
 
-async function ensureDefaultUserAndProfile() {
-    const { auth, firestore: db } = initializeFirebase();
-    const email = 'alex@example.com';
-    const password = 'password123';
-    const displayName = 'Alex Anderson';
-    let userId: string;
-
-    try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(userCredential.user, { displayName });
-        userId = userCredential.user.uid;
-        console.log(`Successfully created and set up user: ${displayName}`);
-        
-        const alexUser = fullUsers.find(u => u.id === 'usr_1');
-        if (alexUser) {
-            const userDocRef = doc(db, 'users', userId);
-            await setDoc(userDocRef, { ...alexUser, id: userId, email: email });
-            console.log(`Created Firestore document for user: ${displayName}`);
-        } else {
-            console.error("Could not find Alex's data in fullUsers to create Firestore profile.");
-        }
-
-    } catch (error: any) {
-        if (error.code === 'auth/email-already-in-use') {
-            console.log(`User ${displayName} already exists. No action taken.`);
-        } else {
-            console.error(`Error during default user setup:`, error);
-        }
-    }
+export async function ensureUser(): Promise<{ success: boolean; message: string }> {
+    return ensureUserFlow();
 }
-
 
 export async function importData(): Promise<{ success: boolean }> {
   return importDataFlow();
 }
+
+const ensureUserFlow = ai.defineFlow(
+    {
+        name: 'ensureUserFlow',
+        outputSchema: z.object({ success: z.boolean(), message: z.string() }),
+    },
+    async () => {
+        const { auth, firestore: db } = initializeFirebase();
+        const email = 'alex@example.com';
+        const password = 'password123';
+        const displayName = 'Alex Anderson';
+
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            await updateProfile(userCredential.user, { displayName });
+            const userId = userCredential.user.uid;
+            
+            const alexUser = fullUsers.find(u => u.id === 'usr_1');
+            if (alexUser) {
+                const userDocRef = doc(db, 'users', userId);
+                const userProfileData = { ...alexUser, id: userId, email: email };
+                await setDoc(userDocRef, userProfileData);
+                return { success: true, message: `Successfully created user and profile for ${displayName}.` };
+            } else {
+                 return { success: false, message: "Could not find Alex's data in fullUsers." };
+            }
+
+        } catch (error: any) {
+            if (error.code === 'auth/email-already-in-use') {
+                return { success: true, message: `User ${displayName} already exists. No action taken.`};
+            }
+            console.error(`Error during default user setup:`, error);
+            return { success: false, message: error.message || 'An unknown error occurred.' };
+        }
+    }
+);
+
 
 const importDataFlow = ai.defineFlow(
   {
@@ -91,11 +101,9 @@ const importDataFlow = ai.defineFlow(
     const { firestore: db } = initializeFirebase();
 
     try {
-      await ensureDefaultUserAndProfile();
-
       await batchWrite(db, 'teams', teams, 'id');
-      const otherUsers = fullUsers.filter(u => u.id !== 'usr_1');
-      await batchWrite(db, 'users', otherUsers, 'id');
+      // Import all users including Alex, in case their profile doc needs updating
+      await batchWrite(db, 'users', fullUsers, 'id');
       
       const predBatch = writeBatch(db);
       const predCollectionRef = collection(db, 'predictions');
@@ -140,13 +148,10 @@ const importDataFlow = ai.defineFlow(
 
       await batchWrite(db, 'teamRecentResults', teamRecentResults, 'teamId');
 
-
       return { success: true };
     } catch (error) {
       console.error("Error importing data to Firestore:", error);
-      throw new Error('Failed to import data.');
+      throw error;
     }
   }
 );
-
-    

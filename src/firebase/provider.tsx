@@ -4,7 +4,7 @@
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
+import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseProviderProps {
@@ -65,22 +65,18 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       return;
     }
   
+    // Listen for auth state changes. This is the source of truth for the user object.
     const unsubscribe = onAuthStateChanged(
       auth,
-      async (firebaseUser) => {
+      (firebaseUser) => {
         if (firebaseUser) {
           // User is signed in.
           setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
         } else {
-          // No user is signed in, attempt to sign in the default user.
-          // The `importData` flow is responsible for creating this user.
-          try {
-            await signInWithEmailAndPassword(auth, 'alex@example.com', 'password123');
-            // onAuthStateChanged will be called again with the new user, so we don't set state here.
-          } catch (error) {
-            console.error("FirebaseProvider: Automatic sign-in failed. Run the 'Import Data' tool from the Admin page to create the default user.", error);
-            setUserAuthState({ user: null, isUserLoading: false, userError: error as Error });
-          }
+          // No user is signed in.
+          // In this app, we expect the default user to be created and signed in via the Admin page.
+          // So, we just update the state to reflect that no user is logged in.
+          setUserAuthState({ user: null, isUserLoading: false, userError: null });
         }
       },
       (error) => {

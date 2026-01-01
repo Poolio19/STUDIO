@@ -20,7 +20,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { importData } from '@/ai/flows/import-data-flow';
+import { importData, ensureUser } from '@/ai/flows/import-data-flow';
 import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 import { type UpdateMatchResultsInput } from '@/ai/flows/update-match-results-flow-types';
 import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
@@ -40,6 +40,7 @@ export default function AdminPage() {
   const { toast } = useToast();
   const { firestore } = useFirebase();
 
+  const [isEnsuringUser, setIsEnsuringUser] = React.useState(false);
   const [isImporting, setIsImporting] = React.useState(false);
   const [isUpdating, setIsUpdating] = React.useState(false);
   const [isLoadingMatches, setIsLoadingMatches] = React.useState(false);
@@ -97,28 +98,58 @@ export default function AdminPage() {
     }));
   };
 
+  const handleEnsureUser = async () => {
+    setIsEnsuringUser(true);
+    toast({
+      title: 'Setting up Default User...',
+      description: 'Attempting to create or verify the default user account.',
+    });
+
+    try {
+      const result = await ensureUser();
+      if (result.success) {
+        toast({
+            title: 'User Setup Complete',
+            description: result.message,
+        });
+      } else {
+        toast({
+            variant: 'destructive',
+            title: 'User Setup Failed',
+            description: result.message,
+        });
+      }
+    } catch (error: any) {
+      console.error('Ensure user failed:', error);
+      toast({
+        variant: 'destructive',
+        title: 'User Setup Failed',
+        description: error.message || 'An unexpected error occurred.',
+      });
+    }
+
+    setIsEnsuringUser(false);
+  };
+
   const handleDataImport = async () => {
     setIsImporting(true);
     toast({
       title: 'Importing Data...',
-      description:
-        'Populating the Firestore database with initial data. This may take a moment.',
+      description: 'Populating the Firestore database with initial data. This may take a moment.',
     });
 
     try {
       await importData();
       toast({
         title: 'Import Complete!',
-        description:
-          'The Firestore database has been populated successfully.',
+        description: 'The Firestore database has been populated successfully.',
       });
     } catch (error) {
       console.error('Data import failed:', error);
       toast({
         variant: 'destructive',
         title: 'Import Failed',
-        description:
-          'There was an error populating the database. Check the console for details.',
+        description: 'There was an error populating the database. Check the console for details.',
       });
     }
 
@@ -181,19 +212,28 @@ export default function AdminPage() {
             <CardHeader>
             <CardTitle>Data Import</CardTitle>
             <CardDescription>
-                Use this tool to fetch the latest data and populate your database.
-                This action will overwrite existing data in the collections.
+                Use this multi-step tool to populate your database. First, ensure the default user exists. Then, import all other data.
             </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-            <Button onClick={handleDataImport} disabled={isImporting}>
+            <CardContent className="flex flex-col space-y-4">
+            <Button onClick={handleEnsureUser} disabled={isEnsuringUser || isImporting}>
+                {isEnsuringUser ? (
+                <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Checking User...
+                </>
+                ) : (
+                '1. Ensure Default User'
+                )}
+            </Button>
+            <Button onClick={handleDataImport} disabled={isImporting || isEnsuringUser}>
                 {isImporting ? (
                 <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Importing...
                 </>
                 ) : (
-                'Import Live Data'
+                '2. Import All Data'
                 )}
             </Button>
             </CardContent>
