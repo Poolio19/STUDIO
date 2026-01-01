@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { importData, ensureUser, type ImportDataInput } from '@/ai/flows/import-data-flow';
+import { importData, ensureUser, testDatabaseConnection, type ImportDataInput, type TestDatabaseConnectionInput } from '@/ai/flows/import-data-flow';
 import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 import { type UpdateMatchResultsInput } from '@/ai/flows/update-match-results-flow-types';
 import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
@@ -29,6 +29,7 @@ import { collection, query, where, getDocs, Query } from 'firebase/firestore';
 import type { Match, Team } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
 import { cn } from '@/lib/utils';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 type MatchWithTeamData = Match & {
   homeTeam: Team;
@@ -41,6 +42,8 @@ export default function AdminPage() {
   const { toast } = useToast();
   const { firestore } = useFirebase();
 
+  const [isTestingConnection, setIsTestingConnection] = React.useState(false);
+  const [isConnectionSuccessful, setIsConnectionSuccessful] = React.useState(false);
   const [isEnsuringUser, setIsEnsuringUser] = React.useState(false);
   const [isImporting, setIsImporting] = React.useState(false);
   const [isUpdating, setIsUpdating] = React.useState(false);
@@ -57,6 +60,57 @@ export default function AdminPage() {
     if (!teams) return new Map();
     return new Map(teams.map(t => [t.id, t]));
   }, [teams]);
+  
+  React.useEffect(() => {
+    // Reset connection status if databaseId changes
+    setIsConnectionSuccessful(false);
+  }, [databaseId]);
+
+  const handleTestConnection = async () => {
+    if (!databaseId) {
+      toast({
+        variant: 'destructive',
+        title: 'Database ID Required',
+        description: 'Please enter a Database ID to test the connection.',
+      });
+      return;
+    }
+    setIsTestingConnection(true);
+    toast({
+      title: 'Testing Connection...',
+      description: `Attempting to connect to database: ${databaseId}`,
+    });
+
+    const input: TestDatabaseConnectionInput = { databaseId };
+
+    try {
+      const result = await testDatabaseConnection(input);
+      if (result.success) {
+        toast({
+          title: 'Connection Successful!',
+          description: result.message,
+        });
+        setIsConnectionSuccessful(true);
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Connection Failed',
+          description: result.message,
+        });
+        setIsConnectionSuccessful(false);
+      }
+    } catch (error: any) {
+      console.error('Test connection failed:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Connection Failed',
+        description: error.message || 'An unexpected error occurred.',
+      });
+      setIsConnectionSuccessful(false);
+    }
+    setIsTestingConnection(false);
+  };
+
 
   const fetchMatchesForWeek = React.useCallback(async (week: string) => {
     if (!firestore || teamsLoading || teamMap.size === 0) return;
@@ -210,6 +264,7 @@ export default function AdminPage() {
   };
 
   const weeks = Array.from({ length: 38 }, (_, i) => i + 1);
+  const anyLoading = isTestingConnection || isEnsuringUser || isImporting;
 
   return (
     <div className="space-y-8">
@@ -227,43 +282,67 @@ export default function AdminPage() {
             <CardHeader>
             <CardTitle>Data Import</CardTitle>
             <CardDescription>
-                Use these tools to populate your database. Step 1 is for creating a default user. Step 2 imports all game data.
+                First, ensure a default user exists. Second, connect to and import data into a specific Firestore database.
             </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col space-y-4">
-            <div className="space-y-2">
-                <Label htmlFor="databaseId">Firestore Database ID (Optional)</Label>
-                <Input 
-                    id="databaseId"
-                    placeholder="(default)"
-                    value={databaseId}
-                    onChange={(e) => setDatabaseId(e.target.value)}
-                    disabled={isImporting || isEnsuringUser}
-                />
-                 <p className="text-sm text-muted-foreground">
-                    If your project has multiple databases, enter the ID of the database you want to use here.
-                 </p>
-            </div>
-            <Button onClick={handleEnsureUser} disabled={isEnsuringUser || isImporting}>
-                {isEnsuringUser ? (
-                <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Checking User...
-                </>
-                ) : (
-                '1. Ensure Default User'
-                )}
-            </Button>
-            <Button onClick={handleDataImport} disabled={isImporting || isEnsuringUser}>
-                {isImporting ? (
-                <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Importing...
-                </>
-                ) : (
-                '2. Import All Data'
-                )}
-            </Button>
+            
+            <Alert>
+                <AlertTitle>Step 1: Ensure Default User</AlertTitle>
+                <AlertDescription>
+                    This creates the 'alex@example.com' user if it doesn't already exist. This is only needed once.
+                </AlertDescription>
+                 <Button onClick={handleEnsureUser} disabled={anyLoading} className="mt-2">
+                    {isEnsuringUser ? (
+                    <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Checking User...
+                    </>
+                    ) : (
+                    'Ensure Default User'
+                    )}
+                </Button>
+            </Alert>
+            
+            <Alert>
+                <AlertTitle>Step 2: Connect & Import Data</AlertTitle>
+                <AlertDescription>
+                    Enter the ID of your Firestore database (e.g., 'prempred-master'), test the connection, then import the data.
+                </AlertDescription>
+                <div className="space-y-2 mt-4">
+                    <Label htmlFor="databaseId">Firestore Database ID</Label>
+                    <Input 
+                        id="databaseId"
+                        placeholder="e.g., prempred-master"
+                        value={databaseId}
+                        onChange={(e) => setDatabaseId(e.target.value)}
+                        disabled={anyLoading}
+                    />
+                </div>
+                 <div className="flex flex-col sm:flex-row gap-2 mt-2">
+                    <Button onClick={handleTestConnection} disabled={anyLoading || !databaseId} className="flex-1">
+                        {isTestingConnection ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Testing...
+                        </>
+                        ) : (
+                        '1. Test Connection'
+                        )}
+                    </Button>
+                    <Button onClick={handleDataImport} disabled={anyLoading || !isConnectionSuccessful} className="flex-1">
+                        {isImporting ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Importing...
+                        </>
+                        ) : (
+                        '2. Import All Data'
+                        )}
+                    </Button>
+                 </div>
+            </Alert>
+           
             </CardContent>
         </Card>
         

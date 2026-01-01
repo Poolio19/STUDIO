@@ -5,6 +5,7 @@
  *
  * - importData - A function that populates Firestore collections.
  * - ensureUser - A function that creates the default user for the app.
+ * - testDatabaseConnection - A function to verify connection to a specific database.
  */
 
 import { ai } from '@/ai/genkit';
@@ -23,6 +24,7 @@ import {
 } from '@/lib/data';
 import { z } from 'zod';
 import { getAdminAuth, getAdminFirestore } from '@/ai/firebase-admin';
+import admin from 'firebase-admin';
 
 async function batchWrite(
   db: FirebaseFirestore.Firestore,
@@ -52,6 +54,38 @@ export type ImportDataInput = z.infer<typeof ImportDataInputSchema>;
 export async function importData(input: ImportDataInput): Promise<{ success: boolean; message?: string }> {
   return importDataFlow(input);
 }
+
+const TestDatabaseConnectionInputSchema = z.object({
+    databaseId: z.string().optional(),
+});
+export type TestDatabaseConnectionInput = z.infer<typeof TestDatabaseConnectionInputSchema>;
+
+export async function testDatabaseConnection(input: TestDatabaseConnectionInput): Promise<{ success: boolean; message: string }> {
+    return testDatabaseConnectionFlow(input);
+}
+
+
+const testDatabaseConnectionFlow = ai.defineFlow(
+    {
+        name: 'testDatabaseConnectionFlow',
+        inputSchema: TestDatabaseConnectionInputSchema,
+        outputSchema: z.object({ success: z.boolean(), message: z.string() }),
+    },
+    async ({ databaseId }) => {
+        try {
+            const db = getAdminFirestore(databaseId);
+            // Perform a simple read operation to verify connection and permissions
+            await db.collection('__test_collection__').limit(1).get();
+            return { success: true, message: `Successfully connected to database '${databaseId || '(default)'}'.` };
+        } catch (error: any) {
+            const projectId = process.env.GOOGLE_CLOUD_PROJECT || '[UNKNOWN]';
+            if (error.message.includes('firestore/not-found') || error.message.includes('does not exist')) {
+                 return { success: false, message: `Connection failed: The project '${projectId}' does not have an active Cloud Firestore database with ID '${databaseId}'. Please create it in the Firebase console.` };
+            }
+             return { success: false, message: `Connection to '${databaseId}' failed: ${error.message}` };
+        }
+    }
+);
 
 const ensureUserFlow = ai.defineFlow(
     {
@@ -124,26 +158,9 @@ const importDataFlow = ai.defineFlow(
   },
   async ({ databaseId }) => {
     let db: FirebaseFirestore.Firestore;
-    // Store original database ID to restore it later
-    const originalDatabaseId = process.env.FIRESTORE_DATABASE_ID;
-
+    
     try {
-        // Temporarily set the environment variable for the Admin SDK to pick up.
-        // This is the most reliable way to specify a database for initialization.
-        if (databaseId) {
-            process.env.FIRESTORE_DATABASE_ID = databaseId;
-        } else {
-            delete process.env.FIRESTORE_DATABASE_ID;
-        }
-
-        // Initialize a new admin app instance to connect to the specified database.
-        const appName = databaseId ? `app-${databaseId}-${Date.now()}` : undefined;
-        const app = admin.apps.find(a => a?.name === appName) || admin.initializeApp({
-             credential: admin.credential.applicationDefault(),
-        }, appName);
-
-        db = admin.firestore(app);
-
+        db = getAdminFirestore(databaseId);
     } catch (initError: any) {
         const projectId = process.env.GOOGLE_CLOUD_PROJECT || '[UNKNOWN]';
         const errorMessage = `Firebase Admin SDK initialization failed for DB '${databaseId}'. Project: ${projectId}. Error: ${initError.message}. Check server logs for details.`;
@@ -205,13 +222,6 @@ const importDataFlow = ai.defineFlow(
         return { success: false, message: `The project '${projectId}' does not have an active Cloud Firestore database with ID '${databaseId}'. Please create it in the Firebase console.` };
       }
       return { success: false, message: `An error occurred during data import to '${databaseId}': ${error.message}` };
-    } finally {
-        // Restore the original environment variable after the operation.
-        if (originalDatabaseId) {
-            process.env.FIRESTORE_DATABASE_ID = originalDatabaseId;
-        } else {
-            delete process.env.FIRESTORE_DATABASE_ID;
-        }
     }
   }
 );
