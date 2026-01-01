@@ -1,19 +1,22 @@
-
 'use server';
 
-import * as admin from 'firebase-admin';
+import admin from 'firebase-admin';
 
 let app: admin.app.App;
 
-if (!admin.apps.length) {
-  // In a deployed Google Cloud environment, the SDK automatically detects the project ID
-  // and credentials. For local development, you would typically set the
-  // GOOGLE_APPLICATION_CREDENTIALS environment variable if it's configured.
-  // Otherwise, it might use default credentials if available.
-  app = admin.initializeApp();
-} else {
-  app = admin.app();
+function initializeAdminApp() {
+  if (!admin.apps.length) {
+    // In a deployed Google Cloud environment, the SDK automatically detects project ID and credentials.
+    // For local development, GOOGLE_APPLICATION_CREDENTIALS env var would be used if set.
+    app = admin.initializeApp();
+  } else {
+    app = admin.app();
+  }
+  return app;
 }
 
-export const adminAuth = app.auth();
-export const adminFirestore = app.firestore();
+// Initialize the app when the module is first loaded.
+const adminApp = initializeAdminApp();
+
+export const adminAuth = adminApp.auth();
+export const adminFirestore = adminApp.firestore();
