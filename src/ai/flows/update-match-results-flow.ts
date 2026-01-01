@@ -12,7 +12,7 @@ import {
   type UpdateMatchResultsInput,
   type UpdateMatchResultsOutput,
 } from './update-match-results-flow-types';
-import { adminFirestore } from '@/ai/firebase-admin';
+import { getAdminFirestore } from '@/ai/firebase-admin';
 
 export async function updateMatchResults(
   input: UpdateMatchResultsInput
@@ -27,7 +27,7 @@ const updateMatchResultsFlow = ai.defineFlow(
     outputSchema: UpdateMatchResultsOutputSchema,
   },
   async ({ week, results }) => {
-    const db = adminFirestore;
+    const db = getAdminFirestore();
     const batch = db.batch();
     const matchesCollectionRef = db.collection('matches');
 

@@ -22,7 +22,7 @@ import {
   teamRecentResults
 } from '@/lib/data';
 import { z } from 'zod';
-import { adminAuth, adminFirestore } from '@/ai/firebase-admin';
+import { getAdminAuth, getAdminFirestore } from '@/ai/firebase-admin';
 
 async function batchWrite(
   db: FirebaseFirestore.Firestore,
@@ -56,8 +56,8 @@ const ensureUserFlow = ai.defineFlow(
         const email = 'alex@example.com';
         const password = 'password123';
         const displayName = 'Alex Anderson';
-        const auth = adminAuth;
-        const db = adminFirestore;
+        const auth = getAdminAuth();
+        const db = getAdminFirestore();
 
         try {
             // Check if user already exists
@@ -105,7 +105,7 @@ const importDataFlow = ai.defineFlow(
     outputSchema: z.object({ success: z.boolean() }),
   },
   async () => {
-    const db = adminFirestore;
+    const db = getAdminFirestore();
     try {
       await batchWrite(db, 'teams', teams, 'id');
       await batchWrite(db, 'users', fullUsers, 'id');
