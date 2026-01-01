@@ -137,10 +137,8 @@ export const fullPredictions: Prediction[] = [
 ];
 
 export const matches: Match[] = [
-    { week: 1, homeTeamId: 'team_1', awayTeamId: 'team_13', homeScore: 1, awayScore: 1 },
-    { week: 1, homeTeamId: 'team_12', awayTeamId: 'team_6', homeScore: 2, awayScore: 0 },
-    { week: 2, homeTeamId: 'team_1', awayTeamId: 'team_12', homeScore: 2, awayScore: 2 },
-    { week: 2, homeTeamId: 'team_13', awayTeamId: 'team_6', homeScore: 3, awayScore: 1 },
+    { week: 1, homeTeamId: 'team_1', awayTeamId: 'team_13', homeScore: -1, awayScore: -1 },
+    { week: 1, homeTeamId: 'team_12', awayTeamId: 'team_6', homeScore: -1, awayScore: -1 },
 ];
 
 export const previousSeasonStandings: PreviousSeasonStanding[] = [
@@ -157,27 +155,16 @@ export const seasonMonths: SeasonMonth[] = [
 export const monthlyMimoM: MonthlyMimoM[] = [];
 
 export const fullUserHistories: UserHistory[] = [
-    { userId: 'usr_1', weeklyScores: [{ week: 1, score: 5, rank: 2 }, { week: 2, score: 10, rank: 1 }] },
-    { userId: 'usr_2', weeklyScores: [{ week: 1, score: 8, rank: 1 }, { week: 2, score: 8, rank: 2 }] },
-    { userId: 'usr_3', weeklyScores: [{ week: 1, score: 5, rank: 3 }, { week: 2, score: 5, rank: 3 }] },
+    { userId: 'usr_1', weeklyScores: [{ week: 0, score: 0, rank: 0 }] },
+    { userId: 'usr_2', weeklyScores: [{ week: 0, score: 0, rank: 0 }] },
+    { userId: 'usr_3', weeklyScores: [{ week: 0, score: 0, rank: 0 }] },
 ];
 
-export const playerTeamScores: PlayerTeamScore[] = [
-    { userId: 'usr_1', teamId: 'team_1', score: 3 },
-    { userId: 'usr_1', teamId: 'team_12', score: 5 },
-];
+export const playerTeamScores: PlayerTeamScore[] = [];
 
-export const weeklyTeamStandings: WeeklyTeamStanding[] = [
-    { week: 1, teamId: 'team_12', rank: 1 },
-    { week: 1, teamId: 'team_1', rank: 2 },
-    { week: 2, teamId: 'team_13', rank: 1 },
-    { week: 2, teamId: 'team_12', rank: 2 },
-];
+export const weeklyTeamStandings: WeeklyTeamStanding[] = [];
 
-export const teamRecentResults: TeamRecentResult[] = [
-    { teamId: 'team_1', results: ['-', '-', '-', '-', 'D', 'D'] },
-    { teamId: 'team_12', results: ['-', '-', '-', '-', 'W', 'D'] },
-];
+export const teamRecentResults: TeamRecentResult[] = [];
 
 // Export limited data for UI performance
 export const users: User[] = fullUsers.slice(0, 20);
