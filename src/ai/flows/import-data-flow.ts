@@ -5,7 +5,6 @@
  *
  * - importData - A function that populates Firestore collections.
  * - ensureUser - A function that creates the default user for the app.
- * - testDatabaseConnection - A function to verify connection to a specific database.
  */
 
 import { ai } from '@/ai/genkit';
@@ -24,6 +23,9 @@ import {
 } from '@/lib/data';
 import { z } from 'zod';
 import { getAdminAuth, getAdminFirestore } from '@/ai/firebase-admin';
+
+// This is the project ID that Firebase Studio uses for your backend.
+const TARGET_PROJECT_ID = 'studio-2138583336-cec5d';
 
 async function batchWrite(
   db: FirebaseFirestore.Firestore,
@@ -44,53 +46,9 @@ export async function ensureUser(): Promise<{ success: boolean; message: string 
     return ensureUserFlow();
 }
 
-const ImportDataInputSchema = z.object({
-  databaseId: z.string().optional(),
-});
-export type ImportDataInput = z.infer<typeof ImportDataInputSchema>;
-
-
-export async function importData(input: ImportDataInput): Promise<{ success: boolean; message?: string }> {
-  return importDataFlow(input);
+export async function importData(): Promise<{ success: boolean; message?: string }> {
+  return importDataFlow();
 }
-
-const TestDatabaseConnectionInputSchema = z.object({
-    databaseId: z.string().optional(),
-});
-export type TestDatabaseConnectionInput = z.infer<typeof TestDatabaseConnectionInputSchema>;
-
-export async function testDatabaseConnection(input: TestDatabaseConnectionInput): Promise<{ success: boolean; message: string }> {
-    return testDatabaseConnectionFlow(input);
-}
-
-
-const testDatabaseConnectionFlow = ai.defineFlow(
-    {
-        name: 'testDatabaseConnectionFlow',
-        inputSchema: TestDatabaseConnectionInputSchema,
-        outputSchema: z.object({ success: z.boolean(), message: z.string() }),
-    },
-    async ({ databaseId }) => {
-        const targetDbId = databaseId || '(default)';
-        try {
-            const db = getAdminFirestore(targetDbId);
-            // This operation requires a valid connection and will fail if the DB doesn't exist or creds are wrong.
-            await db.listCollections();
-            return { success: true, message: `Successfully connected to project. The import will target database '${targetDbId}'.` };
-        } catch (error: any) {
-            console.error(`Error in testDatabaseConnectionFlow for DB '${targetDbId}':`, error);
-            if (error.message.includes('Could not refresh access token')) {
-                 return { success: false, message: `Authentication Failed: Could not get Google Cloud credentials. Please run 'gcloud auth application-default login' in your terminal and restart the server.` };
-            }
-            // Firestore error code 5 is 'NOT_FOUND'
-            if (error.code === 5 || (error.message && error.message.includes('NOT_FOUND'))) {
-                 const projectId = process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || '[UNKNOWN]';
-                 return { success: false, message: `Connection failed: The project '${projectId}' does not have an active Cloud Firestore database with ID '${targetDbId}'. Please verify the ID in the Firebase console or create the database.` };
-            }
-             return { success: false, message: `An unexpected error occurred while connecting to '${targetDbId}': ${error.message}` };
-        }
-    }
-);
 
 const ensureUserFlow = ai.defineFlow(
     {
@@ -106,19 +64,20 @@ const ensureUserFlow = ai.defineFlow(
         let db;
 
         try {
-          // Initialize with the default database for user management
-          auth = getAdminAuth();
-          db = getAdminFirestore(); 
+          // Initialize with the correct project for user management
+          auth = getAdminAuth(TARGET_PROJECT_ID);
+          db = getAdminFirestore(TARGET_PROJECT_ID); 
         } catch (initError: any) {
             console.error('Firebase Admin SDK initialization failed:', initError);
-            const errorMessage = `Firebase Admin SDK initialization failed. This is likely an authentication issue. Please run 'gcloud auth application-default login' in your terminal and restart the server. Original error: ${initError.message}`;
-            return { success: false, message: errorMessage };
+            const detailedMessage = initError.message.includes('Could not refresh access token') 
+                ? `Authentication Failed: Could not get Google Cloud credentials for project '${TARGET_PROJECT_ID}'. Please run 'gcloud auth application-default login' in your terminal, select the project containing this ID, and restart the server.`
+                : `Firebase Admin SDK initialization failed. Original error: ${initError.message}`;
+            return { success: false, message: detailedMessage };
         }
-
 
         try {
             const userRecord = await auth.getUserByEmail(email);
-            return { success: true, message: `User ${displayName} (${email}) already exists. No action taken.` };
+            return { success: true, message: `User ${displayName} (${email}) already exists in project '${TARGET_PROJECT_ID}'.` };
         } catch (error: any) {
             if (error.code === 'auth/user-not-found') {
                 try {
@@ -134,7 +93,7 @@ const ensureUserFlow = ai.defineFlow(
                     if (alexUser) {
                         const userProfileData = { ...alexUser, id: userId, email: email };
                         await db.collection('users').doc(userId).set(userProfileData);
-                         return { success: true, message: `Successfully created user and profile for ${displayName}.` };
+                         return { success: true, message: `Successfully created user and profile for ${displayName} in project '${TARGET_PROJECT_ID}'.` };
                     } else {
                         return { success: false, message: "New user created, but Alex's profile data was not found to populate Firestore." };
                     }
@@ -155,25 +114,25 @@ const ensureUserFlow = ai.defineFlow(
 const importDataFlow = ai.defineFlow(
   {
     name: 'importDataFlow',
-    inputSchema: ImportDataInputSchema,
     outputSchema: z.object({ success: z.boolean(), message: z.string().optional() }),
   },
-  async ({ databaseId }) => {
+  async () => {
     let db: FirebaseFirestore.Firestore;
-    const targetDbId = databaseId || '(default)';
     
     try {
-        // This is the correct place to initialize the admin SDK with a specific database.
-        db = getAdminFirestore(targetDbId);
-    } catch (initError: any)
-{
-        console.error(`Firebase Admin SDK initialization failed for DB '${targetDbId}':`, initError);
-        const errorMessage = `Firebase Admin SDK initialization failed: ${initError.message}. This is likely an authentication issue. Please run 'gcloud auth application-default login' in your terminal and restart the server.`;
-        return { success: false, message: errorMessage };
+        db = getAdminFirestore(TARGET_PROJECT_ID);
+    } catch (initError: any) {
+        console.error(`Firebase Admin SDK initialization failed for project '${TARGET_PROJECT_ID}':`, initError);
+        const detailedMessage = initError.message.includes('Could not refresh access token') 
+            ? `Authentication Failed: Could not get Google Cloud credentials for project '${TARGET_PROJECT_ID}'. Please run 'gcloud auth application-default login' in your terminal, select the project containing this ID, and restart the server.`
+            : `Firebase Admin SDK initialization failed: ${initError.message}.`;
+        return { success: false, message: detailedMessage };
     }
 
     try {
-      // Trigger a restart
+      // Check for a dummy collection to verify connection before writing.
+      await db.collection('__test_connection__').limit(1).get();
+      
       await batchWrite(db, 'teams', teams, 'id');
       await batchWrite(db, 'users', fullUsers, 'id');
       
@@ -219,14 +178,17 @@ const importDataFlow = ai.defineFlow(
 
       await batchWrite(db, 'teamRecentResults', teamRecentResults, 'teamId');
 
-      return { success: true, message: `All data imported successfully into '${targetDbId}'.` };
+      return { success: true, message: `All data imported successfully into project '${TARGET_PROJECT_ID}'.` };
     } catch (error: any) {
-      console.error(`Error importing data to Firestore DB '${targetDbId}':`, error);
-       if (error.code === 5 || (error.message && error.message.includes('NOT_FOUND'))) {
-        const projectId = process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || '[UNKNOWN]';
-        return { success: false, message: `Import failed: The project '${projectId}' does not have an active Cloud Firestore database with ID '${targetDbId}'. Please verify the name in your Firebase Console.` };
+      console.error(`Error importing data to Firestore project '${TARGET_PROJECT_ID}':`, error);
+      if (error.message.includes('Could not refresh access token')) {
+         return { success: false, message: `Authentication Failed: Could not get Google Cloud credentials for project '${TARGET_PROJECT_ID}'. Please run 'gcloud auth application-default login' in your terminal and restart the server.` };
       }
-      return { success: false, message: `An error occurred during data import to '${targetDbId}': ${error.message}` };
+      // Firestore error code 5 is 'NOT_FOUND', which can happen if the DB doesn't exist.
+      if (error.code === 5 || (error.message && error.message.includes('NOT_FOUND'))) {
+         return { success: false, message: `Import failed: Project '${TARGET_PROJECT_ID}' does not have an active Cloud Firestore database. Please create a Firestore database (e.g., with ID 'prempred-master') in the Firebase console.` };
+      }
+      return { success: false, message: `An error occurred during data import to '${TARGET_PROJECT_ID}': ${error.message}` };
     }
   }
 );

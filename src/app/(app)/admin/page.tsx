@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -18,17 +17,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { importData, ensureUser, testDatabaseConnection, type ImportDataInput, type TestDatabaseConnectionInput } from '@/ai/flows/import-data-flow';
+import { importData, ensureUser } from '@/ai/flows/import-data-flow';
 import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
-import { type UpdateMatchResultsInput } from '@/ai/flows/update-match-results-flow-types';
+import type { UpdateMatchResultsInput } from '@/ai/flows/update-match-results-flow-types';
 import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, getDocs, Query } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import type { Match, Team } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
-import { cn } from '@/lib/utils';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 type MatchWithTeamData = Match & {
@@ -42,14 +39,11 @@ export default function AdminPage() {
   const { toast } = useToast();
   const { firestore } = useFirebase();
 
-  const [isTestingConnection, setIsTestingConnection] = React.useState(false);
-  const [isConnectionSuccessful, setIsConnectionSuccessful] = React.useState(false);
   const [isEnsuringUser, setIsEnsuringUser] = React.useState(false);
   const [isImporting, setIsImporting] = React.useState(false);
   const [isUpdating, setIsUpdating] = React.useState(false);
   const [isLoadingMatches, setIsLoadingMatches] = React.useState(false);
-  const [databaseId, setDatabaseId] = React.useState('');
-
+  
   const [selectedWeek, setSelectedWeek] = React.useState<string>('1');
   const [matchesForWeek, setMatchesForWeek] = React.useState<MatchWithTeamData[]>([]);
   const [scores, setScores] = React.useState<{ [matchId: string]: { homeScore: string; awayScore: string } }>({});
@@ -61,57 +55,6 @@ export default function AdminPage() {
     return new Map(teams.map(t => [t.id, t]));
   }, [teams]);
   
-  React.useEffect(() => {
-    // Reset connection status if databaseId changes
-    setIsConnectionSuccessful(false);
-  }, [databaseId]);
-
-  const handleTestConnection = async () => {
-    if (!databaseId) {
-      toast({
-        variant: 'destructive',
-        title: 'Database ID Required',
-        description: 'Please enter a Database ID to test the connection.',
-      });
-      return;
-    }
-    setIsTestingConnection(true);
-    toast({
-      title: 'Testing Connection...',
-      description: `Attempting to connect to database: ${databaseId}`,
-    });
-
-    const input: TestDatabaseConnectionInput = { databaseId };
-
-    try {
-      const result = await testDatabaseConnection(input);
-      if (result.success) {
-        toast({
-          title: 'Connection Successful!',
-          description: result.message,
-        });
-        setIsConnectionSuccessful(true);
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'Connection Failed',
-          description: result.message,
-        });
-        setIsConnectionSuccessful(false);
-      }
-    } catch (error: any) {
-      console.error('Test connection failed:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Connection Failed',
-        description: error.message || 'An unexpected error occurred.',
-      });
-      setIsConnectionSuccessful(false);
-    }
-    setIsTestingConnection(false);
-  };
-
-
   const fetchMatchesForWeek = React.useCallback(async (week: string) => {
     if (!firestore || teamsLoading || teamMap.size === 0) return;
 
@@ -194,13 +137,8 @@ export default function AdminPage() {
       description: 'Populating the Firestore database with initial data. This may take a moment.',
     });
 
-    const input: ImportDataInput = {};
-    if (databaseId) {
-      input.databaseId = databaseId;
-    }
-
     try {
-      const result = await importData(input);
+      const result = await importData();
       if (result.success) {
         toast({
             title: 'Import Complete!',
@@ -251,7 +189,6 @@ export default function AdminPage() {
         title: 'Update Complete!',
         description: `${response.updatedCount} match results for week ${selectedWeek} have been updated.`,
       });
-      // No need to re-fetch, the local state is the source of truth for the form
     } catch (error) {
       console.error('Match result update failed:', error);
       toast({
@@ -264,7 +201,7 @@ export default function AdminPage() {
   };
 
   const weeks = Array.from({ length: 38 }, (_, i) => i + 1);
-  const anyLoading = isTestingConnection || isEnsuringUser || isImporting;
+  const anyLoading = isEnsuringUser || isImporting;
 
   return (
     <div className="space-y-8">
@@ -282,7 +219,7 @@ export default function AdminPage() {
             <CardHeader>
             <CardTitle>Data Import</CardTitle>
             <CardDescription>
-                First, ensure a default user exists. Second, connect to and import data into a specific Firestore database.
+                First, ensure a default user exists. Then, import all sample data into your database.
             </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col space-y-4">
@@ -305,42 +242,20 @@ export default function AdminPage() {
             </Alert>
             
             <Alert>
-                <AlertTitle>Step 2: Connect & Import Data</AlertTitle>
+                <AlertTitle>Step 2: Import All Data</AlertTitle>
                 <AlertDescription>
-                    Enter the ID of your Firestore database (e.g., 'prempred-master'), test the connection, then import the data.
+                    This will populate your Firestore database with all the teams, players, and historical data needed to run the app.
                 </AlertDescription>
-                <div className="space-y-2 mt-4">
-                    <Label htmlFor="databaseId">Firestore Database ID</Label>
-                    <Input 
-                        id="databaseId"
-                        placeholder="e.g., prempred-master"
-                        value={databaseId}
-                        onChange={(e) => setDatabaseId(e.target.value)}
-                        disabled={anyLoading}
-                    />
-                </div>
-                 <div className="flex flex-col sm:flex-row gap-2 mt-2">
-                    <Button onClick={handleTestConnection} disabled={anyLoading || !databaseId} className="flex-1">
-                        {isTestingConnection ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Testing...
-                        </>
-                        ) : (
-                        '1. Test Connection'
-                        )}
-                    </Button>
-                    <Button onClick={handleDataImport} disabled={anyLoading || !isConnectionSuccessful} className="flex-1">
-                        {isImporting ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Importing...
-                        </>
-                        ) : (
-                        '2. Import All Data'
-                        )}
-                    </Button>
-                 </div>
+                <Button onClick={handleDataImport} disabled={anyLoading} className="mt-2">
+                    {isImporting ? (
+                    <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Importing...
+                    </>
+                    ) : (
+                    'Import All Data'
+                    )}
+                </Button>
             </Alert>
            
             </CardContent>
