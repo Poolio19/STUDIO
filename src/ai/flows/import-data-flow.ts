@@ -124,20 +124,24 @@ const importDataFlow = ai.defineFlow(
   },
   async ({ databaseId }) => {
     let db;
-    let databaseURL: string | undefined;
+    const originalDatabaseId = process.env.FIRESTORE_DATABASE_ID;
 
     if (databaseId) {
-        const projectId = process.env.GOOGLE_CLOUD_PROJECT;
-        if (projectId) {
-            databaseURL = `https://${projectId}.firebaseio.com`;
-        }
+        process.env.FIRESTORE_DATABASE_ID = databaseId;
+    } else {
+        delete process.env.FIRESTORE_DATABASE_ID;
     }
-    
+
     try {
-        db = getAdminFirestore(databaseURL);
+        db = getAdminFirestore();
     } catch (initError: any) {
         const projectId = process.env.GOOGLE_CLOUD_PROJECT || '[UNKNOWN]';
         const errorMessage = `Firebase Admin SDK initialization failed. Project: ${projectId}. Error: ${initError.message}. Check server logs for details.`;
+        if (originalDatabaseId) {
+            process.env.FIRESTORE_DATABASE_ID = originalDatabaseId;
+        } else {
+            delete process.env.FIRESTORE_DATABASE_ID;
+        }
         return { success: false, message: errorMessage };
     }
 
@@ -187,14 +191,28 @@ const importDataFlow = ai.defineFlow(
 
       await batchWrite(db, 'teamRecentResults', teamRecentResults, 'teamId');
 
-      return { success: true, message: 'All data imported successfully.' };
+      if (originalDatabaseId) {
+          process.env.FIRESTORE_DATABASE_ID = originalDatabaseId;
+      } else {
+          delete process.env.FIRESTORE_DATABASE_ID;
+      }
+      return { success: true, message: `All data imported successfully into '${databaseId || '(default)'}'.` };
     } catch (error: any) {
       console.error("Error importing data to Firestore:", error);
       const projectId = process.env.GOOGLE_CLOUD_PROJECT || '[UNKNOWN]';
-      if (error.message.includes('firestore/not-found') || error.message.includes('does not exist')) {
-        return { success: false, message: `The project '${projectId}' does not have an active Cloud Firestore database. Please enable it in the Firebase console.` };
+
+      if (originalDatabaseId) {
+          process.env.FIRESTORE_DATABASE_ID = originalDatabaseId;
+      } else {
+          delete process.env.FIRESTORE_DATABASE_ID;
       }
-      return { success: false, message: `An error occurred during data import: ${error.message}` };
+
+      if (error.message.includes('firestore/not-found') || error.message.includes('does not exist')) {
+        return { success: false, message: `The project '${projectId}' does not have an active Cloud Firestore database with ID '${databaseId}'. Please create it in the Firebase console.` };
+      }
+      return { success: false, message: `An error occurred during data import to '${databaseId}': ${error.message}` };
     }
   }
 );
+
+    

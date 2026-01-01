@@ -3,43 +3,58 @@ import admin from 'firebase-admin';
 
 let app: admin.app.App;
 
-function initializeAdminApp(databaseURL?: string) {
-  if (admin.apps.length === 0) {
-    try {
-      const options: admin.AppOptions = {};
-      if (databaseURL) {
-        options.databaseURL = databaseURL;
-      }
-      app = admin.initializeApp(options);
-    } catch (e: any) {
-      console.error(
-        '********************************************************************************\n' +
-        '** FIREBASE ADMIN SDK INITIALIZATION FAILED **\n' +
-        '********************************************************************************\n' +
-        'The Admin SDK could not be initialized. This is almost always due to a problem with\n' +
-        'Application Default Credentials (ADC) in your local development environment.\n\n' +
-        'POSSIBLE CAUSES:\n' +
-        '1. You have not authenticated with the gcloud CLI.\n' +
-        '2. The gcloud credentials are not configured for the correct project.\n' +
-        '3. The Firestore database has not been enabled for this project.\n\n' +
-        'TO FIX THIS, RUN THE FOLLOWING COMMAND IN YOUR TERMINAL:\n' +
-        'gcloud auth application-default login\n\n' +
-        'Then, ensure Firestore is enabled in your Firebase project console.\n\n' +
-        'Original Error: ' + e.message + '\n' +
-        '********************************************************************************'
-      );
-      throw e;
-    }
-  } else {
-    app = admin.app();
+function initializeAdminApp() {
+  // admin.apps is a list of all initialized apps. If it's not empty,
+  // we can assume our app is already initialized and we can safely get it.
+  if (admin.apps.length > 0) {
+      // If an app is already initialized, return it.
+      // This is safe to call multiple times.
+      app = admin.app();
+      return app;
   }
-  return app;
+  
+  // If no app is initialized, this is the first run.
+  try {
+      // The FIRESTORE_DATABASE_ID environment variable is a standard way
+      // for Google Cloud services to specify a non-default database.
+      // The Admin SDK will automatically pick it up when initializeApp is called.
+      // We don't need to pass any options for this to work.
+      const appOptions: admin.AppOptions = {};
+      
+      app = admin.initializeApp(appOptions);
+      return app;
+  } catch (e: any) {
+      console.error(
+          '********************************************************************************\n' +
+          '** FIREBASE ADMIN SDK INITIALIZATION FAILED **\n' +
+          '********************************************************************************\n' +
+          'The Admin SDK could not be initialized. This is almost always due to a problem with\n' +
+          'Application Default Credentials (ADC) in your local development environment.\n\n' +
+          'POSSIBLE CAUSES:\n' +
+          '1. You have not authenticated with the gcloud CLI.\n' +
+          '2. The gcloud credentials are not configured for the correct project.\n' +
+          '3. The Firestore database has not been enabled for this project.\n\n' +
+          'TO FIX THIS, RUN THE FOLLOWING COMMAND IN YOUR TERMINAL:\n' +
+          'gcloud auth application-default login\n\n' +
+          'Then, ensure Firestore is enabled in your Firebase project console.\n\n' +
+          'Original Error: ' + e.message + '\n' +
+          '********************************************************************************'
+      );
+      // Re-throw the error to halt the server process, making the failure obvious.
+      throw e;
+  }
 }
 
-export function getAdminAuth(databaseURL?: string) {
-    return initializeAdminApp(databaseURL).auth();
+// Ensures the admin app is initialized and returns the Auth service.
+export function getAdminAuth() {
+    const initializedApp = initializeAdminApp();
+    return initializedApp.auth();
 }
 
-export function getAdminFirestore(databaseURL?: string) {
-    return initializeAdminApp(databaseURL).firestore();
+// Ensures the admin app is initialized and returns the Firestore service.
+export function getAdminFirestore() {
+    const initializedApp = initializeAdminApp();
+    return initializedApp.firestore();
 }
+
+    
