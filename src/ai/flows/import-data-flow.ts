@@ -56,16 +56,18 @@ const ensureUserFlow = ai.defineFlow(
         const email = 'alex@example.com';
         const password = 'password123';
         const displayName = 'Alex Anderson';
+        const auth = adminAuth;
+        const db = adminFirestore;
 
         try {
             // Check if user already exists
-            const userRecord = await adminAuth.getUserByEmail(email);
+            const userRecord = await auth.getUserByEmail(email);
             return { success: true, message: `User ${displayName} (${email}) already exists. No action taken.` };
         } catch (error: any) {
             if (error.code === 'auth/user-not-found') {
                 // User does not exist, so create them
                 try {
-                    const userRecord = await adminAuth.createUser({
+                    const userRecord = await auth.createUser({
                         email: email,
                         password: password,
                         displayName: displayName,
@@ -76,7 +78,7 @@ const ensureUserFlow = ai.defineFlow(
 
                     if (alexUser) {
                         const userProfileData = { ...alexUser, id: userId, email: email };
-                        await adminFirestore.collection('users').doc(userId).set(userProfileData);
+                        await db.collection('users').doc(userId).set(userProfileData);
                          return { success: true, message: `Successfully created user and profile for ${displayName}.` };
                     } else {
                         // This case should ideally not happen if data is consistent
