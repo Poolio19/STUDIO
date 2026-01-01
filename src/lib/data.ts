@@ -184,5 +184,3 @@ export const teamRecentResults: TeamRecentResult[] = [
 export const users: User[] = fullUsers.slice(0, 20);
 export const predictions: Prediction[] = fullPredictions.slice(0, 20);
 export const userHistories: UserHistory[] = fullUserHistories.slice(0, 20);
-
-    
