@@ -1,4 +1,3 @@
-
 'use client';
 
 import { firebaseConfig } from '@/firebase/config';
@@ -6,13 +5,12 @@ import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore'
 
-// IMPORTANT: This function has been modified to ensure direct initialization
-// from the config file, bypassing environment-specific logic for debugging.
+// This function now robustly initializes Firebase, ensuring it only happens once.
 export function initializeFirebase() {
   if (getApps().length) {
     return getSdks(getApp());
   }
-  // Directly initialize with the explicit config.
+  // Directly initialize with the explicit config from config.ts
   const firebaseApp = initializeApp(firebaseConfig);
   return getSdks(firebaseApp);
 }
@@ -21,7 +19,7 @@ export function getSdks(firebaseApp: FirebaseApp) {
   return {
     firebaseApp,
     auth: getAuth(firebaseApp),
-    firestore: getFirestore(firebaseApp) // Connect to default database
+    firestore: getFirestore(firebaseApp)
   };
 }
 

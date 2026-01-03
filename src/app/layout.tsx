@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import { FirebaseClientProvider } from '@/firebase';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
   title: 'PremPred 2025-2026',
@@ -24,6 +24,10 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
+        {/*
+          By wrapping the entire app in FirebaseClientProvider, we ensure that
+          a single, correctly initialized Firebase instance is used everywhere.
+        */}
         <FirebaseClientProvider>
           {children}
         </FirebaseClientProvider>
