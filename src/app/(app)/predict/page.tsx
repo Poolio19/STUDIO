@@ -35,11 +35,11 @@ type Prediction = z.infer<typeof predictionSchema>;
 
 export default function PredictPage() {
   const { toast } = useToast();
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
-  const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
-  const prevStandingsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'previousSeasonStandings') : null, [firestore]);
+  const teamsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'teams') : null, [firestore, isUserLoading]);
+  const prevStandingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'previousSeasonStandings') : null, [firestore, isUserLoading]);
 
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
   const { data: previousSeasonStandings, isLoading: standingsLoading } = useCollection<PreviousSeasonStanding>(prevStandingsQuery);
@@ -146,7 +146,7 @@ export default function PredictPage() {
     }
   }
   
-  const isLoading = teamsLoading || standingsLoading;
+  const isLoading = isUserLoading || teamsLoading || standingsLoading;
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-full">Loading teams...</div>;

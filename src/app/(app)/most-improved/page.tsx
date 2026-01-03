@@ -26,7 +26,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 
 
@@ -68,18 +68,19 @@ const getMonthForWeek = (week: number): { month: string; year: number } => {
 
 export default function MostImprovedPage() {
   const firestore = useFirestore();
+  const { isUserLoading } = useUser();
 
-  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
-  const standingsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'standings'), orderBy('rank','asc')) : null, [firestore]);
-  const mimoMQuery = useMemoFirebase(() => firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore]);
-  const seasonMonthsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'seasonMonths'), orderBy('year', 'asc')) : null, [firestore]);
+  const usersQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'users') : null, [firestore, isUserLoading]);
+  const standingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'standings'), orderBy('rank','asc')) : null, [firestore, isUserLoading]);
+  const mimoMQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore, isUserLoading]);
+  const seasonMonthsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'seasonMonths'), orderBy('year', 'asc')) : null, [firestore, isUserLoading]);
 
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
   const { data: currentStandings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsQuery);
   const { data: monthlyMimoM, isLoading: mimoMLoading } = useCollection<MonthlyMimoM>(mimoMQuery);
   const { data: seasonMonths, isLoading: seasonMonthsLoading } = useCollection<SeasonMonth>(seasonMonthsQuery);
 
-  const isLoading = usersLoading || standingsLoading || mimoMLoading || seasonMonthsLoading;
+  const isLoading = isUserLoading || usersLoading || standingsLoading || mimoMLoading || seasonMonthsLoading;
 
   const currentWeek = currentStandings?.[0]?.gamesPlayed || 1;
   const { month: currentMonthName, year: currentYear } = getMonthForWeek(currentWeek);

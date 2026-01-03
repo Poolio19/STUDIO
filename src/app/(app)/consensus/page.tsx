@@ -21,7 +21,7 @@ import type { Team, Prediction } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 
 type ConsensusData = {
@@ -32,17 +32,18 @@ const lightTextColours = ['#FFFFFF', '#FBE122', '#99D6EA', '#FDBE11'];
 
 export default function ConsensusPage() {
   const firestore = useFirestore();
+  const { isUserLoading } = useUser();
 
-  const teamsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'teams')) : null, [firestore]);
-  const predictionsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'predictions') : null, [firestore]);
-  const standingsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'standings'), orderBy('rank', 'asc')) : null, [firestore]);
+  const teamsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'teams')) : null, [firestore, isUserLoading]);
+  const predictionsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'predictions') : null, [firestore, isUserLoading]);
+  const standingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'standings'), orderBy('rank', 'asc')) : null, [firestore, isUserLoading]);
 
 
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
   const { data: userPredictions, isLoading: predictionsLoading } = useCollection<Prediction>(predictionsQuery);
   const { data: currentStandings, isLoading: standingsLoading } = useCollection<any>(standingsQuery);
 
-  const isLoading = teamsLoading || predictionsLoading || standingsLoading;
+  const isLoading = isUserLoading || teamsLoading || predictionsLoading || standingsLoading;
 
   const standingsWithTeamData = useMemo(() => {
     if (!teams || !currentStandings) return [];

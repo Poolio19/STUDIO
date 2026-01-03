@@ -11,19 +11,20 @@ import {
 import { useMemo } from 'react';
 import { PlayerPerformanceChart } from '@/components/charts/player-performance-chart';
 import type { User, UserHistory } from '@/lib/data';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 
 export default function PerformancePage() {
   const firestore = useFirestore();
+  const { isUserLoading } = useUser();
 
-  const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('rank', 'asc')) : null, [firestore]);
-  const userHistoriesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'userHistories') : null, [firestore]);
+  const usersQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'users'), orderBy('rank', 'asc')) : null, [firestore, isUserLoading]);
+  const userHistoriesQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'userHistories') : null, [firestore, isUserLoading]);
 
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
   const { data: userHistories, isLoading: historiesLoading } = useCollection<UserHistory>(userHistoriesQuery);
   
-  const isLoading = usersLoading || historiesLoading;
+  const isLoading = isUserLoading || usersLoading || historiesLoading;
 
   const sortedUsers = users || [];
 

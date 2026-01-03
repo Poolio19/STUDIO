@@ -87,23 +87,21 @@ export default function ProfilePage() {
   const currentUserId = authUser?.uid;
 
   const userDocRef = useMemoFirebase(() => {
-    if (firestore && currentUserId) {
+    if (firestore && currentUserId && !isAuthUserLoading) {
       return doc(firestore, 'users', currentUserId);
     }
     return null;
-  }, [firestore, currentUserId]);
+  }, [firestore, currentUserId, isAuthUserLoading]);
 
   const userHistoryDocRef = useMemoFirebase(() => {
-    // CRITICAL: Wait for firestore AND a valid currentUserId before creating the ref
-    if (firestore && currentUserId) {
+    if (firestore && currentUserId && !isAuthUserLoading) {
       return doc(firestore, 'userHistories', currentUserId);
     }
-    // Return null if we are not ready, the useDoc hook will wait.
     return null; 
-  }, [firestore, currentUserId]);
+  }, [firestore, currentUserId, isAuthUserLoading]);
 
-  const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
-  const mimoMQuery = useMemoFirebase(() => firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore]);
+  const teamsQuery = useMemoFirebase(() => !isAuthUserLoading && firestore ? collection(firestore, 'teams') : null, [firestore, isAuthUserLoading]);
+  const mimoMQuery = useMemoFirebase(() => !isAuthUserLoading && firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore, isAuthUserLoading]);
 
   const { data: user, isLoading: userLoading } = useDoc<User>(userDocRef);
   const { data: userHistory, isLoading: historyLoading } = useDoc<UserHistory>(userHistoryDocRef);

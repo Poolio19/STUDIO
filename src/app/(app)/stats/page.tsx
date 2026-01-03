@@ -15,7 +15,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
 import type { User, Team, PlayerTeamScore } from '@/lib/data';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 
 const getAvatarUrl = (avatarId: string) => {
@@ -24,16 +24,17 @@ const getAvatarUrl = (avatarId: string) => {
 
 export default function StatsPage() {
   const firestore = useFirestore();
+  const { isUserLoading } = useUser();
 
-  const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('rank', 'asc')) : null, [firestore]);
-  const teamsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'teams'), orderBy('name', 'asc')) : null, [firestore]);
-  const scoresQuery = useMemoFirebase(() => firestore ? collection(firestore, 'playerTeamScores') : null, [firestore]);
+  const usersQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'users'), orderBy('rank', 'asc')) : null, [firestore, isUserLoading]);
+  const teamsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'teams'), orderBy('name', 'asc')) : null, [firestore, isUserLoading]);
+  const scoresQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'playerTeamScores') : null, [firestore, isUserLoading]);
   
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
   const { data: playerTeamScores, isLoading: scoresLoading } = useCollection<PlayerTeamScore>(scoresQuery);
 
-  const isLoading = usersLoading || teamsLoading || scoresLoading;
+  const isLoading = isUserLoading || usersLoading || teamsLoading || scoresLoading;
   
   const sortedUsers = users || [];
   const sortedTeams = teams || [];
