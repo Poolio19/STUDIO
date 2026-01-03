@@ -25,7 +25,7 @@ import {
   weeklyTeamStandings,
   teamRecentResults,
 } from '@/lib/data';
-import { collection, doc, writeBatch } from 'firebase/firestore';
+import { collection, doc, writeBatch, getDocs } from 'firebase/firestore';
 
 async function importClientSideData(db: any): Promise<{ success: boolean; message: string }> {
   if (!db) {
@@ -122,7 +122,40 @@ export default function AdminPage() {
   const [isImporting, setIsImporting] = React.useState(false);
 
   const handleDataImport = async () => {
+    if (!firestore) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Firestore is not initialized.',
+      });
+      return;
+    }
+
     setIsImporting(true);
+
+    // Check if data already exists
+    try {
+      const teamsCollectionRef = collection(firestore, 'teams');
+      const snapshot = await getDocs(teamsCollectionRef);
+      if (!snapshot.empty) {
+        toast({
+          title: 'Import Not Needed',
+          description: 'Sample data has already been imported into the database.',
+        });
+        setIsImporting(false);
+        return;
+      }
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Error Checking Data',
+            description: `Could not check for existing data: ${error.message}`,
+        });
+        setIsImporting(false);
+        return;
+    }
+
+
     toast({
       title: 'Importing Data...',
       description: `Populating database with initial sample data. This may take a moment.`,
