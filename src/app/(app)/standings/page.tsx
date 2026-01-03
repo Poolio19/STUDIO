@@ -29,7 +29,7 @@ import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query } from 'firebase/firestore';
 
 export default function StandingsPage() {
     const firestore = useFirestore();
@@ -39,15 +39,21 @@ export default function StandingsPage() {
     const standingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'standings') : null, [firestore, isUserLoading]);
     const weeklyStandingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'weeklyTeamStandings') : null, [firestore, isUserLoading]);
     const recentResultsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'teamRecentResults') : null, [firestore, isUserLoading]);
-    const matchesQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'matches'), orderBy('week', 'asc')) : null, [firestore, isUserLoading]);
+    const matchesQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'matches') : null, [firestore, isUserLoading]);
     
     const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
-    const { data: currentStandings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsQuery);
+    const { data: currentStandingsData, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsQuery);
     const { data: weeklyTeamStandings, isLoading: weeklyStandingsLoading } = useCollection<WeeklyTeamStanding>(weeklyStandingsQuery);
     const { data: teamRecentResults, isLoading: recentResultsLoading } = useCollection<TeamRecentResult>(recentResultsQuery);
     const { data: matches, isLoading: matchesLoading } = useCollection<Match>(matchesQuery);
 
     const isLoading = isUserLoading || teamsLoading || standingsLoading || weeklyStandingsLoading || recentResultsLoading || matchesLoading;
+    
+    const currentStandings = useMemo(() => {
+        if (!currentStandingsData) return [];
+        return [...currentStandingsData].sort((a, b) => a.rank - b.rank);
+    }, [currentStandingsData]);
+
 
     const { standingsWithTeamData, chartData, weeklyResults } = useMemo(() => {
         if (!teams || !currentStandings || !weeklyTeamStandings || !teamRecentResults || !matches) {
@@ -81,7 +87,8 @@ export default function StandingsPage() {
         });
         
         const resultsByWeek = new Map<number, (Match & {homeTeam: Team, awayTeam: Team})[]>();
-        matches.forEach(match => {
+        const sortedMatches = [...matches].sort((a,b) => a.week - b.week);
+        sortedMatches.forEach(match => {
             const weekMatches = resultsByWeek.get(match.week) || [];
             const homeTeam = teamMap.get(match.homeTeamId);
             const awayTeam = teamMap.get(match.awayTeamId);
@@ -242,7 +249,7 @@ export default function StandingsPage() {
                 <Accordion type="single" collapsible defaultValue={`week-${gamesPlayed}`}>
                     {[...weeklyResults.keys()].sort((a,b) => b-a).map(weekNumber => (
                         <AccordionItem value={`week-${weekNumber}`} key={weekNumber}>
-                            <AccordionTrigger className="text-lg font-bold">Week {weekNumber} Results</AccordionTrigger>
+                            <AccordionTrigger className="text-lg font-bold">Week {weekNumber} Results & Standings</AccordionTrigger>
                             <AccordionContent>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                                     {weeklyResults.get(weekNumber)?.map((match, index) => {

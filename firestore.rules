@@ -18,12 +18,17 @@ service cloud.firestore {
     }
 
     match /predictions/{userId} {
-      allow read, list: if isAuthenticated();
+      // Allow any authenticated user to list the collection, but only the owner to read a single document.
+      // This is necessary for the consensus page to function.
+      allow list: if isAuthenticated();
+      allow read: if isAuthenticated() && isOwner(userId);
       allow write: if isOwner(userId);
     }
     
     match /playerTeamScores/{scoreId} {
         allow read, list: if isAuthenticated();
+        // The document ID is a combination of userId and teamId, so we can't rely on it for ownership.
+        // We must check the userId field inside the document itself.
         allow create, update, delete: if isAuthenticated() && isOwner(request.resource.data.userId);
     }
 
@@ -32,6 +37,7 @@ service cloud.firestore {
         allow write: if isOwner(userId);
     }
 
+    // Public collections that anyone can read.
     match /teams/{teamId} {
       allow read, list: if isAuthenticated();
       allow write: if false; 

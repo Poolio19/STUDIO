@@ -27,7 +27,7 @@ import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query } from 'firebase/firestore';
 
 
 const getAvatarUrl = (avatarId: string) => {
@@ -71,14 +71,14 @@ export default function MostImprovedPage() {
   const { isUserLoading } = useUser();
 
   const usersQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'users') : null, [firestore, isUserLoading]);
-  const standingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'standings'), orderBy('rank','asc')) : null, [firestore, isUserLoading]);
+  const standingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'standings') : null, [firestore, isUserLoading]);
   const mimoMQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore, isUserLoading]);
-  const seasonMonthsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'seasonMonths'), orderBy('year', 'asc')) : null, [firestore, isUserLoading]);
+  const seasonMonthsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'seasonMonths') : null, [firestore, isUserLoading]);
 
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
   const { data: currentStandings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsQuery);
   const { data: monthlyMimoM, isLoading: mimoMLoading } = useCollection<MonthlyMimoM>(mimoMQuery);
-  const { data: seasonMonths, isLoading: seasonMonthsLoading } = useCollection<SeasonMonth>(seasonMonthsQuery);
+  const { data: seasonMonthsData, isLoading: seasonMonthsLoading } = useCollection<SeasonMonth>(seasonMonthsQuery);
 
   const isLoading = isUserLoading || usersLoading || standingsLoading || mimoMLoading || seasonMonthsLoading;
 
@@ -107,6 +107,19 @@ export default function MostImprovedPage() {
 
     return { ladderWithRanks: rankedUsers, firstPlaceRankChange, secondPlaceRankChange };
   }, [users]);
+  
+  const seasonMonths = useMemo(() => {
+    if (!seasonMonthsData) return [];
+    return [...seasonMonthsData].sort((a, b) => {
+        const aSpecial = a.special === 'Christmas No. 1';
+        const bSpecial = b.special === 'Christmas No. 1';
+        if (a.year !== b.year) return a.year - b.year;
+        if (aSpecial && !bSpecial) return 1;
+        if (!aSpecial && bSpecial) return -1;
+        const monthOrder = ['August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
+        return monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month);
+    });
+  }, [seasonMonthsData]);
 
   const mimoMWithDetails = useMemo(() => {
     if (!users || !monthlyMimoM || !seasonMonths) return [];
