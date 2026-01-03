@@ -39,7 +39,7 @@ service cloud.firestore {
     }
 
     // Read-only collections for all authenticated users.
-    // These are managed by server-side processes, not by clients.
+    // These are managed by server-side processes or initial data import, not by clients.
     match /teams/{teamId} {
       allow read: if isAuthenticated();
       allow write: if false;
@@ -74,6 +74,7 @@ service cloud.firestore {
     }
 
     // Explicitly allow list operations for authenticated users on these collections
+    // This is crucial for collection-wide queries to succeed.
     match /teams/{wildcard=**} {
       allow list: if isAuthenticated();
     }
@@ -87,6 +88,27 @@ service cloud.firestore {
       allow list: if isAuthenticated();
     }
     match /matches/{wildcard=**} {
+      allow list: if isAuthenticated();
+    }
+     match /users/{wildcard=**} {
+      allow list: if isAuthenticated();
+    }
+     match /predictions/{wildcard=**} {
+      allow list: if isAuthenticated();
+    }
+     match /playerTeamScores/{wildcard=**} {
+      allow list: if isAuthenticated();
+    }
+     match /userHistories/{wildcard=**} {
+      allow list: if isAuthenticated();
+    }
+     match /previousSeasonStandings/{wildcard=**} {
+      allow list: if isAuthenticated();
+    }
+    match /monthlyMimoM/{wildcard=**} {
+      allow list: if isAuthenticated();
+    }
+    match /seasonMonths/{wildcard=**} {
       allow list: if isAuthenticated();
     }
   }
