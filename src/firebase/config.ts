@@ -4,7 +4,7 @@
 export const firebaseConfig = {
   apiKey: "API_KEY",
   authDomain: "AUTH_DOMAIN",
-  projectId: "prem-pred-gmail",
+  projectId: "studio-2138583336-cec5d",
   storageBucket: "STORAGE_BUCKET",
   messagingSenderId: "MESSAGING_SENDER_ID",
   appId: "APP_ID",
