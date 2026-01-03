@@ -26,8 +26,8 @@ export default function StatsPage() {
   const firestore = useFirestore();
   const { isUserLoading } = useUser();
 
-  const usersQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'users'), orderBy('rank', 'asc')) : null, [firestore, isUserLoading]);
-  const teamsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'teams'), orderBy('name', 'asc')) : null, [firestore, isUserLoading]);
+  const usersQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'users') : null, [firestore, isUserLoading]);
+  const teamsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'teams') : null, [firestore, isUserLoading]);
   const scoresQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'playerTeamScores') : null, [firestore, isUserLoading]);
   
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
@@ -36,8 +36,16 @@ export default function StatsPage() {
 
   const isLoading = isUserLoading || usersLoading || teamsLoading || scoresLoading;
   
-  const sortedUsers = users || [];
-  const sortedTeams = teams || [];
+  const sortedUsers = useMemo(() => {
+    if (!users) return [];
+    return [...users].sort((a, b) => a.rank - b.rank);
+  }, [users]);
+  
+  const sortedTeams = useMemo(() => {
+    if (!teams) return [];
+    return [...teams].sort((a, b) => a.name.localeCompare(b.name));
+  }, [teams]);
+
 
   const getScoreColour = (score: number) => {
     if (score === 5) return 'bg-green-200/50 dark:bg-green-800/50 font-bold';
@@ -120,3 +128,5 @@ export default function StatsPage() {
     </div>
   );
 }
+
+    

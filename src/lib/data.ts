@@ -589,7 +589,7 @@ function calculateStandings(matches: Match[], maxWeek: number): Map<string, Team
     teams.forEach(team => {
         stats.set(team.id, {
             points: 0, gamesPlayed: 0, wins: 0, draws: 0, losses: 0,
-            goalsFor: 0, goalsAgainst: 0, goalDifference: 0
+            goalsFor: 0, goalsAgainst: 0, goalDifference: 0, teamId: team.id, rank: 0
         });
     });
 
@@ -625,9 +625,9 @@ function calculateStandings(matches: Match[], maxWeek: number): Map<string, Team
     return stats;
 }
 
-function sortStandings(stats: Map<string, TeamStats>): CurrentStanding[] {
-    const sorted = Array.from(stats.entries())
-        .sort(([, a], [, b]) => {
+function sortStandings(statsMap: Map<string, TeamStats>): CurrentStanding[] {
+    const sorted = Array.from(statsMap.values())
+        .sort((a, b) => {
             if (a.points !== b.points) return b.points - a.points;
             if (a.goalDifference !== b.goalDifference) return b.goalDifference - a.goalDifference;
             if (a.goalsFor !== b.goalsFor) return b.goalsFor - a.goalsFor;
@@ -635,10 +635,9 @@ function sortStandings(stats: Map<string, TeamStats>): CurrentStanding[] {
             const teamB = teams.find(t => t.id === b.teamId)?.name || '';
             return teamA.localeCompare(teamB);
         })
-        .map(([teamId, stat], index) => ({
-            teamId,
+        .map((stat, index) => ({
+            ...stat,
             rank: index + 1,
-            ...stat
         }));
     return sorted;
 }
@@ -776,7 +775,14 @@ export const seasonMonths: SeasonMonth[] = [
 ];
 
 export const monthlyMimoM: MonthlyMimoM[] = [
-    // This would be calculated by a backend process based on rank changes.
+    { id: 'mimom_aug_1', month: 'August', year: 2025, userId: 'usr_32', type: 'winner' },
+    { id: 'mimom_aug_2', month: 'August', year: 2025, userId: 'usr_60', type: 'runner-up' },
+    { id: 'mimom_sep_1', month: 'September', year: 2025, userId: 'usr_87', type: 'winner' },
+    { id: 'mimom_sep_2', month: 'September', year: 2025, userId: 'usr_75', type: 'runner-up' },
+    { id: 'mimom_oct_1', month: 'October', year: 2025, userId: 'usr_83', type: 'winner' },
+    { id: 'mimom_oct_2', month: 'October', year: 2025, userId: 'usr_76', type: 'runner-up' },
+    { id: 'mimom_nov_1', month: 'November', year: 2025, userId: 'usr_85', type: 'winner' },
+    { id: 'mimom_nov_2', month: 'November', year: 2025, userId: 'usr_94', type: 'runner-up' },
 ];
 
 
@@ -784,3 +790,5 @@ export const monthlyMimoM: MonthlyMimoM[] = [
 export const users: User[] = fullUsers;
 export const predictions: Prediction[] = fullPredictions;
 export const userHistories: UserHistory[] = fullUserHistories;
+
+    

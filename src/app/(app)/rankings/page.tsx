@@ -12,13 +12,13 @@ import { useMemo } from 'react';
 import { PlayerRankChart } from '@/components/charts/player-rank-chart';
 import type { User, UserHistory } from '@/lib/data';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query } from 'firebase/firestore';
 
 export default function RankingsPage() {
   const firestore = useFirestore();
   const { isUserLoading } = useUser();
 
-  const usersQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'users'), orderBy('rank', 'asc')) : null, [firestore, isUserLoading]);
+  const usersQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'users') : null, [firestore, isUserLoading]);
   const userHistoriesQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'userHistories') : null, [firestore, isUserLoading]);
 
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
@@ -26,7 +26,11 @@ export default function RankingsPage() {
 
   const isLoading = isUserLoading || usersLoading || historiesLoading;
 
-  const sortedUsers = users || [];
+  const sortedUsers = useMemo(() => {
+    if (!users) return [];
+    return [...users].sort((a, b) => a.rank - b.rank);
+  }, [users]);
+
 
   const { chartData, yAxisDomain } = useMemo(() => {
     if (!users || !userHistories) return { chartData: [], yAxisDomain: [1, 20] };
@@ -80,3 +84,5 @@ export default function RankingsPage() {
     </div>
   );
 }
+
+    

@@ -38,8 +38,8 @@ export default function PredictPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
-  const teamsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'teams')) : null, [firestore, isUserLoading]);
-  const prevStandingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'previousSeasonStandings')) : null, [firestore, isUserLoading]);
+  const teamsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'teams') : null, [firestore, isUserLoading]);
+  const prevStandingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'previousSeasonStandings') : null, [firestore, isUserLoading]);
 
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
   const { data: previousSeasonStandings, isLoading: standingsLoading } = useCollection<PreviousSeasonStanding>(prevStandingsQuery);
@@ -84,11 +84,15 @@ export default function PredictPage() {
   });
 
   const [items, setItems] = React.useState<Prediction[]>([]);
+  const [initialLoad, setInitialLoad] = React.useState(true);
 
   React.useEffect(() => {
-    // Only proceed if we are done loading the user, we have a user, and the initial team list is ready.
-    if (!isUserLoading && user && firestore && sortedTeamsForPrediction.length > 0) {
-      const fetchPrediction = async () => {
+    if (isUserLoading || !firestore || sortedTeamsForPrediction.length === 0 || !initialLoad) {
+      return;
+    }
+
+    const fetchPrediction = async () => {
+      if (user) {
         const predictionRef = doc(firestore, 'predictions', user.uid);
         const predictionSnap = await getDoc(predictionRef);
 
@@ -101,14 +105,16 @@ export default function PredictPage() {
           setItems(orderedItems);
           form.reset({ predictions: orderedItems });
         } else {
-          // If no prediction exists, initialize with the default sorted list.
           setItems(sortedTeamsForPrediction);
           form.reset({ predictions: sortedTeamsForPrediction });
         }
-      };
-      fetchPrediction();
-    }
-  }, [sortedTeamsForPrediction, user, firestore, form, isUserLoading]);
+        setInitialLoad(false);
+      }
+    };
+
+    fetchPrediction();
+    
+  }, [sortedTeamsForPrediction, user, firestore, form, isUserLoading, initialLoad]);
 
 
   React.useEffect(() => {
@@ -244,3 +250,5 @@ export default function PredictPage() {
     </div>
   );
 }
+
+    

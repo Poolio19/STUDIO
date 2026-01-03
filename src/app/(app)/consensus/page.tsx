@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -21,7 +22,7 @@ import { Icons, IconName } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query } from 'firebase/firestore';
 
 type ConsensusData = {
   [teamId: string]: number[];
@@ -33,9 +34,9 @@ export default function ConsensusPage() {
   const firestore = useFirestore();
   const { isUserLoading } = useUser();
 
-  const teamsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'teams')) : null, [firestore, isUserLoading]);
+  const teamsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'teams') : null, [firestore, isUserLoading]);
   const predictionsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'predictions') : null, [firestore, isUserLoading]);
-  const standingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'standings'), orderBy('rank', 'asc')) : null, [firestore, isUserLoading]);
+  const standingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'standings') : null, [firestore, isUserLoading]);
 
 
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
@@ -52,7 +53,8 @@ export default function ConsensusPage() {
         const team = teamMap.get(standing.teamId);
         return team ? { ...team, rank: standing.rank } : null;
       })
-      .filter((team): team is Team & { rank: number } => !!team);
+      .filter((team): team is Team & { rank: number } => !!team)
+      .sort((a,b) => a.rank - b.rank);
   }, [teams, currentStandings]);
 
   const consensusData = useMemo((): ConsensusData | null => {
@@ -103,7 +105,10 @@ export default function ConsensusPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent className="h-96 flex items-center justify-center">
-              <div>Loading consensus data...</div>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Icons.logo className="size-5 animate-spin" />
+                <span>Loading consensus data...</span>
+              </div>
             </CardContent>
          </Card>
       </div>
@@ -213,3 +218,5 @@ export default function ConsensusPage() {
     </div>
   );
 }
+
+    

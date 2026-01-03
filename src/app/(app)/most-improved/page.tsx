@@ -54,15 +54,15 @@ const formatPointsChange = (change: number) => {
 
 const getMonthForWeek = (week: number): { month: string; year: number } => {
     if (week <= 4) return { month: 'August', year: 2025 };
-    if (week <= 7) return { month: 'September', year: 2025 };
+    if (week <= 8) return { month: 'September', year: 2025 };
     if (week <= 11) return { month: 'October', year: 2025 };
-    if (week <= 15) return { month: 'November', year: 2025 };
-    if (week <= 20) return { month: 'December', year: 2025 };
-    if (week <= 24) return { month: 'January', year: 2026 };
-    if (week <= 28) return { month: 'February', year: 2026 };
-    if (week <= 32) return { month: 'March', year: 2026 };
-    if (week <= 36) return { month: 'April', year: 2026 };
-    if (week >= 37) return { month: 'May', year: 2026 };
+    if (week <= 14) return { month: 'November', year: 2025 };
+    if (week <= 19) return { month: 'December', year: 2025 };
+    if (week <= 23) return { month: 'January', year: 2026 };
+    if (week <= 27) return { month: 'February', year: 2026 };
+    if (week <= 31) return { month: 'March', year: 2026 };
+    if (week <= 35) return { month: 'April', year: 2026 };
+    if (week >= 36) return { month: 'May', year: 2026 };
     return { month: 'August', year: 2025 }; // Default case
 };
 
@@ -86,10 +86,11 @@ export default function MostImprovedPage() {
   const currentWeek = useMemo(() => {
     if (currentStandings && currentStandings.length > 0) {
       // Find the maximum games played across all teams to get the true current week
-      return Math.max(...currentStandings.map(s => s.gamesPlayed));
+      return Math.max(...currentStandings.map(s => s.gamesPlayed), 0);
     }
     return 1;
   }, [currentStandings]);
+
   const { month: currentMonthName, year: currentYear } = getMonthForWeek(currentWeek);
 
   const ladderData = useMemo(() => {
@@ -351,3 +352,5 @@ export default function MostImprovedPage() {
     </div>
   );
 }
+
+    

@@ -83,10 +83,10 @@ export default function LeaderboardPage() {
   const { isUserLoading } = useUser();
 
   const usersQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'users'), orderBy('rank', 'asc')) : null, [firestore, isUserLoading]);
-  const standingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'standings'), orderBy('rank', 'asc')) : null, [firestore, isUserLoading]);
+  const standingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'standings') : null, [firestore, isUserLoading]);
   const mimoMQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore, isUserLoading]);
 
-  const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
+  const { data: usersData, isLoading: usersLoading } = useCollection<User>(usersQuery);
   const { data: currentStandings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsQuery);
   const { data: monthlyMimoM, isLoading: mimoMLoading } = useCollection<MonthlyMimoM>(mimoMQuery);
 
@@ -99,13 +99,16 @@ export default function LeaderboardPage() {
     return 1;
   }, [currentStandings]);
 
-  const sortedUsers = users || [];
+  const sortedUsers = useMemo(() => {
+    if (!usersData) return [];
+    return [...usersData].sort((a, b) => a.rank - b.rank);
+  }, [usersData]);
   
   const proPlayers = useMemo(() => sortedUsers.filter(u => u.isPro), [sortedUsers]);
   const regularPlayers = useMemo(() => sortedUsers.filter(u => !u.isPro), [sortedUsers]);
 
   const localTotalWinningsMap = useMemo(() => {
-    if (!users || !monthlyMimoM) return new Map();
+    if (!usersData || !monthlyMimoM) return new Map();
     const mimoMWinnings = new Map<string, number>();
     const monthlyAwards: { [key: string]: { winners: string[], runnersUp: string[] } } = {};
 
@@ -187,7 +190,7 @@ export default function LeaderboardPage() {
     });
 
     return calculatedTotalWinnings;
-  }, [regularPlayers, proPlayers, users, monthlyMimoM]);
+  }, [regularPlayers, proPlayers, usersData, monthlyMimoM]);
 
 
   return (
@@ -284,3 +287,5 @@ export default function LeaderboardPage() {
     </div>
   );
 }
+
+    
