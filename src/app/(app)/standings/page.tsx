@@ -87,7 +87,7 @@ export default function StandingsPage() {
         });
         
         const resultsByWeek = new Map<number, (Match & {homeTeam: Team, awayTeam: Team})[]>();
-        const sortedMatches = [...matches].sort((a,b) => a.week - b.week);
+        const sortedMatches = [...matches].filter(m => m.homeScore !== -1 && m.awayScore !== -1).sort((a,b) => a.week - b.week);
         sortedMatches.forEach(match => {
             const weekMatches = resultsByWeek.get(match.week) || [];
             const homeTeam = teamMap.get(match.homeTeamId);

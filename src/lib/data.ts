@@ -371,7 +371,7 @@ export const fullPredictions: Prediction[] = Object.entries(userPredictionTeamId
 
 
 export const matches: Match[] = [
-    // Data up to week 18 is provided. Weeks 19-38 will have scores of -1.
+    // Data up to week 18 is provided.
     // Week 1
     { week: 1, homeTeamId: 'team_14', awayTeamId: 'team_9', homeScore: 1, awayScore: 0 },
     { week: 1, homeTeamId: 'team_1', awayTeamId: 'team_20', homeScore: 2, awayScore: 0 },
@@ -570,14 +570,6 @@ export const matches: Match[] = [
     { week: 18, homeTeamId: 'team_14', awayTeamId: 'team_2', homeScore: 2, awayScore: 2 }, // Villa double week
     { week: 18, homeTeamId: 'team_16', awayTeamId: 'team_17', homeScore: 1, awayScore: 2 },
     { week: 18, homeTeamId: 'team_18', awayTeamId: 'team_19', homeScore: 5, awayScore: 0 },
-    // Weeks 19-38 with placeholder scores
-    ...Array.from({ length: 20 * 10 }, (_, i) => ({
-        week: 19 + Math.floor(i / 10),
-        homeTeamId: 'team_1',
-        awayTeamId: 'team_2',
-        homeScore: -1,
-        awayScore: -1
-    }))
 ];
 
 // --- CALCULATED DATA ---
@@ -791,4 +783,3 @@ export const users: User[] = fullUsers;
 export const predictions: Prediction[] = fullPredictions;
 export const userHistories: UserHistory[] = fullUserHistories;
 
-    
