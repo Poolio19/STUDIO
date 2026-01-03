@@ -36,7 +36,7 @@ export function getSdks(firebaseApp: FirebaseApp) {
   return {
     firebaseApp,
     auth: getAuth(firebaseApp),
-    firestore: getFirestore(firebaseApp, 'prempred-master')
+    firestore: getFirestore(firebaseApp) // Connect to default database
   };
 }
 
