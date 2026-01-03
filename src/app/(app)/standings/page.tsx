@@ -249,7 +249,7 @@ export default function StandingsPage() {
                 <Accordion type="single" collapsible defaultValue={`week-${gamesPlayed}`}>
                     {[...weeklyResults.keys()].sort((a,b) => b-a).map(weekNumber => (
                         <AccordionItem value={`week-${weekNumber}`} key={weekNumber}>
-                            <AccordionTrigger className="text-lg font-bold">Week {weekNumber} Results & Standings</AccordionTrigger>
+                            <AccordionTrigger className="text-lg font-bold">Week {weekNumber} Results</AccordionTrigger>
                             <AccordionContent>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                                     {weeklyResults.get(weekNumber)?.map((match, index) => {
