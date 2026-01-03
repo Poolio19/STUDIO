@@ -135,68 +135,85 @@ export const teams: Team[] = [
     { id: 'team_15', name: 'Newcastle', logo: 'shieldUser', bgColourFaint: 'rgba(45, 41, 38, 0.3)', bgColourSolid: '#2D2926', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_16', name: 'Notts Forest', logo: 'treeDeciduous', bgColourFaint: 'rgba(221, 0, 0, 0.3)', bgColourSolid: '#DD0000', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_17', name: 'Southampton', logo: 'theater', bgColourFaint: 'rgba(215, 25, 32, 0.3)', bgColourSolid: '#D71920', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
-    { id: 'team_18', name: 'Spurs', logo: 'home', bgColourFaint: 'rgba(19, 34, 83, 0.3)', bgColourSolid: '#132257', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
+    { id: 'team_18', name: 'Tottenham', logo: 'home', bgColourFaint: 'rgba(19, 34, 83, 0.3)', bgColourSolid: '#132257', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_19', name: 'West Ham', logo: 'hammer', bgColourFaint: 'rgba(122, 38, 58, 0.3)', bgColourSolid: '#7A263A', textColour: '#FBE122', iconColour: '#FBE122' },
     { id: 'team_20', name: 'Wolves', logo: 'flower', bgColourFaint: 'rgba(253, 190, 17, 0.3)', bgColourSolid: '#FDBE11', textColour: '#000000', iconColour: '#000000' }
 ];
 
+const teamNameMapping: { [key: string]: string } = {
+    'Arsenal': 'team_1', 'Aston Villa': 'team_2', 'Bournemouth': 'team_3', 'Brentford': 'team_4',
+    'Brighton': 'team_5', 'Chelsea': 'team_6', 'Crystal Palace': 'team_7', 'Everton': 'team_8',
+    'Fulham': 'team_9', 'Ipswich Town': 'team_10', 'Ipswich': 'team_10', 'Leicester City': 'team_11', 'Leicester': 'team_11',
+    'Liverpool': 'team_12', 'Man City': 'team_13', 'Man Utd': 'team_14', 'Newcastle': 'team_15',
+    'Notts Forest': 'team_16', 'Southampton': 'team_17', 'Tottenham': 'team_18', 'Spurs': 'team_18',
+    'West Ham': 'team_19', 'Wolves': 'team_20', 'Leeds': 'team_10', 'Burnley': 'team_11', 'Sunderland': 'team_17'
+};
+
+
 const userList = [
-    { id: 'usr_1', name: 'Alex Anderson' }, { id: 'usr_2', name: 'Maria Garcia' },
-    { id: 'usr_3', name: 'David Smith' }, { id: 'usr_4', name: 'Sophia Johnson' },
-    { id: 'usr_5', name: 'Kenji Tanaka' }, { id: 'usr_6', name: 'Fatima Ahmed' },
-    { id: 'usr_7', name: 'Leo Rossi' }, { id: 'usr_8', name: 'Chloe Dubois' },
-    { id: 'usr_9', name: 'Mohammed Ali' }, { id: 'usr_10', name: 'Isabella Johansson' },
-    { id: 'usr_11', name: 'James Wilson' }, { id: 'usr_12', name: 'Amelia Brown' },
-    { id: 'usr_13', name: 'Benjamin Green' }, { id: 'usr_14', name: 'Mia Taylor' },
-    { id: 'usr_15', name: 'Elijah Moore' }, { id: 'usr_16', name: 'Harper King' },
-    { id: 'usr_17', name: 'Lucas White' }, { id: 'usr_18', name: 'Evelyn Harris' },
-    { id: 'usr_19', name: 'Henry Clark' }, { id: 'usr_20', name: 'Abigail Lewis' },
-    { id: 'usr_21', name: 'Alexander Walker' }, { id: 'usr_22', name: 'Emily Hall' },
-    { id: 'usr_23', name: 'Daniel Young' }, { id: 'usr_24', name: 'Elizabeth Allen' },
-    { id: 'usr_25', name: 'Michael Wright' }, { id: 'usr_26', name: 'Sofia Scott' },
-    { id: 'usr_27', name: 'Matthew Adams' }, { id: 'usr_28', name: 'Avery Baker' },
-    { id: 'usr_29', name: 'Joseph Nelson' }, { id: 'usr_30', name: 'Scarlett Carter' },
-    { id: 'usr_31', name: 'William Mitchell' }, { id: 'usr_32', name: 'Grace Perez' },
-    { id: 'usr_33', name: 'Owen Roberts' }, { id: 'usr_34', name: 'Zoe Turner' },
-    { id: 'usr_35', name: 'Nathan Phillips' }, { id: 'usr_36', name: 'Lily Campbell' },
-    { id: 'usr_37', name: 'Ryan Parker' }, { id: 'usr_38', name: 'Hannah Evans' },
-    { id: 'usr_39', name: 'Caleb Edwards' }, { id: 'usr_40', name: 'Nora Collins' },
-    { id: 'usr_41', name: 'Isaac Stewart' }, { id: 'usr_42', name: 'Addison Sanchez' },
-    { id: 'usr_43', name: 'Levi Morris' }, { id: 'usr_44', name: 'Stella Rogers' },
-    { id: 'usr_45', name: 'Samuel Reed' }, { id: 'usr_46', name: 'Natalie Cook' },
-    { id: 'usr_47', name: 'BBC' }, { id: 'usr_48', name: 'SKY' },
-    { id: 'usr_49', name: 'OPTA' }, { id: 'usr_50', name: 'Tony Jones' },
-    { id: 'usr_51', name: 'Laura Bailey' }, { id: 'usr_52', name: 'Chris Wood' },
-    { id: 'usr_53', name: 'Rachel Murphy' }, { id: 'usr_54', name: 'Mark Rivera' },
-    { id: 'usr_55', name: 'Jessica Long' }, { id: 'usr_56', name: 'Brian Hughes' },
-    { id: 'usr_57', name: 'Sarah Foster' }, { id: 'usr_58', name: 'Kevin Butler' },
-    { id: 'usr_59', name: 'Angela Simmons' }, { id: 'usr_60', name: 'Steven Powell' },
-    { id: 'usr_61', name: 'Kimberly Richardson' }, { id: 'usr_62', name: 'Paul Cox' },
-    { id: 'usr_63', name: 'Donna Howard' }, { id: 'usr_64', name: 'George Ward' },
-    { id: 'usr_65', name: 'Helen Peterson' }, { id: 'usr_66', name: 'Gary Gray' },
-    { id: 'usr_67', name: 'Brenda James' }, { id: 'usr_68', name: 'Larry Watson' },
-    { id: 'usr_69', name: 'Nicole Brooks' }, { id: 'usr_70', name: 'Justin Kelly' },
-    { id: 'usr_71', name: 'Janet Sanders' }, { id: 'usr_72', name: 'Jerry Price' },
-    { id: 'usr_73', name: 'Ashley Bennett' }, { id: 'usr_74', name: 'Scott Henderson' },
-    { id: 'usr_75', name: 'Rebecca Barnes' }, { id: 'usr_76', name: 'Dennis Ross' },
-    { id: 'usr_77', name: 'Amanda Henderson' }, { id: 'usr_78', name: 'Keith Coleman' },
-    { id: 'usr_79', name: 'Cynthia Jenkins' }, { id: 'usr_80', name: 'Douglas Perry' },
-    { id: 'usr_81', name: 'Frances Patterson' }, { id: 'usr_82', name: 'Peter Griffin' },
-    { id: 'usr_83', name: 'Ruth Jordan' }, { id: 'usr_84', name: 'Carl Graham' },
-    { id: 'usr_85', name: 'Katherine Hamilton' }, { id: 'usr_86', name: 'Arthur Wallace' },
-    { id: 'usr_87', name: 'Teresa Woods' }, { id: 'usr_88', name: 'Walter Cole' },
-    { id: 'usr_89', name: 'Joan West' }, { id: 'usr_90', name: 'Wayne Snyder' },
-    { id: 'usr_91', name: 'Alice Fox' }, { id: 'usr_92', name: 'Billy Larson' },
-    { id: 'usr_93', name: 'Diana Stone' }, { id: 'usr_94', name: 'Randy Meyer' },
-    { id: 'usr_95', name: 'Denise Franklin' }, { id: 'usr_96', name: 'Frank Warren' },
-    { id: 'usr_97', name: 'Julia Ray' }, { id: 'usr_98', name: 'Philip Lawson' },
-    { id: 'usr_99', name: 'Marie Fields' }, { id: 'usr_100', name: 'Louis Ortiz' },
-    { id: 'usr_101', name: 'Sara Gordon' }, { id: 'usr_102', name: 'Roy Stephens' },
-    { id: 'usr_103', name: 'Ann Simpson' }, { id: 'usr_104', name: 'Patrick Austin' },
-    { id: 'usr_105', name: 'Jacqueline Porter' }, { id: 'usr_106', name: 'Bobby Spencer' },
-    { id: 'usr_107', name: 'Beverly Carroll' }, { id: 'usr_108', name: 'Harry Armstrong' },
-    { id: 'usr_109', name: 'Doris Daniels' }
-];
+    { id: 'usr_1', name: 'Thomas Wright' }, { id: 'usr_2', name: 'Barrie Cross' },
+    { id: 'usr_3', name: 'Dave Nightingale' }, { id: 'usr_4', name: 'Pip Stokes' },
+    { id: 'usr_5', name: 'Alex Anderson' }, { id: 'usr_6', name: 'Nat Walsh' },
+    { id: 'usr_7', name: 'Patrick Meese' }, { id: 'usr_8', name: 'Lee Harte' },
+    { id: 'usr_9', name: 'Jim Poole' }, { id: 'usr_10', name: 'Lyndon Padmore' },
+    { id: 'usr_11', name: 'Alg Mangor Wroldsen' }, { id: 'usr_12', name: 'Steve Wroldsen' },
+    { id: 'usr_13', name: 'Roger Wymer' }, { id: 'usr_14', name: 'Mike Wymer' },
+    { id: 'usr_15', name: 'Andy Belton' }, { id: 'usr_16', name: 'Ernest Belton' },
+    { id: 'usr_17', name: 'Tim Birchall' }, { id: 'usr_18', name: 'Nathan Hyatt' },
+    { id: 'usr_19', name: 'Rory Hyatt' }, { id: 'usr_20', name: 'Gazza Littlewood' },
+    { id: 'usr_21', name: 'Fazil Sediqi' }, { id: 'usr_22', name: 'Shuhra Sediqi' },
+    { id: 'usr_23', name: 'Ilyas Taj Sediqi' }, { id: 'usr_24', name: 'Eshwa Sediqi' },
+    { id: 'usr_25', name: 'Ben Fellows' }, { id: 'usr_26', name: 'Michelle Duffy-Turner' },
+    { id: 'usr_27', name: 'Nicola Spears' }, { id: 'usr_28', name: 'Jamie Spears' },
+    { id: 'usr_29', name: 'Jonny Taylor' }, { id: 'usr_30', name: 'John Taylor' },
+    { id: 'usr_31', name: 'Sam Dixon' }, { id: 'usr_32', name: 'Doug Potter' },
+    { id: 'usr_33', name: 'Finlay Sinclair' }, { id: 'usr_34', name: 'YOUR NAME HERE' },
+    { id: 'usr_35', name: 'Aidan Kehoe' }, { id: 'usr_36', name: 'Ben Patey' },
+    { id: 'usr_37', name: 'Theo Gresson' }, { id: 'usr_38', name: 'Adam Barclay' },
+    { id: 'usr_39', name: 'James Eldred' }, { id: 'usr_40', name: 'Otis Eldred' },
+    { id: 'usr_41', name: 'Dan Coles' }, { id: 'usr_42', name: 'Daniel Crick' },
+    { id: 'usr_43', name: 'Sheila McKenzie' }, { id: 'usr_44', name: 'Chris Dodds' },
+    { id: 'usr_45', name: 'Rich Seddon' }, { id: 'usr_46', name: 'Ross Allatt' },
+    { id: 'usr_47', name: 'Neville Johnson' }, { id: 'usr_48', name: 'Julian Spears' },
+    { id: 'usr_49', name: 'Andrew Spears' }, { id: 'usr_50', name: 'Danny Broom' },
+    { id: 'usr_51', name: 'Paul Hammett' }, { id: 'usr_52', name: 'Tom Gill' },
+    { id: 'usr_53', name: 'Ronnie Bain' }, { id: 'usr_54', name: 'Matthew Bain' },
+    { id: 'usr_55', name: 'Sam Bain' }, { id: 'usr_56', name: 'Andy Barnes' },
+    { id: 'usr_57', name: 'Pascal Walls' }, { id: 'usr_58', name: 'Steve Lawrence' },
+    { id: 'usr_59', name: 'Gill Butler' }, { id: 'usr_60', name: 'Tom Coles' },
+    { id: 'usr_61', name: 'Tommy Poole' }, { id: 'usr_62', 'name': 'Eddie Spencer' },
+    { id: 'usr_63', name: 'Rory Poole' }, { id: 'usr_64', name: 'Scott Emmett' },
+    { id: 'usr_65', name: 'Craig Temporal' }, { id: 'usr_66', name: 'Andrew Senior' },
+    { id: 'usr_67', name: 'Dan Brown' }, { id: 'usr_68', name: 'Rupert Massey' },
+    { id: 'usr_69', name: 'Matt Howard' }, { id: 'usr_70', name: 'Justin Downing' },
+    { id: 'usr_71', name: 'Sam Burgess' }, { id: 'usr_72', name: 'George John Roberts' },
+    { id: 'usr_73', name: 'Leyton Collings' }, { id: 'usr_74', name: 'Ben Cox' },
+    { id: 'usr_75', name: 'Adan F Bain' }, { id: 'usr_76', name: 'Amy Parkinson' },
+    { id: 'usr_77', name: 'Steven Bain' }, { id: 'usr_78', name: 'Ian Scotland' },
+    { id: 'usr_79', name: 'Benjamin Dawes' }, { id: 'usr_80', name: 'Tom Bywater' },
+    { id: 'usr_81', name: 'Jack Murray' }, { id: 'usr_82', name: 'Rob Mabon' },
+    { id: 'usr_83', name: 'Andrew Trafford' }, { id: 'usr_84', name: 'Luca Trafford' },
+    { id: 'usr_85', name: 'Craig Stevens' }, { id: 'usr_86', name: 'George Butterworth' },
+    { id: 'usr_87', name: 'Ashley Davies' }, { id: 'usr_88', name: 'Duncan Holder' },
+    { id: 'usr_89', name: 'Arthur Davies' }, { id: 'usr_90', name: 'Paul Stonier' },
+    { id: 'usr_91', name: 'Jember Weekes' }, { id: 'usr_92', name: 'Tom Kehoe' },
+    { id: 'usr_93', name: 'Chris Burston' }, { id: 'usr_94', name: 'Malcolm Sinclair' },
+    { id: 'usr_95', name: 'Dan Parkinson' }, { id: 'usr_96', name: 'Alfie Skingley' },
+    { id: 'usr_97', name: 'Bev Skingley' }, { id: 'usr_98', name: 'Daniel Skingley' },
+    { id: 'usr_99', name: 'Ken Skingley' }, { id: 'usr_100', name: 'Lyndsey Preece' },
+    { id: 'usr_101', name: 'Kane Sullivan' }, { id: 'usr_102', name: 'Graeme Bailie' },
+    { id: 'usr_103', name: 'Dan Dawson' }, { id: 'usr_104', name: 'THE MSN' },
+    { id: 'usr_105', name: 'THE A.I.' }, { id: 'usr_106', name: 'THE SUPERCOMPUTER' }
+].map(u => ({ ...u, name: u.name.toUpperCase() }));
+
+const proUsers = ['THE MSN', 'THE A.I.', 'THE SUPERCOMPUTER'];
+
+userList.forEach(user => {
+    if (!proUsers.includes(user.name)) {
+        user.name = user.name.replace(/\b\w/g, l => l.toUpperCase()).replace(/\B[A-Z]/g, l => l.toLowerCase());
+    }
+});
+
 
 export const previousSeasonStandings: PreviousSeasonStanding[] = [
     { teamId: 'team_13', rank: 1, points: 91, goalDifference: 62 },
@@ -216,45 +233,138 @@ export const previousSeasonStandings: PreviousSeasonStanding[] = [
     { teamId: 'team_8', rank: 15, points: 40, goalDifference: -11 },
     { teamId: 'team_4', rank: 16, points: 39, goalDifference: -9 },
     { teamId: 'team_16', rank: 17, points: 32, goalDifference: -18 },
-    { teamId: 'team_11', rank: 18, points: 31, goalDifference: -13 }, // Relegated
-    { teamId: 'team_10', rank: 19, points: 28, goalDifference: -33 }, // Relegated
-    { teamId: 'team_17', rank: 20, points: 25, goalDifference: -37 }  // Relegated
+    { teamId: 'team_11', rank: 18, points: 31, goalDifference: -13 },
+    { teamId: 'team_10', rank: 19, points: 28, goalDifference: -33 },
+    { teamId: 'team_17', rank: 20, points: 25, goalDifference: -37 }
 ];
 
-// USER-PROVIDED PREDICTIONS
 const userPredictionsRaw: { [key: string]: string[] } = {
-  "usr_1": ["team_13", "team_1", "team_12", "team_6", "team_14", "team_2", "team_15", "team_18", "team_5", "team_19", "team_9", "team_7", "team_3", "team_20", "team_4", "team_8", "team_16", "team_11", "team_10", "team_17"],
-  "usr_2": ["team_13", "team_12", "team_1", "team_2", "team_18", "team_6", "team_15", "team_14", "team_5", "team_19", "team_9", "team_7", "team_20", "team_4", "team_8", "team_3", "team_16", "team_11", "team_10", "team_17"],
-  // ... (all 109 user predictions would be here) ...
-  "usr_3": ["team_1", "team_13", "team_12", "team_15", "team_18", "team_2", "team_14", "team_6", "team_19", "team_5", "team_7", "team_9", "team_20", "team_3", "team_8", "team_4", "team_16", "team_11", "team_10", "team_17"],
-  "usr_4": ["team_13", "team_1", "team_12", "team_18", "team_2", "team_15", "team_6", "team_14", "team_5", "team_19", "team_7", "team_9", "team_20", "team_3", "team_4", "team_8", "team_16", "team_11", "team_10", "team_17"],
-  "usr_5": ["team_13", "team_1", "team_12", "team_14", "team_2", "team_6", "team_18", "team_15", "team_5", "team_19", "team_9", "team_7", "team_20", "team_8", "team_3", "team_4", "team_16", "team_11", "team_10", "team_17"],
-  "usr_6": ["team_13", "team_1", "team_12", "team_14", "team_2", "team_18", "team_6", "team_15", "team_19", "team_5", "team_9", "team_7", "team_3", "team_20", "team_4", "team_8", "team_16", "team_11", "team_10", "team_17"],
-  "usr_7": ["team_13", "team_12", "team_1", "team_14", "team_2", "team_18", "team_15", "team_6", "team_5", "team_19", "team_9", "team_7", "team_20", "team_3", "team_4", "team_8", "team_16", "team_11", "team_10", "team_17"],
-  "usr_8": ["team_13", "team_1", "team_12", "team_14", "team_2", "team_18", "team_15", "team_6", "team_5", "team_19", "team_9", "team_7", "team_3", "team_20", "team_4", "team_8", "team_16", "team_11", "team_10", "team_17"],
-  "usr_9": ["team_1", "team_13", "team_12", "team_14", "team_2", "team_18", "team_15", "team_6", "team_5", "team_19", "team_9", "team_7", "team_3", "team_20", "team_4", "team_8", "team_16", "team_11", "team_10", "team_17"],
-  "usr_10": ["team_13", "team_1", "team_12", "team_14", "team_2", "team_18", "team_15", "team_6", "team_5", "team_19", "team_9", "team_7", "team_3", "team_20", "team_4", "team_8", "team_16", "team_11", "team_10", "team_17"],
-  // NOTE: This is a truncated list for brevity. A full implementation would include all 109 predictions.
-  // To ensure variety, let's create some dummy randomized predictions for the rest
+  "usr_1": ["Man Utd", "Liverpool", "Man City", "Arsenal", "Newcastle", "Chelsea", "Aston Villa", "Notts Forest", "Tottenham", "Bournemouth", "Brighton", "Fulham", "Brentford", "Leeds", "Crystal Palace", "West Ham", "Wolves", "Everton", "Burnley", "Sunderland"],
+  "usr_2": ["Liverpool", "Man City", "Arsenal", "Chelsea", "Aston Villa", "Newcastle", "Notts Forest", "Crystal Palace", "Brighton", "Man Utd", "Tottenham", "Bournemouth", "Brentford", "Fulham", "Everton", "Leeds", "Wolves", "West Ham", "Burnley", "Sunderland"],
+  "usr_3": ["Liverpool", "Arsenal", "Man City", "Chelsea", "Newcastle", "Man Utd", "Aston Villa", "Tottenham", "Brighton", "Bournemouth", "Notts Forest", "Everton", "Crystal Palace", "Fulham", "West Ham", "Brentford", "Wolves", "Leeds", "Burnley", "Sunderland"],
+  "usr_4": ["Liverpool", "Man City", "Chelsea", "Arsenal", "Aston Villa", "Newcastle", "Brighton", "Tottenham", "Notts Forest", "Fulham", "Man Utd", "Bournemouth", "Everton", "Crystal Palace", "Wolves", "West Ham", "Brentford", "Leeds", "Burnley", "Sunderland"],
+  "usr_5": ["Chelsea", "Man City", "Liverpool", "Arsenal", "Aston Villa", "Newcastle", "Tottenham", "Brighton", "Man Utd", "Fulham", "Bournemouth", "Brentford", "Leeds", "Everton", "Crystal Palace", "Wolves", "West Ham", "Notts Forest", "Burnley", "Sunderland"],
+  "usr_6": ["Chelsea", "Man City", "Liverpool", "Arsenal", "Newcastle", "Man Utd", "Everton", "Aston Villa", "Crystal Palace", "Brighton", "Notts Forest", "Leeds", "West Ham", "Sunderland", "Tottenham", "Wolves", "Bournemouth", "Fulham", "Brentford", "Burnley"],
+  "usr_7": ["Man City", "Liverpool", "Arsenal", "Chelsea", "Newcastle", "Aston Villa", "Tottenham", "Man Utd", "Bournemouth", "Notts Forest", "Fulham", "Brighton", "Wolves", "Crystal Palace", "West Ham", "Leeds", "Everton", "Brentford", "Sunderland", "Burnley"],
+  "usr_8": ["Liverpool", "Man City", "Arsenal", "Chelsea", "Aston Villa", "Man Utd", "Tottenham", "Newcastle", "Bournemouth", "Brighton", "Everton", "West Ham", "Fulham", "Crystal Palace", "Wolves", "Notts Forest", "Brentford", "Leeds", "Sunderland", "Burnley"],
+  "usr_9": ["Liverpool", "Man City", "Arsenal", "Chelsea", "Aston Villa", "Newcastle", "Tottenham", "Man Utd", "Notts Forest", "Everton", "Brighton", "Brentford", "West Ham", "Bournemouth", "Fulham", "Crystal Palace", "Wolves", "Burnley", "Leeds", "Sunderland"],
+  "usr_10": ["Man City", "Liverpool", "Arsenal", "Chelsea", "Tottenham", "Man Utd", "Aston Villa", "Newcastle", "West Ham", "Everton", "Brighton", "Wolves", "Brentford", "Fulham", "Crystal Palace", "Bournemouth", "Notts Forest", "Leeds", "Burnley", "Sunderland"],
+  "usr_11": ["Man City", "Liverpool", "Arsenal", "Chelsea", "Aston Villa", "Man Utd", "Tottenham", "Newcastle", "Everton", "Brighton", "Crystal Palace", "Fulham", "West Ham", "Brentford", "Bournemouth", "Notts Forest", "Sunderland", "Wolves", "Burnley", "Leeds"],
+  "usr_12": ["Man City", "Arsenal", "Liverpool", "Chelsea", "Aston Villa", "Newcastle", "Brentford", "Bournemouth", "Notts Forest", "Brighton", "Crystal Palace", "Everton", "Man Utd", "Tottenham", "Fulham", "West Ham", "Wolves", "Sunderland", "Burnley", "Leeds"],
+  "usr_13": ["Liverpool", "Man City", "Arsenal", "Newcastle", "Man Utd", "Chelsea", "Tottenham", "Everton", "Aston Villa", "West Ham", "Crystal Palace", "Brighton", "Fulham", "Brentford", "Notts Forest", "Wolves", "Bournemouth", "Sunderland", "Leeds", "Burnley"],
+  "usr_14": ["Liverpool", "Arsenal", "Newcastle", "Chelsea", "Man City", "Man Utd", "Tottenham", "Aston Villa", "Everton", "Bournemouth", "Brighton", "West Ham", "Fulham", "Crystal Palace", "Sunderland", "Wolves", "Brentford", "Notts Forest", "Leeds", "Burnley"],
+  "usr_15": ["Liverpool", "Chelsea", "Man City", "Arsenal", "Aston Villa", "Man Utd", "Newcastle", "Tottenham", "West Ham", "Brighton", "Notts Forest", "Everton", "Fulham", "Crystal Palace", "Wolves", "Bournemouth", "Sunderland", "Brentford", "Burnley", "Leeds"],
+  "usr_16": ["Man City", "Liverpool", "Arsenal", "Chelsea", "Man Utd", "Aston Villa", "Newcastle", "Tottenham", "Notts Forest", "Bournemouth", "Crystal Palace", "Everton", "Brighton", "West Ham", "Brentford", "Wolves", "Fulham", "Leeds", "Burnley", "Sunderland"],
+  "usr_17": ["Liverpool", "Man City", "Arsenal", "Chelsea", "Brighton", "Notts Forest", "Man Utd", "Tottenham", "Fulham", "Crystal Palace", "Everton", "Aston Villa", "West Ham", "Newcastle", "Leeds", "Wolves", "Bournemouth", "Brentford", "Sunderland", "Burnley"],
+  "usr_18": ["Liverpool", "Arsenal", "Man City", "Chelsea", "Newcastle", "Man Utd", "Aston Villa", "Tottenham", "Notts Forest", "Brighton", "Bournemouth", "Crystal Palace", "Everton", "Wolves", "Fulham", "West Ham", "Brentford", "Leeds", "Sunderland", "Burnley"],
+  "usr_19": ["Arsenal", "Liverpool", "Chelsea", "Man City", "Aston Villa", "Notts Forest", "Newcastle", "Brighton", "Bournemouth", "Tottenham", "Brentford", "Fulham", "Man Utd", "Everton", "West Ham", "Crystal Palace", "Wolves", "Leeds", "Sunderland", "Burnley"],
+  "usr_20": ["Liverpool", "Arsenal", "Chelsea", "Man City", "Aston Villa", "Man Utd", "Newcastle", "Crystal Palace", "Notts Forest", "Brighton", "Bournemouth", "Everton", "Tottenham", "Brentford", "Fulham", "West Ham", "Wolves", "Leeds", "Burnley", "Sunderland"],
+  "usr_21": ["Liverpool", "Arsenal", "Man City", "Man Utd", "Chelsea", "Aston Villa", "Tottenham", "Newcastle", "Crystal Palace", "Brighton", "Notts Forest", "Bournemouth", "Brentford", "Everton", "West Ham", "Fulham", "Wolves", "Leeds", "Burnley", "Sunderland"],
+  "usr_22": ["Liverpool", "Man City", "Chelsea", "Arsenal", "Aston Villa", "Bournemouth", "Man Utd", "Newcastle", "Crystal Palace", "Brighton", "Notts Forest", "Fulham", "Brentford", "West Ham", "Everton", "Tottenham", "Wolves", "Burnley", "Leeds", "Sunderland"],
+  "usr_23": ["Arsenal", "Man City", "Liverpool", "Newcastle", "Chelsea", "Notts Forest", "Man Utd", "Tottenham", "Wolves", "Fulham", "West Ham", "Crystal Palace", "Brentford", "Brighton", "Everton", "Bournemouth", "Leeds", "Aston Villa", "Sunderland", "Burnley"],
+  "usr_24": ["Liverpool", "Man City", "Arsenal", "Chelsea", "Newcastle", "Everton", "Bournemouth", "Aston Villa", "Brighton", "Notts Forest", "Crystal Palace", "Fulham", "Man Utd", "West Ham", "Wolves", "Tottenham", "Leeds", "Brentford", "Sunderland", "Burnley"],
+  "usr_25": ["Arsenal", "Man City", "Liverpool", "Chelsea", "Man Utd", "Aston Villa", "Crystal Palace", "Newcastle", "Tottenham", "Brighton", "Everton", "Bournemouth", "Notts Forest", "Brentford", "Fulham", "West Ham", "Wolves", "Leeds", "Burnley", "Sunderland"],
+  "usr_26": ["Chelsea", "Man City", "Liverpool", "Arsenal", "Aston Villa", "Newcastle", "Everton", "Bournemouth", "Man Utd", "Crystal Palace", "Brighton", "Tottenham", "Notts Forest", "West Ham", "Fulham", "Wolves", "Leeds", "Brentford", "Sunderland", "Burnley"],
+  "usr_27": ["Chelsea", "Liverpool", "Man City", "Arsenal", "Aston Villa", "Newcastle", "Tottenham", "Man Utd", "Notts Forest", "Brighton", "Brentford", "Leeds", "Everton", "Bournemouth", "Crystal Palace", "Fulham", "Burnley", "West Ham", "Sunderland", "Wolves"],
+  "usr_28": ["Liverpool", "Chelsea", "Arsenal", "Notts Forest", "Man City", "Bournemouth", "Newcastle", "Tottenham", "Wolves", "Aston Villa", "Brighton", "Everton", "Crystal Palace", "Man Utd", "West Ham", "Fulham", "Leeds", "Burnley", "Brentford", "Sunderland"],
+  "usr_29": ["Liverpool", "Arsenal", "Man City", "Chelsea", "Aston Villa", "Newcastle", "Tottenham", "Man Utd", "Brighton", "Notts Forest", "Everton", "Bournemouth", "Crystal Palace", "Fulham", "West Ham", "Brentford", "Wolves", "Leeds", "Sunderland", "Burnley"],
+  "usr_30": ["Man City", "Arsenal", "Liverpool", "Chelsea", "Newcastle", "Aston Villa", "Tottenham", "Man Utd", "Crystal Palace", "Fulham", "Notts Forest", "Brighton", "Bournemouth", "Everton", "West Ham", "Leeds", "Wolves", "Brentford", "Burnley", "Sunderland"],
+  "usr_31": ["Liverpool", "Man City", "Arsenal", "Chelsea", "Tottenham", "Aston Villa", "Newcastle", "Brighton", "Man Utd", "Crystal Palace", "Everton", "West Ham", "Notts Forest", "Bournemouth", "Wolves", "Fulham", "Leeds", "Brentford", "Burnley", "Sunderland"],
+  "usr_32": ["Liverpool", "Man City", "Arsenal", "Chelsea", "Aston Villa", "Newcastle", "Man Utd", "Tottenham", "Notts Forest", "Brighton", "Everton", "Bournemouth", "Fulham", "Brentford", "West Ham", "Crystal Palace", "Leeds", "Wolves", "Burnley", "Sunderland"],
+  "usr_33": ["Man City", "Arsenal", "Chelsea", "Liverpool", "Man Utd", "Aston Villa", "Tottenham", "Brighton", "Newcastle", "Bournemouth", "Everton", "Fulham", "Crystal Palace", "West Ham", "Notts Forest", "Brentford", "Sunderland", "Wolves", "Leeds", "Burnley"],
+  "usr_34": ["Man City", "Liverpool", "Chelsea", "Arsenal", "Aston Villa", "Tottenham", "Man Utd", "Brighton", "Newcastle", "Crystal Palace", "Bournemouth", "Notts Forest", "Fulham", "Everton", "West Ham", "Brentford", "Leeds", "Sunderland", "Wolves", "Burnley"],
+  "usr_35": ["Arsenal", "Liverpool", "Aston Villa", "Man City", "Chelsea", "Man Utd", "Tottenham", "Brighton", "Newcastle", "Bournemouth", "Notts Forest", "Everton", "Fulham", "Crystal Palace", "Wolves", "Sunderland", "Leeds", "West Ham", "Brentford", "Burnley"],
+  "usr_36": ["Liverpool", "Man City", "Arsenal", "Chelsea", "Man Utd", "Aston Villa", "Newcastle", "Brighton", "Tottenham", "Everton", "Fulham", "Bournemouth", "West Ham", "Crystal Palace", "Notts Forest", "Brentford", "Wolves", "Leeds", "Burnley", "Sunderland"],
+  "usr_37": ["Liverpool", "Man City", "Chelsea", "Arsenal", "Man Utd", "Aston Villa", "Tottenham", "Everton", "Newcastle", "Crystal Palace", "Brighton", "Bournemouth", "Notts Forest", "Fulham", "West Ham", "Brentford", "Wolves", "Burnley", "Leeds", "Sunderland"],
+  "usr_38": ["Liverpool", "Arsenal", "Man City", "Chelsea", "Aston Villa", "Newcastle", "Man Utd", "Brighton", "Tottenham", "Notts Forest", "Crystal Palace", "Everton", "Bournemouth", "Fulham", "West Ham", "Brentford", "Wolves", "Burnley", "Leeds", "Sunderland"],
+  "usr_39": ["Liverpool", "Arsenal", "Man City", "Chelsea", "Man Utd", "Aston Villa", "Tottenham", "Newcastle", "Notts Forest", "Brighton", "Fulham", "Bournemouth", "Everton", "Crystal Palace", "Brentford", "West Ham", "Leeds", "Wolves", "Burnley", "Sunderland"],
+  "usr_40": ["Liverpool", "Man City", "Man Utd", "Chelsea", "Tottenham", "Arsenal", "Aston Villa", "Everton", "Fulham", "Crystal Palace", "Newcastle", "Notts Forest", "West Ham", "Brighton", "Bournemouth", "Sunderland", "Wolves", "Burnley", "Brentford", "Leeds"],
+  "usr_41": ["Man City", "Chelsea", "Liverpool", "Arsenal", "Tottenham", "Aston Villa", "Man Utd", "Newcastle", "Everton", "Brighton", "Notts Forest", "Crystal Palace", "West Ham", "Fulham", "Wolves", "Leeds", "Brentford", "Bournemouth", "Sunderland", "Burnley"],
+  "usr_42": ["Liverpool", "Man City", "Chelsea", "Arsenal", "Aston Villa", "Newcastle", "Man Utd", "Tottenham", "Crystal Palace", "Brighton", "Bournemouth", "Notts Forest", "Fulham", "West Ham", "Everton", "Wolves", "Leeds", "Sunderland", "Brentford", "Burnley"],
+  "usr_43": ["Liverpool", "Arsenal", "Man City", "Chelsea", "Newcastle", "Tottenham", "Aston Villa", "Brighton", "Man Utd", "Crystal Palace", "Notts Forest", "Bournemouth", "Everton", "Wolves", "Fulham", "West Ham", "Brentford", "Leeds", "Sunderland", "Burnley"],
+  "usr_44": ["Liverpool", "Chelsea", "Arsenal", "Man City", "Tottenham", "Man Utd", "Newcastle", "Aston Villa", "Brighton", "Notts Forest", "Crystal Palace", "Everton", "West Ham", "Bournemouth", "Fulham", "Brentford", "Wolves", "Leeds", "Sunderland", "Burnley"],
+  "usr_45": ["Man City", "Arsenal", "Man Utd", "Newcastle", "Liverpool", "Chelsea", "Tottenham", "Brighton", "Aston Villa", "West Ham", "Brentford", "Crystal Palace", "Fulham", "Wolves", "Notts Forest", "Everton", "Bournemouth", "Sunderland", "Burnley", "Leeds"],
+  "usr_46": ["Man City", "Arsenal", "Liverpool", "Chelsea", "Newcastle", "Man Utd", "Brighton", "Aston Villa", "Tottenham", "Notts Forest", "Fulham", "Crystal Palace", "Everton", "Bournemouth", "Burnley", "Brentford", "Leeds", "Wolves", "West Ham", "Sunderland"],
+  "usr_47": ["Chelsea", "Liverpool", "Man City", "Man Utd", "Arsenal", "Newcastle", "Crystal Palace", "Brighton", "Aston Villa", "Notts Forest", "Tottenham", "Everton", "Wolves", "Bournemouth", "Fulham", "Leeds", "West Ham", "Burnley", "Brentford", "Sunderland"],
+  "usr_48": ["Chelsea", "Liverpool", "Man City", "Arsenal", "Newcastle", "Man Utd", "Aston Villa", "Tottenham", "Brighton", "Fulham", "Crystal Palace", "Notts Forest", "Wolves", "Leeds", "Bournemouth", "Brentford", "Everton", "Burnley", "West Ham", "Sunderland"],
+  "usr_49": ["Liverpool", "Chelsea", "Man City", "Arsenal", "Newcastle", "Man Utd", "Crystal Palace", "Aston Villa", "Brighton", "Fulham", "Tottenham", "Notts Forest", "Wolves", "Everton", "Bournemouth", "Brentford", "Leeds", "Burnley", "West Ham", "Sunderland"],
+  "usr_50": ["Chelsea", "Liverpool", "Man City", "Arsenal", "Tottenham", "Newcastle", "Aston Villa", "Notts Forest", "Crystal Palace", "Man Utd", "Bournemouth", "Brighton", "West Ham", "Fulham", "Everton", "Wolves", "Sunderland", "Brentford", "Leeds", "Burnley"],
+  "usr_51": ["Liverpool", "Chelsea", "Man City", "Arsenal", "Aston Villa", "Newcastle", "Notts Forest", "Brighton", "Bournemouth", "Man Utd", "Everton", "Brentford", "West Ham", "Crystal Palace", "Fulham", "Tottenham", "Wolves", "Burnley", "Leeds", "Sunderland"],
+  "usr_52": ["Man City", "Chelsea", "Liverpool", "Arsenal", "Man Utd", "Aston Villa", "Newcastle", "Everton", "Tottenham", "Crystal Palace", "Brighton", "West Ham", "Fulham", "Notts Forest", "Sunderland", "Bournemouth", "Burnley", "Leeds", "Brentford", "Wolves"],
+  "usr_53": ["Arsenal", "Liverpool", "Man City", "Chelsea", "Aston Villa", "Newcastle", "Tottenham", "Man Utd", "Everton", "Notts Forest", "Brighton", "Brentford", "West Ham", "Fulham", "Leeds", "Crystal Palace", "Wolves", "Bournemouth", "Sunderland", "Burnley"],
+  "usr_54": ["Liverpool", "Man City", "Chelsea", "Tottenham", "Newcastle", "Man Utd", "Aston Villa", "Notts Forest", "Arsenal", "Everton", "Crystal Palace", "Brighton", "Fulham", "Bournemouth", "Leeds", "Sunderland", "West Ham", "Brentford", "Wolves", "Burnley"],
+  "usr_55": ["Chelsea", "Liverpool", "Man City", "Arsenal", "Newcastle", "Aston Villa", "Notts Forest", "Everton", "Man Utd", "Crystal Palace", "Brighton", "Bournemouth", "Fulham", "Brentford", "Tottenham", "West Ham", "Leeds", "Wolves", "Burnley", "Sunderland"],
+  "usr_56": ["Liverpool", "Man City", "Chelsea", "Arsenal", "Newcastle", "Tottenham", "Man Utd", "Brighton", "Aston Villa", "Bournemouth", "Brentford", "Everton", "Notts Forest", "West Ham", "Fulham", "Crystal Palace", "Leeds", "Sunderland", "Wolves", "Burnley"],
+  "usr_57": ["Liverpool", "Man City", "Arsenal", "Chelsea", "Notts Forest", "Man Utd", "Brighton", "Aston Villa", "Newcastle", "Crystal Palace", "Everton", "Tottenham", "Fulham", "Bournemouth", "West Ham", "Brentford", "Sunderland", "Wolves", "Leeds", "Burnley"],
+  "usr_58": ["Arsenal", "Liverpool", "Man City", "Man Utd", "Chelsea", "Aston Villa", "Newcastle", "Brighton", "Notts Forest", "Tottenham", "Fulham", "Crystal Palace", "Everton", "Wolves", "Bournemouth", "West Ham", "Leeds", "Burnley", "Brentford", "Sunderland"],
+  "usr_59": ["Arsenal", "Chelsea", "Man City", "Liverpool", "Man Utd", "Aston Villa", "Tottenham", "Notts Forest", "Crystal Palace", "Newcastle", "Bournemouth", "Brighton", "Fulham", "Everton", "West Ham", "Wolves", "Sunderland", "Leeds", "Brentford", "Burnley"],
+  "usr_60": ["Liverpool", "Arsenal", "Chelsea", "Man City", "Newcastle", "Tottenham", "Aston Villa", "Man Utd", "Bournemouth", "Brighton", "Notts Forest", "Crystal Palace", "West Ham", "Brentford", "Fulham", "Wolves", "Everton", "Leeds", "Burnley", "Sunderland"],
+  "usr_61": ["Liverpool", "Arsenal", "Man City", "Chelsea", "Aston Villa", "Crystal Palace", "Newcastle", "Brighton", "Bournemouth", "Notts Forest", "Tottenham", "Man Utd", "Brentford", "Fulham", "Everton", "West Ham", "Wolves", "Burnley", "Leeds", "Sunderland"],
+  "usr_62": ["Liverpool", "Man City", "Arsenal", "Chelsea", "Tottenham", "Man Utd", "Newcastle", "Aston Villa", "Everton", "Brighton", "Notts Forest", "Brentford", "Bournemouth", "Crystal Palace", "West Ham", "Fulham", "Wolves", "Leeds", "Burnley", "Sunderland"],
+  "usr_63": ["Liverpool", "Arsenal", "Man City", "Chelsea", "Aston Villa", "Notts Forest", "Crystal Palace", "Newcastle", "Brighton", "Bournemouth", "Tottenham", "Man Utd", "Brentford", "West Ham", "Everton", "Fulham", "Leeds", "Wolves", "Burnley", "Sunderland"],
+  "usr_64": ["Liverpool", "Man City", "Chelsea", "Arsenal", "Aston Villa", "Tottenham", "Man Utd", "Newcastle", "Brighton", "Notts Forest", "Crystal Palace", "Everton", "Bournemouth", "West Ham", "Brentford", "Fulham", "Sunderland", "Leeds", "Wolves", "Burnley"],
+  "usr_65": ["Chelsea", "Liverpool", "Man City", "Arsenal", "Brighton", "Aston Villa", "Man Utd", "Newcastle", "Notts Forest", "Tottenham", "Everton", "Leeds", "Crystal Palace", "West Ham", "Fulham", "Sunderland", "Wolves", "Bournemouth", "Brentford", "Burnley"],
+  "usr_66": ["Liverpool", "Chelsea", "Arsenal", "Man City", "Newcastle", "Aston Villa", "Tottenham", "Man Utd", "Brighton", "Bournemouth", "Notts Forest", "Fulham", "Everton", "Brentford", "Crystal Palace", "West Ham", "Sunderland", "Wolves", "Leeds", "Burnley"],
+  "usr_67": ["Liverpool", "Arsenal", "Chelsea", "Man City", "Newcastle", "Aston Villa", "Tottenham", "Man Utd", "Brighton", "Crystal Palace", "Bournemouth", "Fulham", "Everton", "Wolves", "Notts Forest", "Brentford", "West Ham", "Leeds", "Burnley", "Sunderland"],
+  "usr_68": ["Liverpool", "Arsenal", "Man City", "Chelsea", "Man Utd", "Newcastle", "Aston Villa", "Everton", "Tottenham", "Brighton", "Notts Forest", "Crystal Palace", "Bournemouth", "Fulham", "West Ham", "Wolves", "Leeds", "Brentford", "Burnley", "Sunderland"],
+  "usr_69": ["Arsenal", "Man City", "Liverpool", "Man Utd", "Chelsea", "Aston Villa", "Tottenham", "Newcastle", "Notts Forest", "Brighton", "Bournemouth", "Everton", "Crystal Palace", "Brentford", "Fulham", "West Ham", "Wolves", "Leeds", "Burnley", "Sunderland"],
+  "usr_70": ["Liverpool", "Arsenal", "Man City", "Newcastle", "Chelsea", "Aston Villa", "Brighton", "Crystal Palace", "Brentford", "Notts Forest", "Man Utd", "Tottenham", "Bournemouth", "Everton", "Fulham", "West Ham", "Leeds", "Wolves", "Burnley", "Sunderland"],
+  "usr_71": ["Man City", "Chelsea", "Liverpool", "Arsenal", "Aston Villa", "Newcastle", "Tottenham", "Man Utd", "Notts Forest", "West Ham", "Fulham", "Brighton", "Everton", "Crystal Palace", "Bournemouth", "Leeds", "Brentford", "Wolves", "Sunderland", "Burnley"],
+  "usr_72": ["Arsenal", "Liverpool", "Man City", "Chelsea", "Aston Villa", "Newcastle", "Man Utd", "Brighton", "Tottenham", "Bournemouth", "Notts Forest", "Wolves", "Fulham", "Crystal Palace", "Everton", "Brentford", "Sunderland", "West Ham", "Burnley", "Leeds"],
+  "usr_73": ["Liverpool", "Man City", "Chelsea", "Arsenal", "Newcastle", "Man Utd", "Aston Villa", "Notts Forest", "Fulham", "Tottenham", "Everton", "Crystal Palace", "Brighton", "Bournemouth", "West Ham", "Brentford", "Wolves", "Leeds", "Burnley", "Sunderland"],
+  "usr_74": ["Liverpool", "Man City", "Chelsea", "Arsenal", "Aston Villa", "Man Utd", "Newcastle", "Notts Forest", "Crystal Palace", "Everton", "Tottenham", "Bournemouth", "Fulham", "Brighton", "Wolves", "Leeds", "West Ham", "Brentford", "Sunderland", "Burnley"],
+  "usr_75": ["Liverpool", "Man City", "Chelsea", "Arsenal", "Tottenham", "Man Utd", "Newcastle", "Aston Villa", "Leeds", "Crystal Palace", "Brighton", "Wolves", "Everton", "Notts Forest", "Sunderland", "West Ham", "Fulham", "Brentford", "Bournemouth", "Burnley"],
+  "usr_76": ["Liverpool", "Arsenal", "Man City", "Chelsea", "Newcastle", "Aston Villa", "Crystal Palace", "Notts Forest", "Brighton", "Brentford", "Bournemouth", "Man Utd", "Fulham", "Everton", "Tottenham", "West Ham", "Burnley", "Wolves", "Leeds", "Sunderland"],
+  "usr_77": ["Liverpool", "Arsenal", "Chelsea", "Man City", "Aston Villa", "Newcastle", "Crystal Palace", "Brighton", "Man Utd", "Tottenham", "Everton", "Sunderland", "Notts Forest", "Brentford", "West Ham", "Leeds", "Fulham", "Wolves", "Bournemouth", "Burnley"],
+  "usr_78": ["Man City", "Liverpool", "Chelsea", "Arsenal", "Notts Forest", "Man Utd", "Tottenham", "Brighton", "Newcastle", "Bournemouth", "Aston Villa", "Everton", "Fulham", "Crystal Palace", "Brentford", "West Ham", "Burnley", "Wolves", "Leeds", "Sunderland"],
+  "usr_79": ["Liverpool", "Chelsea", "Man City", "Arsenal", "Man Utd", "Aston Villa", "Newcastle", "Tottenham", "Everton", "Crystal Palace", "Notts Forest", "Bournemouth", "Brighton", "Brentford", "West Ham", "Fulham", "Burnley", "Leeds", "Wolves", "Sunderland"],
+  "usr_80": ["Liverpool", "Arsenal", "Man City", "Chelsea", "Aston Villa", "Newcastle", "Tottenham", "Man Utd", "Brighton", "Crystal Palace", "Notts Forest", "Everton", "Wolves", "West Ham", "Fulham", "Bournemouth", "Brentford", "Leeds", "Sunderland", "Burnley"],
+  "usr_81": ["Arsenal", "Liverpool", "Chelsea", "Man City", "Man Utd", "Newcastle", "Aston Villa", "Tottenham", "Brighton", "Notts Forest", "Crystal Palace", "West Ham", "Wolves", "Everton", "Brentford", "Sunderland", "Fulham", "Leeds", "Bournemouth", "Burnley"],
+  "usr_82": ["Liverpool", "Arsenal", "Man City", "Chelsea", "Aston Villa", "Man Utd", "Tottenham", "Newcastle", "Brighton", "Notts Forest", "Crystal Palace", "Everton", "Bournemouth", "Fulham", "West Ham", "Wolves", "Leeds", "Burnley", "Sunderland", "Brentford"],
+  "usr_83": ["Arsenal", "Liverpool", "Crystal Palace", "Chelsea", "Man City", "Aston Villa", "Newcastle", "Brighton", "Man Utd", "Notts Forest", "Tottenham", "Everton", "Bournemouth", "Brentford", "Wolves", "Fulham", "Leeds", "West Ham", "Sunderland", "Burnley"],
+  "usr_84": ["Liverpool", "Arsenal", "Man City", "Chelsea", "Newcastle", "Aston Villa", "Brighton", "West Ham", "Man Utd", "Tottenham", "Crystal Palace", "Wolves", "Fulham", "Brentford", "Bournemouth", "Notts Forest", "Everton", "Leeds", "Burnley", "Sunderland"],
+  "usr_85": ["Liverpool", "Man City", "Chelsea", "Arsenal", "Newcastle", "Tottenham", "Man Utd", "Aston Villa", "Crystal Palace", "Brighton", "Notts Forest", "Bournemouth", "Everton", "Fulham", "West Ham", "Leeds", "Wolves", "Brentford", "Sunderland", "Burnley"],
+  "usr_86": ["Arsenal", "Liverpool", "Man City", "Chelsea", "Aston Villa", "Newcastle", "Notts Forest", "Everton", "Bournemouth", "Brighton", "Crystal Palace", "Tottenham", "Fulham", "Man Utd", "Brentford", "West Ham", "Wolves", "Leeds", "Sunderland", "Burnley"],
+  "usr_87": ["Liverpool", "Man City", "Arsenal", "Chelsea", "Newcastle", "Aston Villa", "Man Utd", "Brighton", "Tottenham", "Crystal Palace", "Notts Forest", "Bournemouth", "Fulham", "Everton", "West Ham", "Wolves", "Sunderland", "Brentford", "Leeds", "Burnley"],
+  "usr_88": ["Liverpool", "Chelsea", "Arsenal", "Man City", "Man Utd", "Tottenham", "Aston Villa", "Crystal Palace", "Newcastle", "Everton", "West Ham", "Fulham", "Brighton", "Brentford", "Notts Forest", "Bournemouth", "Leeds", "Burnley", "Wolves", "Sunderland"],
+  "usr_89": ["Liverpool", "Arsenal", "Chelsea", "Man City", "Newcastle", "Aston Villa", "Man Utd", "Brighton", "Crystal Palace", "Tottenham", "Notts Forest", "Bournemouth", "Fulham", "Brentford", "Everton", "West Ham", "Wolves", "Sunderland", "Leeds", "Burnley"],
+  "usr_90": ["Man Utd", "Liverpool", "Arsenal", "Man City", "Aston Villa", "Chelsea", "Tottenham", "Burnley", "Bournemouth", "Brighton", "Notts Forest", "Fulham", "Newcastle", "Brentford", "Crystal Palace", "Sunderland", "Leeds", "Everton", "Wolves", "West Ham"],
+  "usr_91": ["Man City", "Arsenal", "Liverpool", "Aston Villa", "Chelsea", "Crystal Palace", "Tottenham", "Man Utd", "Newcastle", "Fulham", "Leeds", "Bournemouth", "Burnley", "Wolves", "Notts Forest", "Brentford", "Brighton", "Everton", "Sunderland", "West Ham"],
+  "usr_92": ["Liverpool", "Arsenal", "Man City", "Chelsea", "Aston Villa", "Newcastle", "Tottenham", "Man Utd", "Brighton", "Crystal Palace", "Notts Forest", "Fulham", "Brentford", "West Ham", "Bournemouth", "Everton", "Wolves", "Leeds", "Sunderland", "Burnley"],
+  "usr_93": ["Liverpool", "Arsenal", "Man City", "Chelsea", "Aston Villa", "Tottenham", "Newcastle", "Brighton", "Man Utd", "Notts Forest", "Crystal Palace", "Brentford", "Bournemouth", "Everton", "Fulham", "West Ham", "Wolves", "Burnley", "Leeds", "Sunderland"],
+  "usr_94": ["Liverpool", "Man City", "Chelsea", "Arsenal", "Aston Villa", "Man Utd", "Newcastle", "Tottenham", "Brighton", "Everton", "Bournemouth", "Notts Forest", "Crystal Palace", "Fulham", "West Ham", "Leeds", "Brentford", "Burnley", "Wolves", "Sunderland"],
+  "usr_95": ["Liverpool", "Man City", "Chelsea", "Arsenal", "Newcastle", "Man Utd", "Aston Villa", "Tottenham", "Brighton", "Crystal Palace", "Bournemouth", "West Ham", "Fulham", "Everton", "Notts Forest", "Wolves", "Burnley", "Leeds", "Brentford", "Sunderland"],
+  "usr_96": ["Arsenal", "Liverpool", "Man City", "Chelsea", "Aston Villa", "Tottenham", "Man Utd", "Crystal Palace", "Newcastle", "Notts Forest", "Everton", "Brighton", "West Ham", "Fulham", "Bournemouth", "Brentford", "Leeds", "Sunderland", "Wolves", "Burnley"],
+  "usr_97": ["Arsenal", "Liverpool", "Chelsea", "Man City", "Aston Villa", "Tottenham", "Notts Forest", "Crystal Palace", "Man Utd", "Brighton", "Everton", "Brentford", "Newcastle", "West Ham", "Leeds", "Wolves", "Fulham", "Sunderland", "Burnley", "Bournemouth"],
+  "usr_98": ["Arsenal", "Chelsea", "Liverpool", "Man City", "Tottenham", "Man Utd", "Crystal Palace", "Aston Villa", "Everton", "Newcastle", "Brighton", "Notts Forest", "West Ham", "Fulham", "Bournemouth", "Brentford", "Leeds", "Wolves", "Burnley", "Sunderland"],
+  "usr_99": ["Arsenal", "Liverpool", "Man City", "Chelsea", "Man Utd", "Newcastle", "Notts Forest", "Aston Villa", "Bournemouth", "Tottenham", "Brighton", "Brentford", "Crystal Palace", "Leeds", "West Ham", "Everton", "Fulham", "Wolves", "Burnley", "Sunderland"],
+  "usr_100": ["Arsenal", "Man City", "Liverpool", "Chelsea", "Man Utd", "Fulham", "Notts Forest", "Aston Villa", "Newcastle", "Leeds", "Crystal Palace", "Tottenham", "Bournemouth", "Everton", "Sunderland", "Brighton", "West Ham", "Brentford", "Wolves", "Burnley"],
+  "usr_101": ["Liverpool", "Arsenal", "Man City", "Chelsea", "Newcastle", "Man Utd", "Aston Villa", "Tottenham", "West Ham", "Everton", "Brighton", "Wolves", "Brentford", "Fulham", "Crystal Palace", "Bournemouth", "Notts Forest", "Leeds", "Sunderland", "Burnley"],
+  "usr_102": ["Man Utd", "Liverpool", "Arsenal", "Man City", "Aston Villa", "Chelsea", "Tottenham", "Newcastle", "Crystal Palace", "Brighton", "Everton", "Leeds", "Fulham", "Sunderland", "Bournemouth", "West Ham", "Notts Forest", "Brentford", "Wolves", "Burnley"],
+  "usr_103": ["Man City", "Liverpool", "Arsenal", "Chelsea", "Tottenham", "Aston Villa", "Newcastle", "Man Utd", "Notts Forest", "Crystal Palace", "Everton", "West Ham", "Bournemouth", "Brighton", "Wolves", "Fulham", "Leeds", "Brentford", "Sunderland", "Burnley"],
+  "usr_104": ["Arsenal", "Man City", "Liverpool", "Chelsea", "Aston Villa", "Newcastle", "Tottenham", "Notts Forest", "Crystal Palace", "Everton", "Brighton", "Man Utd", "West Ham", "Brentford", "Bournemouth", "Fulham", "Leeds", "Wolves", "Burnley", "Sunderland"],
+  "usr_105": ["Liverpool", "Arsenal", "Man City", "Newcastle", "Chelsea", "Aston Villa", "Notts Forest", "Tottenham", "Brighton", "Fulham", "Man Utd", "Everton", "West Ham", "Bournemouth", "Brentford", "Leeds", "Crystal Palace", "Wolves", "Burnley", "Sunderland"],
+  "usr_106": ["Man City", "Arsenal", "Liverpool", "Chelsea", "Man Utd", "Aston Villa", "Tottenham", "Newcastle", "West Ham", "Everton", "Brighton", "Wolves", "Brentford", "Fulham", "Crystal Palace", "Bournemouth", "Notts Forest", "Burnley", "Sunderland", "Leeds"]
 };
 
-function shuffleArray(array: any[]) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
+
+const userPredictionTeamIds: { [key: string]: string[] } = {};
+for (const userId in userPredictionsRaw) {
+    userPredictionTeamIds[userId] = userPredictionsRaw[userId].map(teamName => {
+        const normalizedName = teamName.toLowerCase().replace(/\s/g, '');
+        for (const key in teamNameMapping) {
+            if (key.toLowerCase().replace(/\s/g, '') === normalizedName) {
+                return teamNameMapping[key];
+            }
+        }
+        // Fallback for names that match directly in the teams list if not in mapping
+        const team = teams.find(t => t.name.toLowerCase().replace(/\s/g, '') === normalizedName);
+        return team ? team.id : 'unknown';
+    }).filter(id => id !== 'unknown');
 }
 
-const teamIds = teams.map(t => t.id);
-userList.forEach(user => {
-    if (!userPredictionsRaw[user.id]) {
-        userPredictionsRaw[user.id] = shuffleArray([...teamIds]);
-    }
-});
 
-
-export const fullPredictions: Prediction[] = Object.entries(userPredictionsRaw).map(([userId, rankings]) => ({
+export const fullPredictions: Prediction[] = Object.entries(userPredictionTeamIds).map(([userId, rankings]) => ({
     userId,
     rankings,
 }));
@@ -521,7 +631,9 @@ function sortStandings(stats: Map<string, TeamStats>): CurrentStanding[] {
             if (a.points !== b.points) return b.points - a.points;
             if (a.goalDifference !== b.goalDifference) return b.goalDifference - a.goalDifference;
             if (a.goalsFor !== b.goalsFor) return b.goalsFor - a.goalsFor;
-            return 0; // Or sort by name if needed for tie-breaking
+            const teamA = teams.find(t => t.id === a.teamId)?.name || '';
+            const teamB = teams.find(t => t.id === b.teamId)?.name || '';
+            return teamA.localeCompare(teamB);
         })
         .map(([teamId, stat], index) => ({
             teamId,
@@ -605,23 +717,26 @@ export const fullUsers: User[] = userList.map((user, i) => {
     return {
         id: user.id,
         name: user.name,
-        avatar: `${(i % 50) + 1}`,
+        avatar: `${(i % 49) + 1}`,
         score: week18.score,
         rank: week18.rank,
         previousRank: week17.rank,
         previousScore: week17.score,
-        rankChange: week17.rank - week18.rank,
+        rankChange: week17.rank > 0 && week18.rank > 0 ? week17.rank - week18.rank : 0,
         scoreChange: week18.score - week17.score,
         maxRank: allRanks.length > 0 ? Math.min(...allRanks) : 0,
         minRank: allRanks.length > 0 ? Math.max(...allRanks) : 0,
         maxScore: allScores.length > 0 ? Math.max(...allScores) : 0,
         minScore: allScores.length > 0 ? Math.min(...allScores) : 0,
-        isPro: ['BBC', 'SKY', 'OPTA'].includes(user.name),
+        isPro: proUsers.includes(user.name),
         email: `${user.name.toLowerCase().replace(/ /g, '.')}@example.com`,
         joinDate: new Date(2024, 7, 1).toISOString()
     };
-}).sort((a, b) => a.rank - b.rank);
-
+}).sort((a, b) => {
+    if (a.rank === 0) return 1;
+    if (b.rank === 0) return -1;
+    return a.rank - b.rank;
+});
 
 export const teamRecentResults: TeamRecentResult[] = teams.map(team => {
     const results: ('W' | 'D' | 'L' | '-')[] = [];
@@ -662,8 +777,6 @@ export const seasonMonths: SeasonMonth[] = [
 
 export const monthlyMimoM: MonthlyMimoM[] = [
     // This would be calculated by a backend process based on rank changes.
-    // Example:
-    // { id: 'mimo_1', month: 'August', year: 2025, userId: 'usr_50', type: 'winner' },
 ];
 
 
