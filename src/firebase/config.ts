@@ -3,10 +3,10 @@
 // This is a public configuration and is safe to be exposed to the client.
 
 export const firebaseConfig = {
-  apiKey: "API_KEY",
-  authDomain: "AUTH_DOMAIN",
+  apiKey: "AIzaSyAZLJE-FLo3n1p29zYTt93i5aC9a-w499A",
+  authDomain: "prempred-43933.firebaseapp.com",
   projectId: "prempred-43933",
-  storageBucket: "STORAGE_BUCKET",
-  messagingSenderId: "MESSAGING_SENDER_ID",
-  appId: "APP_ID",
+  storageBucket: "prempred-43933.appspot.com",
+  messagingSenderId: "54228994464",
+  appId: "1:54228994464:web:0b005933555f269a83858c",
 };
