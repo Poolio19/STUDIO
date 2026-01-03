@@ -6,7 +6,7 @@ const appInstances = new Map<string, admin.app.App>();
 
 // This is the Google Cloud Project that Firebase Studio has provisioned for your backend.
 // It is used by the Admin SDK to access your project's resources.
-const TARGET_PROJECT_ID = 'studio-2138583336-cec5d';
+const TARGET_PROJECT_ID = 'prem-pred-gmail';
 
 /**
  * Initializes and returns a Firebase Admin App instance.

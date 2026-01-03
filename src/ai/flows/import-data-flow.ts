@@ -26,7 +26,7 @@ import { z } from 'zod';
 import { getAdminAuth, getAdminFirestore } from '@/ai/firebase-admin';
 
 // This is the project ID that Firebase Studio uses for your backend.
-const TARGET_PROJECT_ID = 'studio-2138583336-cec5d';
+const TARGET_PROJECT_ID = 'prem-pred-gmail';
 
 async function batchWrite(
   db: FirebaseFirestore.Firestore,
