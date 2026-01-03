@@ -88,6 +88,7 @@ export default function PredictPage() {
   React.useEffect(() => {
     if (sortedTeamsForPrediction.length > 0 && user && firestore) {
       const fetchPrediction = async () => {
+        if (isUserLoading) return; // Don't fetch if auth is still loading
         const predictionRef = doc(firestore, 'predictions', user.uid);
         const predictionSnap = await getDoc(predictionRef);
 
@@ -106,7 +107,7 @@ export default function PredictPage() {
       };
       fetchPrediction();
     }
-  }, [sortedTeamsForPrediction, user, firestore, form]);
+  }, [sortedTeamsForPrediction, user, firestore, form, isUserLoading]);
 
 
   React.useEffect(() => {
