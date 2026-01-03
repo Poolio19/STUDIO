@@ -38,7 +38,7 @@ function initializeAdminApp(databaseId?: string): admin.app.App {
       credential: admin.credential.applicationDefault(),
       projectId: TARGET_PROJECT_ID,
       // If a databaseId is provided, specify the URL. Otherwise, it connects to the default database.
-      databaseURL: databaseId ? `https://${TARGET_PROJECT_ID}.firebaseio.com?database=${databaseId}` : `https://${TARGET_PROJECT_ID}.firebaseio.com`
+      databaseURL: databaseId ? `https://prempred-43933.firebaseio.com?database=${databaseId}` : `https://prempred-43933.firebaseio.com`
     }, appName);
 
     console.log(`Successfully initialized Firebase Admin SDK for app: ${appName}`);
@@ -91,7 +91,7 @@ export function getAdminAuth() {
  * @param databaseId Optional. The specific database to connect to. Defaults to '(default)'.
  * @returns The Firestore service instance.
  */
-export function getAdminFirestore(databaseId?: string) {
+export function getAdminFirestore(databaseId: string = 'prempred-master') {
     const app = initializeAdminApp(databaseId);
     return app.firestore();
 }

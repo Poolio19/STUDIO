@@ -9,5 +9,5 @@ export const firebaseConfig = {
   storageBucket: "prempred-43933.appspot.com",
   messagingSenderId: "54228994464",
   appId: "1:54228994464:web:0b005933555f269a83858c",
-  databaseURL: "https://prempred-43933.firebaseio.com",
+  databaseURL: "https://prempred-43933.firebaseio.com?database=prempred-master",
 };
