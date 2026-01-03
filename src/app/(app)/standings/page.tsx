@@ -111,7 +111,13 @@ export default function StandingsPage() {
         }
     };
 
-    const gamesPlayed = currentStandings?.[0]?.gamesPlayed || 0;
+    const gamesPlayed = useMemo(() => {
+        if (currentStandings && currentStandings.length > 0) {
+            return Math.max(...currentStandings.map(s => s.gamesPlayed), 0);
+        }
+        return 0;
+    }, [currentStandings]);
+
     const weekHeaders = Array.from({ length: 6 }, (_, i) => {
         const week = gamesPlayed - 5 + i;
         return week > 0 ? `WK${week}` : '';
@@ -286,5 +292,3 @@ export default function StandingsPage() {
     </div>
   );
 }
-
-    
