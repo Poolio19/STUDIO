@@ -14,7 +14,7 @@ import { Reorder } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import type { Team, PreviousSeasonStanding } from '@/lib/data';
 import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, query } from 'firebase/firestore';
 
 const predictionSchema = z.object({
   id: z.string(),
@@ -38,8 +38,8 @@ export default function PredictPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
-  const teamsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'teams') : null, [firestore, isUserLoading]);
-  const prevStandingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'previousSeasonStandings') : null, [firestore, isUserLoading]);
+  const teamsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'teams')) : null, [firestore, isUserLoading]);
+  const prevStandingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'previousSeasonStandings')) : null, [firestore, isUserLoading]);
 
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
   const { data: previousSeasonStandings, isLoading: standingsLoading } = useCollection<PreviousSeasonStanding>(prevStandingsQuery);
@@ -86,9 +86,9 @@ export default function PredictPage() {
   const [items, setItems] = React.useState<Prediction[]>([]);
 
   React.useEffect(() => {
-    if (sortedTeamsForPrediction.length > 0 && user && firestore) {
+    // Only proceed if we are done loading the user, we have a user, and the initial team list is ready.
+    if (!isUserLoading && user && firestore && sortedTeamsForPrediction.length > 0) {
       const fetchPrediction = async () => {
-        if (isUserLoading) return; // Don't fetch if auth is still loading
         const predictionRef = doc(firestore, 'predictions', user.uid);
         const predictionSnap = await getDoc(predictionRef);
 
@@ -101,6 +101,7 @@ export default function PredictPage() {
           setItems(orderedItems);
           form.reset({ predictions: orderedItems });
         } else {
+          // If no prediction exists, initialize with the default sorted list.
           setItems(sortedTeamsForPrediction);
           form.reset({ predictions: sortedTeamsForPrediction });
         }
@@ -132,7 +133,7 @@ export default function PredictPage() {
 
     try {
       const predictionRef = doc(firestore, 'predictions', user.uid);
-      await setDoc(predictionRef, predictionData);
+      await setDoc(predictionRef, predictionData, { merge: true });
       toast({
           title: 'Season Predictions Submitted!',
           description: 'Your final standings prediction has been saved. Good luck!',
@@ -147,10 +148,10 @@ export default function PredictPage() {
     }
   }
   
-  const isLoading = isUserLoading || teamsLoading || standingsLoading;
+  const isLoading = isUserLoading || teamsLoading || standingsLoading || items.length === 0;
 
   if (isLoading) {
-    return <div className="flex justify-center items-center h-full">Loading teams...</div>;
+    return <div className="flex justify-center items-center h-full">Loading your predictions...</div>;
   }
 
   return (
