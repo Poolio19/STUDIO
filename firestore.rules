@@ -72,5 +72,22 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow write: if false; // Match results are updated by the server
     }
+
+    // Explicitly allow list operations for authenticated users on these collections
+    match /teams/{wildcard=**} {
+      allow list: if isAuthenticated();
+    }
+    match /standings/{wildcard=**} {
+      allow list: if isAuthenticated();
+    }
+    match /weeklyTeamStandings/{wildcard=**} {
+      allow list: if isAuthenticated();
+    }
+    match /teamRecentResults/{wildcard=**} {
+      allow list: if isAuthenticated();
+    }
+    match /matches/{wildcard=**} {
+      allow list: if isAuthenticated();
+    }
   }
 }
