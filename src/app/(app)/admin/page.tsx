@@ -119,7 +119,7 @@ async function importClientSideData(db: any): Promise<{ success: boolean; messag
 
     await batch.commit();
 
-    return { success: true, message: 'All sample data has been imported successfully.' };
+    return { success: true, message: 'All application data has been imported successfully.' };
 
   } catch (error: any) {
     console.error('Client-side data import failed:', error);
@@ -137,7 +137,7 @@ export default function AdminPage() {
     setIsImporting(true);
     toast({
       title: 'Importing Data...',
-      description: `Populating database with initial sample data. This may take a moment.`,
+      description: `Populating database with initial application data. This may take a moment.`,
     });
 
     const result = await importClientSideData(firestore);
@@ -201,9 +201,9 @@ export default function AdminPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <Card>
               <CardHeader>
-              <CardTitle>Import Sample Data</CardTitle>
+              <CardTitle>Import Application Data</CardTitle>
               <CardDescription>
-                  Click the button below to populate your Firestore database with all the required sample data for the application. This process runs entirely in your browser.
+                  Click the button below to populate your Firestore database with all the required application data. This process runs entirely in your browser.
               </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col space-y-4">
@@ -227,7 +227,7 @@ export default function AdminPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Overwrite Existing Data?</AlertDialogTitle>
             <AlertDialogDescription>
-              Your database already contains data. Continuing will overwrite the existing data with the sample data from the application. This action cannot be undone.
+              Your database already contains data. Continuing will overwrite the existing data with the application data. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
