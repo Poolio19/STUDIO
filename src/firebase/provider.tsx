@@ -72,7 +72,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
           setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
         } else {
           // If no user is logged in, sign them in anonymously.
-          // This prevents "auth: null" errors for public collections.
           signInAnonymously(auth).catch((error) => {
              console.error("FirebaseProvider: Anonymous sign-in failed:", error);
              setUserAuthState({ user: null, isUserLoading: false, userError: error });

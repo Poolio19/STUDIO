@@ -1,12 +1,16 @@
 'use client';
 
 import { firebaseConfig } from '@/firebase/config';
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
+import { getAuth, type Auth } from 'firebase/auth';
+import { getFirestore, type Firestore } from 'firebase/firestore';
 
 // This function now robustly initializes Firebase, ensuring it only happens once.
-export function initializeFirebase() {
+export function initializeFirebase(): {
+  firebaseApp: FirebaseApp;
+  auth: Auth;
+  firestore: Firestore;
+} {
   if (getApps().length) {
     const app = getApp();
     return {
