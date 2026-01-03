@@ -27,7 +27,7 @@ const updateMatchResultsFlow = ai.defineFlow(
     outputSchema: UpdateMatchResultsOutputSchema,
   },
   async ({ week, results }) => {
-    const db = getAdminFirestore();
+    const db = getAdminFirestore('prempred-master');
     const batch = db.batch();
     const matchesCollectionRef = db.collection('matches');
 
