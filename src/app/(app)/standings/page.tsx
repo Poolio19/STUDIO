@@ -6,6 +6,7 @@ import {
     CardContent,
     CardHeader,
     CardTitle,
+    CardDescription,
 } from '@/components/ui/card';
 import {
     Table,
@@ -35,7 +36,7 @@ export default function StandingsPage() {
     const { isUserLoading } = useUser();
 
     const teamsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'teams') : null, [firestore, isUserLoading]);
-    const standingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'standings'), orderBy('rank', 'asc')) : null, [firestore, isUserLoading]);
+    const standingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'standings') : null, [firestore, isUserLoading]);
     const weeklyStandingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'weeklyTeamStandings') : null, [firestore, isUserLoading]);
     const recentResultsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'teamRecentResults') : null, [firestore, isUserLoading]);
     const matchesQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'matches'), orderBy('week', 'asc')) : null, [firestore, isUserLoading]);
@@ -56,11 +57,14 @@ export default function StandingsPage() {
         const teamMap = new Map(teams.map(t => [t.id, t]));
 
         const recentResultsMap = new Map(teamRecentResults.map(r => [r.teamId, r.results]));
-        const finalStandings = currentStandings.map(standing => {
-            const team = teamMap.get(standing.teamId);
-            const recentResults = recentResultsMap.get(standing.teamId) || Array(6).fill('-');
-            return team ? { ...standing, ...team, recentResults } : null;
-        }).filter((item): item is NonNullable<typeof item> => item !== null);
+        
+        const finalStandings = [...currentStandings]
+            .sort((a,b) => a.rank - b.rank)
+            .map(standing => {
+                const team = teamMap.get(standing.teamId);
+                const recentResults = recentResultsMap.get(standing.teamId) || Array(6).fill('-');
+                return team ? { ...standing, ...team, recentResults } : null;
+            }).filter((item): item is NonNullable<typeof item> => item !== null);
 
         const weeks = [...new Set(weeklyTeamStandings.map(d => d.week))].sort((a, b) => a - b);
         const transformedChartData = weeks.map(week => {
@@ -111,13 +115,26 @@ export default function StandingsPage() {
     <div className="space-y-8">
        <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
           <h1 className="text-3xl font-bold tracking-tight">Premier League</h1>
+          <p className="text-slate-400">Official league standings, results, and form guide for the 2025-26 season.</p>
       </header>
 
-      <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData as (Team & { rank: number })[]} />
+      {isLoading ? (
+        <Card>
+            <CardHeader className="items-center">
+                <CardTitle className="bg-black text-yellow-400 p-2 rounded-md">Team Movement 2025-2026</CardTitle>
+            </CardHeader>
+            <CardContent className="h-[700px] flex items-center justify-center">
+                <div>Loading chart data...</div>
+            </CardContent>
+        </Card>
+      ) : (
+        <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData as (Team & { rank: number })[]} />
+      )}
 
       <Card>
         <CardHeader className="items-center">
           <CardTitle className="bg-black text-yellow-400 p-2 rounded-md">Team Standings 2025-26</CardTitle>
+           <CardDescription>Points, form, and goal difference.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table className="border-separate border-spacing-y-1">
@@ -216,6 +233,7 @@ export default function StandingsPage() {
       <Card>
         <CardHeader className="items-center">
             <CardTitle className="bg-black text-yellow-400 p-2 rounded-md">Week by Week Results</CardTitle>
+             <CardDescription>A complete history of the season's results.</CardDescription>
         </CardHeader>
         <CardContent>
             {isLoading ? (
