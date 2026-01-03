@@ -4,7 +4,7 @@
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged } from 'firebase/auth';
+import { Auth, User, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseProviderProps {
@@ -65,18 +65,18 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       return;
     }
   
-    // Listen for auth state changes. This is the source of truth for the user object.
     const unsubscribe = onAuthStateChanged(
       auth,
       (firebaseUser) => {
         if (firebaseUser) {
-          // User is signed in.
           setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
         } else {
-          // No user is signed in.
-          // In this app, we expect the default user to be created and signed in via the Admin page.
-          // So, we just update the state to reflect that no user is logged in.
-          setUserAuthState({ user: null, isUserLoading: false, userError: null });
+          // If no user is logged in, sign them in anonymously.
+          // This prevents "auth: null" errors for public collections.
+          signInAnonymously(auth).catch((error) => {
+             console.error("FirebaseProvider: Anonymous sign-in failed:", error);
+             setUserAuthState({ user: null, isUserLoading: false, userError: error });
+          });
         }
       },
       (error) => {
