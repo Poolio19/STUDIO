@@ -140,51 +140,150 @@ export const teams: Team[] = [
     { id: 'team_20', name: 'Wolves', logo: 'flower', bgColourFaint: 'rgba(253, 190, 17, 0.3)', bgColourSolid: '#FDBE11', textColour: '#000000', iconColour: '#000000' }
 ];
 
-export const fullUsers: User[] = [
-  { id: 'usr_1', name: 'Alex Anderson', avatar: '1', score: 10, rank: 1, previousRank: 2, previousScore: 5, maxRank: 1, minRank: 3, maxScore: 10, minScore: 2, rankChange: 1, scoreChange: 5, email: 'alex.anderson@example.com', joinDate: '2023-08-10' },
-  { id: 'usr_2', name: 'Maria Garcia', avatar: '2', score: 8, rank: 2, previousRank: 1, previousScore: 8, maxRank: 1, minRank: 2, maxScore: 9, minScore: 8, rankChange: -1, scoreChange: 0, email: 'maria.garcia@example.com', joinDate: '2023-08-11' },
-  { id: 'usr_3', name: 'David Smith', avatar: '3', score: 5, rank: 3, previousRank: 3, previousScore: 5, maxRank: 3, minRank: 4, maxScore: 5, minScore: 3, rankChange: 0, scoreChange: 0, email: 'david.smith@example.com', joinDate: '2023-08-12' },
-  { id: 'usr_4', name: 'Sophia Johnson', avatar: '4', score: 3, rank: 4, previousRank: 5, previousScore: 1, maxRank: 4, minRank: 6, maxScore: 3, minScore: -2, rankChange: 1, scoreChange: 2, email: 'sophia.johnson@example.com', joinDate: '2023-08-13' },
-  { id: 'usr_5', name: 'Kenji Tanaka', avatar: '5', score: 1, rank: 5, previousRank: 4, previousScore: 3, maxRank: 4, minRank: 5, maxScore: 4, minScore: 1, rankChange: -1, scoreChange: -2, email: 'kenji.tanaka@example.com', joinDate: '2023-08-14' },
-  { id: 'usr_6', name: 'Fatima Ahmed', avatar: '6', score: 0, rank: 6, previousRank: 6, previousScore: 0, maxRank: 6, minRank: 8, maxScore: 2, minScore: -1, rankChange: 0, scoreChange: 0, email: 'fatima.ahmed@example.com', joinDate: '2023-08-15' },
-  { id: 'usr_7', name: 'Leo Rossi', avatar: '7', score: -2, rank: 7, previousRank: 8, previousScore: -4, maxRank: 7, minRank: 9, maxScore: 0, minScore: -5, rankChange: 1, scoreChange: 2, email: 'leo.rossi@example.com', joinDate: '2023-08-16' },
-  { id: 'usr_8', name: 'Chloe Dubois', avatar: '8', score: -5, rank: 8, previousRank: 7, previousScore: -3, maxRank: 7, minRank: 8, maxScore: -2, minScore: -6, rankChange: -1, scoreChange: -2, email: 'chloe.dubois@example.com', joinDate: '2023-08-17' },
-  { id: 'usr_9', name: 'Mohammed Ali', avatar: '9', score: -8, rank: 9, previousRank: 9, previousScore: -8, maxRank: 8, minRank: 10, maxScore: -7, minScore: -10, rankChange: 0, scoreChange: 0, email: 'mohammed.ali@example.com', joinDate: '2023-08-18' },
-  { id: 'usr_10', name: 'Isabella Johansson', avatar: '10', score: -12, rank: 10, previousRank: 10, previousScore: -10, maxRank: 9, minRank: 11, maxScore: -9, minScore: -12, rankChange: 0, scoreChange: -2, email: 'isabella.johansson@example.com', joinDate: '2023-08-19' },
-  { id: 'usr_11', name: 'James Wilson', avatar: '11', score: 15, rank: 1, previousRank: 3, previousScore: 12, maxRank: 1, minRank: 5, maxScore: 15, minScore: 10, rankChange: 2, scoreChange: 3, isPro: false, email: 'james.wilson@example.com', joinDate: '2023-08-20' },
-  { id: 'usr_12', name: 'Amelia Brown', avatar: '12', score: -15, rank: 12, previousRank: 11, previousScore: -13, maxRank: 10, minRank: 13, maxScore: -11, minScore: -15, rankChange: -1, scoreChange: -2, isPro: false, email: 'amelia.brown@example.com', joinDate: '2023-08-21' },
-  { id: 'usr_13', name: 'Benjamin Green', avatar: '13', score: 20, rank: 1, previousRank: 1, previousScore: 20, maxRank: 1, minRank: 1, maxScore: 20, minScore: 20, rankChange: 0, scoreChange: 0, isPro: true, email: 'benjamin.green@example.com', joinDate: '2023-08-22' },
-  { id: 'usr_14', name: 'Mia Taylor', avatar: '14', score: -20, rank: 14, previousRank: 14, previousScore: -18, maxRank: 13, minRank: 15, maxScore: -17, minScore: -20, rankChange: 0, scoreChange: -2, isPro: false, email: 'mia.taylor@example.com', joinDate: '2023-08-23' },
-  { id: 'usr_15', name: 'Elijah Moore', avatar: '15', score: 25, rank: 1, previousRank: 2, previousScore: 22, maxRank: 1, minRank: 3, maxScore: 25, minScore: 20, rankChange: 1, scoreChange: 3, isPro: false, email: 'elijah.moore@example.com', joinDate: '2023-08-24' },
-  { id: 'usr_16', name: 'Harper King', avatar: '16', score: -25, rank: 16, previousRank: 15, previousScore: -22, maxRank: 14, minRank: 16, maxScore: -21, minScore: -25, rankChange: -1, scoreChange: -3, isPro: false, email: 'harper.king@example.com', joinDate: '2023-08-25' },
-  { id: 'usr_17', name: 'Lucas White', avatar: '17', score: 30, rank: 1, previousRank: 1, previousScore: 30, maxRank: 1, minRank: 1, maxScore: 30, minScore: 30, rankChange: 0, scoreChange: 0, isPro: true, email: 'lucas.white@example.com', joinDate: '2023-08-26' },
-  { id: 'usr_18', name: 'Evelyn Harris', avatar: '18', score: -30, rank: 18, previousRank: 18, previousScore: -28, maxRank: 17, minRank: 19, maxScore: -27, minScore: -30, rankChange: 0, scoreChange: -2, isPro: false, email: 'evelyn.harris@example.com', joinDate: '2023-08-27' },
-  { id: 'usr_19', name: 'Henry Clark', avatar: '19', score: 35, rank: 1, previousRank: 2, previousScore: 32, maxRank: 1, minRank: 3, maxScore: 35, minScore: 30, rankChange: 1, scoreChange: 3, isPro: false, email: 'henry.clark@example.com', joinDate: '2023-08-28' },
-  { id: 'usr_20', name: 'Abigail Lewis', avatar: '20', score: -35, rank: 20, previousRank: 19, previousScore: -32, maxRank: 18, minRank: 20, maxScore: -31, minScore: -35, rankChange: -1, scoreChange: -3, isPro: false, email: 'abigail.lewis@example.com', joinDate: '2023-08-29' }
+const generateInitialUserData = (user: { id: string; name: string }, index: number): User => {
+    const rank = index + 1;
+    const score = Math.floor(50 - (rank * 2.5));
+    return {
+        id: user.id,
+        name: user.name,
+        avatar: `${(index % 50) + 1}`,
+        score: score,
+        rank: rank,
+        previousRank: rank,
+        previousScore: score,
+        maxRank: rank,
+        minRank: rank,
+        maxScore: score,
+        minScore: score,
+        rankChange: 0,
+        scoreChange: 0,
+        isPro: false,
+        email: `${user.name.toLowerCase().replace(/ /g, '.')}@example.com`,
+        joinDate: new Date().toISOString()
+    };
+};
+
+const userList = [
+    { id: 'usr_1', name: 'Alex Anderson' },
+    { id: 'usr_2', name: 'Maria Garcia' },
+    { id: 'usr_3', name: 'David Smith' },
+    { id: 'usr_4', name: 'Sophia Johnson' },
+    { id: 'usr_5', name: 'Kenji Tanaka' },
+    { id: 'usr_6', name: 'Fatima Ahmed' },
+    { id: 'usr_7', name: 'Leo Rossi' },
+    { id: 'usr_8', name: 'Chloe Dubois' },
+    { id: 'usr_9', name: 'Mohammed Ali' },
+    { id: 'usr_10', name: 'Isabella Johansson' },
+    { id: 'usr_11', name: 'James Wilson' },
+    { id: 'usr_12', name: 'Amelia Brown' },
+    { id: 'usr_13', name: 'Benjamin Green' },
+    { id: 'usr_14', name: 'Mia Taylor' },
+    { id: 'usr_15', name: 'Elijah Moore' },
+    { id: 'usr_16', name: 'Harper King' },
+    { id: 'usr_17', name: 'Lucas White' },
+    { id: 'usr_18', name: 'Evelyn Harris' },
+    { id: 'usr_19', name: 'Henry Clark' },
+    { id: 'usr_20', name: 'Abigail Lewis' },
+    { id: 'usr_21', name: 'Alexander Walker' },
+    { id: 'usr_22', name: 'Emily Hall' },
+    { id: 'usr_23', name: 'Daniel Young' },
+    { id: 'usr_24', name: 'Elizabeth Allen' },
+    { id: 'usr_25', name: 'Michael Wright' },
+    { id: 'usr_26', name: 'Sofia Scott' },
+    { id: 'usr_27', name: 'Matthew Adams' },
+    { id: 'usr_28', name: 'Avery Baker' },
+    { id: 'usr_29', name: 'Joseph Nelson' },
+    { id: 'usr_30', name: 'Scarlett Carter' },
+    { id: 'usr_31', name: 'William Mitchell' },
+    { id: 'usr_32', name: 'Grace Perez' },
+    { id: 'usr_33', name: 'Owen Roberts' },
+    { id: 'usr_34', name: 'Zoe Turner' },
+    { id: 'usr_35', name: 'Nathan Phillips' },
+    { id: 'usr_36', name: 'Lily Campbell' },
+    { id: 'usr_37', name: 'Ryan Parker' },
+    { id: 'usr_38', name: 'Hannah Evans' },
+    { id: 'usr_39', name: 'Caleb Edwards' },
+    { id: 'usr_40', name: 'Nora Collins' },
+    { id: 'usr_41', name: 'Isaac Stewart' },
+    { id: 'usr_42', name: 'Addison Sanchez' },
+    { id: 'usr_43', name: 'Levi Morris' },
+    { id: 'usr_44', name: 'Stella Rogers' },
+    { id: 'usr_45', name: 'Samuel Reed' },
+    { id: 'usr_46', name: 'Natalie Cook' },
+    { id: 'usr_47', name: 'BBC' },
+    { id: 'usr_48', name: 'SKY' },
+    { id: 'usr_49', name: 'OPTA' },
+    { id: 'usr_50', name: 'Tony Jones' },
+    { id: 'usr_51', name: 'Laura Bailey' },
+    { id: 'usr_52', name: 'Chris Wood' },
+    { id: 'usr_53', name: 'Rachel Murphy' },
+    { id: 'usr_54', name: 'Mark Rivera' },
+    { id: 'usr_55', name: 'Jessica Long' },
+    { id: 'usr_56', name: 'Brian Hughes' },
+    { id: 'usr_57', name: 'Sarah Foster' },
+    { id: 'usr_58', name: 'Kevin Butler' },
+    { id: 'usr_59', name: 'Angela Simmons' },
+    { id: 'usr_60', name: 'Steven Powell' },
+    { id: 'usr_61', name: 'Kimberly Richardson' },
+    { id: 'usr_62', name: 'Paul Cox' },
+    { id: 'usr_63', name: 'Donna Howard' },
+    { id: 'usr_64', name: 'George Ward' },
+    { id: 'usr_65', name: 'Helen Peterson' },
+    { id: 'usr_66', name: 'Gary Gray' },
+    { id: 'usr_67', 'name': 'Brenda James' },
+    { id: 'usr_68', 'name': 'Larry Watson' },
+    { id: 'usr_69', 'name': 'Nicole Brooks' },
+    { id: 'usr_70', 'name': 'Justin Kelly' },
+    { id: 'usr_71', 'name': 'Janet Sanders' },
+    { id: 'usr_72', 'name': 'Jerry Price' },
+    { id: 'usr_73', 'name': 'Ashley Bennett' },
+    { id: 'usr_74', 'name': 'Scott Henderson' },
+    { id: 'usr_75', 'name': 'Rebecca Barnes' },
+    { id: 'usr_76', 'name': 'Dennis Ross' },
+    { id: 'usr_77', 'name': 'Amanda Henderson' },
+    { id: 'usr_78', 'name': 'Keith Coleman' },
+    { id: 'usr_79', 'name': 'Cynthia Jenkins' },
+    { id: 'usr_80', 'name': 'Douglas Perry' },
+    { id: 'usr_81', 'name': 'Frances Patterson' },
+    { id: 'usr_82', 'name': 'Peter Griffin' },
+    { id: 'usr_83', 'name': 'Ruth Jordan' },
+    { id: 'usr_84', 'name': 'Carl Graham' },
+    { id: 'usr_85', 'name': 'Katherine Hamilton' },
+    { id: 'usr_86', 'name': 'Arthur Wallace' },
+    { id: 'usr_87', 'name': 'Teresa Woods' },
+    { id: 'usr_88', 'name': 'Walter Cole' },
+    { id: 'usr_89', 'name': 'Joan West' },
+    { id: 'usr_90', 'name': 'Wayne Snyder' },
+    { id: 'usr_91', 'name': 'Alice Fox' },
+    { id: 'usr_92', 'name': 'Billy Larson' },
+    { id: 'usr_93', 'name': 'Diana Stone' },
+    { id: 'usr_94', 'name': 'Randy Meyer' },
+    { id: 'usr_95', 'name': 'Denise Franklin' },
+    { id: 'usr_96', 'name': 'Frank Warren' },
+    { id: 'usr_97', 'name': 'Julia Ray' },
+    { id: 'usr_98', 'name': 'Philip Lawson' },
+    { id: 'usr_99', 'name': 'Marie Fields' },
+    { id: 'usr_100', 'name': 'Louis Ortiz' },
+    { id: 'usr_101', 'name': 'Sara Gordon' },
+    { id: 'usr_102', 'name': 'Roy Stephens' },
+    { id: 'usr_103', 'name': 'Ann Simpson' },
+    { id: 'usr_104', 'name': 'Patrick Austin' },
+    { id: 'usr_105', 'name': 'Jacqueline Porter' },
+    { id: 'usr_106', 'name': 'Bobby Spencer' },
+    { id: 'usr_107', 'name': 'Beverly Carroll' },
+    { id: 'usr_108', 'name': 'Harry Armstrong' },
+    { id: 'usr_109', 'name': 'Doris Daniels' }
 ];
 
-export const fullPredictions: Prediction[] = [
-  { userId: "usr_1", rankings: ["team_13", "team_1", "team_12", "team_6", "team_2", "team_18", "team_15", "team_19", "team_7", "team_5", "team_20", "team_9", "team_8", "team_3", "team_4", "team_16", "team_17", "team_11", "team_10", "team_14"] },
-  { userId: "usr_2", rankings: ["team_13", "team_1", "team_12", "team_6", "team_2", "team_18", "team_15", "team_19", "team_7", "team_5", "team_20", "team_9", "team_8", "team_3", "team_4", "team_16", "team_17", "team_11", "team_10", "team_14"] },
-  { userId: "usr_3", rankings: ["team_13", "team_1", "team_12", "team_6", "team_2", "team_18", "team_15", "team_19", "team_7", "team_5", "team_20", "team_9", "team_8", "team_3", "team_4", "team_16", "team_17", "team_11", "team_10", "team_14"] },
-  { userId: "usr_4", rankings: ["team_13", "team_1", "team_12", "team_6", "team_2", "team_18", "team_15", "team_19", "team_7", "team_5", "team_20", "team_9", "team_8", "team_3", "team_4", "team_16", "team_17", "team_11", "team_10", "team_14"] },
-  { userId: "usr_5", rankings: ["team_13", "team_1", "team_12", "team_6", "team_2", "team_18", "team_15", "team_19", "team_7", "team_5", "team_20", "team_9", "team_8", "team_3", "team_4", "team_16", "team_17", "team_11", "team_10", "team_14"] },
-  { userId: "usr_6", rankings: ["team_13", "team_1", "team_12", "team_6", "team_2", "team_18", "team_15", "team_19", "team_7", "team_5", "team_20", "team_9", "team_8", "team_3", "team_4", "team_16", "team_17", "team_11", "team_10", "team_14"] },
-  { userId: "usr_7", rankings: ["team_13", "team_1", "team_12", "team_6", "team_2", "team_18", "team_15", "team_19", "team_7", "team_5", "team_20", "team_9", "team_8", "team_3", "team_4", "team_16", "team_17", "team_11", "team_10", "team_14"] },
-  { userId: "usr_8", rankings: ["team_13", "team_1", "team_12", "team_6", "team_2", "team_18", "team_15", "team_19", "team_7", "team_5", "team_20", "team_9", "team_8", "team_3", "team_4", "team_16", "team_17", "team_11", "team_10", "team_14"] },
-  { userId: "usr_9", rankings: ["team_13", "team_1", "team_12", "team_6", "team_2", "team_18", "team_15", "team_19", "team_7", "team_5", "team_20", "team_9", "team_8", "team_3", "team_4", "team_16", "team_17", "team_11", "team_10", "team_14"] },
-  { userId: "usr_10", rankings: ["team_13", "team_1", "team_12", "team_6", "team_2", "team_18", "team_15", "team_19", "team_7", "team_5", "team_20", "team_9", "team_8", "team_3", "team_4", "team_16", "team_17", "team_11", "team_10", "team_14"] },
-  { userId: "usr_11", rankings: ["team_13", "team_1", "team_12", "team_6", "team_2", "team_18", "team_15", "team_19", "team_7", "team_5", "team_20", "team_9", "team_8", "team_3", "team_4", "team_16", "team_17", "team_11", "team_10", "team_14"] },
-  { userId: "usr_12", rankings: ["team_13", "team_1", "team_12", "team_6", "team_2", "team_18", "team_15", "team_19", "team_7", "team_5", "team_20", "team_9", "team_8", "team_3", "team_4", "team_16", "team_17", "team_11", "team_10", "team_14"] },
-  { userId: "usr_13", rankings: ["team_13", "team_1", "team_12", "team_6", "team_2", "team_18", "team_15", "team_19", "team_7", "team_5", "team_20", "team_9", "team_8", "team_3", "team_4", "team_16", "team_17", "team_11", "team_10", "team_14"] },
-  { userId: "usr_14", rankings: ["team_13", "team_1", "team_12", "team_6", "team_2", "team_18", "team_15", "team_19", "team_7", "team_5", "team_20", "team_9", "team_8", "team_3", "team_4", "team_16", "team_17", "team_11", "team_10", "team_14"] },
-  { userId: "usr_15", rankings: ["team_13", "team_1", "team_12", "team_6", "team_2", "team_18", "team_15", "team_19", "team_7", "team_5", "team_20", "team_9", "team_8", "team_3", "team_4", "team_16", "team_17", "team_11", "team_10", "team_14"] },
-  { userId: "usr_16", rankings: ["team_13", "team_1", "team_12", "team_6", "team_2", "team_18", "team_15", "team_19", "team_7", "team_5", "team_20", "team_9", "team_8", "team_3", "team_4", "team_16", "team_17", "team_11", "team_10", "team_14"] },
-  { userId: "usr_17", rankings: ["team_13", "team_1", "team_12", "team_6", "team_2", "team_18", "team_15", "team_19", "team_7", "team_5", "team_20", "team_9", "team_8", "team_3", "team_4", "team_16", "team_17", "team_11", "team_10", "team_14"] },
-  { userId: "usr_18", rankings: ["team_13", "team_1", "team_12", "team_6", "team_2", "team_18", "team_15", "team_19", "team_7", "team_5", "team_20", "team_9", "team_8", "team_3", "team_4", "team_16", "team_17", "team_11", "team_10", "team_14"] },
-  { userId: "usr_19", rankings: ["team_13", "team_1", "team_12", "team_6", "team_2", "team_18", "team_15", "team_19", "team_7", "team_5", "team_20", "team_9", "team_8", "team_3", "team_4", "team_16", "team_17", "team_11", "team_10", "team_14"] },
-  { userId: "usr_20", rankings: ["team_13", "team_1", "team_12", "team_6", "team_2", "team_18", "team_15", "team_19", "team_7", "team_5", "team_20", "team_9", "team_8", "team_3", "team_4", "team_16", "team_17", "team_11", "team_10", "team_14"] }
-];
+
+export const fullUsers: User[] = userList.map(generateInitialUserData);
+
+const defaultPrediction = ["team_13", "team_1", "team_12", "team_6", "team_2", "team_18", "team_15", "team_19", "team_7", "team_5", "team_20", "team_9", "team_8", "team_3", "team_4", "team_16", "team_17", "team_11", "team_10", "team_14"];
+
+export const fullPredictions: Prediction[] = fullUsers.map(user => ({
+    userId: user.id,
+    rankings: defaultPrediction,
+}));
 
 export const matches: Match[] = [
     { week: 1, homeTeamId: 'team_1', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
@@ -226,7 +325,13 @@ export const fullUserHistories: UserHistory[] = fullUsers.map(user => ({
     weeklyScores: [{ week: 0, score: 0, rank: 0 }]
 }));
 
-export const playerTeamScores: PlayerTeamScore[] = [];
+export const playerTeamScores: PlayerTeamScore[] = fullUsers.flatMap(user => 
+    teams.map(team => ({
+        userId: user.id,
+        teamId: team.id,
+        score: 0 
+    }))
+);
 
 export const weeklyTeamStandings: WeeklyTeamStanding[] = [];
 
