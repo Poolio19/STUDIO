@@ -29,14 +29,14 @@ import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 
 export default function StandingsPage() {
     const firestore = useFirestore();
     const { isUserLoading } = useUser();
 
     const teamsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'teams')) : null, [firestore, isUserLoading]);
-    const standingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'standings')) : null, [firestore, isUserLoading]);
+    const standingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'standings'), where('teamId', '==', 'team_1')) : null, [firestore, isUserLoading]);
     const weeklyStandingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'weeklyTeamStandings')) : null, [firestore, isUserLoading]);
     const recentResultsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'teamRecentResults')) : null, [firestore, isUserLoading]);
     const matchesQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'matches')) : null, [firestore, isUserLoading]);
