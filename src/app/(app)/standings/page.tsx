@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -29,7 +28,7 @@ import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { collection } from 'firebase/firestore';
 
 export default function StandingsPage() {
     const firestore = useFirestore();
@@ -72,7 +71,7 @@ export default function StandingsPage() {
                 return team ? { ...standing, ...team, recentResults } : null;
             }).filter((item): item is NonNullable<typeof item> => item !== null);
 
-        const weeks = [...new Set(weeklyTeamStandings.map(d => d.week))].sort((a, b) => a - b);
+        const weeks = [...new Set(weeklyTeamStandings.map(d => d.week))].sort((a, b) => a - b).filter(w => w > 0);
         const transformedChartData = weeks.map(week => {
             const weekData: { [key: string]: any } = { week };
             weeklyTeamStandings
@@ -89,6 +88,7 @@ export default function StandingsPage() {
         const resultsByWeek = new Map<number, (Match & {homeTeam: Team, awayTeam: Team})[]>();
         const sortedMatches = [...matches].filter(m => m.homeScore !== -1 && m.awayScore !== -1).sort((a,b) => a.week - b.week);
         sortedMatches.forEach(match => {
+            if (match.week === 0) return;
             const weekMatches = resultsByWeek.get(match.week) || [];
             const homeTeam = teamMap.get(match.homeTeamId);
             const awayTeam = teamMap.get(match.awayTeamId);
