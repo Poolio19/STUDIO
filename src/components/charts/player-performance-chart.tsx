@@ -46,7 +46,7 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers }: 
             data={chartData}
             margin={{
               top: 20,
-              right: 280, // Increased right margin for wider legend
+              right: 320, // Increased right margin for wider legend
               left: -20,
               bottom: 20,
             }}
@@ -71,7 +71,6 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers }: 
                       labelKey="name"
                       indicator="dot"
                       formatter={(value, name) => {
-                        const user = sortedUsers.find(u => u.name === name);
                         return (
                          <div className="flex items-center gap-2">
                           <div className="size-2.5 rounded-sm" style={{ backgroundColor: chartConfig[name]?.colour }}/>
@@ -96,11 +95,11 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers }: 
         </ResponsiveContainer>
       </ChartContainer>
       <div
-        className="absolute grid grid-cols-2 gap-x-8 gap-y-2"
+        className="absolute grid grid-cols-2 gap-x-4 gap-y-1"
         style={{
           right: 0,
           top: '20px',
-          width: '260px',
+          width: '300px', // Increased width for the legend container
           paddingLeft: '1rem',
           fontSize: '12px',
         }}
