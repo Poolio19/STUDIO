@@ -46,7 +46,7 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers }: 
             data={chartData}
             margin={{
               top: 20,
-              right: 130,
+              right: 280, // Increased right margin for wider legend
               left: -20,
               bottom: 20,
             }}
@@ -95,32 +95,31 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers }: 
           </LineChart>
         </ResponsiveContainer>
       </ChartContainer>
-      <ul
-        className="absolute flex h-full flex-col justify-between"
+      <div
+        className="absolute grid grid-cols-2 gap-x-8 gap-y-2"
         style={{
           right: 0,
-          top: '-25px',
-          bottom: '20px',
-          width: '130px',
+          top: '20px',
+          width: '260px',
           paddingLeft: '1rem',
           fontSize: '12px',
         }}
       >
-        <p className="font-medium mb-2">Player, Score</p>
+        <p className="col-span-2 font-medium mb-2">Player, Score</p>
           {sortedUsers.map((user: User) => {
             const userConfig = chartConfig[user.name];
             if (!userConfig) return null;
             return (
-              <li key={user.id} className="flex items-center space-x-2">
+              <div key={user.id} className="flex items-center space-x-2 truncate">
                 <span
-                  className="inline-block h-2 w-2 rounded-sm"
+                  className="inline-block h-2 w-2 rounded-sm shrink-0"
                   style={{ backgroundColor: userConfig.colour }}
                 ></span>
-                <span>{`${user.name}, ${user.score}`}</span>
-              </li>
+                <span className="truncate" title={`${user.name}, ${user.score}`}>{`${user.name}, ${user.score}`}</span>
+              </div>
             );
           })}
-      </ul>
+      </div>
     </div>
   );
 }
