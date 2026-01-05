@@ -645,7 +645,10 @@ const finalTeamRanks = new Map(standings.map(s => [s.teamId, s.rank]));
 // Calculate player scores based on week 18 standings
 export const playerTeamScores: PlayerTeamScore[] = userList.flatMap(user => {
     const prediction = fullPredictions.find(p => p.userId === user.id);
-    if (!prediction || !prediction.rankings) return [];
+    if (!prediction || !prediction.rankings) {
+        console.warn(`No prediction found for user: ${user.id}`);
+        return [];
+    };
 
     return teams.map(team => {
         const predictedRank = prediction.rankings.indexOf(team.id) + 1;
@@ -788,4 +791,6 @@ export const predictions: Prediction[] = fullPredictions;
 export const userHistories: UserHistory[] = fullUserHistories;
 
     
+    
+
     
