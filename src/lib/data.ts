@@ -230,12 +230,12 @@ export const previousSeasonStandings: PreviousSeasonStanding[] = [
     { teamId: 'team_5', rank: 12, points: 48, goalDifference: -6 },
     { teamId: 'team_9', rank: 13, points: 47, goalDifference: -6 },
     { teamId: 'team_20', rank: 14, points: 46, goalDifference: -15 },
-    { teamId: 'team_8', rank: 15, points: 40, goalDifference: -11 },
-    { teamId: 'team_4', rank: 16, points: 39, goalDifference: -9 },
-    { teamId: 'team_16', rank: 17, points: 32, goalDifference: -18 },
-    { teamId: 'team_11', rank: 18, points: 31, goalDifference: -13 },
-    { teamId: 'team_10', rank: 19, points: 28, goalDifference: -33 },
-    { teamId: 'team_17', rank: 20, points: 25, goalDifference: -37 }
+    { id: 'team_8', rank: 15, points: 40, goalDifference: -11 },
+    { id: 'team_4', rank: 16, points: 39, goalDifference: -9 },
+    { id: 'team_16', rank: 17, points: 32, goalDifference: -18 },
+    { id: 'team_11', rank: 18, points: 31, goalDifference: -13 },
+    { id: 'team_10', rank: 19, points: 28, goalDifference: -33 },
+    { id: 'team_17', rank: 20, points: 25, goalDifference: -37 }
 ];
 
 const userPredictionsRaw: { [key: string]: string[] } = {
@@ -783,3 +783,4 @@ export const users: User[] = fullUsers;
 export const predictions: Prediction[] = fullPredictions;
 export const userHistories: UserHistory[] = fullUserHistories;
 
+    
