@@ -93,24 +93,6 @@ export default function PerformancePage() {
       {isLoading ? (
           <div className="flex justify-center items-center h-[600px]">Loading chart data...</div>
       ) : (
-        <>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-0 text-xs">
-            {sortedUsers.map((user: User) => {
-              const userConfig = chartConfig[user.name];
-              if (!userConfig) return null;
-              const formattedName = formatNameForLegend(user.name);
-              return (
-                <div key={user.id} className="flex items-center space-x-2 truncate py-0.5">
-                  <span
-                    className="inline-block h-2 w-2 rounded-sm shrink-0"
-                    style={{ backgroundColor: userConfig.colour }}
-                  ></span>
-                  <span className="truncate" title={`${user.name}, ${user.score}`}>{`${formattedName}, ${user.score}`}</span>
-                </div>
-              );
-            })}
-          </div>
-
           <Card>
             <CardHeader>
               <CardTitle>Player Scores By Week</CardTitle>
@@ -119,6 +101,22 @@ export default function PerformancePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+                <div className="grid grid-cols-14 gap-x-4 gap-y-0 text-xs mb-6">
+                    {sortedUsers.map((user: User) => {
+                    const userConfig = chartConfig[user.name];
+                    if (!userConfig) return null;
+                    const formattedName = formatNameForLegend(user.name);
+                    return (
+                        <div key={user.id} className="flex items-center space-x-2 truncate py-0">
+                        <span
+                            className="inline-block h-2 w-2 rounded-sm shrink-0"
+                            style={{ backgroundColor: userConfig.colour }}
+                        ></span>
+                        <span className="truncate" title={`${user.name}, ${user.score}`}>{`${formattedName}, ${user.score}`}</span>
+                        </div>
+                    );
+                    })}
+                </div>
               <PlayerPerformanceChart 
                 chartData={chartData} 
                 yAxisDomain={yAxisDomain} 
@@ -127,7 +125,6 @@ export default function PerformancePage() {
               />
             </CardContent>
           </Card>
-        </>
       )}
     </div>
   );
