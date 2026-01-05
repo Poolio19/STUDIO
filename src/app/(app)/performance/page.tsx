@@ -101,7 +101,7 @@ export default function PerformancePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-14 gap-x-4 gap-y-0 text-xs mb-6">
+                <div className="grid grid-flow-col grid-rows-8 gap-x-4 gap-y-0 text-xs mb-6">
                     {sortedUsers.map((user: User) => {
                     const userConfig = chartConfig[user.name];
                     if (!userConfig) return null;
