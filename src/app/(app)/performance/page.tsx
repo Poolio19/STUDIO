@@ -70,13 +70,29 @@ export default function PerformancePage() {
     return { chartData: transformedData, yAxisDomain, chartConfig: config };
   }, [users, userHistories, sortedUsers]);
 
+  const surnameCounts = useMemo(() => {
+    if (!sortedUsers) return new Map<string, number>();
+    const counts = new Map<string, number>();
+    sortedUsers.forEach(user => {
+      if (user.isPro) return;
+      const parts = user.name.split(' ');
+      const surname = parts[parts.length - 1];
+      counts.set(surname, (counts.get(surname) || 0) + 1);
+    });
+    return counts;
+  }, [sortedUsers]);
+
   const formatNameForLegend = (name: string) => {
     if (name.startsWith('THE ')) {
       return name.substring(4);
     }
     const parts = name.split(' ');
     if (parts.length > 1) {
-      return `${parts[0].charAt(0)}. ${parts.slice(1).join(' ')}`;
+      const surname = parts[parts.length - 1];
+      if (surnameCounts.get(surname) === 1) {
+        return surname;
+      }
+      return `${parts[0].charAt(0)} ${surname}`;
     }
     return name;
   };
