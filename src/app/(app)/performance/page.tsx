@@ -31,12 +31,24 @@ export default function PerformancePage() {
     return [...users].sort((a, b) => a.rank - b.rank);
   }, [users]);
 
+  // Filter for top 20 users for the chart
+  const top20Users = useMemo(() => {
+    return sortedUsers.slice(0, 20);
+  }, [sortedUsers]);
+  
+  const top20UserIds = useMemo(() => {
+    return new Set(top20Users.map(u => u.id));
+  }, [top20Users]);
+
 
   const { chartData, yAxisDomain } = useMemo(() => {
-    if (!users || !userHistories) return { chartData: [], yAxisDomain: [0, 0] };
+    if (!users || !userHistories || top20Users.length === 0) return { chartData: [], yAxisDomain: [0, 0] };
     
-    const allScores = userHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.score));
+    const relevantUserHistories = userHistories.filter(h => top20UserIds.has(h.userId));
+    const allScores = relevantUserHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.score));
+
     if (allScores.length === 0) return { chartData: [], yAxisDomain: [0, 10] };
+    
     const minScore = Math.min(...allScores);
     const maxScore = Math.max(...allScores);
     const yAxisDomain: [number, number] = [minScore - 5, maxScore + 5];
@@ -45,8 +57,8 @@ export default function PerformancePage() {
     
     const transformedData = weeks.map(week => {
       const weekData: { [key: string]: number | string } = { week: `Wk ${week}` };
-      userHistories.forEach(history => {
-        const user = users.find(u => u.id === history.userId); 
+      relevantUserHistories.forEach(history => {
+        const user = top20Users.find(u => u.id === history.userId); 
         if (user) {
           const weekScore = history.weeklyScores.find(w => w.week === week);
           if (weekScore) {
@@ -58,7 +70,7 @@ export default function PerformancePage() {
     });
 
     return { chartData: transformedData, yAxisDomain };
-  }, [users, userHistories]);
+  }, [users, userHistories, top20Users, top20UserIds]);
 
   return (
     <div className="space-y-8">
@@ -71,7 +83,7 @@ export default function PerformancePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Player Scores By Week</CardTitle>
+          <CardTitle>Top 20 Player Scores By Week</CardTitle>
           <CardDescription>
             Each line represents a player's total score over the weeks.
           </CardDescription>
@@ -80,12 +92,10 @@ export default function PerformancePage() {
             {isLoading ? (
                 <div className="flex justify-center items-center h-[600px]">Loading chart data...</div>
             ) : (
-                <PlayerPerformanceChart chartData={chartData} yAxisDomain={yAxisDomain} sortedUsers={sortedUsers} />
+                <PlayerPerformanceChart chartData={chartData} yAxisDomain={yAxisDomain} sortedUsers={top20Users} />
             )}
         </CardContent>
       </Card>
     </div>
   );
 }
-
-    
