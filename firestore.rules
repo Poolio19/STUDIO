@@ -25,12 +25,14 @@ service cloud.firestore {
     
     match /playerTeamScores/{scoreId} {
         allow read, list: if isAuthenticated();
-        allow create, update, delete: if isAuthenticated() && isOwner(request.resource.data.userId);
+        // Allow server-side processes to write this data
+        allow write: if true; 
     }
 
     match /userHistories/{userId} {
         allow read, list: if isAuthenticated();
-        allow write: if isOwner(userId);
+        // Allow server-side processes to write this data
+        allow write: if true;
     }
 
     match /teams/{teamId} {
@@ -63,9 +65,12 @@ service cloud.firestore {
 
     match /matches/{matchId} {
       allow read, list: if isAuthenticated();
+      // Allow server-side processes to update scores
+      allow update: if true;
+      allow create: if true;
     }
     
-    // Default deny all writes to public collections
+    // Default deny all writes to public collections that haven't been explicitly defined
     match /{collection}/{doc} {
         allow write: if false;
     }
