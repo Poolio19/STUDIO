@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -25,6 +26,7 @@ import { Loader2 } from 'lucide-react';
 import { useFirebase } from '@/firebase';
 import {
   teams,
+  standings,
   fullUsers,
   fullPredictions,
   matches,
@@ -50,6 +52,14 @@ async function importClientSideData(db: any): Promise<{ success: boolean; messag
     teams.forEach(item => {
       const docRef = doc(db, 'teams', item.id);
       batch.set(docRef, item);
+    });
+
+    // Standings
+    standings.forEach(item => {
+      if (item.teamId) {
+        const docRef = doc(db, 'standings', item.teamId);
+        batch.set(docRef, item);
+      }
     });
     
     // Users
