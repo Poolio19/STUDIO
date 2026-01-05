@@ -37,6 +37,14 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers }: 
       return config;
     }, {} as any);
   }, [sortedUsers]);
+
+  const formatName = (name: string) => {
+    const parts = name.split(' ');
+    if (parts.length > 1) {
+      return `${parts[0].charAt(0)}. ${parts.slice(1).join(' ')}`;
+    }
+    return name;
+  }
   
   return (
     <div className="relative">
@@ -95,26 +103,26 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers }: 
         </ResponsiveContainer>
       </ChartContainer>
       <div
-        className="absolute grid grid-cols-2 gap-x-4 gap-y-1"
+        className="absolute grid grid-cols-2 gap-x-4 gap-y-0"
         style={{
           right: 0,
-          top: '20px',
-          width: '300px', // Increased width for the legend container
+          top: 0,
+          width: '300px', 
           paddingLeft: '1rem',
           fontSize: '12px',
         }}
       >
-        <p className="col-span-2 font-medium mb-2">Player, Score</p>
           {sortedUsers.map((user: User) => {
             const userConfig = chartConfig[user.name];
             if (!userConfig) return null;
+            const formattedName = formatName(user.name);
             return (
-              <div key={user.id} className="flex items-center space-x-2 truncate">
+              <div key={user.id} className="flex items-center space-x-2 truncate py-0.5">
                 <span
                   className="inline-block h-2 w-2 rounded-sm shrink-0"
                   style={{ backgroundColor: userConfig.colour }}
                 ></span>
-                <span className="truncate" title={`${user.name}, ${user.score}`}>{`${user.name}, ${user.score}`}</span>
+                <span className="truncate" title={`${user.name}, ${user.score}`}>{`${formattedName}, ${user.score}`}</span>
               </div>
             );
           })}
