@@ -31,12 +31,12 @@ export default function PerformancePage() {
     return [...users].sort((a, b) => a.rank - b.rank);
   }, [users]);
 
-  const { chartData, yAxisDomain } = useMemo(() => {
-    if (!users || !userHistories) return { chartData: [], yAxisDomain: [0, 0] };
+  const { chartData, yAxisDomain, chartConfig } = useMemo(() => {
+    if (!users || !userHistories) return { chartData: [], yAxisDomain: [0, 0], chartConfig: {} };
     
     const allScores = userHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.score));
 
-    if (allScores.length === 0) return { chartData: [], yAxisDomain: [0, 10] };
+    if (allScores.length === 0) return { chartData: [], yAxisDomain: [0, 10], chartConfig: {} };
     
     const minScore = Math.min(...allScores);
     const maxScore = Math.max(...allScores);
@@ -58,8 +58,28 @@ export default function PerformancePage() {
       return weekData;
     });
 
-    return { chartData: transformedData, yAxisDomain };
-  }, [users, userHistories]);
+    const config = sortedUsers.reduce((config, user, index) => {
+      config[user.name] = {
+        label: user.name,
+        colour: `hsl(var(--chart-color-${index + 1}))`,
+      };
+      return config;
+    }, {} as any);
+
+
+    return { chartData: transformedData, yAxisDomain, chartConfig: config };
+  }, [users, userHistories, sortedUsers]);
+
+  const formatNameForLegend = (name: string) => {
+    if (name.startsWith('THE ')) {
+      return name.substring(4);
+    }
+    const parts = name.split(' ');
+    if (parts.length > 1) {
+      return `${parts[0].charAt(0)}. ${parts.slice(1).join(' ')}`;
+    }
+    return name;
+  };
 
   return (
     <div className="space-y-8">
@@ -70,21 +90,45 @@ export default function PerformancePage() {
         </p>
       </header>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Player Scores By Week</CardTitle>
-          <CardDescription>
-            Each line represents a player's total score over the weeks.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-            {isLoading ? (
-                <div className="flex justify-center items-center h-[600px]">Loading chart data...</div>
-            ) : (
-                <PlayerPerformanceChart chartData={chartData} yAxisDomain={yAxisDomain} sortedUsers={sortedUsers} />
-            )}
-        </CardContent>
-      </Card>
+      {isLoading ? (
+          <div className="flex justify-center items-center h-[600px]">Loading chart data...</div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-0 text-xs">
+            {sortedUsers.map((user: User) => {
+              const userConfig = chartConfig[user.name];
+              if (!userConfig) return null;
+              const formattedName = formatNameForLegend(user.name);
+              return (
+                <div key={user.id} className="flex items-center space-x-2 truncate py-0.5">
+                  <span
+                    className="inline-block h-2 w-2 rounded-sm shrink-0"
+                    style={{ backgroundColor: userConfig.colour }}
+                  ></span>
+                  <span className="truncate" title={`${user.name}, ${user.score}`}>{`${formattedName}, ${user.score}`}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Player Scores By Week</CardTitle>
+              <CardDescription>
+                Each line represents a player's total score over the weeks.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PlayerPerformanceChart 
+                chartData={chartData} 
+                yAxisDomain={yAxisDomain} 
+                sortedUsers={sortedUsers} 
+                chartConfig={chartConfig}
+              />
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 }

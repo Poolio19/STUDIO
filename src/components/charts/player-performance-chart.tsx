@@ -23,28 +23,11 @@ interface PlayerPerformanceChartProps {
     chartData: any[];
     yAxisDomain: [number, number];
     sortedUsers: User[];
+    chartConfig: any;
 }
 
 
-export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers }: PlayerPerformanceChartProps) {
-  
-  const chartConfig = React.useMemo(() => {
-    return sortedUsers.reduce((config, user, index) => {
-      config[user.name] = {
-        label: user.name,
-        colour: `hsl(var(--chart-color-${index + 1}))`,
-      };
-      return config;
-    }, {} as any);
-  }, [sortedUsers]);
-
-  const formatName = (name: string) => {
-    const parts = name.split(' ');
-    if (parts.length > 1) {
-      return `${parts[0].charAt(0)}. ${parts.slice(1).join(' ')}`;
-    }
-    return name;
-  }
+export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers, chartConfig }: PlayerPerformanceChartProps) {
   
   return (
     <div className="relative">
@@ -54,7 +37,7 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers }: 
             data={chartData}
             margin={{
               top: 20,
-              right: 320, // Increased right margin for wider legend
+              right: 20,
               left: -20,
               bottom: 20,
             }}
@@ -102,31 +85,6 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers }: 
           </LineChart>
         </ResponsiveContainer>
       </ChartContainer>
-      <div
-        className="absolute grid grid-cols-2 gap-x-4 gap-y-0"
-        style={{
-          right: 0,
-          top: 0,
-          width: '300px', 
-          paddingLeft: '1rem',
-          fontSize: '12px',
-        }}
-      >
-          {sortedUsers.map((user: User) => {
-            const userConfig = chartConfig[user.name];
-            if (!userConfig) return null;
-            const formattedName = formatName(user.name);
-            return (
-              <div key={user.id} className="flex items-center space-x-2 truncate py-0.5">
-                <span
-                  className="inline-block h-2 w-2 rounded-sm shrink-0"
-                  style={{ backgroundColor: userConfig.colour }}
-                ></span>
-                <span className="truncate" title={`${user.name}, ${user.score}`}>{`${formattedName}, ${user.score}`}</span>
-              </div>
-            );
-          })}
-      </div>
     </div>
   );
 }
