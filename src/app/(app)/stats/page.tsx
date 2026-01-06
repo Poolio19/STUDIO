@@ -78,19 +78,19 @@ export default function StatsPage() {
                 ) : (
                     <Table className="min-w-full border-collapse">
                         <TableHeader>
-                            <TableRow className="h-[100px]">
+                            <TableRow className="h-[65px]">
                                 <TableHead className="sticky left-0 z-10 bg-card whitespace-nowrap w-[250px] p-0">
-                                    <div className="flex items-end h-full pl-12 pb-1">
+                                    <div className="flex items-end h-full pb-1 pl-12">
                                         <span className="text-xl font-bold text-black dark:text-white">Player</span>
                                     </div>
                                 </TableHead>
                                 <TableHead className="text-center p-0 w-[40px] border-l border-dashed border-border">
-                                    <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-bold h-[92px] w-full flex items-center justify-end">TOTAL</div>
+                                    <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-bold h-[57px] w-full flex items-center justify-end">TOTAL</div>
                                 </TableHead>
                                 {sortedTeams.map((team) => {
                                     return (
                                     <TableHead key={team.id} className="text-left p-0 w-[40px] border-l border-dashed border-border">
-                                        <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium h-[92px] w-full flex items-end">{team.name}</div>
+                                        <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium h-[57px] w-full flex items-end">{team.name}</div>
                                     </TableHead>
                                 )})}
                             </TableRow>
@@ -98,8 +98,8 @@ export default function StatsPage() {
                         <TableBody>
                             {sortedUsers.map((user) => (
                                 <TableRow key={user.id} className="h-10">
-                                    <TableCell className="sticky left-0 z-10 bg-card whitespace-nowrap font-medium w-[250px]">
-                                        <div className="flex items-center justify-between gap-3">
+                                    <TableCell className="sticky left-0 z-10 bg-card whitespace-nowrap font-medium p-0 w-[250px]">
+                                        <div className="flex items-center justify-between gap-3 h-10 pl-2">
                                             <div className="flex items-center gap-3">
                                                 <Avatar className="h-8 w-8">
                                                     <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
@@ -109,7 +109,7 @@ export default function StatsPage() {
                                             </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell className="text-center font-bold text-lg border-l border-dashed border-border">
+                                    <TableCell className="text-center font-bold text-lg border-l border-dashed border-border p-0">
                                         {user.score}
                                     </TableCell>
                                     {sortedTeams.map((team) => {
