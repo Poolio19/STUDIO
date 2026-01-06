@@ -76,15 +76,19 @@ export default function StatsPage() {
                 ) : (
                     <Table className="min-w-full border-collapse">
                         <TableHeader>
-                            <TableRow className="h-40">
-                                <TableHead className="sticky left-0 z-10 bg-card whitespace-nowrap w-[250px]">Player</TableHead>
+                            <TableRow className="h-28">
+                                <TableHead className="sticky left-0 z-10 bg-card whitespace-nowrap w-[250px] p-0">
+                                    <div className="flex items-end h-full pl-12 pb-1">
+                                        <span className="text-xl font-bold text-black dark:text-white">Player</span>
+                                    </div>
+                                </TableHead>
                                 <TableHead className="text-center p-0 w-[40px] border-l border-dashed border-border">
-                                    <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-bold h-[140px] flex items-center justify-center">TOTAL</div>
+                                    <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-bold h-[100px] flex items-end justify-center">TOTAL</div>
                                 </TableHead>
                                 {sortedTeams.map((team) => {
                                     return (
-                                    <TableHead key={team.id} className="text-center p-0 w-[40px] border-l border-dashed border-border">
-                                        <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium h-[140px] flex items-center justify-center">{team.name}</div>
+                                    <TableHead key={team.id} className="text-left p-0 w-[40px] border-l border-dashed border-border">
+                                        <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium h-[100px] flex items-start justify-center">{team.name}</div>
                                     </TableHead>
                                 )})}
                             </TableRow>
