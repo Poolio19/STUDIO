@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -16,7 +15,7 @@ import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
 import type { User, Team, PlayerTeamScore } from '@/lib/data';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query } from 'firebase/firestore';
 
 const getAvatarUrl = (avatarId: string) => {
   return PlaceHolderImages.find((img) => img.id === avatarId)?.imageUrl || '';
@@ -128,5 +127,3 @@ export default function StatsPage() {
     </div>
   );
 }
-
-    
