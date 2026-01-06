@@ -61,12 +61,12 @@ async function importClientSideData(db: any): Promise<{ success: boolean; messag
         });
     };
 
-    // Delete all documents from all collections first
+    // Queue delete operations for all documents in all collections first
     for (const name of collectionNames) {
         await deleteCollection(name);
     }
     
-    // Now, add the new data
+    // Now, queue the set operations to add the new data
     // Teams
     teams.forEach(item => {
       const docRef = doc(db, 'teams', item.id);
@@ -146,7 +146,7 @@ async function importClientSideData(db: any): Promise<{ success: boolean; messag
         batch.set(docRef, item);
     });
 
-    // Commit all deletions and additions
+    // Atomically commit all deletions and additions
     await batch.commit();
 
     return { success: true, message: 'All application data has been purged and re-imported successfully.' };
