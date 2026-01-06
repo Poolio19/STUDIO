@@ -540,207 +540,7 @@ export const matches: Match[] = [
     { week: 18, homeTeamId: 'team_12', awayTeamId: 'team_15', homeScore: 4, awayScore: 2 },
     { week: 18, homeTeamId: 'team_02', awayTeamId: 'team_16', homeScore: 2, awayScore: 3 },
     { week: 18, homeTeamId: 'team_11', awayTeamId: 'team_17', homeScore: 3, awayScore: 0 },
-    { week: 19, homeTeamId: 'team_19', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
-    { week: 19, homeTeamId: 'team_18', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
-    { week: 19, homeTeamId: 'team_17', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
-    { week: 19, homeTeamId: 'team_16', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
-    { week: 19, homeTeamId: 'team_15', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
-    { week: 19, homeTeamId: 'team_13', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
-    { week: 19, homeTeamId: 'team_10', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
-    { week: 19, homeTeamId: 'team_09', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
-    { week: 19, homeTeamId: 'team_04', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
-    { week: 19, homeTeamId: 'team_01', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
-    { week: 20, homeTeamId: 'team_20', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
-    { week: 20, homeTeamId: 'team_19', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
-    { week: 20, homeTeamId: 'team_18', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
-    { week: 20, homeTeamId: 'team_17', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
-    { week: 20, homeTeamId: 'team_14', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
-    { week: 20, homeTeamId: 'team_12', awayTeamId: 'team_13', homeScore: -1, awayScore: -1 },
-    { week: 20, homeTeamId: 'team_10', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
-    { week: 20, homeTeamId: 'team_07', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
-    { week: 20, homeTeamId: 'team_06', awayTeamId: 'team_15', homeScore: -1, awayScore: -1 },
-    { week: 20, homeTeamId: 'team_02', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
-    { week: 21, homeTeamId: 'team_19', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
-    { week: 21, homeTeamId: 'team_15', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
-    { week: 21, homeTeamId: 'team_13', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
-    { week: 21, homeTeamId: 'team_10', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
-    { week: 21, homeTeamId: 'team_08', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
-    { week: 21, homeTeamId: 'team_06', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
-    { week: 21, homeTeamId: 'team_05', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
-    { week: 21, homeTeamId: 'team_04', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
-    { week: 21, homeTeamId: 'team_03', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
-    { week: 21, homeTeamId: 'team_01', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
-    { week: 22, homeTeamId: 'team_20', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
-    { week: 22, homeTeamId: 'team_19', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
-    { week: 22, homeTeamId: 'team_18', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
-    { week: 22, homeTeamId: 'team_17', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
-    { week: 22, homeTeamId: 'team_16', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
-    { week: 22, homeTeamId: 'team_14', awayTeamId: 'team_13', homeScore: -1, awayScore: -1 },
-    { week: 22, homeTeamId: 'team_12', awayTeamId: 'team_15', homeScore: -1, awayScore: -1 },
-    { week: 22, homeTeamId: 'team_11', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
-    { week: 22, homeTeamId: 'team_04', awayTeamId: 'team_06', homeScore: -1, awayScore: -1 },
-    { week: 22, homeTeamId: 'team_01', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
-    { week: 23, homeTeamId: 'team_15', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
-    { week: 23, homeTeamId: 'team_13', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
-    { week: 23, homeTeamId: 'team_09', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
-    { week: 23, homeTeamId: 'team_08', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
-    { week: 23, homeTeamId: 'team_07', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
-    { week: 23, homeTeamId: 'team_06', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
-    { week: 23, homeTeamId: 'team_05', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
-    { week: 23, homeTeamId: 'team_03', awayTeamId: 'team_19', homeScore: -1, awayScore: -1 },
-    { week: 23, homeTeamId: 'team_02', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
-    { week: 23, homeTeamId: 'team_14', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
-    { week: 24, homeTeamId: 'team_20', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
-    { week: 24, homeTeamId: 'team_19', awayTeamId: 'team_15', homeScore: -1, awayScore: -1 },
-    { week: 24, homeTeamId: 'team_18', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
-    { week: 24, homeTeamId: 'team_17', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
-    { week: 24, homeTeamId: 'team_12', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
-    { week: 24, homeTeamId: 'team_11', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
-    { week: 24, homeTeamId: 'team_09', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
-    { week: 24, homeTeamId: 'team_05', awayTeamId: 'team_06', homeScore: -1, awayScore: -1 },
-    { week: 24, homeTeamId: 'team_04', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
-    { week: 24, homeTeamId: 'team_01', awayTeamId: 'team_13', homeScore: -1, awayScore: -1 },
-    { week: 25, homeTeamId: 'team_16', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
-    { week: 25, homeTeamId: 'team_15', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
-    { week: 25, homeTeamId: 'team_13', awayTeamId: 'team_19', homeScore: -1, awayScore: -1 },
-    { week: 25, homeTeamId: 'team_10', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
-    { week: 25, homeTeamId: 'team_07', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
-    { week: 25, homeTeamId: 'team_06', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
-    { week: 25, homeTeamId: 'team_05', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
-    { week: 25, homeTeamId: 'team_03', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
-    { week: 25, homeTeamId: 'team_12', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
-    { week: 25, homeTeamId: 'team_11', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
-    { week: 26, homeTeamId: 'team_20', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
-    { week: 26, homeTeamId: 'team_19', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
-    { week: 26, homeTeamId: 'team_18', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
-    { week: 26, homeTeamId: 'team_17', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
-    { week: 26, homeTeamId: 'team_14', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
-    { week: 26, homeTeamId: 'team_13', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
-    { week: 26, homeTeamId: 'team_08', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
-    { week: 26, homeTeamId: 'team_07', awayTeamId: 'team_15', homeScore: -1, awayScore: -1 },
-    { week: 26, homeTeamId: 'team_02', awayTeamId: 'team_06', homeScore: -1, awayScore: -1 },
-    { week: 26, homeTeamId: 'team_01', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
-    { week: 27, homeTeamId: 'team_19', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
-    { week: 27, homeTeamId: 'team_16', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
-    { week: 27, homeTeamId: 'team_15', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
-    { week: 27, homeTeamId: 'team_13', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
-    { week: 27, homeTeamId: 'team_10', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
-    { week: 27, homeTeamId: 'team_09', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
-    { week: 27, homeTeamId: 'team_08', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
-    { week: 27, homeTeamId: 'team_06', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
-    { week: 27, homeTeamId: 'team_04', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
-    { week: 27, homeTeamId: 'team_02', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
-    { week: 28, homeTeamId: 'team_20', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
-    { week: 28, homeTeamId: 'team_18', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
-    { week: 28, homeTeamId: 'team_17', awayTeamId: 'team_15', homeScore: -1, awayScore: -1 },
-    { week: 28, homeTeamId: 'team_14', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
-    { week: 28, homeTeamId: 'team_11', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
-    { week: 28, homeTeamId: 'team_09', awayTeamId: 'team_19', homeScore: -1, awayScore: -1 },
-    { week: 28, homeTeamId: 'team_08', awayTeamId: 'team_06', homeScore: -1, awayScore: -1 },
-    { week: 28, homeTeamId: 'team_05', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
-    { week: 28, homeTeamId: 'team_03', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
-    { week: 28, homeTeamId: 'team_01', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
-    { week: 29, homeTeamId: 'team_19', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
-    { week: 29, homeTeamId: 'team_16', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
-    { week: 29, homeTeamId: 'team_15', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
-    { week: 29, homeTeamId: 'team_13', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
-    { week: 29, homeTeamId: 'team_12', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
-    { week: 29, homeTeamId: 'team_11', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
-    { week: 29, homeTeamId: 'team_07', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
-    { week: 29, homeTeamId: 'team_06', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
-    { week: 29, homeTeamId: 'team_02', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
-    { week: 29, homeTeamId: 'team_14', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
-    { week: 30, homeTeamId: 'team_20', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
-    { week: 30, homeTeamId: 'team_17', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
-    { week: 30, homeTeamId: 'team_16', awayTeamId: 'team_06', homeScore: -1, awayScore: -1 },
-    { week: 30, homeTeamId: 'team_12', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
-    { week: 30, homeTeamId: 'team_10', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
-    { week: 30, homeTeamId: 'team_09', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
-    { week: 30, homeTeamId: 'team_08', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
-    { week: 30, homeTeamId: 'team_05', awayTeamId: 'team_19', homeScore: -1, awayScore: -1 },
-    { week: 30, homeTeamId: 'team_04', awayTeamId: 'team_15', homeScore: -1, awayScore: -1 },
-    { week: 30, homeTeamId: 'team_03', awayTeamId: 'team_13', homeScore: -1, awayScore: -1 },
-    { week: 31, homeTeamId: 'team_19', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
-    { week: 31, homeTeamId: 'team_18', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
-    { week: 31, homeTeamId: 'team_15', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
-    { week: 31, homeTeamId: 'team_14', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
-    { week: 31, homeTeamId: 'team_13', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
-    { week: 31, homeTeamId: 'team_11', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
-    { week: 31, homeTeamId: 'team_07', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
-    { week: 31, homeTeamId: 'team_06', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
-    { week: 31, homeTeamId: 'team_02', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
-    { week: 31, homeTeamId: 'team_01', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
-    { week: 32, homeTeamId: 'team_20', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
-    { week: 32, homeTeamId: 'team_19', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
-    { week: 32, homeTeamId: 'team_17', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
-    { week: 32, homeTeamId: 'team_16', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
-    { week: 32, homeTeamId: 'team_12', awayTeamId: 'team_06', homeScore: -1, awayScore: -1 },
-    { week: 32, homeTeamId: 'team_10', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
-    { week: 32, homeTeamId: 'team_09', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
-    { week: 32, homeTeamId: 'team_08', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
-    { week: 32, homeTeamId: 'team_04', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
-    { week: 32, homeTeamId: 'team_15', awayTeamId: 'team_13', homeScore: -1, awayScore: -1 },
-    { week: 33, homeTeamId: 'team_14', awayTeamId: 'team_19', homeScore: -1, awayScore: -1 },
-    { week: 33, homeTeamId: 'team_13', awayTeamId: 'team_15', homeScore: -1, awayScore: -1 },
-    { week: 33, homeTeamId: 'team_10', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
-    { week: 33, homeTeamId: 'team_09', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
-    { week: 33, homeTeamId: 'team_08', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
-    { week: 33, homeTeamId: 'team_07', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
-    { week: 33, homeTeamId: 'team_06', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
-    { week: 33, homeTeamId: 'team_05', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
-    { week: 33, homeTeamId: 'team_03', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
-    { week: 33, homeTeamId: 'team_01', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
-    { week: 34, homeTeamId: 'team_20', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
-    { week: 34, homeTeamId: 'team_19', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
-    { week: 34, homeTeamId: 'team_18', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
-    { week: 34, homeTeamId: 'team_17', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
-    { week: 34, homeTeamId: 'team_16', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
-    { week: 34, homeTeamId: 'team_15', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
-    { week: 34, homeTeamId: 'team_13', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
-    { week: 34, homeTeamId: 'team_07', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
-    { week: 34, homeTeamId: 'team_04', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
-    { week: 34, homeTeamId: 'team_02', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
-    { week: 35, homeTeamId: 'team_19', awayTeamId: 'team_13', homeScore: -1, awayScore: -1 },
-    { week: 35, homeTeamId: 'team_16', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
-    { week: 35, homeTeamId: 'team_12', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
-    { week: 35, homeTeamId: 'team_11', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
-    { week: 35, homeTeamId: 'team_09', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
-    { week: 35, homeTeamId: 'team_08', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
-    { week: 35, homeTeamId: 'team_06', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
-    { week: 35, homeTeamId: 'team_04', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
-    { week: 35, homeTeamId: 'team_03', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
-    { week: 35, homeTeamId: 'team_01', awayTeamId: 'team_15', homeScore: -1, awayScore: -1 },
-    { week: 36, homeTeamId: 'team_18', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
-    { week: 36, homeTeamId: 'team_17', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
-    { week: 36, homeTeamId: 'team_15', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
-    { week: 36, homeTeamId: 'team_14', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
-    { week: 36, homeTeamId: 'team_13', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
-    { week: 36, homeTeamId: 'team_10', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
-    { week: 36, homeTeamId: 'team_09', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
-    { week: 36, homeTeamId: 'team_06', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
-    { week: 36, homeTeamId: 'team_02', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
-    { week: 36, homeTeamId: 'team_19', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
-    { week: 37, homeTeamId: 'team_20', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
-    { week: 37, homeTeamId: 'team_18', awayTeamId: 'team_15', homeScore: -1, awayScore: -1 },
-    { week: 37, homeTeamId: 'team_17', awayTeamId: 'team_19', homeScore: -1, awayScore: -1 },
-    { week: 37, homeTeamId: 'team_12', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
-    { week: 37, homeTeamId: 'team_11', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
-    { week: 37, homeTeamId: 'team_09', awayTeamId: 'team_13', homeScore: -1, awayScore: -1 },
-    { week: 37, homeTeamId: 'team_07', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
-    { week: 37, homeTeamId: 'team_05', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
-    { week: 37, homeTeamId: 'team_04', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
-    { week: 37, homeTeamId: 'team_03', awayTeamId: 'team_06', homeScore: -1, awayScore: -1 },
-    { week: 38, homeTeamId: 'team_19', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
-    { week: 38, homeTeamId: 'team_16', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
-    { week: 38, homeTeamId: 'team_15', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
-    { week: 38, homeTeamId: 'team_14', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
-    { week: 38, homeTeamId: 'team_13', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
-    { week: 38, homeTeamId: 'team_08', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
-    { week: 38, homeTeamId: 'team_06', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
-    { week: 38, homeTeamId: 'team_05', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
-    { week: 38, homeTeamId: 'team_02', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
-    { week: 38, homeTeamId: 'team_01', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 }
-]
+];
 
 const playedMatches = matches.filter(m => m.homeScore !== -1);
 
@@ -893,61 +693,60 @@ export const playerTeamScores: PlayerTeamScore[] = fullPredictions.flatMap(predi
     });
 });
 
-export const fullUsers: User[] = (() => {
-    const weeklyScoresByUser: { [userId: string]: WeeklyScore[] } = {};
-
-    userList.forEach(user => {
-        weeklyScoresByUser[user.id] = [];
-    });
-
+const weeklyScoresByUser: { [userId: string]: WeeklyScore[] } = {};
+userList.forEach(user => {
+    weeklyScoresByUser[user.id] = [];
+    const prediction = fullPredictions.find(p => p.userId === user.id);
+    if (!prediction) return;
     const maxWeek = Math.max(...playedMatches.map(m => m.week), 0);
 
     for (let week = 1; week <= maxWeek; week++) {
+        let totalScore = 0;
         const weeklyStandingsForWeek = weeklyTeamStandings.filter(ws => ws.week === week);
         const weeklyFinalRankings: { [teamId: string]: number } = {};
         weeklyStandingsForWeek.forEach(s => {
             weeklyFinalRankings[s.teamId] = s.rank;
         });
 
-        const weeklyUserScores: { userId: string, score: number }[] = [];
-
-        fullPredictions.forEach(prediction => {
-            let totalScore = 0;
-            prediction.rankings.forEach((teamId, index) => {
-                const predictedRank = index + 1;
-                const actualRank = weeklyFinalRankings[teamId];
-                if (actualRank) {
-                    totalScore += 5 - Math.abs(predictedRank - actualRank);
-                }
-            });
-            weeklyUserScores.push({ userId: prediction.userId, score: totalScore });
+        prediction.rankings.forEach((teamId, index) => {
+            const predictedRank = index + 1;
+            const actualRank = weeklyFinalRankings[teamId];
+            if (actualRank !== undefined) {
+                totalScore += 5 - Math.abs(predictedRank - actualRank);
+            }
         });
-
-        weeklyUserScores.sort((a, b) => b.score - a.score);
-
-        const weeklyRanks: { [userId: string]: number } = {};
-        let rank = 1;
-        for (let i = 0; i < weeklyUserScores.length; i++) {
-          if (i > 0 && weeklyUserScores[i].score < weeklyUserScores[i - 1].score) {
-            rank = i + 1;
-          }
-          weeklyRanks[weeklyUserScores[i].userId] = rank;
-        }
-
-        userList.forEach(user => {
-            const score = weeklyUserScores.find(s => s.userId === user.id)?.score ?? 0;
-            const rank = weeklyRanks[user.id] ?? userList.length;
-            weeklyScoresByUser[user.id].push({ week, score, rank });
-        });
+        weeklyScoresByUser[user.id].push({ week, score: totalScore, rank: 0 }); // Rank calculated later
     }
+});
 
+// Calculate ranks for each week
+const maxWeek = Math.max(...playedMatches.map(m => m.week), 0);
+for (let week = 1; week <= maxWeek; week++) {
+    const scoresForWeek = userList.map(user => ({
+        userId: user.id,
+        score: weeklyScoresByUser[user.id]?.find(s => s.week === week)?.score ?? -Infinity,
+    })).sort((a, b) => b.score - a.score);
+
+    let currentRank = 1;
+    for(let i=0; i<scoresForWeek.length; i++) {
+        if(i > 0 && scoresForWeek[i].score < scoresForWeek[i-1].score) {
+            currentRank = i + 1;
+        }
+        const userWeekScore = weeklyScoresByUser[scoresForWeek[i].userId].find(s => s.week === week);
+        if(userWeekScore) {
+            userWeekScore.rank = currentRank;
+        }
+    }
+}
+
+export const fullUsers: User[] = (() => {
     const finalUsers = userList.map(user => {
-        const weeklyScores = weeklyScoresByUser[user.id];
+        const weeklyScores = weeklyScoresByUser[user.id] || [];
         const latestWeek = weeklyScores.length > 0 ? weeklyScores[weeklyScores.length - 1] : { score: 0, rank: 0, week: 0 };
         const previousWeek = weeklyScores.length > 1 ? weeklyScores[weeklyScores.length - 2] : { score: 0, rank: 0, week: 0 };
         
         const allScores = weeklyScores.map(w => w.score);
-        const allRanks = weeklyScores.map(w => w.rank);
+        const allRanks = weeklyScores.map(w => w.rank).filter(r => r > 0);
 
         return {
             ...user,
@@ -956,11 +755,11 @@ export const fullUsers: User[] = (() => {
             previousScore: previousWeek.score,
             previousRank: previousWeek.rank,
             scoreChange: latestWeek.score - previousWeek.score,
-            rankChange: previousWeek.rank - latestWeek.rank,
-            maxScore: Math.max(...allScores, -Infinity),
-            minScore: Math.min(...allScores, Infinity),
-            maxRank: Math.min(...allRanks, Infinity),
-            minRank: Math.max(...allRanks, -Infinity),
+            rankChange: previousWeek.rank > 0 ? previousWeek.rank - latestWeek.rank : 0,
+            maxScore: allScores.length > 0 ? Math.max(...allScores) : 0,
+            minScore: allScores.length > 0 ? Math.min(...allScores) : 0,
+            maxRank: allRanks.length > 0 ? Math.min(...allRanks) : 0,
+            minRank: allRanks.length > 0 ? Math.max(...allRanks) : 0,
             avatar: String((userList.findIndex(u => u.id === user.id) % 49) + 1),
             email: `${user.name.replace(/ /g, '.').toLowerCase()}@prempred.com`,
             joinDate: '2025-08-01T12:00:00.000Z'
@@ -981,46 +780,7 @@ export const fullUsers: User[] = (() => {
     return finalUsers;
 })();
 
-export const fullUserHistories: UserHistory[] = Object.entries(
-    fullUsers.reduce((acc, user) => {
-        const history: WeeklyScore[] = [];
-        const maxWeek = Math.max(...playedMatches.map(m => m.week), 0);
-
-        for (let week = 1; week <= maxWeek; week++) {
-            const weeklyStandingsForWeek = weeklyTeamStandings.filter(ws => ws.week === week);
-            const weeklyFinalRankings: { [teamId: string]: number } = {};
-            weeklyStandingsForWeek.forEach(s => {
-                weeklyFinalRankings[s.teamId] = s.rank;
-            });
-            
-            const prediction = fullPredictions.find(p => p.userId === user.id);
-            let totalScore = 0;
-            if (prediction) {
-                 prediction.rankings.forEach((teamId, index) => {
-                    const predictedRank = index + 1;
-                    const actualRank = weeklyFinalRankings[teamId];
-                    if (actualRank) {
-                        totalScore += 5 - Math.abs(predictedRank - actualRank);
-                    }
-                });
-            }
-            history.push({ week, score: totalScore, rank: 0 }); // Rank will be calculated next
-        }
-        acc[user.id] = history;
-        return acc;
-    }, {} as {[userId: string]: WeeklyScore[]})
-).map(([userId, weeklyScores]) => {
-    const maxWeek = Math.max(...playedMatches.map(m => m.week), 0);
-    for (let week = 1; week <= maxWeek; week++) {
-        const scoresForWeek = Object.keys(weeklyScoresByUser).map(uid => weeklyScoresByUser[uid].find(s => s.week === week)?.score || 0);
-        scoresForWeek.sort((a,b) => b-a);
-        const userWeekScore = weeklyScores.find(s => s.week === week);
-        if(userWeekScore) {
-            let rank = scoresForWeek.findIndex(s => s === userWeekScore.score) + 1;
-            if (rank === 0) rank = scoresForWeek.length;
-            userWeekScore.rank = rank;
-        }
-    }
+export const fullUserHistories: UserHistory[] = Object.entries(weeklyScoresByUser).map(([userId, weeklyScores]) => {
     return { userId, weeklyScores };
 });
 
@@ -1078,49 +838,4 @@ export const monthlyMimoM: MonthlyMimoM[] = [
     { id: 'mimo_09', special: 'Christmas No. 1', month: 'December', year: 2025, userId: 'usr_086', type: 'winner' },
 ];
 
-// Helper to get all weekly scores for all users, used to calculate ranks
-const weeklyScoresByUser: { [userId: string]: WeeklyScore[] } = {};
-userList.forEach(user => {
-    weeklyScoresByUser[user.id] = [];
-    const prediction = fullPredictions.find(p => p.userId === user.id);
-    if (!prediction) return;
-    const maxWeek = Math.max(...playedMatches.map(m => m.week), 0);
-
-    for (let week = 1; week <= maxWeek; week++) {
-        let totalScore = 0;
-        const weeklyStandingsForWeek = weeklyTeamStandings.filter(ws => ws.week === week);
-        const weeklyFinalRankings: { [teamId: string]: number } = {};
-        weeklyStandingsForWeek.forEach(s => {
-            weeklyFinalRankings[s.teamId] = s.rank;
-        });
-
-        prediction.rankings.forEach((teamId, index) => {
-            const predictedRank = index + 1;
-            const actualRank = weeklyFinalRankings[teamId];
-            if (actualRank !== undefined) {
-                totalScore += 5 - Math.abs(predictedRank - actualRank);
-            }
-        });
-        weeklyScoresByUser[user.id].push({ week, score: totalScore, rank: 0 }); // Rank calculated later
-    }
-});
-
-// Calculate ranks for each week
-const maxWeek = Math.max(...playedMatches.map(m => m.week), 0);
-for (let week = 1; week <= maxWeek; week++) {
-    const scoresForWeek = userList.map(user => ({
-        userId: user.id,
-        score: weeklyScoresByUser[user.id].find(s => s.week === week)?.score ?? -Infinity,
-    })).sort((a, b) => b.score - a.score);
-
-    let currentRank = 1;
-    for(let i=0; i<scoresForWeek.length; i++) {
-        if(i > 0 && scoresForWeek[i].score < scoresForWeek[i-1].score) {
-            currentRank = i + 1;
-        }
-        const userWeekScore = weeklyScoresByUser[scoresForWeek[i].userId].find(s => s.week === week);
-        if(userWeekScore) {
-            userWeekScore.rank = currentRank;
-        }
-    }
-}
+    
