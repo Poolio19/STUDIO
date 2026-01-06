@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -90,7 +89,7 @@ export default function StatsPage() {
                                 {sortedTeams.map((team) => {
                                     return (
                                     <TableHead key={team.id} className="text-left p-0 w-[40px] border-l border-dashed border-border">
-                                        <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium h-[57px] w-full flex items-end">{team.name}</div>
+                                        <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium h-[57px] w-full flex items-center justify-end">{team.name}</div>
                                     </TableHead>
                                 )})}
                             </TableRow>
