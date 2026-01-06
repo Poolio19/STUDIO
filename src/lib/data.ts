@@ -212,9 +212,9 @@ for (const userId in userPredictionsRaw) {
         if (teamId) {
             return teamId;
         }
-        console.warn(`Could not map team name: ${teamName} for user ${userId}`);
-        return 'unknown';
-    }).filter(id => id !== 'unknown');
+        //This will now silently ignore teams that are not in the mapping, like the relegated ones in old predictions
+        return null;
+    }).filter((id): id is string => id !== null);
 }
 
 
@@ -470,16 +470,7 @@ export const seasonMonths: SeasonMonth[] = [
     { id: 'sm_10', month: 'May', year: 2026, abbreviation: 'MAY' }
 ];
 
-export const monthlyMimoM: MonthlyMimoM[] = [
-    { id: 'mimom_aug_1', month: 'August', year: 2025, userId: 'usr_32', type: 'winner' },
-    { id: 'mimom_aug_2', month: 'August', year: 2025, userId: 'usr_60', type: 'runner-up' },
-    { id: 'mimom_sep_1', month: 'September', year: 2025, userId: 'usr_87', type: 'winner' },
-    { id: 'mimom_sep_2', month: 'September', year: 2025, userId: 'usr_75', type: 'runner-up' },
-    { id: 'mimom_oct_1', month: 'October', year: 2025, userId: 'usr_83', type: 'winner' },
-    { id: 'mimom_oct_2', month: 'October', year: 2025, userId: 'usr_76', type: 'runner-up' },
-    { id: 'mimom_nov_1', month: 'November', year: 2025, userId: 'usr_85', type: 'winner' },
-    { id: 'mimom_nov_2', month: 'November', year: 2025, userId: 'usr_94', type: 'runner-up' },
-];
+export const monthlyMimoM: MonthlyMimoM[] = [];
 
 
 // Final exports for the app
