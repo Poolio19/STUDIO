@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -37,7 +36,7 @@ import {
   weeklyTeamStandings,
   teamRecentResults,
 } from '@/lib/data';
-import { collection, doc, writeBatch, getDocs } from 'firebase/firestore';
+import { collection, doc, writeBatch, getDocs, QuerySnapshot, DocumentData } from 'firebase/firestore';
 
 async function importClientSideData(db: any): Promise<{ success: boolean; message: string }> {
   if (!db) {
@@ -47,6 +46,27 @@ async function importClientSideData(db: any): Promise<{ success: boolean; messag
   try {
     const batch = writeBatch(db);
 
+    const collectionNames = [
+        'teams', 'standings', 'users', 'predictions', 'matches', 
+        'previousSeasonStandings', 'seasonMonths', 'monthlyMimoM', 
+        'userHistories', 'playerTeamScores', 'weeklyTeamStandings', 'teamRecentResults'
+    ];
+    
+    // Helper function to delete all documents in a collection
+    const deleteCollection = async (collectionName: string) => {
+        const collectionRef = collection(db, collectionName);
+        const snapshot: QuerySnapshot<DocumentData> = await getDocs(collectionRef);
+        snapshot.docs.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
+    };
+
+    // Delete all documents from all collections first
+    for (const name of collectionNames) {
+        await deleteCollection(name);
+    }
+    
+    // Now, add the new data
     // Teams
     teams.forEach(item => {
       const docRef = doc(db, 'teams', item.id);
@@ -126,9 +146,10 @@ async function importClientSideData(db: any): Promise<{ success: boolean; messag
         batch.set(docRef, item);
     });
 
+    // Commit all deletions and additions
     await batch.commit();
 
-    return { success: true, message: 'All application data has been imported successfully.' };
+    return { success: true, message: 'All application data has been purged and re-imported successfully.' };
 
   } catch (error: any) {
     console.error('Client-side data import failed:', error);
@@ -145,8 +166,8 @@ export default function AdminPage() {
   const performImport = async () => {
     setIsImporting(true);
     toast({
-      title: 'Importing Data...',
-      description: `Populating database with initial application data. This may take a moment.`,
+      title: 'Purging and Importing Data...',
+      description: `Wiping and repopulating database with initial application data. This may take a moment.`,
     });
 
     const result = await importClientSideData(firestore);
@@ -170,29 +191,8 @@ export default function AdminPage() {
       return;
     }
 
-    setIsImporting(true);
-
-    // Check if data already exists
-    try {
-      const teamsCollectionRef = collection(firestore, 'teams');
-      const snapshot = await getDocs(teamsCollectionRef);
-      if (!snapshot.empty) {
-        setIsAlertOpen(true);
-        setIsImporting(false);
-        return;
-      }
-    } catch (error: any) {
-        toast({
-            variant: 'destructive',
-            title: 'Error Checking Data',
-            description: `Could not check for existing data: ${error.message}`,
-        });
-        setIsImporting(false);
-        return;
-    }
-    
-    // If no data exists, import directly
-    await performImport();
+    // Always show the alert because this is a destructive action
+    setIsAlertOpen(true);
   };
 
   return (
@@ -212,7 +212,7 @@ export default function AdminPage() {
               <CardHeader>
               <CardTitle>Import Application Data</CardTitle>
               <CardDescription>
-                  Click the button below to populate your Firestore database with all the required application data. This process runs entirely in your browser.
+                  Click the button below to purge and repopulate your Firestore database with all the required application data. This is a destructive action and cannot be undone.
               </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col space-y-4">
@@ -223,7 +223,7 @@ export default function AdminPage() {
                         Importing Data...
                     </>
                     ) : (
-                    'Import All Data'
+                    'Purge and Import All Data'
                     )}
                 </Button>
               </CardContent>
@@ -236,7 +236,7 @@ export default function AdminPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Overwrite Existing Data?</AlertDialogTitle>
             <AlertDialogDescription>
-              Your database already contains data. Continuing will overwrite the existing data with the application data. This action cannot be undone.
+              You are about to delete all data in the collections and replace it with the initial application data. This action cannot be undone. Are you sure you want to continue?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -245,7 +245,7 @@ export default function AdminPage() {
               setIsAlertOpen(false);
               await performImport();
             }}>
-              Overwrite
+              Purge and Overwrite
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
