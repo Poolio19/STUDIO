@@ -85,7 +85,7 @@ export default function StatsPage() {
                                     </div>
                                 </TableHead>
                                 <TableHead className="text-center p-0 w-[40px] border-l border-dashed border-border">
-                                    <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-bold h-[92px] w-full flex items-end justify-center">TOTAL</div>
+                                    <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-bold h-[92px] w-full flex items-center justify-end">TOTAL</div>
                                 </TableHead>
                                 {sortedTeams.map((team) => {
                                     return (
@@ -97,11 +97,11 @@ export default function StatsPage() {
                         </TableHeader>
                         <TableBody>
                             {sortedUsers.map((user) => (
-                                <TableRow key={user.id} className="h-[45px]">
+                                <TableRow key={user.id} className="h-10">
                                     <TableCell className="sticky left-0 z-10 bg-card whitespace-nowrap font-medium w-[250px]">
                                         <div className="flex items-center justify-between gap-3">
                                             <div className="flex items-center gap-3">
-                                                <Avatar className="h-9 w-9">
+                                                <Avatar className="h-8 w-8">
                                                     <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
                                                     <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                                                 </Avatar>
