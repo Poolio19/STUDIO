@@ -143,11 +143,10 @@ export const teams: Team[] = [
 const teamNameMapping: { [key: string]: string } = {
     'Arsenal': 'team_1', 'Aston Villa': 'team_2', 'Bournemouth': 'team_3', 'Brentford': 'team_4',
     'Brighton': 'team_5', 'Chelsea': 'team_6', 'Crystal Palace': 'team_7', 'Everton': 'team_8',
-    'Fulham': 'team_9', 'Ipswich Town': 'team_10', 'Leicester City': 'team_11',
-    'Liverpool': 'team_12', 'Man City': 'team_13', 'Man Utd': 'team_14', 'Newcastle': 'team_15',
-    'Notts Forest': 'team_16', 'Southampton': 'team_17', 'Tottenham': 'team_18', 'Spurs': 'team_18',
-    'West Ham': 'team_19', 'Wolves': 'team_20', 'Ipswich': 'team_10', 'Leicester': 'team_11',
-    'Burnley': 'team_21', 'Sunderland': 'team_22', 'Leeds': 'team_23'
+    'Fulham': 'team_9', 'Liverpool': 'team_12', 'Man City': 'team_13', 'Man Utd': 'team_14', 
+    'Newcastle': 'team_15', 'Notts Forest': 'team_16', 'Tottenham': 'team_18', 'Spurs': 'team_18',
+    'West Ham': 'team_19', 'Wolves': 'team_20', 'Burnley': 'team_21', 'Sunderland': 'team_22', 
+    'Leeds': 'team_23'
 };
 
 
@@ -212,7 +211,6 @@ for (const userId in userPredictionsRaw) {
         if (teamId) {
             return teamId;
         }
-        //This will now silently ignore teams that are not in the mapping, like the relegated ones in old predictions
         return null;
     }).filter((id): id is string => id !== null);
 }
@@ -276,7 +274,7 @@ function calculateStandings(matches: Match[], maxWeek: number): Map<string, Team
     teams.forEach(team => {
         stats.set(team.id, {
             points: 0, gamesPlayed: 0, wins: 0, draws: 0, losses: 0,
-            goalsFor: 0, goalsAgainst: 0, goalDifference: 0, teamId: team.id, rank: 0
+            goalsFor: 0, goalsAgainst: 0, goalDifference: 0
         });
     });
 
@@ -313,7 +311,8 @@ function calculateStandings(matches: Match[], maxWeek: number): Map<string, Team
 }
 
 function sortStandings(statsMap: Map<string, TeamStats>): CurrentStanding[] {
-    const sorted = Array.from(statsMap.values())
+    const sorted = Array.from(statsMap.entries())
+        .map(([teamId, stats]) => ({ ...stats, teamId }))
         .sort((a, b) => {
             if (a.points !== b.points) return b.points - a.points;
             if (a.goalDifference !== b.goalDifference) return b.goalDifference - a.goalDifference;
@@ -329,7 +328,7 @@ function sortStandings(statsMap: Map<string, TeamStats>): CurrentStanding[] {
     return sorted;
 }
 
-const MAX_WEEK = 4;
+const MAX_WEEK = Math.max(...matches.map(m => m.week), 0);
 
 // Calculate final standings after max week
 const finalStatsMap = calculateStandings(matches, MAX_WEEK);
@@ -340,7 +339,6 @@ const finalTeamRanks = new Map(standings.map(s => [s.teamId, s.rank]));
 export const playerTeamScores: PlayerTeamScore[] = userList.flatMap(user => {
     const prediction = fullPredictions.find(p => p.userId === user.id);
     if (!prediction || !prediction.rankings) {
-        console.warn(`No prediction found for user: ${user.id}`);
         return [];
     };
 
@@ -409,7 +407,7 @@ export const fullUsers: User[] = userList.map((user, i) => {
     return {
         id: user.id,
         name: user.name,
-        avatar: `${(i % 49) + 1}`,
+        avatar: `${(i % 10) + 1}`,
         score: lastWeekData.score,
         rank: lastWeekData.rank,
         previousRank: prevWeekData.rank,
@@ -449,10 +447,10 @@ export const teamRecentResults: TeamRecentResult[] = teams.map(team => {
     }
     
     while (results.length < 6) {
-        results.push('-');
+        results.unshift('-');
     }
 
-    return { teamId: team.id, results: results.reverse() };
+    return { teamId: team.id, results: results };
 });
 
 
