@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -77,19 +78,19 @@ export default function StatsPage() {
                 ) : (
                     <Table className="min-w-full border-collapse">
                         <TableHeader>
-                            <TableRow className="h-[65px]">
+                            <TableRow className="h-[78px]">
                                 <TableHead className="sticky left-0 z-10 bg-card whitespace-nowrap w-[250px] p-0">
                                     <div className="flex items-end h-full pb-1 pl-12">
                                         <span className="text-xl font-bold text-black dark:text-white">Player</span>
                                     </div>
                                 </TableHead>
                                 <TableHead className="text-center p-0 w-[40px] border-l border-dashed border-border">
-                                    <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-bold h-[57px] w-full flex items-center justify-end">TOTAL</div>
+                                    <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-bold h-[68px] w-full flex items-center justify-end">TOTAL</div>
                                 </TableHead>
                                 {sortedTeams.map((team) => {
                                     return (
                                     <TableHead key={team.id} className="text-left p-0 w-[40px] border-l border-dashed border-border">
-                                        <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium h-[57px] w-full flex items-center justify-center">{team.name}</div>
+                                        <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium h-[68px] w-full flex items-center justify-center">{team.name}</div>
                                     </TableHead>
                                 )})}
                             </TableRow>
