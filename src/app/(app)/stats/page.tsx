@@ -30,7 +30,7 @@ export default function StatsPage() {
   const scoresQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'playerTeamScores') : null, [firestore, isUserLoading]);
   
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
-  const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
+  const { data: teams, isLoading: teamsLoading } = useCollection<Team>(scoresQuery);
   const { data: playerTeamScores, isLoading: scoresLoading } = useCollection<PlayerTeamScore>(scoresQuery);
 
   const isLoading = isUserLoading || usersLoading || teamsLoading || scoresLoading;
@@ -47,9 +47,10 @@ export default function StatsPage() {
 
 
   const getScoreColour = (score: number) => {
-    if (score === 5) return 'bg-green-200/50 dark:bg-green-800/50 font-bold';
-    if (score >= 3) return 'bg-green-100/50 dark:bg-green-900/40';
-    if (score <= 0) return 'bg-red-100/50 dark:bg-red-900/40 text-red-500';
+    if (score === 5) return 'bg-green-500/80 dark:bg-green-700/80 font-bold text-white';
+    if (score === 4) return 'bg-green-400/50 dark:bg-green-800/50';
+    if (score === 3) return 'bg-green-300/50 dark:bg-green-900/50';
+    if (score <= 0) return 'bg-red-400/50 dark:bg-red-900/50 text-red-800 dark:text-red-200';
     return '';
   };
 
@@ -76,14 +77,14 @@ export default function StatsPage() {
                 ) : (
                     <Table className="min-w-full border-collapse">
                         <TableHeader>
-                            <TableRow className="h-28">
+                            <TableRow className="h-[112px]">
                                 <TableHead className="sticky left-0 z-10 bg-card whitespace-nowrap w-[250px] p-0">
                                     <div className="flex items-end h-full pl-12 pb-1">
                                         <span className="text-xl font-bold text-black dark:text-white">Player</span>
                                     </div>
                                 </TableHead>
                                 <TableHead className="text-center p-0 w-[40px] border-l border-dashed border-border">
-                                    <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-bold h-[100px] flex items-end justify-center">TOTAL</div>
+                                    <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-bold h-[100px] flex items-center justify-center">TOTAL</div>
                                 </TableHead>
                                 {sortedTeams.map((team) => {
                                     return (
@@ -95,7 +96,7 @@ export default function StatsPage() {
                         </TableHeader>
                         <TableBody>
                             {sortedUsers.map((user) => (
-                                <TableRow key={user.id}>
+                                <TableRow key={user.id} className="h-[45px]">
                                     <TableCell className="sticky left-0 z-10 bg-card whitespace-nowrap font-medium w-[250px]">
                                         <div className="flex items-center justify-between gap-3">
                                             <div className="flex items-center gap-3">
