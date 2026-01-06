@@ -172,9 +172,10 @@
         "homeTeamId": { "type": "string" },
         "awayTeamId": { "type": "string" },
         "homeScore": { "type": "number" },
-        "awayScore": { "type": "number" }
+        "awayScore": { "type": "number" },
+        "matchDate": { "type": "string", "format": "date-time" }
       },
-      "required": ["week", "homeTeamId", "awayTeamId", "homeScore", "awayScore"]
+      "required": ["week", "homeTeamId", "awayTeamId", "homeScore", "awayScore", "matchDate"]
     }
   },
   "auth": {
