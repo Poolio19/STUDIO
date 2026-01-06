@@ -1,4 +1,5 @@
 
+
 export type User = {
   id: string;
   name: string;
@@ -127,81 +128,66 @@ export const teams: Team[] = [
     { id: 'team_07', name: 'Crystal Palace', logo: 'castle', bgColourFaint: 'rgba(27, 69, 143, 0.3)', bgColourSolid: '#1B458F', textColour: '#C4122E', iconColour: '#C4122E' },
     { id: 'team_08', name: 'Everton', logo: 'shieldHalf', bgColourFaint: 'rgba(0, 51, 160, 0.3)', bgColourSolid: '#0033A0', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_09', name: 'Fulham', logo: 'rabbit', bgColourFaint: 'rgba(0, 0, 0, 0.3)', bgColourSolid: '#000000', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
-    { id: 'team_10', name: 'Ipswich', logo: 'theater', bgColourFaint: 'rgba(0, 51, 160, 0.3)', bgColourSolid: '#0033A0', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
-    { id: 'team_11', name: 'Leicester', logo: 'squirrel', bgColourFaint: 'rgba(0, 83, 160, 0.3)', bgColourSolid: '#0053A0', textColour: '#FDBE11', iconColour: '#FDBE11' },
+    { id: 'team_10', name: 'Leeds', logo: 'theater', bgColourFaint: 'rgba(255, 205, 0, 0.3)', bgColourSolid: '#FFCD00', textColour: '#1D428A', iconColour: '#1D428A' },
+    { id: 'team_11', name: 'Burnley', logo: 'squirrel', bgColourFaint: 'rgba(108, 29, 69, 0.3)', bgColourSolid: '#6C1D45', textColour: '#99D6EA', iconColour: '#99D6EA' },
     { id: 'team_12', name: 'Liverpool', logo: 'origami', bgColourFaint: 'rgba(200, 16, 46, 0.3)', bgColourSolid: '#C8102E', textColour: '#000000', iconColour: '#FFFFFF' },
     { id: 'team_13', name: 'Man City', logo: 'sailboat', bgColourFaint: 'rgba(108, 171, 221, 0.3)', bgColourSolid: '#6CABDD', textColour: '#00285E', iconColour: '#00285E' },
     { id: 'team_14', name: 'Man Utd', logo: 'sparkles', bgColourFaint: 'rgba(218, 41, 28, 0.3)', bgColourSolid: '#DA291C', textColour: '#FBE122', iconColour: '#FBE122' },
     { id: 'team_15', name: 'Newcastle', logo: 'shieldUser', bgColourFaint: 'rgba(45, 41, 38, 0.3)', bgColourSolid: '#2D2926', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_16', name: 'Notts Forest', logo: 'treeDeciduous', bgColourFaint: 'rgba(221, 0, 0, 0.3)', bgColourSolid: '#DD0000', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
-    { id: 'team_17', name: 'Southampton', logo: 'gitlab', bgColourFaint: 'rgba(215, 25, 32, 0.3)', bgColourSolid: '#D71920', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
+    { id: 'team_17', name: 'Sunderland', logo: 'gitlab', bgColourFaint: 'rgba(235, 20, 30, 0.3)', bgColourSolid: '#EB141E', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_18', name: 'Tottenham', logo: 'home', bgColourFaint: 'rgba(19, 34, 83, 0.3)', bgColourSolid: '#132257', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_19', name: 'West Ham', logo: 'hammer', bgColourFaint: 'rgba(122, 38, 58, 0.3)', bgColourSolid: '#7A263A', textColour: '#FBE122', iconColour: '#FBE122' },
     { id: 'team_20', name: 'Wolves', logo: 'flower', bgColourFaint: 'rgba(253, 190, 17, 0.3)', bgColourSolid: '#FDBE11', textColour: '#000000', iconColour: '#000000' }
 ];
 
 const teamNameMapping: { [key: string]: string } = teams.reduce((acc, team) => {
-    acc[team.name] = team.id;
-    if(team.name === 'Tottenham') acc['Spurs'] = team.id;
+    const lowerCaseName = team.name.toLowerCase();
+    acc[lowerCaseName] = team.id;
+    if (lowerCaseName === 'tottenham') acc['spurs'] = team.id;
+    if (lowerCaseName === 'man city') acc['manchester city'] = team.id;
+    if (lowerCaseName === 'man utd') acc['manchester united'] = team.id;
+    if (lowerCaseName === 'notts forest') acc['nottingham forest'] = team.id;
     return acc;
 }, {} as { [key: string]: string });
 
 const userListRaw = [
-    { id: 'usr_001', name: 'Thomas Wright' }, { id: 'usr_002', name: 'Barrie Cross' },
-    { id: 'usr_003', name: 'Dave Nightingale' }, { id: 'usr_004', name: 'Pip Stokes' },
-    { id: 'usr_005', name: 'Alex Anderson' }, { id: 'usr_006', name: 'Nat Walsh' },
-    { id: 'usr_007', name: 'Patrick Meese' }, { id: 'usr_008', name: 'Lee Harte' },
-    { id: 'usr_009', name: 'Jim Poole' }, { id: 'usr_010', name: 'Lyndon Padmore' },
-    { id: 'usr_011', name: 'Mark Hurst' }, { id: 'usr_012', name: 'Paul Baker' },
-    { id: 'usr_013', name: 'Andy Casey' }, { id: 'usr_014', name: 'Richard Wood' },
-    { id: 'usr_015', name: 'Richard Thomas' }, { id: 'usr_016', name: 'Matthew Byrne' },
-    { id: 'usr_017', name: 'Gary Jakeman' }, { id: 'usr_018', name: 'Paul Davies' },
-    { id: 'usr_019', name: 'Graham Hough' }, { id: 'usr_020', name: 'Mark Allen' },
-    { id: 'usr_021', name: 'Steve Wilson' }, { id: 'usr_022', name: 'Leighton Doyle' },
-    { id: 'usr_023', name: 'Adam Evans' }, { id: 'usr_024', name: 'Andrew Hingley' },
-    { id: 'usr_025', name: 'Ben Lancaster' }, { id: 'usr_026', name: 'Ashley Radnall' },
-    { id: 'usr_027', name: 'Gareth Ellis' }, { id: 'usr_028', name: 'Chris Radnall' },
-    { id: 'usr_029', name: 'Gary Williams' }, { id: 'usr_030', name: 'Gavin Budge' },
-    { id: 'usr_031', name: 'Matt Hall' }, { id: 'usr_032', name: 'Robert Chapman' },
-    { id: 'usr_033', name: 'Paul Radnall' }, { id: 'usr_034', name: 'Tom Lancaster' },
-    { id: 'usr_035', name: 'David Wheale' }, { id: 'usr_036', name: 'Simon Wilkes' },
-    { id: 'usr_037', name: 'Steve Gray' }, { id: 'usr_038', name: 'Tom Barrett' },
-    { id: 'usr_039', name: 'Paul Casey' }, { id: 'usr_040', name: 'James Hurst' },
-    { id: 'usr_041', name: 'Nick Radnall' }, { id: 'usr_042', name: 'Matt Casey' },
-    { id: 'usr_043', name: 'Andrew Evans' }, { id: 'usr_044', name: 'Dean Wilkes' },
-    { id: 'usr_045', name: 'Neil Evans' }, { id: 'usr_046', name: 'Phil Hanlon' },
-    { id: 'usr_047', name: 'Paul Hanlon' }, { id: 'usr_048', name: 'Jonathan Radnall' },
-    { id: 'usr_049', name: 'Joe Radnall' }, { id: 'usr_050', name: 'James Radnall' },
-    { id: 'usr_051', name: 'Dan Stokes' }, { id: 'usr_052', name: 'David Stokes' },
-    { id: 'usr_053', name: 'Adam Nightingale' }, { id: 'usr_054', name: 'Dan Nightingale' },
-    { id: 'usr_055', name: 'Steve Stokes' }, { id: 'usr_056', name: 'Robbie Nightingale' },
-    { id: 'usr_057', name: 'Roger Nightingale' }, { id: 'usr_058', name: 'Phil Cross' },
-    { id: 'usr_059', name: 'Paul Baker-Brian' }, { id: 'usr_060', name: 'Ben Baker' },
-    { id: 'usr_061', name: 'Ollie Baker' }, { id: 'usr_062', name: 'Richard Baker' },
-    { id: 'usr_063', name: 'Paul Baker-Brian Snr' }, { id: 'usr_064', name: 'Luke Baker' },
-    { id: 'usr_065', name: 'Joe Baker' }, { id: 'usr_066', name: 'Sam Baker' },
-    { id: 'usr_067', name: 'Jake Baker' }, { id: 'usr_068', name: 'Jack Baker' },
-    { id: 'usr_069', name: 'Dan Baker' }, { id: 'usr_070', name: 'Matt Baker' },
-    { id: 'usr_071', name: 'Tom Baker' }, { id: 'usr_072', name: 'Andrew Baker' },
-    { id: 'usr_073', name: 'Steve Baker' }, { id: 'usr_074', name: 'Andy Baker' },
-    { id: 'usr_075', name: 'Chris Baker' }, { id: 'usr_076', name: 'John Baker' },
-    { id: 'usr_077', name: 'Neil Baker' }, { id: 'usr_078', name: 'Gary Baker' },
-    { id: 'usr_079', name: 'Dave Baker' }, { id: 'usr_080', name: 'Mark Baker' },
-    { id: 'usr_081', name: 'Graham Baker' }, { id: 'usr_082', name: 'Leighton Baker' },
-    { id: 'usr_083', name: 'Adam Baker' }, { id: 'usr_084', name: 'Gareth Baker' },
-    { id: 'usr_085', name: 'Ben Baker-Brian' }, { id: 'usr_086', name: 'Ashley Baker' },
-    { id: 'usr_087', name: 'Gavin Baker' }, { id: 'usr_088', name: 'Robert Baker' },
-    { id: 'usr_089', name: 'Tom Baker-Brian' }, { id: 'usr_090', name: 'David Baker-Brian' },
-    { id: 'usr_091', name: 'Simon Baker' }, { id: 'usr_092', name: 'Steve Baker-Brian' },
-    { id: 'usr_093', name: 'Tom Barrett-Brian' }, { id: 'usr_094', name: 'Paul Casey-Brian' },
-    { id: 'usr_095', name: 'James Hurst-Brian' }, { id: 'usr_096', name: 'Nick Radnall-Brian' },
-    { id: 'usr_097', name: 'Matt Casey-Brian' }, { id: 'usr_098', name: 'Andrew Evans-Brian' },
-    { id: 'usr_099', name: 'Dean Wilkes-Brian' }, { id: 'usr_100', name: 'Neil Evans-Brian' },
-    { id: 'usr_101', name: 'Phil Hanlon-Brian' }, { id: 'usr_102', name: 'Paul Hanlon-Brian' },
-    { id: 'usr_103', name: 'Jonathan Radnall-Brian' }, { id: 'usr_104', name: 'Joe Radnall-Brian' },
-    { id: 'usr_105', name: 'James Radnall-Brian' }, { id: 'usr_106', name: 'BBC', isPro: true },
-    { id: 'usr_107', name: 'SKY', isPro: true }, { id: 'usr_108', name: 'OPTA', isPro: true },
-    { id: 'usr_109', name: 'THE SUN', isPro: true }
+    { id: 'usr_001', name: 'Tom Wright'}, { id: 'usr_002', name: 'Barrie Cross'}, { id: 'usr_003', name: 'Dave Nightingale'},
+    { id: 'usr_004', name: 'Pip Stokes'}, { id: 'usr_005', name: 'Alex Anderson'}, { id: 'usr_006', name: 'Nat Walsh'},
+    { id: 'usr_007', name: 'Patrick Meese'}, { id: 'usr_008', name: 'Lee Harte'}, { id: 'usr_009', name: 'Jim Poole'},
+    { id: 'usr_010', name: 'Lyndon Padmore'}, { id: 'usr_011', name: 'Alf Wroldsen'}, { id: 'usr_012', name: 'Steve Wroldsen'},
+    { id: 'usr_013', name: 'Roger Wymer'}, { id: 'usr_014', name: 'Mike Wymer'}, { id: 'usr_015', name: 'Andy Belton'},
+    { id: 'usr_016', name: 'Ernest Belton'}, { id: 'usr_017', name: 'Tim Birchall'}, { id: 'usr_018', name: 'Nathan Hyatt'},
+    { id: 'usr_019', name: 'Rory Hyatt'}, { id: 'usr_020', name: 'Gaz Littlewood'}, { id: 'usr_021', name: 'Fazil Sediqi'},
+    { id: 'usr_022', name: 'Shuhra Sediqi'}, { id: 'usr_023', name: 'Ilyas Taj Sediqi'}, { id: 'usr_024', name: 'Eshwa Sediqi'},
+    { id: 'usr_025', name: 'Ben Fellows'}, { id: 'usr_026', name: 'Michelle Duffy-Turner'}, { id: 'usr_027', name: 'Nicola Spears'},
+    { id: 'usr_028', name: 'Jamie Spears'}, { id: 'usr_029', name: 'Jonny Taylot'}, { id: 'usr_030', name: 'John Taylor'},
+    { id: 'usr_031', name: 'Sam Dixon'}, { id: 'usr_032', name: 'Doug Potter'}, { id: 'usr_033', name: 'Finlay Sinclair'},
+    { id: 'usr_034', name: 'Bart Ainsworth'}, { id: 'usr_035', name: 'Aidan Kehoe'}, { id: 'usr_036', name: 'Ben Patey'},
+    { id: 'usr_037', name: 'Theo Gresson'}, { id: 'usr_038', name: 'Adam Barclay'}, { id: 'usr_039', name: 'James Eldred'},
+    { id: 'usr_040', name: 'Otis Eldred'}, { id: 'usr_041', name: 'Dan Coles'}, { id: 'usr_042', name: 'Daniel Crick'},
+    { id: 'usr_043', name: 'Sheila McKenzie'}, { id: 'usr_044', name: 'Chris Dodds'}, { id: 'usr_045', name: 'Rich Seddon'},
+    { id: 'usr_046', name: 'Ross Allatt'}, { id: 'usr_047', name: 'Neville Johnson'}, { id: 'usr_048', name: 'Julian Spears'},
+    { id: 'usr_049', name: 'Andrew Spears'}, { id: 'usr_050', name: 'Danny Broom'}, { id: 'usr_051', name: 'Paul Hammett'},
+    { id: 'usr_052', name: 'Tom Gill'}, { id: 'usr_053', name: 'Ronnie Bain'}, { id: 'usr_054', name: 'Matthew Bain'},
+    { id: 'usr_055', name: 'Sam Bain'}, { id: 'usr_056', name: 'Andy Barnes'}, { id: 'usr_057', name: 'Pascal Walls'},
+    { id: 'usr_058', name: 'Steve Lawrence'}, { id: 'usr_059', name: 'Gill Butler'}, { id: 'usr_060', name: 'Tom Coles'},
+    { id: 'usr_061', name: 'Tom Poole'}, { id: 'usr_062', name: 'Eddie Spencer'}, { id: 'usr_063', name: 'Rory Poole'},
+    { id: 'usr_064', name: 'Scott Emmett'}, { id: 'usr_065', name: 'Craig Temporal'}, { id: 'usr_066', name: 'Andy Senior'},
+    { id: 'usr_067', name: 'Dan Brown'}, { id: 'usr_068', name: 'Rupert Massey'}, { id: 'usr_069', name: 'Matt Howard'},
+    { id: 'usr_070', name: 'Justin Downing'}, { id: 'usr_071', name: 'Sam Burgess'}, { id: 'usr_072', name: 'George Roberts'},
+    { id: 'usr_073', name: 'Leyton Collings'}, { id: 'usr_074', name: 'Ben Cox'}, { id: 'usr_075', name: 'Adam F Bain'},
+    { id: 'usr_076', name: 'Amy Parkinson'}, { id: 'usr_077', name: 'Stven Bain'}, { id: 'usr_078', name: 'Ian Scotland'},
+    { id: 'usr_079', name: 'Ben Dawes'}, { id: 'usr_080', name: 'Tom Bywater'}, { id: 'usr_081', name: 'Jack Murray'},
+    { id: 'usr_082', name: 'Rob Mabon'}, { id: 'usr_083', name: 'Andrew Trafford'}, { id: 'usr_084', name: 'Luca Trafford'},
+    { id: 'usr_085', name: 'Craig Stevens'}, { id: 'usr_086', name: 'George Butterworth'}, { id: 'usr_087', name: 'Ashley Davies'},
+    { id: 'usr_088', name: 'Duncan Holder'}, { id: 'usr_089', name: 'Arthur Gwyn-Davies'}, { id: 'usr_090', name: 'Paul Stonier'},
+    { id: 'usr_091', name: 'Jember Weekes'}, { id: 'usr_092', name: 'Tom Kehoe'}, { id: 'usr_093', name: 'Chris Burston'},
+    { id: 'usr_094', name: 'Malcolm Sinclair'}, { id: 'usr_095', name: 'Dan Parkinson'}, { id: 'usr_096', name: 'Alfie Skingley'},
+    { id: 'usr_097', name: 'Bev Skingley'}, { id: 'usr_098', name: 'Dan Skingley'}, { id: 'usr_099', name: 'Ken Skingley'},
+    { id: 'usr_100', name: 'Lyndsey Preece'}, { id: 'usr_101', name: 'Kane Sullivan'}, { id: 'usr_102', name: 'Graeme Bailie'},
+    { id: 'usr_103', name: 'Dan Dawson'}, { id: 'usr_104', name: 'Alix Nicholls'}, { id: 'usr_105', name: 'Alistair Whitfield'},
+    { id: 'usr_106', name: 'THE PREM-MEM', isPro: true }, { id: 'usr_107', name: 'THE AI', isPro: true }, { id: 'usr_108', name: 'THE SUPERCOMPUTER', isPro: true }, { id: 'usr_109', name: 'Alex Liston' }
 ];
 
 const userList = userListRaw.map(u => ({ ...u, name: u.isPro ? u.name : u.name.replace(/\b\w/g, l => l.toUpperCase()).replace(/\B[A-Z]/g, l => l.toLowerCase()) }));
@@ -230,33 +216,119 @@ export const previousSeasonStandings: PreviousSeasonStanding[] = [
 ];
 
 const userPredictionsRaw: { [key: string]: string[] } = {
-  "usr_001": ["Man Utd", "Liverpool", "Man City", "Arsenal", "Newcastle", "Chelsea", "Aston Villa", "Notts Forest", "Tottenham", "Bournemouth", "Brighton", "Fulham", "Brentford", "Ipswich", "Crystal Palace", "West Ham", "Wolves", "Everton", "Leicester", "Southampton"],
-  "usr_002": ["Liverpool", "Man City", "Arsenal", "Chelsea", "Aston Villa", "Newcastle", "Notts Forest", "Crystal Palace", "Brighton", "Man Utd", "Tottenham", "Bournemouth", "Brentford", "Fulham", "Everton", "Ipswich", "Wolves", "West Ham", "Leicester", "Southampton"],
-  "usr_003": ["Liverpool", "Arsenal", "Man City", "Chelsea", "Newcastle", "Man Utd", "Aston Villa", "Tottenham", "Brighton", "Bournemouth", "Notts Forest", "Everton", "Crystal Palace", "Fulham", "West Ham", "Brentford", "Wolves", "Ipswich", "Leicester", "Southampton"],
-  "usr_004": ["Liverpool", "Man City", "Chelsea", "Arsenal", "Aston Villa", "Newcastle", "Brighton", "Tottenham", "Notts Forest", "Fulham", "Man Utd", "Bournemouth", "Everton", "Crystal Palace", "Wolves", "West Ham", "Brentford", "Ipswich", "Leicester", "Southampton"],
-  "usr_005": ["Chelsea", "Man City", "Liverpool", "Arsenal", "Aston Villa", "Newcastle", "Tottenham", "Brighton", "Man Utd", "Fulham", "Bournemouth", "Brentford", "Ipswich", "Everton", "Crystal Palace", "Wolves", "West Ham", "Notts Forest", "Leicester", "Southampton"],
-  "usr_006": ["Chelsea", "Man City", "Liverpool", "Arsenal", "Newcastle", "Man Utd", "Everton", "Aston Villa", "Crystal Palace", "Brighton", "Notts Forest", "Ipswich", "West Ham", "Southampton", "Tottenham", "Wolves", "Bournemouth", "Fulham", "Brentford", "Leicester"],
-  "usr_007": ["Man City", "Liverpool", "Arsenal", "Chelsea", "Newcastle", "Aston Villa", "Tottenham", "Man Utd", "Bournemouth", "Notts Forest", "Fulham", "Brighton", "Wolves", "Crystal Palace", "West Ham", "Ipswich", "Everton", "Brentford", "Southampton", "Leicester"],
-  "usr_008": ["Liverpool", "Man City", "Arsenal", "Chelsea", "Aston Villa", "Man Utd", "Tottenham", "Newcastle", "Bournemouth", "Brighton", "Everton", "West Ham", "Fulham", "Crystal Palace", "Wolves", "Notts Forest", "Brentford", "Ipswich", "Southampton", "Leicester"],
-  "usr_009": ["Liverpool", "Man City", "Arsenal", "Chelsea", "Aston Villa", "Newcastle", "Tottenham", "Man Utd", "Notts Forest", "Everton", "Brighton", "Brentford", "West Ham", "Bournemouth", "Fulham", "Crystal Palace", "Wolves", "Leicester", "Ipswich", "Southampton"],
-  "usr_010": ["Man City", "Liverpool", "Arsenal", "Chelsea", "Tottenham", "Man Utd", "Aston Villa", "Newcastle", "West Ham", "Everton", "Brighton", "Wolves", "Brentford", "Fulham", "Crystal Palace", "Bournemouth", "Notts Forest", "Ipswich", "Leicester", "Southampton"],
-  "usr_106": ["Man City", "Arsenal", "Liverpool", "Aston Villa", "Tottenham", "Chelsea", "Newcastle", "Man Utd", "West Ham", "Brighton", "Bournemouth", "Crystal Palace", "Wolves", "Fulham", "Everton", "Brentford", "Notts Forest", "Ipswich", "Southampton", "Leicester"],
-  "usr_107": ["Man City", "Arsenal", "Liverpool", "Chelsea", "Tottenham", "Man Utd", "Aston Villa", "Newcastle", "West Ham", "Brighton", "Crystal Palace", "Fulham", "Everton", "Bournemouth", "Brentford", "Wolves", "Notts Forest", "Ipswich", "Leicester", "Southampton"],
-  "usr_108": ["Man City", "Arsenal", "Liverpool", "Aston Villa", "Chelsea", "Newcastle", "Man Utd", "Tottenham", "West Ham", "Crystal Palace", "Brighton", "Bournemouth", "Fulham", "Wolves", "Brentford", "Everton", "Notts Forest", "Ipswich", "Southampton", "Leicester"],
-  "usr_109": ["Man City", "Arsenal", "Liverpool", "Aston Villa", "Tottenham", "Man Utd", "Newcastle", "Chelsea", "West Ham", "Brighton", "Crystal Palace", "Wolves", "Fulham", "Bournemouth", "Everton", "Brentford", "Notts Forest", "Ipswich", "Leicester", "Southampton"]
+    "usr_001":["Man Utd","Liverpool","Man City","Arsenal","Newcastle","Chelsea","Aston Villa","Notts Forest","Tottenham","Bournemouth","Brighton","Fulham","Brentford","Leeds","Crystal Palace","West Ham","Wolves","Everton","Burnley","Sunderland"],
+    "usr_002":["Liverpool","Man City","Arsenal","Chelsea","Aston Villa","Newcastle","Notts Forest","Crystal Palace","Brighton","Man Utd","Tottenham","Bournemouth","Brentford","Fulham","Everton","Leeds","Wolves","West Ham","Burnley","Sunderland"],
+    "usr_003":["Liverpool","Arsenal","Man City","Chelsea","Newcastle","Man Utd","Aston Villa","Tottenham","Brighton","Bournemouth","Notts Forest","Everton","Crystal Palace","Fulham","West Ham","Brentford","Wolves","Leeds","Burnley","Sunderland"],
+    "usr_004":["Liverpool","Man City","Chelsea","Arsenal","Aston Villa","Newcastle","Brighton","Tottenham","Notts Forest","Fulham","Man Utd","Bournemouth","Everton","Crystal Palace","Wolves","West Ham","Brentford","Leeds","Burnley","Sunderland"],
+    "usr_005":["Chelsea","Man City","Liverpool","Arsenal","Aston Villa","Newcastle","Tottenham","Brighton","Man Utd","Fulham","Bournemouth","Brentford","Leeds","Everton","Crystal Palace","Wolves","West Ham","Notts Forest","Burnley","Sunderland"],
+    "usr_006":["Chelsea","Man City","Liverpool","Arsenal","Newcastle","Man Utd","Everton","Aston Villa","Crystal Palace","Brighton","Notts Forest","Leeds","West Ham","Sunderland","Tottenham","Wolves","Bournemouth","Fulham","Brentford","Burnley"],
+    "usr_007":["Man City","Liverpool","Arsenal","Chelsea","Newcastle","Aston Villa","Tottenham","Man Utd","Bournemouth","Notts Forest","Fulham","Brighton","Wolves","Crystal Palace","West Ham","Leeds","Everton","Brentford","Sunderland","Burnley"],
+    "usr_008":["Liverpool","Man City","Arsenal","Chelsea","Aston Villa","Man Utd","Tottenham","Newcastle","Bournemouth","Brighton","Everton","West Ham","Fulham","Crystal Palace","Wolves","Notts Forest","Brentford","Leeds","Sunderland","Burnley"],
+    "usr_009":["Liverpool","Man City","Arsenal","Chelsea","Aston Villa","Newcastle","Tottenham","Man Utd","Notts Forest","Everton","Brighton","Brentford","West Ham","Bournemouth","Fulham","Crystal Palace","Wolves","Burnley","Leeds","Sunderland"],
+    "usr_010":["Man City","Liverpool","Arsenal","Chelsea","Tottenham","Man Utd","Aston Villa","Newcastle","West Ham","Everton","Brighton","Wolves","Brentford","Fulham","Crystal Palace","Bournemouth","Notts Forest","Leeds","Burnley","Sunderland"],
+    "usr_011":["Man City","Liverpool","Arsenal","Chelsea","Aston Villa","Man Utd","Tottenham","Newcastle","Everton","Brighton","Crystal Palace","Fulham","West Ham","Brentford","Bournemouth","Notts Forest","Sunderland","Wolves","Burnley","Leeds"],
+    "usr_012":["Man City","Arsenal","Liverpool","Chelsea","Aston Villa","Newcastle","Brentford","Bournemouth","Notts Forest","Brighton","Crystal Palace","Everton","Man Utd","Tottenham","Fulham","West Ham","Wolves","Sunderland","Burnley","Leeds"],
+    "usr_013":["Liverpool","Man City","Arsenal","Newcastle","Man Utd","Chelsea","Tottenham","Everton","Aston Villa","West Ham","Crystal Palace","Brighton","Fulham","Brentford","Notts Forest","Wolves","Bournemouth","Sunderland","Leeds","Burnley"],
+    "usr_014":["Liverpool","Arsenal","Newcastle","Chelsea","Man City","Man Utd","Tottenham","Aston Villa","Everton","Bournemouth","Brighton","West Ham","Fulham","Crystal Palace","Sunderland","Wolves","Brentford","Notts Forest","Leeds","Burnley"],
+    "usr_015":["Liverpool","Chelsea","Man City","Arsenal","Aston Villa","Man Utd","Newcastle","Tottenham","West Ham","Brighton","Notts Forest","Everton","Fulham","Crystal Palace","Wolves","Bournemouth","Sunderland","Brentford","Burnley","Leeds"],
+    "usr_016":["Man City","Liverpool","Arsenal","Chelsea","Man Utd","Aston Villa","Newcastle","Tottenham","Notts Forest","Bournemouth","Crystal Palace","Everton","Brighton","West Ham","Brentford","Wolves","Fulham","Leeds","Burnley","Sunderland"],
+    "usr_017":["Liverpool","Man City","Arsenal","Chelsea","Brighton","Notts Forest","Man Utd","Tottenham","Fulham","Crystal Palace","Everton","Aston Villa","West Ham","Newcastle","Leeds","Wolves","Bournemouth","Brentford","Sunderland","Burnley"],
+    "usr_018":["Liverpool","Arsenal","Man City","Chelsea","Newcastle","Man Utd","Aston Villa","Tottenham","Notts Forest","Brighton","Bournemouth","Crystal Palace","Everton","Wolves","Fulham","West Ham","Brentford","Leeds","Sunderland","Burnley"],
+    "usr_019":["Arsenal","Liverpool","Chelsea","Man City","Aston Villa","Notts Forest","Newcastle","Brighton","Bournemouth","Tottenham","Brentford","Fulham","Man Utd","Everton","West Ham","Crystal Palace","Wolves","Leeds","Sunderland","Burnley"],
+    "usr_020":["Liverpool","Arsenal","Chelsea","Man City","Aston Villa","Man Utd","Newcastle","Crystal Palace","Notts Forest","Brighton","Bournemouth","Everton","Tottenham","Brentford","Fulham","West Ham","Wolves","Leeds","Burnley","Sunderland"],
+    "usr_021":["Liverpool","Arsenal","Man City","Man Utd","Chelsea","Aston Villa","Tottenham","Newcastle","Crystal Palace","Brighton","Notts Forest","Bournemouth","Brentford","Everton","West Ham","Fulham","Wolves","Leeds","Burnley","Sunderland"],
+    "usr_022":["Liverpool","Man City","Chelsea","Arsenal","Aston Villa","Bournemouth","Man Utd","Newcastle","Crystal Palace","Brighton","Notts Forest","Fulham","Brentford","West Ham","Everton","Tottenham","Wolves","Burnley","Leeds","Sunderland"],
+    "usr_023":["Arsenal","Man City","Liverpool","Newcastle","Chelsea","Notts Forest","Man Utd","Tottenham","Wolves","Fulham","West Ham","Crystal Palace","Brentford","Brighton","Everton","Bournemouth","Leeds","Aston Villa","Sunderland","Burnley"],
+    "usr_024":["Liverpool","Man City","Arsenal","Chelsea","Newcastle","Everton","Bournemouth","Aston Villa","Brighton","Notts Forest","Crystal Palace","Fulham","Man Utd","West Ham","Wolves","Tottenham","Leeds","Brentford","Sunderland","Burnley"],
+    "usr_025":["Arsenal","Man City","Liverpool","Chelsea","Man Utd","Aston Villa","Crystal Palace","Newcastle","Tottenham","Brighton","Everton","Bournemouth","Notts Forest","Brentford","Fulham","West Ham","Wolves","Leeds","Burnley","Sunderland"],
+    "usr_026":["Chelsea","Man City","Liverpool","Arsenal","Aston Villa","Newcastle","Everton","Bournemouth","Man Utd","Crystal Palace","Brighton","Tottenham","Notts Forest","West Ham","Fulham","Wolves","Leeds","Brentford","Sunderland","Burnley"],
+    "usr_027":["Chelsea","Liverpool","Man City","Arsenal","Aston Villa","Newcastle","Tottenham","Man Utd","Notts Forest","Brighton","Brentford","Leeds","Everton","Bournemouth","Crystal Palace","Fulham","Burnley","West Ham","Sunderland","Wolves"],
+    "usr_028":["Liverpool","Chelsea","Arsenal","Notts Forest","Man City","Bournemouth","Newcastle","Tottenham","Wolves","Aston Villa","Brighton","Everton","Crystal Palace","Man Utd","West Ham","Fulham","Leeds","Burnley","Brentford","Sunderland"],
+    "usr_029":["Liverpool","Arsenal","Man City","Chelsea","Aston Villa","Newcastle","Tottenham","Man Utd","Brighton","Notts Forest","Everton","Bournemouth","Crystal Palace","Fulham","West Ham","Brentford","Wolves","Leeds","Sunderland","Burnley"],
+    "usr_030":["Man City","Arsenal","Liverpool","Chelsea","Newcastle","Aston Villa","Tottenham","Man Utd","Crystal Palace","Fulham","Notts Forest","Brighton","Bournemouth","Everton","West Ham","Leeds","Wolves","Brentford","Burnley","Sunderland"],
+    "usr_031":["Liverpool","Man City","Arsenal","Chelsea","Tottenham","Aston Villa","Newcastle","Brighton","Man Utd","Crystal Palace","Everton","West Ham","Notts Forest","Bournemouth","Wolves","Fulham","Leeds","Brentford","Burnley","Sunderland"],
+    "usr_032":["Liverpool","Man City","Arsenal","Chelsea","Aston Villa","Newcastle","Man Utd","Tottenham","Notts Forest","Brighton","Everton","Bournemouth","Fulham","Brentford","West Ham","Crystal Palace","Leeds","Wolves","Burnley","Sunderland"],
+    "usr_033":["Man City","Arsenal","Chelsea","Liverpool","Man Utd","Aston Villa","Tottenham","Brighton","Newcastle","Bournemouth","Everton","Fulham","Crystal Palace","West Ham","Notts Forest","Brentford","Sunderland","Wolves","Leeds","Burnley"],
+    "usr_034":["Man City","Liverpool","Chelsea","Arsenal","Aston Villa","Tottenham","Man Utd","Brighton","Newcastle","Crystal Palace","Bournemouth","Notts Forest","Fulham","Everton","West Ham","Brentford","Leeds","Sunderland","Wolves","Burnley"],
+    "usr_035":["Arsenal","Liverpool","Aston Villa","Man City","Chelsea","Man Utd","Tottenham","Brighton","Newcastle","Bournemouth","Notts Forest","Everton","Fulham","Crystal Palace","Wolves","Sunderland","Leeds","West Ham","Brentford","Burnley"],
+    "usr_036":["Liverpool","Man City","Arsenal","Chelsea","Man Utd","Aston Villa","Newcastle","Brighton","Tottenham","Everton","Fulham","Bournemouth","West Ham","Crystal Palace","Notts Forest","Brentford","Wolves","Leeds","Burnley","Sunderland"],
+    "usr_037":["Liverpool","Man City","Chelsea","Arsenal","Man Utd","Aston Villa","Tottenham","Everton","Newcastle","Crystal Palace","Brighton","Bournemouth","Notts Forest","Fulham","West Ham","Brentford","Wolves","Burnley","Leeds","Sunderland"],
+    "usr_038":["Liverpool","Arsenal","Man City","Chelsea","Aston Villa","Newcastle","Man Utd","Brighton","Tottenham","Notts Forest","Crystal Palace","Everton","Bournemouth","Fulham","West Ham","Brentford","Wolves","Burnley","Leeds","Sunderland"],
+    "usr_039":["Liverpool","Arsenal","Man City","Chelsea","Man Utd","Aston Villa","Tottenham","Newcastle","Notts Forest","Brighton","Fulham","Bournemouth","Everton","Crystal Palace","Brentford","West Ham","Leeds","Wolves","Burnley","Sunderland"],
+    "usr_040":["Liverpool","Man City","Man Utd","Chelsea","Tottenham","Arsenal","Aston Villa","Everton","Fulham","Crystal Palace","Newcastle","Notts Forest","West Ham","Brighton","Bournemouth","Sunderland","Wolves","Burnley","Brentford","Leeds"],
+    "usr_041":["Man City","Chelsea","Liverpool","Arsenal","Tottenham","Aston Villa","Man Utd","Newcastle","Everton","Brighton","Notts Forest","Crystal Palace","West Ham","Fulham","Wolves","Leeds","Brentford","Bournemouth","Sunderland","Burnley"],
+    "usr_042":["Liverpool","Man City","Chelsea","Arsenal","Aston Villa","Newcastle","Man Utd","Tottenham","Crystal Palace","Brighton","Bournemouth","Notts Forest","Fulham","West Ham","Everton","Wolves","Leeds","Sunderland","Brentford","Burnley"],
+    "usr_043":["Liverpool","Arsenal","Man City","Chelsea","Newcastle","Tottenham","Aston Villa","Brighton","Man Utd","Crystal Palace","Notts Forest","Bournemouth","Everton","Wolves","Fulham","West Ham","Brentford","Leeds","Sunderland","Burnley"],
+    "usr_044":["Liverpool","Chelsea","Arsenal","Man City","Tottenham","Man Utd","Newcastle","Aston Villa","Brighton","Notts Forest","Crystal Palace","Everton","West Ham","Bournemouth","Fulham","Brentford","Wolves","Leeds","Sunderland","Burnley"],
+    "usr_045":["Man City","Arsenal","Man Utd","Newcastle","Liverpool","Chelsea","Tottenham","Brighton","Aston Villa","West Ham","Brentford","Crystal Palace","Fulham","Wolves","Notts Forest","Everton","Bournemouth","Sunderland","Burnley","Leeds"],
+    "usr_046":["Man City","Arsenal","Liverpool","Chelsea","Newcastle","Man Utd","Brighton","Aston Villa","Tottenham","Notts Forest","Fulham","Crystal Palace","Everton","Bournemouth","Burnley","Brentford","Leeds","Wolves","West Ham","Sunderland"],
+    "usr_047":["Chelsea","Liverpool","Man City","Man Utd","Arsenal","Newcastle","Crystal Palace","Brighton","Aston Villa","Notts Forest","Tottenham","Everton","Wolves","Bournemouth","Fulham","Leeds","West Ham","Burnley","Brentford","Sunderland"],
+    "usr_048":["Chelsea","Liverpool","Man City","Arsenal","Newcastle","Man Utd","Aston Villa","Tottenham","Brighton","Fulham","Crystal Palace","Notts Forest","Wolves","Leeds","Bournemouth","Brentford","Everton","Burnley","West Ham","Sunderland"],
+    "usr_049":["Liverpool","Chelsea","Man City","Arsenal","Newcastle","Man Utd","Crystal Palace","Aston Villa","Brighton","Fulham","Tottenham","Notts Forest","Wolves","Everton","Bournemouth","Brentford","Leeds","Burnley","West Ham","Sunderland"],
+    "usr_050":["Chelsea","Liverpool","Man City","Arsenal","Tottenham","Newcastle","Aston Villa","Notts Forest","Crystal Palace","Man Utd","Bournemouth","Brighton","West Ham","Fulham","Everton","Wolves","Sunderland","Brentford","Leeds","Burnley"],
+    "usr_051":["Liverpool","Chelsea","Man City","Arsenal","Aston Villa","Newcastle","Notts Forest","Brighton","Bournemouth","Man Utd","Everton","Brentford","West Ham","Crystal Palace","Fulham","Tottenham","Wolves","Burnley","Leeds","Sunderland"],
+    "usr_052":["Man City","Chelsea","Liverpool","Arsenal","Man Utd","Aston Villa","Newcastle","Everton","Tottenham","Crystal Palace","Brighton","West Ham","Fulham","Notts Forest","Sunderland","Bournemouth","Burnley","Leeds","Brentford","Wolves"],
+    "usr_053":["Arsenal","Liverpool","Man City","Chelsea","Aston Villa","Newcastle","Tottenham","Man Utd","Everton","Notts Forest","Brighton","Brentford","West Ham","Fulham","Leeds","Crystal Palace","Wolves","Bournemouth","Sunderland","Burnley"],
+    "usr_054":["Liverpool","Man City","Chelsea","Tottenham","Newcastle","Man Utd","Aston Villa","Notts Forest","Arsenal","Everton","Crystal Palace","Brighton","Fulham","Bournemouth","Leeds","Sunderland","West Ham","Brentford","Wolves","Burnley"],
+    "usr_055":["Chelsea","Liverpool","Man City","Arsenal","Newcastle","Aston Villa","Notts Forest","Everton","Man Utd","Crystal Palace","Brighton","Bournemouth","Fulham","Brentford","Tottenham","West Ham","Leeds","Wolves","Burnley","Sunderland"],
+    "usr_056":["Liverpool","Man City","Chelsea","Arsenal","Newcastle","Tottenham","Man Utd","Brighton","Aston Villa","Bournemouth","Brentford","Everton","Notts Forest","West Ham","Fulham","Crystal Palace","Leeds","Sunderland","Wolves","Burnley"],
+    "usr_057":["Liverpool","Man City","Arsenal","Chelsea","Notts Forest","Man Utd","Brighton","Aston Villa","Newcastle","Crystal Palace","Everton","Tottenham","Fulham","Bournemouth","West Ham","Brentford","Sunderland","Wolves","Leeds","Burnley"],
+    "usr_058":["Arsenal","Liverpool","Man City","Man Utd","Chelsea","Aston Villa","Newcastle","Brighton","Notts Forest","Tottenham","Fulham","Crystal Palace","Everton","Wolves","Bournemouth","West Ham","Leeds","Burnley","Brentford","Sunderland"],
+    "usr_059":["Arsenal","Chelsea","Man City","liverpool","man utd","Aston Villa","Tottenham","Notts Forest","Crystal Palace","Newcastle","Bournemouth","Brighton","Fulham","everton","West Ham","wolves","Sunderland","Leeds","Brentford","Burnley"],
+    "usr_060":["Liverpool","Arsenal","Chelsea","Man City","Newcastle","Tottenham","Aston Villa","Man Utd","Bournemouth","Brighton","Notts Forest","Crystal Palace","West Ham","Brentford","Fulham","Wolves","Everton","Leeds","Burnley","Sunderland"],
+    "usr_061":["Liverpool","Arsenal","Man City","Chelsea","Aston Villa","Crystal Palace","Newcastle","Brighton","Bournemouth","Notts Forest","Tottenham","Man Utd","Brentford","Fulham","Everton","West Ham","Wolves","Burnley","Leeds","Sunderland"],
+    "usr_062":["Liverpool","Man City","Arsenal","Chelsea","Tottenham","Man Utd","Newcastle","Aston Villa","Everton","Brighton","Notts Forest","Brentford","Bournemouth","Crystal Palace","West Ham","Fulham","Wolves","Leeds","Burnley","Sunderland"],
+    "usr_063":["Liverpool","Arsenal","Man City","Chelsea","Aston villa","Notts forest","Crystal palace","Newcastle","brighton","bournemouth","Tottenham","Man utd","Brentford","West Ham","Everton","Fulham","Leeds","Wolves","Burnley","Sunderland"],
+    "usr_064":["Liverpool","Man City","Chelsea","Arsenal","Aston Villa","Tottenham","Man Utd","Newcastle","Brighton","Notts Forest","Crystal Palace","Everton","Bournemouth","West Ham","Brentford","Fulham","Sunderland","Leeds","Wolves","Burnley"],
+    "usr_065":["Chelsea","Liverpool","Man City","Arsenal","Brighton","Aston Villa","Man Utd","Newcastle","Notts Forest","Tottenham","Everton","Leeds","Crystal Palace","West Ham","Fulham","Sunderland","Wolves","Bournemouth","Brentford","Burnley"],
+    "usr_066":["Liverpool","Chelsea","Arsenal","Man City","Newcastle","Aston Villa","Tottenham","Man Utd","Brighton","Bournemouth","Notts Forest","Fulham","Everton","Brentford","Crystal Palace","West Ham","Sunderland","Wolves","Leeds","Burnley"],
+    "usr_067":["Liverpool","Arsenal","Chelsea","Man City","Newcastle","Aston Villa","Tottenham","Man Utd","Brighton","Crystal Palace","Bournemouth","Fulham","Everton","Wolves","Notts Forest","Brentford","West Ham","Leeds","Burnley","Sunderland"],
+    "usr_068":["Liverpool","Arsenal","Man City","Chelsea","Man Utd","Newcastle","Aston Villa","Everton","Tottenham","Brighton","Notts Forest","Crystal Palace","Bournemouth","Fulham","West Ham","Wolves","Leeds","Brentford","Burnley","Sunderland"],
+    "usr_069":["Arsenal","Man City","Liverpool","Man Utd","Chelsea","Aston Villa","Tottenham","Newcastle","Notts Forest","Brighton","Bournemouth","Everton","Crystal Palace","Brentford","Fulham","West Ham","Wolves","Leeds","Burnley","Sunderland"],
+    "usr_070":["Liverpool","Arsenal","Man City","Newcastle","Chelsea","Aston Villa","Brighton","Crystal Palace","Brentford","Notts Forest","Man Utd","Tottenham","Bournemouth","Everton","Fulham","West Ham","Leeds","Wolves","Burnley","Sunderland"],
+    "usr_071":["Man City","Chelsea","Liverpool","Arsenal","Aston Villa","Newcastle","Tottenham","Man Utd","Notts Forest","West Ham","Fulham","Brighton","Everton","Crystal Palace","Bournemouth","Leeds","Brentford","Wolves","Sunderland","Burnley"],
+    "usr_072":["Arsenal","Liverpool","Man City","Chelsea","Aston Villa","Newcastle","Man Utd","Brighton","Tottenham","Bournemouth","Notts Forest","Wolves","Fulham","Crystal Palace","Everton","Brentford","Sunderland","West Ham","Burnley","Leeds"],
+    "usr_073":["Liverpool","Man City","Chelsea","Arsenal","Newcastle","Man Utd","Aston Villa","Notts Forest","Fulham","Tottenham","Everton","Crystal Palace","Brighton","Bournemouth","West Ham","Brentford","Wolves","Leeds","Burnley","Sunderland"],
+    "usr_074":["Liverpool","Man City","Chelsea","Arsenal","Aston Villa","Man Utd","Newcastle","Notts Forest","Crystal Palace","Everton","Tottenham","Bournemouth","Fulham","Brighton","Wolves","Leeds","West Ham","Brentford","Sunderland","Burnley"],
+    "usr_075":["Liverpool","Man City","Chelsea","Arsenal","Tottenham","Man Utd","Newcastle","Aston Villa","Leeds","Crystal Palace","Brighton","Wolves","Everton","Notts Forest","Sunderland","West Ham","Fulham","Brentford","Bournemouth","Burnley"],
+    "usr_076":["Liverpool","Arsenal","Man City","Chelsea","Newcastle","Aston Villa","Crystal Palace","Notts Forest","Brighton","Brentford","Bournemouth","Man Utd","Fulham","Everton","Tottenham","West Ham","Burnley","Wolves","Leeds","Sunderland"],
+    "usr_077":["Liverpool","Arsenal","Chelsea","Man City","Aston Villa","Newcastle","Crystal Palace","Brighton","Man Utd","Tottenham","Everton","Sunderland","Notts Forest","Brentford","West Ham","Leeds","Fulham","Wolves","Bournemouth","Burnley"],
+    "usr_078":["Man City","Liverpool","Chelsea","Arsenal","Notts Forest","Man Utd","Tottenham","Brighton","Newcastle","Bournemouth","Aston Villa","Everton","Fulham","Crystal Palace","Brentford","West Ham","Burnley","Wolves","Leeds","Sunderland"],
+    "usr_079":["Liverpool","Chelsea","Man City","Arsenal","Man Utd","Aston Villa","Newcastle","Tottenham","Everton","Crystal Palace","Notts Forest","Bournemouth","Brighton","Brentford","West Ham","Fulham","Burnley","Leeds","Wolves","Sunderland"],
+    "usr_080":["Liverpool","Arsenal","Man City","Chelsea","Aston Villa","Newcastle","Tottenham","Man Utd","Brighton","Crystal Palace","Notts Forest","Everton","Wolves","West Ham","Fulham","Bournemouth","Brentford","Leeds","Sunderland","Burnley"],
+    "usr_081":["Arsenal","Liverpool","Chelsea","Man City","Man Utd","Newcastle","Aston Villa","Tottenham","Brighton","Notts Forest","Crystal Palace","West Ham","Wolves","Everton","Brentford","Sunderland","Fulham","Leeds","Bournemouth","Burnley"],
+    "usr_082":["Liverpool","Arsenal","Man City","Chelsea","Aston Villa","Man Utd","Tottenham","Newcastle","Brighton","Notts Forest","Crystal Palace","Everton","Bournemouth","Fulham","West Ham","Wolves","Leeds","Burnley","Sunderland","Brentford"],
+    "usr_083":["Arsenal","Liverpool","Crystal Palace","Chelsea","Man City","Aston Villa","Newcastle","Brighton","Man Utd","Notts Forest","Tottenham","Everton","Bournemouth","Brentford","Wolves","Fulham","Leeds","West Ham","Sunderland","Burnley"],
+    "usr_084":["Liverpool","Arsenal","Man City","Chelsea","Newcastle","Aston Villa","Brighton","West Ham","Man Utd","Tottenham","Crystal Palace","Wolves","Fulham","Brentford","Bournemouth","Notts Forest","Everton","Leeds","Burnley","Sunderland"],
+    "usr_085":["Liverpool","Man City","Chelsea","Arsenal","Newcastle","Tottenham","Man Utd","Aston Villa","Crystal Palace","Brighton","Notts Forest","Bournemouth","Everton","Fulham","West Ham","Leeds","Wolves","Brentford","Sunderland","Burnley"],
+    "usr_086":["Arsenal","Liverpool","Man City","Chelsea","Aston Villa","Newcastle","Notts Forest","Everton","Bournemouth","Brighton","Crystal Palace","Tottenham","Fulham","Man Utd","Brentford","West Ham","Wolves","Leeds","Sunderland","Burnley"],
+    "usr_087":["Liverpool","Man City","Arsenal","Chelsea","Newcastle","Aston Villa","Man Utd","Brighton","Tottenham","Crystal Palace","Notts Forest","Bournemouth","Fulham","Everton","West Ham","Wolves","Sunderland","Brentford","Leeds","Burnley"],
+    "usr_088":["Liverpool","Chelsea","Arsenal","Man City","Man Utd","Tottenham","Aston Villa","Crystal Palace","Newcastle","Everton","West Ham","Fulham","Brighton","Brentford","Notts Forest","Bournemouth","Leeds","Burnley","Wolves","Sunderland"],
+    "usr_089":["Liverpool","Arsenal","Chelsea","Man City","Newcastle","Aston Villa","Man Utd","Brighton","Crystal Palace","Tottenham","Notts Forest","Bournemouth","Fulham","Brentford","Everton","West Ham","Wolves","Sunderland","Leeds","Burnley"],
+    "usr_090":["Man Utd","Liverpool","Arsenal","Man City","Aston Villa","Chelsea","Tottenham","Burnley","Bournemouth","Brighton","Notts Forest","Fulham","Newcastle","Brentford","Crystal Palace","Sunderland","Leeds","Everton","Wolves","West Ham"],
+    "usr_091":["Man City","Arsenal","Liverpool","Aston Villa","Chelsea","Crystal Palace","Tottenham","Man Utd","Newcastle","Fulham","Leeds","Bournemouth","Burnley","Wolves","Notts Forest","Brentford","Brighton","Everton","Sunderland","West Ham"],
+    "usr_092":["Liverpool","Arsenal","Man City","Chelsea","Aston Villa","Newcastle","Tottenham","Man Utd","Brighton","Crystal Palace","Notts Forest","Fulham","Brentford","West Ham","Bournemouth","Everton","Wolves","Leeds","Sunderland","Burnley"],
+    "usr_093":["Liverpool","Arsenal","Man City","Chelsea","Aston Villa","Tottenham","Newcastle","Brighton","Man Utd","Notts Forest","Crystal Palace","Brentford","Bournemouth","Everton","Fulham","West Ham","Wolves","Burnley","Leeds","Sunderland"],
+    "usr_094":["Liverpool","Man City","Chelsea","Arsenal","Aston Villa","Man Utd","Newcastle","Tottenham","Brighton","Everton","Bournemouth","Notts Forest","Crystal Palace","Fulham","West Ham","Leeds","Brentford","Burnley","Wolves","Sunderland"],
+    "usr_095":["Liverpool","Man City","Chelsea","Arsenal","Newcastle","Man Utd","Aston Villa","Tottenham","Brighton","Crystal Palace","Bournemouth","West Ham","Fulham","Everton","Notts Forest","Wolves","Burnley","Leeds","Brentford","Sunderland"],
+    "usr_096":["Arsenal","Liverpool","Man City","Chelsea","Aston Villa","Tottenham","Man Utd","Crystal Palace","Newcastle","Notts Forest","Everton","Brighton","West Ham","Fulham","Bournemouth","Brentford","Leeds","Sunderland","Wolves","Burnley"],
+    "usr_097":["Arsenal","Liverpool","Chelsea","Man City","Aston Villa","Tottenham","Notts Forest","Crystal Palace","Man Utd","Brighton","Everton","Brentford","Newcastle","West Ham","Leeds","Wolves","Fulham","Sunderland","Burnley","Bournemouth"],
+    "usr_098":["Arsenal","Chelsea","Liverpool","Man City","Tottenham","Man Utd","Crystal Palace","Aston Villa","Everton","Newcastle","Brighton","Notts Forest","West Ham","Fulham","Bournemouth","Brentford","Leeds","Wolves","Burnley","Sunderland"],
+    "usr_099":["Arsenal","Liverpool","Man City","Chelsea","Man Utd","Newcastle","Notts Forest","Aston Villa","Bournemouth","Tottenham","Brighton","Brentford","Crystal Palace","Leeds","West Ham","Everton","Fulham","Wolves","Burnley","Sunderland"],
+    "usr_100":["Arsenal","Man City","Liverpool","Chelsea","Man Utd","Fulham","Notts Forest","Aston Villa","Newcastle","Leeds","Crystal Palace","Tottenham","Bournemouth","Everton","Sunderland","Brighton","West Ham","Brentford","Wolves","Burnley"],
+    "usr_101":["Liverpool","Arsenal","Man City","Chelsea","Newcastle","Man Utd","Aston Villa","Tottenham","West Ham","Everton","Brighton","Wolves","Brentford","Fulham","Crystal Palace","Bournemouth","Notts Forest","Leeds","Sunderland","Burnley"],
+    "usr_102":["Man Utd","Liverpool","Arsenal","Man City","Aston Villa","Chelsea","Tottenham","Newcastle","Crystal Palace","Brighton","Everton","Leeds","Fulham","Sunderland","Bournemouth","West Ham","Notts Forest","Brentford","Wolves","Burnley"],
+    "usr_103":["Man City","Liverpool","Arsenal","Chelsea","Tottenham","Aston Villa","Newcastle","Man Utd","Notts Forest","Crystal Palace","Everton","West Ham","Bournemouth","Brighton","Wolves","Fulham","Leeds","Brentford","Sunderland","Burnley"],
+    "usr_104":["Liverpool","Arsenal","Man City","Chelsea","Newcastle","Tottenham","Man Utd","Aston Villa","Brighton","Fulham","Notts Forest","Everton","Crystal Palace","Brentford","Bournemouth","Wolves","West Ham","Leeds","Burnley","Sunderland"],
+    "usr_105":["Arsenal","Man City","Liverpool","Chelsea","Aston Villa","Tottenham","Man Utd","Newcastle","Fulham","Everton","Crystal Palace","Bournemouth","Wolves","Brighton","West Ham","Notts Forest","Leeds","Burnley","Sunderland","Brentford"],
+    "usr_106":["Liverpool","Man City","Arsenal","Chelsea","Aston Villa","Newcastle","Man Utd","Tottenham","Brighton","Notts Forest","Crystal Palace","Everton","Bournemouth","Fulham","West Ham","Brentford","Wolves","Leeds","Sunderland","Burnley"],
+    "usr_107":["Liverpool","Arsenal","Man City","Newcastle","Chelsea","Aston Villa","Notts Forest","Tottenham","Brighton","Fulham","Man Utd","Everton","West Ham","Bournemouth","Brentford","Leeds","Crystal Palace","Wolves","Burnley","Sunderland"],
+    "usr_108":["Man City","Arsenal","Liverpool","Chelsea","Man Utd","Aston Villa","Tottenham","Newcastle","West Ham","Everton","Brighton","Wolves","Brentford","Fulham","Crystal Palace","Bournemouth","Notts Forest","Burnley","Sunderland","Leeds"],
+    "usr_109":["Liverpool","Man City","Arsenal","Chelsea","Man Utd","Notts Forest","Tottenham","Aston Villa","Newcastle","Brighton","Bournemouth","Fulham","Crystal Palace","Everton","West Ham","Sunderland","Leeds","Brentford","Wolves","Burnley"]
 };
-
 const userPredictionTeamIds: { [key: string]: string[] } = {};
 for (const userId in userPredictionsRaw) {
-    userPredictionTeamIds[userId] = userPredictionsRaw[userId].map(teamName => teamNameMapping[teamName]).filter(Boolean);
-}
-
-// Add dummy predictions for the rest of the users
-for (let i = 11; i <= 105; i++) {
-    const userId = `usr_${String(i).padStart(3, '0')}`;
-    if (!userPredictionTeamIds[userId]) {
-        userPredictionTeamIds[userId] = teams.map(t => t.id).sort(() => Math.random() - 0.5);
-    }
+    userPredictionTeamIds[userId] = userPredictionsRaw[userId].map(teamName => teamNameMapping[teamName.toLowerCase().trim()]).filter(Boolean);
 }
 
 export const fullPredictions: Prediction[] = Object.entries(userPredictionTeamIds).map(([userId, rankings]) => ({
@@ -265,68 +337,57 @@ export const fullPredictions: Prediction[] = Object.entries(userPredictionTeamId
 }));
 
 export const matches: Match[] = [
-    // Week 1
-    { week: 1, homeTeamId: 'team_14', awayTeamId: 'team_09', homeScore: 1, awayScore: 0 },
-    { week: 1, homeTeamId: 'team_01', awayTeamId: 'team_16', homeScore: 2, awayScore: 1 },
-    { week: 1, homeTeamId: 'team_03', awayTeamId: 'team_19', homeScore: 1, awayScore: 1 },
-    { week: 1, homeTeamId: 'team_05', awayTeamId: 'team_11', homeScore: 3, awayScore: 0 },
-    { week: 1, homeTeamId: 'team_08', awayTeamId: 'team_09', homeScore: 0, awayScore: 1 },
-    { week: 1, homeTeamId: 'team_15', awayTeamId: 'team_02', homeScore: 5, awayScore: 1 },
-    { week: 1, homeTeamId: 'team_04', awayTeamId: 'team_18', homeScore: 2, awayScore: 2 },
-    { week: 1, homeTeamId: 'team_06', awayTeamId: 'team_12', homeScore: 1, awayScore: 1 },
-    { week: 1, homeTeamId: 'team_13', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
-    { week: 1, homeTeamId: 'team_20', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
-
-    // Week 2
-    { week: 2, homeTeamId: 'team_16', awayTeamId: 'team_11', homeScore: 2, awayScore: 1 },
-    { week: 2, homeTeamId: 'team_09', awayTeamId: 'team_04', homeScore: 0, awayScore: 3 },
-    { week: 2, homeTeamId: 'team_12', awayTeamId: 'team_03', homeScore: 3, awayScore: 1 },
-    { week: 2, homeTeamId: 'team_18', awayTeamId: 'team_14', homeScore: 2, awayScore: 0 },
-    { week: 2, homeTeamId: 'team_20', awayTeamId: 'team_05', homeScore: 1, awayScore: 4 },
-    { week: 2, homeTeamId: 'team_02', awayTeamId: 'team_08', homeScore: 4, awayScore: 0 },
-    { week: 2, homeTeamId: 'team_19', awayTeamId: 'team_06', homeScore: 3, awayScore: 1 },
-    { week: 2, homeTeamId: 'team_13', awayTeamId: 'team_15', homeScore: 1, awayScore: 0 },
-    { week: 2, homeTeamId: 'team_07', awayTeamId: 'team_01', homeScore: 0, awayScore: 1 },
-    { week: 2, homeTeamId: 'team_10', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
-    
-    // Week 3
-    { week: 3, homeTeamId: 'team_06', awayTeamId: 'team_11', homeScore: 3, awayScore: 0 },
-    { week: 3, homeTeamId: 'team_03', awayTeamId: 'team_18', homeScore: 0, awayScore: 2 },
-    { week: 3, homeTeamId: 'team_01', awayTeamId: 'team_09', homeScore: 2, awayScore: 2 },
-    { week: 3, homeTeamId: 'team_04', awayTeamId: 'team_07', homeScore: 1, awayScore: 1 },
-    { week: 3, homeTeamId: 'team_14', awayTeamId: 'team_16', homeScore: 3, awayScore: 2 },
-    { week: 3, homeTeamId: 'team_08', awayTeamId: 'team_20', homeScore: 0, awayScore: 1 },
-    { week: 3, homeTeamId: 'team_05', awayTeamId: 'team_19', homeScore: 1, awayScore: 3 },
-    { week: 3, homeTeamId: 'team_11', awayTeamId: 'team_02', homeScore: 1, awayScore: 2 },
-    { week: 3, homeTeamId: 'team_15', awayTeamId: 'team_12', homeScore: 1, awayScore: 2 },
-    { week: 3, homeTeamId: 'team_10', awayTeamId: 'team_13', homeScore: -1, awayScore: -1 },
-    
-    // Week 4
-    { week: 4, homeTeamId: 'team_11', awayTeamId: 'team_14', homeScore: 0, awayScore: 1 },
-    { week: 4, homeTeamId: 'team_05', awayTeamId: 'team_15', homeScore: 3, awayScore: 1 },
-    { week: 4, homeTeamId: 'team_04', awayTeamId: 'team_03', homeScore: 2, awayScore: 2 },
-    { week: 4, homeTeamId: 'team_06', awayTeamId: 'team_16', homeScore: 0, awayScore: 1 },
-    { week: 4, homeTeamId: 'team_12', awayTeamId: 'team_02', homeScore: 3, awayScore: 0 },
-    { week: 4, homeTeamId: 'team_07', awayTeamId: 'team_20', homeScore: 3, awayScore: 2 },
-    { week: 4, homeTeamId: 'team_01', awayTeamId: 'team_14', homeScore: 3, awayScore: 1 },
-    { week: 4, homeTeamId: 'team_13', awayTeamId: 'team_09', homeScore: 5, awayScore: 1 },
-    { week: 4, homeTeamId: 'team_18', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
-    { week: 4, homeTeamId: 'team_19', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
-    
-    // Week 5
-    { week: 5, homeTeamId: 'team_02', awayTeamId: 'team_07', homeScore: 3, awayScore: 1 },
-    { week: 5, homeTeamId: 'team_09', awayTeamId: 'team_11', homeScore: 1, awayScore: 0 },
-    { week: 5, homeTeamId: 'team_14', awayTeamId: 'team_05', homeScore: 1, awayScore: 3 },
-    { week: 5, homeTeamId: 'team_18', awayTeamId: 'team_11', homeScore: 2, awayScore: 1 },
-    { week: 5, homeTeamId: 'team_19', awayTeamId: 'team_13', homeScore: 1, awayScore: 3 },
-    { week: 5, homeTeamId: 'team_20', awayTeamId: 'team_12', homeScore: 1, awayScore: 3 },
-    { week: 5, homeTeamId: 'team_01', awayTeamId: 'team_18', homeScore: 2, awayScore: 2 },
-    { week: 5, homeTeamId: 'team_03', awayTeamId: 'team_06', homeScore: 0, awayScore: 0 },
-    { week: 5, homeTeamId: 'team_16', awayTeamId: 'team_04', homeScore: 1, awayScore: 1 },
-    { week: 5, homeTeamId: 'team_08', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
-    
-    // Week 6
-    { week: 6, homeTeamId: 'team_07', awayTeamId: 'team_09', homeScore: 0, awayScore: 0 },
+    { week: 1, homeTeamId: 'team_12', awayTeamId: 'team_03', homeScore: 4, awayScore: 2 },
+    { week: 1, homeTeamId: 'team_02', awayTeamId: 'team_15', homeScore: 0, awayScore: 0 },
+    { week: 1, homeTeamId: 'team_18', awayTeamId: 'team_11', homeScore: 3, awayScore: 0 },
+    { week: 1, homeTeamId: 'team_17', awayTeamId: 'team_19', homeScore: 3, awayScore: 0 },
+    { week: 1, homeTeamId: 'team_05', awayTeamId: 'team_09', homeScore: 1, awayScore: 1 },
+    { week: 1, homeTeamId: 'team_20', awayTeamId: 'team_13', homeScore: 0, awayScore: 4 },
+    { week: 1, homeTeamId: 'team_16', awayTeamId: 'team_04', homeScore: 3, awayScore: 1 },
+    { week: 1, homeTeamId: 'team_06', awayTeamId: 'team_07', homeScore: 0, awayScore: 0 },
+    { week: 1, homeTeamId: 'team_14', awayTeamId: 'team_01', homeScore: 0, awayScore: 1 },
+    { week: 1, homeTeamId: 'team_10', awayTeamId: 'team_08', homeScore: 1, awayScore: 0 },
+    { week: 2, homeTeamId: 'team_19', awayTeamId: 'team_06', homeScore: 1, awayScore: 5 },
+    { week: 2, homeTeamId: 'team_15', awayTeamId: 'team_12', homeScore: 2, awayScore: 3 },
+    { week: 2, homeTeamId: 'team_13', awayTeamId: 'team_18', homeScore: 0, awayScore: 2 },
+    { week: 2, homeTeamId: 'team_09', awayTeamId: 'team_14', homeScore: 1, awayScore: 1 },
+    { week: 2, homeTeamId: 'team_08', awayTeamId: 'team_05', homeScore: 2, awayScore: 0 },
+    { week: 2, homeTeamId: 'team_07', awayTeamId: 'team_16', homeScore: 1, awayScore: 1 },
+    { week: 2, homeTeamId: 'team_11', awayTeamId: 'team_17', homeScore: 2, awayScore: 0 },
+    { week: 2, homeTeamId: 'team_04', awayTeamId: 'team_02', homeScore: 1, awayScore: 0 },
+    { week: 2, homeTeamId: 'team_01', awayTeamId: 'team_10', homeScore: 5, awayScore: 0 },
+    { week: 2, homeTeamId: 'team_03', awayTeamId: 'team_20', homeScore: 1, awayScore: 0 },
+    { week: 3, homeTeamId: 'team_20', awayTeamId: 'team_08', homeScore: 2, awayScore: 3 },
+    { week: 3, homeTeamId: 'team_18', awayTeamId: 'team_03', homeScore: 0, awayScore: 1 },
+    { week: 3, homeTeamId: 'team_17', awayTeamId: 'team_04', homeScore: 2, awayScore: 1 },
+    { week: 3, homeTeamId: 'team_16', awayTeamId: 'team_19', homeScore: 0, awayScore: 3 },
+    { week: 3, homeTeamId: 'team_14', awayTeamId: 'team_11', homeScore: 3, awayScore: 2 },
+    { week: 3, homeTeamId: 'team_12', awayTeamId: 'team_01', homeScore: 1, awayScore: 0 },
+    { week: 3, homeTeamId: 'team_10', awayTeamId: 'team_15', homeScore: 0, awayScore: 0 },
+    { week: 3, homeTeamId: 'team_06', awayTeamId: 'team_09', homeScore: 2, awayScore: 0 },
+    { week: 3, homeTeamId: 'team_05', awayTeamId: 'team_13', homeScore: 2, awayScore: 1 },
+    { week: 3, homeTeamId: 'team_02', awayTeamId: 'team_07', homeScore: 0, awayScore: 3 },
+    { week: 4, homeTeamId: 'team_19', awayTeamId: 'team_18', homeScore: 0, awayScore: 3 },
+    { week: 4, homeTeamId: 'team_15', awayTeamId: 'team_20', homeScore: 1, awayScore: 0 },
+    { week: 4, homeTeamId: 'team_13', awayTeamId: 'team_14', homeScore: 3, awayScore: 0 },
+    { week: 4, homeTeamId: 'team_09', awayTeamId: 'team_10', homeScore: 1, awayScore: 0 },
+    { week: 4, homeTeamId: 'team_08', awayTeamId: 'team_02', homeScore: 0, awayScore: 0 },
+    { week: 4, homeTeamId: 'team_07', awayTeamId: 'team_17', homeScore: 0, awayScore: 0 },
+    { week: 4, homeTeamId: 'team_11', awayTeamId: 'team_12', homeScore: 0, awayScore: 1 },
+    { week: 4, homeTeamId: 'team_04', awayTeamId: 'team_06', homeScore: 2, awayScore: 2 },
+    { week: 4, homeTeamId: 'team_01', awayTeamId: 'team_16', homeScore: 3, awayScore: 0 },
+    { week: 4, homeTeamId: 'team_03', awayTeamId: 'team_05', homeScore: 2, awayScore: 1 },
+    { week: 5, homeTeamId: 'team_20', awayTeamId: 'team_10', homeScore: 1, awayScore: 3 },
+    { week: 5, homeTeamId: 'team_19', awayTeamId: 'team_07', homeScore: 1, awayScore: 2 },
+    { week: 5, homeTeamId: 'team_17', awayTeamId: 'team_02', homeScore: 1, awayScore: 1 },
+    { week: 5, homeTeamId: 'team_14', awayTeamId: 'team_06', homeScore: 2, awayScore: 1 },
+    { week: 5, homeTeamId: 'team_12', awayTeamId: 'team_08', homeScore: 2, awayScore: 1 },
+    { week: 5, homeTeamId: 'team_09', awayTeamId: 'team_04', homeScore: 3, awayScore: 1 },
+    { week: 5, homeTeamId: 'team_11', awayTeamId: 'team_16', homeScore: 1, awayScore: 1 },
+    { week: 5, homeTeamId: 'team_05', awayTeamId: 'team_18', homeScore: 2, awayScore: 2 },
+    { week: 5, homeTeamId: 'team_01', awayTeamId: 'team_13', homeScore: 1, awayScore: 1 },
+    { week: 5, homeTeamId: 'team_03', awayTeamId: 'team_15', homeScore: 0, awayScore: 0 },
+    { week: 6, homeTeamId: 'team_07', awayTeamId: 'team_19', homeScore: 0, awayScore: 0 },
     { week: 6, homeTeamId: 'team_11', awayTeamId: 'team_01', homeScore: 0, awayScore: 1 },
     { week: 6, homeTeamId: 'team_13', awayTeamId: 'team_16', homeScore: 2, awayScore: 0 },
     { week: 6, homeTeamId: 'team_04', awayTeamId: 'team_08', homeScore: 1, awayScore: 3 },
@@ -335,9 +396,7 @@ export const matches: Match[] = [
     { week: 6, homeTeamId: 'team_06', awayTeamId: 'team_02', homeScore: 0, awayScore: 1 },
     { week: 6, homeTeamId: 'team_01', awayTeamId: 'team_18', homeScore: 2, awayScore: 2 },
     { week: 6, homeTeamId: 'team_11', awayTeamId: 'team_14', homeScore: 0, awayScore: 1 },
-    { week: 6, homeTeamId: 'team_10', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
-
-    // Week 7
+    { week: 6, homeTeamId: 'team_10', awayTeamId: 'team_17', homeScore: 1, awayScore: 2 },
     { week: 7, homeTeamId: 'team_02', awayTeamId: 'team_05', homeScore: 6, awayScore: 1 },
     { week: 7, homeTeamId: 'team_03', awayTeamId: 'team_01', homeScore: 0, awayScore: 4 },
     { week: 7, homeTeamId: 'team_08', awayTeamId: 'team_11', homeScore: 1, awayScore: 2 },
@@ -347,9 +406,7 @@ export const matches: Match[] = [
     { week: 7, homeTeamId: 'team_18', awayTeamId: 'team_12', homeScore: 2, awayScore: 1 },
     { week: 7, homeTeamId: 'team_09', awayTeamId: 'team_06', homeScore: 0, awayScore: 2 },
     { week: 7, homeTeamId: 'team_20', awayTeamId: 'team_13', homeScore: 2, awayScore: 1 },
-    { week: 7, homeTeamId: 'team_19', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
-
-    // Week 8
+    { week: 7, homeTeamId: 'team_19', awayTeamId: 'team_10', homeScore: 1, awayScore: 0 },
     { week: 8, homeTeamId: 'team_11', awayTeamId: 'team_18', homeScore: 1, awayScore: 4 },
     { week: 8, homeTeamId: 'team_01', awayTeamId: 'team_13', homeScore: 1, awayScore: 0 },
     { week: 8, homeTeamId: 'team_03', awayTeamId: 'team_20', homeScore: 1, awayScore: 2 },
@@ -360,8 +417,6 @@ export const matches: Match[] = [
     { week: 8, homeTeamId: 'team_12', awayTeamId: 'team_08', homeScore: 2, awayScore: 0 },
     { week: 8, homeTeamId: 'team_19', awayTeamId: 'team_15', homeScore: 2, awayScore: 2 },
     { week: 8, homeTeamId: 'team_05', awayTeamId: 'team_02', homeScore: 1, awayScore: 1 },
-
-    // Week 9
     { week: 9, homeTeamId: 'team_02', awayTeamId: 'team_19', homeScore: 4, awayScore: 1 },
     { week: 9, homeTeamId: 'team_04', awayTeamId: 'team_11', homeScore: 3, awayScore: 2 },
     { week: 9, homeTeamId: 'team_06', awayTeamId: 'team_04', homeScore: 2, awayScore: 0 },
@@ -371,9 +426,7 @@ export const matches: Match[] = [
     { week: 9, homeTeamId: 'team_20', awayTeamId: 'team_15', homeScore: 2, awayScore: 2 },
     { week: 9, homeTeamId: 'team_18', awayTeamId: 'team_09', homeScore: 1, awayScore: 0 },
     { week: 9, homeTeamId: 'team_14', awayTeamId: 'team_13', homeScore: 0, awayScore: 3 },
-    { week: 9, homeTeamId: 'team_08', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
-    
-    // Week 10
+    { week: 9, homeTeamId: 'team_08', awayTeamId: 'team_17', homeScore: 2, awayScore: 1 },
     { week: 10, homeTeamId: 'team_09', awayTeamId: 'team_14', homeScore: 0, awayScore: 1 },
     { week: 10, homeTeamId: 'team_04', awayTeamId: 'team_19', homeScore: 3, awayScore: 2 },
     { week: 10, homeTeamId: 'team_08', awayTeamId: 'team_05', homeScore: 1, awayScore: 1 },
@@ -383,9 +436,7 @@ export const matches: Match[] = [
     { week: 10, homeTeamId: 'team_11', awayTeamId: 'team_06', homeScore: 1, awayScore: 4 },
     { week: 10, homeTeamId: 'team_18', awayTeamId: 'team_06', homeScore: 1, awayScore: 4 },
     { week: 10, homeTeamId: 'team_13', awayTeamId: 'team_03', homeScore: 6, awayScore: 1 },
-    { week: 10, homeTeamId: 'team_12', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
-
-    // Week 11
+    { week: 10, homeTeamId: 'team_12', awayTeamId: 'team_10', homeScore: 2, awayScore: 1 },
     { week: 11, homeTeamId: 'team_14', awayTeamId: 'team_11', homeScore: 1, awayScore: 0 },
     { week: 11, homeTeamId: 'team_01', awayTeamId: 'team_04', homeScore: 3, awayScore: 1 },
     { week: 11, homeTeamId: 'team_05', awayTeamId: 'team_11', homeScore: 1, awayScore: 1 },
@@ -395,9 +446,7 @@ export const matches: Match[] = [
     { week: 11, homeTeamId: 'team_02', awayTeamId: 'team_09', homeScore: 3, awayScore: 1 },
     { week: 11, homeTeamId: 'team_19', awayTeamId: 'team_16', homeScore: 3, awayScore: 2 },
     { week: 11, homeTeamId: 'team_20', awayTeamId: 'team_18', homeScore: 2, awayScore: 1 },
-    { week: 11, homeTeamId: 'team_15', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
-
-    // Week 12
+    { week: 11, homeTeamId: 'team_15', awayTeamId: 'team_17', homeScore: 3, awayScore: 1 },
     { week: 12, homeTeamId: 'team_01', awayTeamId: 'team_20', homeScore: 2, awayScore: 1 },
     { week: 12, homeTeamId: 'team_04', awayTeamId: 'team_01', homeScore: 0, awayScore: 1 },
     { week: 12, homeTeamId: 'team_11', awayTeamId: 'team_19', homeScore: 0, awayScore: 1 },
@@ -407,9 +456,7 @@ export const matches: Match[] = [
     { week: 12, homeTeamId: 'team_09', awayTeamId: 'team_20', homeScore: 3, awayScore: 2 },
     { week: 12, homeTeamId: 'team_08', awayTeamId: 'team_14', homeScore: 0, awayScore: 3 },
     { week: 12, homeTeamId: 'team_13', awayTeamId: 'team_12', homeScore: 1, awayScore: 1 },
-    { week: 12, homeTeamId: 'team_10', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
-    
-    // Week 13
+    { week: 12, homeTeamId: 'team_10', awayTeamId: 'team_11', homeScore: 1, awayScore: 0 },
     { week: 13, homeTeamId: 'team_01', awayTeamId: 'team_20', homeScore: 2, awayScore: 1 },
     { week: 13, homeTeamId: 'team_02', awayTeamId: 'team_13', homeScore: 1, awayScore: 2 },
     { week: 13, homeTeamId: 'team_05', awayTeamId: 'team_04', homeScore: 1, awayScore: 2 },
@@ -419,9 +466,7 @@ export const matches: Match[] = [
     { week: 13, homeTeamId: 'team_16', awayTeamId: 'team_08', homeScore: 0, awayScore: 1 },
     { week: 13, homeTeamId: 'team_19', awayTeamId: 'team_07', homeScore: 1, awayScore: 1 },
     { week: 13, homeTeamId: 'team_18', awayTeamId: 'team_13', homeScore: 3, awayScore: 3 },
-    { week: 13, homeTeamId: 'team_11', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
-
-    // Week 14
+    { week: 13, homeTeamId: 'team_11', awayTeamId: 'team_17', homeScore: 2, awayScore: 0 },
     { week: 14, homeTeamId: 'team_02', awayTeamId: 'team_14', homeScore: 1, awayScore: 0 },
     { week: 14, homeTeamId: 'team_05', awayTeamId: 'team_04', homeScore: 2, awayScore: 1 },
     { week: 14, homeTeamId: 'team_07', awayTeamId: 'team_12', homeScore: 1, awayScore: 1 },
@@ -431,9 +476,7 @@ export const matches: Match[] = [
     { week: 14, homeTeamId: 'team_14', awayTeamId: 'team_06', homeScore: 2, awayScore: 1 },
     { week: 14, homeTeamId: 'team_19', awayTeamId: 'team_01', homeScore: 1, awayScore: 2 },
     { week: 14, homeTeamId: 'team_20', awayTeamId: 'team_11', homeScore: 1, awayScore: 0 },
-    { week: 14, homeTeamId: 'team_10', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
-
-    // Week 15
+    { week: 14, homeTeamId: 'team_10', awayTeamId: 'team_18', homeScore: 1, awayScore: 0 },
     { week: 15, homeTeamId: 'team_07', awayTeamId: 'team_12', homeScore: 1, awayScore: 2 },
     { week: 15, homeTeamId: 'team_05', awayTeamId: 'team_11', homeScore: 1, awayScore: 1 },
     { week: 15, homeTeamId: 'team_11', awayTeamId: 'team_08', homeScore: 1, awayScore: 1 },
@@ -443,9 +486,7 @@ export const matches: Match[] = [
     { week: 15, homeTeamId: 'team_13', awayTeamId: 'team_02', homeScore: 2, awayScore: 2 },
     { week: 15, homeTeamId: 'team_19', awayTeamId: 'team_20', homeScore: 3, awayScore: 0 },
     { week: 15, homeTeamId: 'team_09', awayTeamId: 'team_19', homeScore: 5, awayScore: 0 },
-    { week: 15, homeTeamId: 'team_06', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
-
-    // Week 16
+    { week: 15, homeTeamId: 'team_06', awayTeamId: 'team_10', homeScore: 2, awayScore: 1 },
     { week: 16, homeTeamId: 'team_12', awayTeamId: 'team_14', homeScore: 0, awayScore: 0 },
     { week: 16, homeTeamId: 'team_02', awayTeamId: 'team_11', homeScore: 1, awayScore: 0 },
     { week: 16, homeTeamId: 'team_03', awayTeamId: 'team_16', homeScore: 2, awayScore: 3 },
@@ -455,9 +496,7 @@ export const matches: Match[] = [
     { week: 16, homeTeamId: 'team_18', awayTeamId: 'team_08', homeScore: 2, awayScore: 1 },
     { week: 16, homeTeamId: 'team_19', awayTeamId: 'team_14', homeScore: 2, awayScore: 0 },
     { week: 16, homeTeamId: 'team_20', awayTeamId: 'team_06', homeScore: 2, awayScore: 1 },
-    { week: 16, homeTeamId: 'team_01', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
-    
-    // Week 17
+    { week: 16, homeTeamId: 'team_01', awayTeamId: 'team_17', homeScore: 4, awayScore: 1 },
     { week: 17, homeTeamId: 'team_02', awayTeamId: 'team_11', homeScore: 3, awayScore: 2 },
     { week: 17, homeTeamId: 'team_07', awayTeamId: 'team_05', homeScore: 3, awayScore: 0 },
     { week: 17, homeTeamId: 'team_11', awayTeamId: 'team_13', homeScore: 2, awayScore: 3 },
@@ -467,9 +506,7 @@ export const matches: Match[] = [
     { week: 17, homeTeamId: 'team_19', awayTeamId: 'team_14', homeScore: 2, awayScore: 3 },
     { week: 17, homeTeamId: 'team_20', awayTeamId: 'team_08', homeScore: 3, awayScore: 0 },
     { week: 17, homeTeamId: 'team_01', awayTeamId: 'team_19', homeScore: 0, awayScore: 2 },
-    { week: 17, homeTeamId: 'team_09', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
-
-    // Week 18
+    { week: 17, homeTeamId: 'team_09', awayTeamId: 'team_10', homeScore: 2, awayScore: 2 },
     { week: 18, homeTeamId: 'team_06', awayTeamId: 'team_20', homeScore: 5, awayScore: 0 },
     { week: 18, homeTeamId: 'team_04', awayTeamId: 'team_12', homeScore: 1, awayScore: 1 },
     { week: 18, homeTeamId: 'team_08', awayTeamId: 'team_18', homeScore: 0, awayScore: 1 },
@@ -479,219 +516,227 @@ export const matches: Match[] = [
     { week: 18, homeTeamId: 'team_13', awayTeamId: 'team_08', homeScore: 2, awayScore: 0 },
     { week: 18, homeTeamId: 'team_12', awayTeamId: 'team_15', homeScore: 4, awayScore: 2 },
     { week: 18, homeTeamId: 'team_02', awayTeamId: 'team_16', homeScore: 2, awayScore: 3 },
-    { week: 18, homeTeamId: 'team_11', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
-
-    // Weeks 19-38 (no results yet)
-    ...Array.from({ length: 20 * 10 }, (_, i) => {
-        const week = 19 + Math.floor(i / 10);
-        const team1Index = i % 20;
-        const team2Index = (i + 10) % 20;
-        return {
-            week,
-            homeTeamId: teams[team1Index].id,
-            awayTeamId: teams[team2Index].id,
-            homeScore: -1,
-            awayScore: -1,
-        };
-    })
+    { week: 18, homeTeamId: 'team_11', awayTeamId: 'team_17', homeScore: 3, awayScore: 0 },
+    { week: 19, homeTeamId: 'team_19', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
+    { week: 19, homeTeamId: 'team_18', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
+    { week: 19, homeTeamId: 'team_17', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
+    { week: 19, homeTeamId: 'team_16', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
+    { week: 19, homeTeamId: 'team_15', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
+    { week: 19, homeTeamId: 'team_13', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
+    { week: 19, homeTeamId: 'team_10', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
+    { week: 19, homeTeamId: 'team_09', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
+    { week: 19, homeTeamId: 'team_04', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
+    { week: 19, homeTeamId: 'team_01', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
+    { week: 20, homeTeamId: 'team_20', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
+    { week: 20, homeTeamId: 'team_19', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
+    { week: 20, homeTeamId: 'team_18', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
+    { week: 20, homeTeamId: 'team_17', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
+    { week: 20, homeTeamId: 'team_14', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
+    { week: 20, homeTeamId: 'team_12', awayTeamId: 'team_13', homeScore: -1, awayScore: -1 },
+    { week: 20, homeTeamId: 'team_10', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
+    { week: 20, homeTeamId: 'team_07', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
+    { week: 20, homeTeamId: 'team_06', awayTeamId: 'team_15', homeScore: -1, awayScore: -1 },
+    { week: 20, homeTeamId: 'team_02', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
+    { week: 21, homeTeamId: 'team_19', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
+    { week: 21, homeTeamId: 'team_15', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
+    { week: 21, homeTeamId: 'team_13', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
+    { week: 21, homeTeamId: 'team_10', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
+    { week: 21, homeTeamId: 'team_08', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
+    { week: 21, homeTeamId: 'team_06', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
+    { week: 21, homeTeamId: 'team_05', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
+    { week: 21, homeTeamId: 'team_04', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
+    { week: 21, homeTeamId: 'team_03', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
+    { week: 21, homeTeamId: 'team_01', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
+    { week: 22, homeTeamId: 'team_20', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
+    { week: 22, homeTeamId: 'team_19', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
+    { week: 22, homeTeamId: 'team_18', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
+    { week: 22, homeTeamId: 'team_17', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
+    { week: 22, homeTeamId: 'team_16', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
+    { week: 22, homeTeamId: 'team_14', awayTeamId: 'team_13', homeScore: -1, awayScore: -1 },
+    { week: 22, homeTeamId: 'team_12', awayTeamId: 'team_15', homeScore: -1, awayScore: -1 },
+    { week: 22, homeTeamId: 'team_11', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
+    { week: 22, homeTeamId: 'team_04', awayTeamId: 'team_06', homeScore: -1, awayScore: -1 },
+    { week: 22, homeTeamId: 'team_01', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
+    { week: 23, homeTeamId: 'team_15', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
+    { week: 23, homeTeamId: 'team_13', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
+    { week: 23, homeTeamId: 'team_09', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
+    { week: 23, homeTeamId: 'team_08', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
+    { week: 23, homeTeamId: 'team_07', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
+    { week: 23, homeTeamId: 'team_06', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
+    { week: 23, homeTeamId: 'team_05', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
+    { week: 23, homeTeamId: 'team_03', awayTeamId: 'team_19', homeScore: -1, awayScore: -1 },
+    { week: 23, homeTeamId: 'team_02', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
+    { week: 23, homeTeamId: 'team_14', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
+    { week: 24, homeTeamId: 'team_20', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
+    { week: 24, homeTeamId: 'team_19', awayTeamId: 'team_15', homeScore: -1, awayScore: -1 },
+    { week: 24, homeTeamId: 'team_18', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
+    { week: 24, homeTeamId: 'team_17', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
+    { week: 24, homeTeamId: 'team_12', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
+    { week: 24, homeTeamId: 'team_11', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
+    { week: 24, homeTeamId: 'team_09', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
+    { week: 24, homeTeamId: 'team_05', awayTeamId: 'team_06', homeScore: -1, awayScore: -1 },
+    { week: 24, homeTeamId: 'team_04', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
+    { week: 24, homeTeamId: 'team_01', awayTeamId: 'team_13', homeScore: -1, awayScore: -1 },
+    { week: 25, homeTeamId: 'team_16', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
+    { week: 25, homeTeamId: 'team_15', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
+    { week: 25, homeTeamId: 'team_13', awayTeamId: 'team_19', homeScore: -1, awayScore: -1 },
+    { week: 25, homeTeamId: 'team_10', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
+    { week: 25, homeTeamId: 'team_07', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
+    { week: 25, homeTeamId: 'team_06', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
+    { week: 25, homeTeamId: 'team_05', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
+    { week: 25, homeTeamId: 'team_03', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
+    { week: 25, homeTeamId: 'team_12', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
+    { week: 25, homeTeamId: 'team_11', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
+    { week: 26, homeTeamId: 'team_20', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
+    { week: 26, homeTeamId: 'team_19', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
+    { week: 26, homeTeamId: 'team_18', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
+    { week: 26, homeTeamId: 'team_17', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
+    { week: 26, homeTeamId: 'team_14', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
+    { week: 26, homeTeamId: 'team_13', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
+    { week: 26, homeTeamId: 'team_08', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
+    { week: 26, homeTeamId: 'team_07', awayTeamId: 'team_15', homeScore: -1, awayScore: -1 },
+    { week: 26, homeTeamId: 'team_02', awayTeamId: 'team_06', homeScore: -1, awayScore: -1 },
+    { week: 26, homeTeamId: 'team_01', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
+    { week: 27, homeTeamId: 'team_19', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
+    { week: 27, homeTeamId: 'team_16', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
+    { week: 27, homeTeamId: 'team_15', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
+    { week: 27, homeTeamId: 'team_13', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
+    { week: 27, homeTeamId: 'team_10', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
+    { week: 27, homeTeamId: 'team_09', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
+    { week: 27, homeTeamId: 'team_08', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
+    { week: 27, homeTeamId: 'team_06', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
+    { week: 27, homeTeamId: 'team_04', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
+    { week: 27, homeTeamId: 'team_02', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
+    { week: 28, homeTeamId: 'team_20', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
+    { week: 28, homeTeamId: 'team_18', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
+    { week: 28, homeTeamId: 'team_17', awayTeamId: 'team_15', homeScore: -1, awayScore: -1 },
+    { week: 28, homeTeamId: 'team_14', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
+    { week: 28, homeTeamId: 'team_11', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
+    { week: 28, homeTeamId: 'team_09', awayTeamId: 'team_19', homeScore: -1, awayScore: -1 },
+    { week: 28, homeTeamId: 'team_08', awayTeamId: 'team_06', homeScore: -1, awayScore: -1 },
+    { week: 28, homeTeamId: 'team_05', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
+    { week: 28, homeTeamId: 'team_03', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
+    { week: 28, homeTeamId: 'team_01', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
+    { week: 29, homeTeamId: 'team_19', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
+    { week: 29, homeTeamId: 'team_16', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
+    { week: 29, homeTeamId: 'team_15', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
+    { week: 29, homeTeamId: 'team_13', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
+    { week: 29, homeTeamId: 'team_12', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
+    { week: 29, homeTeamId: 'team_11', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
+    { week: 29, homeTeamId: 'team_07', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
+    { week: 29, homeTeamId: 'team_06', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
+    { week: 29, homeTeamId: 'team_02', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
+    { week: 29, homeTeamId: 'team_14', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
+    { week: 30, homeTeamId: 'team_20', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
+    { week: 30, homeTeamId: 'team_17', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
+    { week: 30, homeTeamId: 'team_16', awayTeamId: 'team_06', homeScore: -1, awayScore: -1 },
+    { week: 30, homeTeamId: 'team_12', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
+    { week: 30, homeTeamId: 'team_10', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
+    { week: 30, homeTeamId: 'team_09', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
+    { week: 30, homeTeamId: 'team_08', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
+    { week: 30, homeTeamId: 'team_05', awayTeamId: 'team_19', homeScore: -1, awayScore: -1 },
+    { week: 30, homeTeamId: 'team_04', awayTeamId: 'team_15', homeScore: -1, awayScore: -1 },
+    { week: 30, homeTeamId: 'team_03', awayTeamId: 'team_13', homeScore: -1, awayScore: -1 },
+    { week: 31, homeTeamId: 'team_19', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
+    { week: 31, homeTeamId: 'team_18', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
+    { week: 31, homeTeamId: 'team_15', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
+    { week: 31, homeTeamId: 'team_14', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
+    { week: 31, homeTeamId: 'team_13', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
+    { week: 31, homeTeamId: 'team_11', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
+    { week: 31, homeTeamId: 'team_07', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
+    { week: 31, homeTeamId: 'team_06', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
+    { week: 31, homeTeamId: 'team_02', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
+    { week: 31, homeTeamId: 'team_01', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
+    { week: 32, homeTeamId: 'team_20', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
+    { week: 32, homeTeamId: 'team_19', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
+    { week: 32, homeTeamId: 'team_17', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
+    { week: 32, homeTeamId: 'team_16', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
+    { week: 32, homeTeamId: 'team_12', awayTeamId: 'team_06', homeScore: -1, awayScore: -1 },
+    { week: 32, homeTeamId: 'team_10', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
+    { week: 32, homeTeamId: 'team_09', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
+    { week: 32, homeTeamId: 'team_08', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
+    { week: 32, homeTeamId: 'team_04', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
+    { week: 32, homeTeamId: 'team_15', awayTeamId: 'team_13', homeScore: -1, awayScore: -1 },
+    { week: 33, homeTeamId: 'team_14', awayTeamId: 'team_19', homeScore: -1, awayScore: -1 },
+    { week: 33, homeTeamId: 'team_13', awayTeamId: 'team_15', homeScore: -1, awayScore: -1 },
+    { week: 33, homeTeamId: 'team_10', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
+    { week: 33, homeTeamId: 'team_09', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
+    { week: 33, homeTeamId: 'team_08', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
+    { week: 33, homeTeamId: 'team_07', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
+    { week: 33, homeTeamId: 'team_06', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
+    { week: 33, homeTeamId: 'team_05', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
+    { week: 33, homeTeamId: 'team_03', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
+    { week: 33, homeTeamId: 'team_01', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
+    { week: 34, homeTeamId: 'team_20', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
+    { week: 34, homeTeamId: 'team_19', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
+    { week: 34, homeTeamId: 'team_18', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
+    { week: 34, homeTeamId: 'team_17', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
+    { week: 34, homeTeamId: 'team_16', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
+    { week: 34, homeTeamId: 'team_15', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
+    { week: 34, homeTeamId: 'team_13', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
+    { week: 34, homeTeamId: 'team_07', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
+    { week: 34, homeTeamId: 'team_04', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
+    { week: 34, homeTeamId: 'team_02', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
+    { week: 35, homeTeamId: 'team_19', awayTeamId: 'team_13', homeScore: -1, awayScore: -1 },
+    { week: 35, homeTeamId: 'team_16', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
+    { week: 35, homeTeamId: 'team_12', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
+    { week: 35, homeTeamId: 'team_11', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
+    { week: 35, homeTeamId: 'team_09', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
+    { week: 35, homeTeamId: 'team_08', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
+    { week: 35, homeTeamId: 'team_06', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
+    { week: 35, homeTeamId: 'team_04', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
+    { week: 35, homeTeamId: 'team_03', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
+    { week: 35, homeTeamId: 'team_01', awayTeamId: 'team_15', homeScore: -1, awayScore: -1 },
+    { week: 36, homeTeamId: 'team_18', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
+    { week: 36, homeTeamId: 'team_17', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
+    { week: 36, homeTeamId: 'team_15', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
+    { week: 36, homeTeamId: 'team_14', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
+    { week: 36, homeTeamId: 'team_13', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
+    { week: 36, homeTeamId: 'team_10', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
+    { week: 36, homeTeamId: 'team_09', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
+    { week: 36, homeTeamId: 'team_06', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
+    { week: 36, homeTeamId: 'team_02', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
+    { week: 36, homeTeamId: 'team_19', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
+    { week: 37, homeTeamId: 'team_20', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
+    { week: 37, homeTeamId: 'team_18', awayTeamId: 'team_15', homeScore: -1, awayScore: -1 },
+    { week: 37, homeTeamId: 'team_17', awayTeamId: 'team_19', homeScore: -1, awayScore: -1 },
+    { week: 37, homeTeamId: 'team_12', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
+    { week: 37, homeTeamId: 'team_11', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
+    { week: 37, homeTeamId: 'team_09', awayTeamId: 'team_13', homeScore: -1, awayScore: -1 },
+    { week: 37, homeTeamId: 'team_07', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
+    { week: 37, homeTeamId: 'team_05', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
+    { week: 37, homeTeamId: 'team_04', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
+    { week: 37, homeTeamId: 'team_03', awayTeamId: 'team_06', homeScore: -1, awayScore: -1 },
+    { week: 38, homeTeamId: 'team_19', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
+    { week: 38, homeTeamId: 'team_16', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
+    { week: 38, homeTeamId: 'team_15', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
+    { week: 38, homeTeamId: 'team_14', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
+    { week: 38, homeTeamId: 'team_13', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
+    { week: 38, homeTeamId: 'team_08', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
+    { week: 38, homeTeamId: 'team_06', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
+    { week: 38, homeTeamId: 'team_05', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
+    { week: 38, homeTeamId: 'team_02', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
+    { week: 38, homeTeamId: 'team_01', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 }
 ];
-
-// --- CALCULATED DATA ---
-
-type TeamStats = Omit<CurrentStanding, 'teamId' | 'rank'>;
-
-function calculateStandings(matches: Match[], maxWeek: number): Map<string, TeamStats> {
-    const stats: Map<string, TeamStats> = new Map();
-    teams.forEach(team => {
-        stats.set(team.id, {
-            points: 0, gamesPlayed: 0, wins: 0, draws: 0, losses: 0,
-            goalsFor: 0, goalsAgainst: 0, goalDifference: 0
-        });
-    });
-
-    matches.filter(m => m.week <= maxWeek && m.homeScore !== -1).forEach(match => {
-        const homeStats = stats.get(match.homeTeamId)!;
-        const awayStats = stats.get(match.awayTeamId)!;
-
-        homeStats.gamesPlayed++;
-        awayStats.gamesPlayed++;
-        homeStats.goalsFor += match.homeScore;
-        awayStats.goalsFor += match.awayScore;
-        homeStats.goalsAgainst += match.awayScore;
-        awayStats.goalsAgainst += match.homeScore;
-        homeStats.goalDifference = homeStats.goalsFor - homeStats.goalsAgainst;
-        awayStats.goalDifference = awayStats.goalsFor - awayStats.goalsAgainst;
-
-        if (match.homeScore > match.awayScore) {
-            homeStats.wins++;
-            homeStats.points += 3;
-            awayStats.losses++;
-        } else if (match.homeScore < match.awayScore) {
-            awayStats.wins++;
-            awayStats.points += 3;
-            homeStats.losses++;
-        } else {
-            homeStats.draws++;
-            awayStats.draws++;
-            homeStats.points++;
-            awayStats.points++;
-        }
-    });
-
-    return stats;
-}
-
-function sortStandings(statsMap: Map<string, TeamStats>): CurrentStanding[] {
-    const sorted = Array.from(statsMap.entries())
-        .map(([teamId, stats]) => ({ ...stats, teamId }))
-        .sort((a, b) => {
-            if (a.points !== b.points) return b.points - a.points;
-            if (a.goalDifference !== b.goalDifference) return b.goalDifference - a.goalDifference;
-            if (a.goalsFor !== b.goalsFor) return b.goalsFor - a.goalsFor;
-            const teamA = teams.find(t => t.id === a.teamId)?.name || '';
-            const teamB = teams.find(t => t.id === b.teamId)?.name || '';
-            return teamA.localeCompare(teamB);
-        })
-        .map((stat, index) => ({
-            ...stat,
-            rank: index + 1,
-        }));
-    return sorted;
-}
-
-const MAX_WEEK = 18;
-
-const finalStatsMap = calculateStandings(matches, MAX_WEEK);
-export const standings: CurrentStanding[] = sortStandings(finalStatsMap);
-const finalTeamRanks = new Map(standings.map(s => [s.teamId, s.rank]));
-
-export const playerTeamScores: PlayerTeamScore[] = userList.flatMap(user => {
-    const prediction = fullPredictions.find(p => p.userId === user.id);
-    if (!prediction || !prediction.rankings) {
-        return [];
-    };
-
-    return teams.map(team => {
-        const predictedRank = prediction.rankings.indexOf(team.id) + 1;
-        const actualRank = finalTeamRanks.get(team.id) || 0;
-        const score = actualRank > 0 && predictedRank > 0 ? 5 - Math.abs(predictedRank - actualRank) : 0;
-        return { userId: user.id, teamId: team.id, score };
-    });
-});
-
-export const weeklyTeamStandings: WeeklyTeamStanding[] = [];
-export const fullUserHistories: UserHistory[] = userList.map(u => ({ userId: u.id, weeklyScores: [] }));
-
-for (let week = 1; week <= MAX_WEEK; week++) {
-    const weeklyStats = calculateStandings(matches, week);
-    const weeklySorted = sortStandings(weeklyStats);
-    
-    weeklySorted.forEach(standing => {
-        weeklyTeamStandings.push({ week, teamId: standing.teamId, rank: standing.rank });
-    });
-
-    const weeklyTeamRanks = new Map(weeklySorted.map(s => [s.teamId, s.rank]));
-
-    const weeklyUserScores = userList.map(user => {
-        const prediction = fullPredictions.find(p => p.userId === user.id);
-        if (!prediction || !prediction.rankings) return { userId: user.id, score: 0 };
-        const weeklyScore = prediction.rankings.reduce((total, teamId, index) => {
-            const predictedRank = index + 1;
-            const actualRank = weeklyTeamRanks.get(teamId) || 0;
-            const score = actualRank > 0 ? 5 - Math.abs(predictedRank - actualRank) : 0;
-            return total + score;
-        }, 0);
-        return { userId: user.id, score: weeklyScore };
-    }).sort((a,b) => b.score - a.score);
-
-    let currentRank = 0;
-    let lastScore = Infinity;
-    weeklyUserScores.forEach((userScore, index) => {
-        if (userScore.score < lastScore) {
-            currentRank = index + 1;
-            lastScore = userScore.score;
-        }
-        const userHistory = fullUserHistories.find(h => h.userId === userScore.userId)!;
-        userHistory.weeklyScores.push({ week, score: userScore.score, rank: currentRank });
-    });
-}
-
-
-export const fullUsers: User[] = userList.map((user, i) => {
-    const history = fullUserHistories.find(h => h.userId === user.id)?.weeklyScores || [];
-    const lastWeekData = history.find(s => s.week === MAX_WEEK) || { score: 0, rank: 0 };
-    const prevWeekData = history.find(s => s.week === MAX_WEEK - 1) || { score: 0, rank: 0 };
-
-    const allScores = history.map(s => s.score);
-    const allRanks = history.map(s => s.rank).filter(r => r > 0);
-
-    return {
-        id: user.id,
-        name: user.name,
-        avatar: `${(i % 50) + 1}`,
-        score: lastWeekData.score,
-        rank: lastWeekData.rank,
-        previousRank: prevWeekData.rank,
-        previousScore: prevWeekData.score,
-        rankChange: prevWeekData.rank > 0 && lastWeekData.rank > 0 ? prevWeekData.rank - lastWeekData.rank : 0,
-        scoreChange: lastWeekData.score - prevWeekData.score,
-        maxRank: allRanks.length > 0 ? Math.min(...allRanks) : 0,
-        minRank: allRanks.length > 0 ? Math.max(...allRanks) : 0,
-        maxScore: allScores.length > 0 ? Math.max(...allScores) : 0,
-        minScore: allScores.length > 0 ? Math.min(...allScores) : 0,
-        isPro: user.isPro || false,
-        email: `${user.name.toLowerCase().replace(/ /g, '.')}@example.com`,
-        joinDate: new Date(2024, 7, 1).toISOString()
-    };
-}).sort((a, b) => {
-    if (a.rank === 0) return 1;
-    if (b.rank === 0) return -1;
-    return a.rank - b.rank;
-});
-
-export const teamRecentResults: TeamRecentResult[] = teams.map(team => {
-    const results: ('W' | 'D' | 'L' | '-')[] = [];
-    const teamMatches = matches.filter(m => m.week <= MAX_WEEK && (m.homeTeamId === team.id || m.awayTeamId === team.id))
-        .sort((a,b) => b.week - a.week)
-        .slice(0, 6);
-
-    for (const match of teamMatches) {
-        if (match.homeTeamId === team.id) {
-            if (match.homeScore > match.awayScore) results.push('W');
-            else if (match.homeScore < match.awayScore) results.push('L');
-            else results.push('D');
-        } else {
-            if (match.awayScore > match.homeScore) results.push('W');
-            else if (match.awayScore < match.homeScore) results.push('L');
-            else results.push('D');
-        }
-    }
-    
-    while (results.length < 6) {
-        results.unshift('-');
-    }
-
-    return { teamId: team.id, results: results.reverse() };
-});
-
-
-export const seasonMonths: SeasonMonth[] = [
-    { id: 'sm_1', month: 'August', year: 2025, abbreviation: 'AUG' },
-    { id: 'sm_2', month: 'September', year: 2025, abbreviation: 'SEP' },
-    { id: 'sm_3', month: 'October', year: 2025, abbreviation: 'OCT' },
-    { id: 'sm_4', month: 'November', year: 2025, abbreviation: 'NOV' },
-    { id: 'sm_5', month: 'December', year: 2025, abbreviation: 'DEC' },
-    { id: 'sm_xmas', month: 'December', year: 2025, abbreviation: 'XMAS', special: 'Christmas No. 1' },
-    { id: 'sm_6', month: 'January', year: 2026, abbreviation: 'JAN' },
-    { id: 'sm_7', month: 'February', year: 2026, abbreviation: 'FEB' },
-    { id: 'sm_8', month: 'March', year: 2026, abbreviation: 'MAR' },
-    { id: 'sm_9', month: 'April', year: 2026, abbreviation: 'APR' },
-    { id: 'sm_10', month: 'May', year: 2026, abbreviation: 'MAY' }
-];
-
-export const monthlyMimoM: MonthlyMimoM[] = [];
-
-// Final exports for the app
-export const users: User[] = fullUsers;
-export const predictions: Prediction[] = fullPredictions;
-export const userHistories: UserHistory[] = fullUserHistories;
+const teamScores: { [team: string]: number[] } = {
+    "Arsenal": [1, 5, -1, 3, -1, -1, 4, 4, 1, 2, 2, 2, 0, 4, 2, 3, 2, -1, 0, 0],
+    "Aston Villa": [-5, 0, -3, 0, 1, 0, 3, 1, 1, -2, -3, -1, -2, -4, 0, -2, -2, 2, 2, 0],
+    "Bournemouth": [2, 1, -1, 2, 1, 2, 2, 1, 2, -1, -2, -2, -4, -3, 2, -1, 3, 0, 2, -2],
+    "Brentford": [-1, 1, 2, 0, 2, -1, 0, 1, -3, -2, 0, 1, -2, 0, -2, 0, 2, 1, 1, -2],
+    "Brighton": [1, 2, -1, -2, 2, 1, 1, 2, 0, -1, -3, -3, -1, -1, 0, 0, -1, -1, -2, -1],
+    "Chelsea": [0, 4, 2, 4, 5, 5, 2, 4, 4, 4, 4, 4, 4, 4, 5, -1, 1, 1, 5, 5],
+    "Crystal Palace": [0, 2, 3, 0, -1, 1, 3, 1, 1, -2, -2, 0, 0, 0, -1, -1, 1, 1, 2, 1],
+    "Everton": [-1, 2, 0, -2, -1, -1, 2, 1, 0, -1, 1, 2, 2, 1, 2, 0, -1, 1, 0, 0],
+    "Fulham": [1, 1, 0, 1, -1, 1, 1, 1, 0, 1, -1, -1, 0, 0, -1, 0, 0, -1, -1, -2],
+    "Leeds": [-1, -3, -2, -1, -1, 0, -2, -1, -2, 0, -2, -2, -1, -1, -1, 0, 0, -1, -1, -1],
+    "Burnley": [0, -2, -1, 0, 0, -2, -1, 0, -2, -1, 0, 1, 0, -1, 0, -2, -2, -2, -2, -2],
+    "Liverpool": [4, 5, 5, 5, 3, 4, 4, 5, 5, 5, 5, 3, 5, 5, 4, 3, 4, 5, 5, 3],
+    "Man City": [4, 4, 3, 4, 4, 4, 5, 4, 4, 5, 4, 5, 3, 3, 3, 4, 3, 3, 3, 3],
+    "Man Utd": [-4, -1, -1, 0, -2, -1, 2, 0, 2, 2, 2, 2, 3, 2, 2, 1, 1, 2, 2, -2],
+    "Newcastle": [0, 0, 1, 0, 1, 0, 1, 2, -1, -1, 2, 2, 3, 3, 1, 1, 1, 2, 1, 0],
+    "Notts Forest": [3, 2, 1, 1, 1, 1, 2, 1, 3, 1, 1, 1, 1, 1, -1, 3, 2, 3, 2, 0],
+    "Sunderland": [3, -2, -2, -2, -2, -3, -1, -1, -2, 0, -1, -1, -1, -2, -1, -1, -1, 0, -1, -2],
+    "Tottenham": [3, 0, 0, 2, 1, 1, 3, 2, 2, 2, 2, 3, 2, 2, 2, 1, 1, 2, 2, -1],
+    "West Ham": [0, -3, 0, 0, -1, 0, -2, -1, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, -1],
+    "Wolves": [-4, -1, -1, -1, -1, 0, -1, -2, -2, -1, -1, -1, -2, -1, -1, -2, -1, -1, -1, -1]
+};

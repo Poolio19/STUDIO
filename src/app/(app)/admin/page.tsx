@@ -59,6 +59,7 @@ async function importClientSideData(db: Firestore | null): Promise<{ success: bo
         snapshot.docs.forEach((doc) => {
             batch.delete(doc.ref);
         });
+        console.log(`Queued deletion for all ${snapshot.size} documents in '${collectionName}'.`);
     };
 
     // Queue delete operations for all documents in all collections first
