@@ -917,7 +917,7 @@ export const fullUsers: User[] = (() => {
                 const predictedRank = index + 1;
                 const actualRank = weeklyFinalRankings[teamId];
                 if (actualRank) {
-                    totalScore += 5 - Math.abs(predicted_rank - actualRank);
+                    totalScore += 5 - Math.abs(predictedRank - actualRank);
                 }
             });
             weeklyUserScores.push({ userId: prediction.userId, score: totalScore });
