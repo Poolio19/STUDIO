@@ -1,5 +1,4 @@
 
-
 export type User = {
   id: string;
   name: string;
@@ -128,14 +127,14 @@ export const teams: Team[] = [
     { id: 'team_07', name: 'Crystal Palace', logo: 'castle', bgColourFaint: 'rgba(27, 69, 143, 0.3)', bgColourSolid: '#1B458F', textColour: '#C4122E', iconColour: '#C4122E' },
     { id: 'team_08', name: 'Everton', logo: 'shieldHalf', bgColourFaint: 'rgba(0, 51, 160, 0.3)', bgColourSolid: '#0033A0', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_09', name: 'Fulham', logo: 'rabbit', bgColourFaint: 'rgba(0, 0, 0, 0.3)', bgColourSolid: '#000000', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
-    { id: 'team_10', name: 'Leeds', logo: 'theater', bgColourFaint: 'rgba(255, 205, 0, 0.3)', bgColourSolid: '#FFCD00', textColour: '#1D428A', iconColour: '#1D428A' },
-    { id: 'team_11', name: 'Burnley', logo: 'squirrel', bgColourFaint: 'rgba(108, 29, 69, 0.3)', bgColourSolid: '#6C1D45', textColour: '#99D6EA', iconColour: '#99D6EA' },
+    { id: 'team_10', name: 'Ipswich', logo: 'theater', bgColourFaint: 'rgba(255, 205, 0, 0.3)', bgColourSolid: '#FFCD00', textColour: '#1D428A', iconColour: '#1D428A' },
+    { id: 'team_11', name: 'Leicester', logo: 'squirrel', bgColourFaint: 'rgba(108, 29, 69, 0.3)', bgColourSolid: '#6C1D45', textColour: '#99D6EA', iconColour: '#99D6EA' },
     { id: 'team_12', name: 'Liverpool', logo: 'origami', bgColourFaint: 'rgba(200, 16, 46, 0.3)', bgColourSolid: '#C8102E', textColour: '#000000', iconColour: '#FFFFFF' },
     { id: 'team_13', name: 'Man City', logo: 'sailboat', bgColourFaint: 'rgba(108, 171, 221, 0.3)', bgColourSolid: '#6CABDD', textColour: '#00285E', iconColour: '#00285E' },
     { id: 'team_14', name: 'Man Utd', logo: 'sparkles', bgColourFaint: 'rgba(218, 41, 28, 0.3)', bgColourSolid: '#DA291C', textColour: '#FBE122', iconColour: '#FBE122' },
     { id: 'team_15', name: 'Newcastle', logo: 'shieldUser', bgColourFaint: 'rgba(45, 41, 38, 0.3)', bgColourSolid: '#2D2926', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_16', name: 'Notts Forest', logo: 'treeDeciduous', bgColourFaint: 'rgba(221, 0, 0, 0.3)', bgColourSolid: '#DD0000', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
-    { id: 'team_17', name: 'Sunderland', logo: 'gitlab', bgColourFaint: 'rgba(235, 20, 30, 0.3)', bgColourSolid: '#EB141E', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
+    { id: 'team_17', name: 'Southampton', logo: 'gitlab', bgColourFaint: 'rgba(235, 20, 30, 0.3)', bgColourSolid: '#EB141E', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_18', name: 'Tottenham', logo: 'home', bgColourFaint: 'rgba(19, 34, 83, 0.3)', bgColourSolid: '#132257', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_19', name: 'West Ham', logo: 'hammer', bgColourFaint: 'rgba(122, 38, 58, 0.3)', bgColourSolid: '#7A263A', textColour: '#FBE122', iconColour: '#FBE122' },
     { id: 'team_20', name: 'Wolves', logo: 'flower', bgColourFaint: 'rgba(253, 190, 17, 0.3)', bgColourSolid: '#FDBE11', textColour: '#000000', iconColour: '#000000' }
@@ -148,46 +147,53 @@ const teamNameMapping: { [key: string]: string } = teams.reduce((acc, team) => {
     if (lowerCaseName === 'man city') acc['manchester city'] = team.id;
     if (lowerCaseName === 'man utd') acc['manchester united'] = team.id;
     if (lowerCaseName === 'notts forest') acc['nottingham forest'] = team.id;
+    if (lowerCaseName === 'ipswich') {
+      acc['leeds'] = team.id;
+      acc['ipswich town'] = team.id;
+    }
+    if (lowerCaseName === 'leicester') acc['leicester city'] = team.id;
+    if (lowerCaseName === 'southampton') acc['sunderland'] = team.id;
     return acc;
 }, {} as { [key: string]: string });
 
+
 const userListRaw = [
-    { id: 'usr_001', name: 'Tom Wright'}, { id: 'usr_002', name: 'Barrie Cross'}, { id: 'usr_003', name: 'Dave Nightingale'},
-    { id: 'usr_004', name: 'Pip Stokes'}, { id: 'usr_005', name: 'Alex Anderson'}, { id: 'usr_006', name: 'Nat Walsh'},
-    { id: 'usr_007', name: 'Patrick Meese'}, { id: 'usr_008', name: 'Lee Harte'}, { id: 'usr_009', name: 'Jim Poole'},
-    { id: 'usr_010', name: 'Lyndon Padmore'}, { id: 'usr_011', name: 'Alf Wroldsen'}, { id: 'usr_012', name: 'Steve Wroldsen'},
-    { id: 'usr_013', name: 'Roger Wymer'}, { id: 'usr_014', name: 'Mike Wymer'}, { id: 'usr_015', name: 'Andy Belton'},
-    { id: 'usr_016', name: 'Ernest Belton'}, { id: 'usr_017', name: 'Tim Birchall'}, { id: 'usr_018', name: 'Nathan Hyatt'},
-    { id: 'usr_019', name: 'Rory Hyatt'}, { id: 'usr_020', name: 'Gaz Littlewood'}, { id: 'usr_021', name: 'Fazil Sediqi'},
-    { id: 'usr_022', name: 'Shuhra Sediqi'}, { id: 'usr_023', name: 'Ilyas Taj Sediqi'}, { id: 'usr_024', name: 'Eshwa Sediqi'},
-    { id: 'usr_025', name: 'Ben Fellows'}, { id: 'usr_026', name: 'Michelle Duffy-Turner'}, { id: 'usr_027', name: 'Nicola Spears'},
-    { id: 'usr_028', name: 'Jamie Spears'}, { id: 'usr_029', name: 'Jonny Taylot'}, { id: 'usr_030', name: 'John Taylor'},
-    { id: 'usr_031', name: 'Sam Dixon'}, { id: 'usr_032', name: 'Doug Potter'}, { id: 'usr_033', name: 'Finlay Sinclair'},
-    { id: 'usr_034', name: 'Bart Ainsworth'}, { id: 'usr_035', name: 'Aidan Kehoe'}, { id: 'usr_036', name: 'Ben Patey'},
-    { id: 'usr_037', name: 'Theo Gresson'}, { id: 'usr_038', name: 'Adam Barclay'}, { id: 'usr_039', name: 'James Eldred'},
-    { id: 'usr_040', name: 'Otis Eldred'}, { id: 'usr_041', name: 'Dan Coles'}, { id: 'usr_042', name: 'Daniel Crick'},
-    { id: 'usr_043', name: 'Sheila McKenzie'}, { id: 'usr_044', name: 'Chris Dodds'}, { id: 'usr_045', name: 'Rich Seddon'},
-    { id: 'usr_046', name: 'Ross Allatt'}, { id: 'usr_047', name: 'Neville Johnson'}, { id: 'usr_048', name: 'Julian Spears'},
-    { id: 'usr_049', name: 'Andrew Spears'}, { id: 'usr_050', name: 'Danny Broom'}, { id: 'usr_051', name: 'Paul Hammett'},
-    { id: 'usr_052', name: 'Tom Gill'}, { id: 'usr_053', name: 'Ronnie Bain'}, { id: 'usr_054', name: 'Matthew Bain'},
-    { id: 'usr_055', name: 'Sam Bain'}, { id: 'usr_056', name: 'Andy Barnes'}, { id: 'usr_057', name: 'Pascal Walls'},
-    { id: 'usr_058', name: 'Steve Lawrence'}, { id: 'usr_059', name: 'Gill Butler'}, { id: 'usr_060', name: 'Tom Coles'},
-    { id: 'usr_061', name: 'Tom Poole'}, { id: 'usr_062', name: 'Eddie Spencer'}, { id: 'usr_063', name: 'Rory Poole'},
-    { id: 'usr_064', name: 'Scott Emmett'}, { id: 'usr_065', name: 'Craig Temporal'}, { id: 'usr_066', name: 'Andy Senior'},
-    { id: 'usr_067', name: 'Dan Brown'}, { id: 'usr_068', name: 'Rupert Massey'}, { id: 'usr_069', name: 'Matt Howard'},
-    { id: 'usr_070', name: 'Justin Downing'}, { id: 'usr_071', name: 'Sam Burgess'}, { id: 'usr_072', name: 'George Roberts'},
-    { id: 'usr_073', name: 'Leyton Collings'}, { id: 'usr_074', name: 'Ben Cox'}, { id: 'usr_075', name: 'Adam F Bain'},
-    { id: 'usr_076', name: 'Amy Parkinson'}, { id: 'usr_077', name: 'Stven Bain'}, { id: 'usr_078', name: 'Ian Scotland'},
-    { id: 'usr_079', name: 'Ben Dawes'}, { id: 'usr_080', name: 'Tom Bywater'}, { id: 'usr_081', name: 'Jack Murray'},
-    { id: 'usr_082', name: 'Rob Mabon'}, { id: 'usr_083', name: 'Andrew Trafford'}, { id: 'usr_084', name: 'Luca Trafford'},
-    { id: 'usr_085', name: 'Craig Stevens'}, { id: 'usr_086', name: 'George Butterworth'}, { id: 'usr_087', name: 'Ashley Davies'},
-    { id: 'usr_088', name: 'Duncan Holder'}, { id: 'usr_089', name: 'Arthur Gwyn-Davies'}, { id: 'usr_090', name: 'Paul Stonier'},
-    { id: 'usr_091', name: 'Jember Weekes'}, { id: 'usr_092', name: 'Tom Kehoe'}, { id: 'usr_093', name: 'Chris Burston'},
-    { id: 'usr_094', name: 'Malcolm Sinclair'}, { id: 'usr_095', name: 'Dan Parkinson'}, { id: 'usr_096', name: 'Alfie Skingley'},
-    { id: 'usr_097', name: 'Bev Skingley'}, { id: 'usr_098', name: 'Dan Skingley'}, { id: 'usr_099', name: 'Ken Skingley'},
-    { id: 'usr_100', name: 'Lyndsey Preece'}, { id: 'usr_101', name: 'Kane Sullivan'}, { id: 'usr_102', name: 'Graeme Bailie'},
-    { id: 'usr_103', name: 'Dan Dawson'}, { id: 'usr_104', name: 'Alix Nicholls'}, { id: 'usr_105', name: 'Alistair Whitfield'},
-    { id: 'usr_106', name: 'THE PREM-MEM', isPro: true }, { id: 'usr_107', name: 'THE AI', isPro: true }, { id: 'usr_108', name: 'THE SUPERCOMPUTER', isPro: true }, { id: 'usr_109', name: 'Alex Liston' }
+  { id: 'usr_001', name: 'Tom Wright'}, { id: 'usr_002', name: 'Barrie Cross'}, { id: 'usr_003', name: 'Dave Nightingale'},
+  { id: 'usr_004', name: 'Pip Stokes'}, { id: 'usr_005', name: 'Alex Anderson'}, { id: 'usr_006', name: 'Nat Walsh'},
+  { id: 'usr_007', name: 'Patrick Meese'}, { id: 'usr_008', name: 'Lee Harte'}, { id: 'usr_009', name: 'Jim Poole'},
+  { id: 'usr_010', name: 'Lyndon Padmore'}, { id: 'usr_011', name: 'Alf Wroldsen'}, { id: 'usr_012', name: 'Steve Wroldsen'},
+  { id: 'usr_013', name: 'Roger Wymer'}, { id: 'usr_014', name: 'Mike Wymer'}, { id: 'usr_015', name: 'Andy Belton'},
+  { id: 'usr_016', name: 'Ernest Belton'}, { id: 'usr_017', name: 'Tim Birchall'}, { id: 'usr_018', name: 'Nathan Hyatt'},
+  { id: 'usr_019', name: 'Rory Hyatt'}, { id: 'usr_020', name: 'Gaz Littlewood'}, { id: 'usr_021', name: 'Fazil Sediqi'},
+  { id: 'usr_022', name: 'Shuhra Sediqi'}, { id: 'usr_023', name: 'Ilyas Taj Sediqi'}, { id: 'usr_024', name: 'Eshwa Sediqi'},
+  { id: 'usr_025', name: 'Ben Fellows'}, { id: 'usr_026', name: 'Michelle Duffy-Turner'}, { id: 'usr_027', name: 'Nicola Spears'},
+  { id: 'usr_028', name: 'Jamie Spears'}, { id: 'usr_029', name: 'Jonny Taylot'}, { id: 'usr_030', name: 'John Taylor'},
+  { id: 'usr_031', name: 'Sam Dixon'}, { id: 'usr_032', name: 'Doug Potter'}, { id: 'usr_033', name: 'Finlay Sinclair'},
+  { id: 'usr_034', name: 'Bart Ainsworth'}, { id: 'usr_035', name: 'Aidan Kehoe'}, { id: 'usr_036', name: 'Ben Patey'},
+  { id: 'usr_037', name: 'Theo Gresson'}, { id: 'usr_038', name: 'Adam Barclay'}, { id: 'usr_039', name: 'James Eldred'},
+  { id: 'usr_040', name: 'Otis Eldred'}, { id: 'usr_041', name: 'Dan Coles'}, { id: 'usr_042', name: 'Daniel Crick'},
+  { id: 'usr_043', name: 'Sheila McKenzie'}, { id: 'usr_044', name: 'Chris Dodds'}, { id: 'usr_045', name: 'Rich Seddon'},
+  { id: 'usr_046', name: 'Ross Allatt'}, { id: 'usr_047', name: 'Neville Johnson'}, { id: 'usr_048', name: 'Julian Spears'},
+  { id: 'usr_049', name: 'Andrew Spears'}, { id: 'usr_050', name: 'Danny Broom'}, { id: 'usr_051', name: 'Paul Hammett'},
+  { id: 'usr_052', name: 'Tom Gill'}, { id: 'usr_053', name: 'Ronnie Bain'}, { id: 'usr_054', name: 'Matthew Bain'},
+  { id: 'usr_055', name: 'Sam Bain'}, { id: 'usr_056', name: 'Andy Barnes'}, { id: 'usr_057', name: 'Pascal Walls'},
+  { id: 'usr_058', name: 'Steve Lawrence'}, { id: 'usr_059', name: 'Gill Butler'}, { id: 'usr_060', name: 'Tom Coles'},
+  { id: 'usr_061', name: 'Tom Poole'}, { id: 'usr_062', name: 'Eddie Spencer'}, { id: 'usr_063', name: 'Rory Poole'},
+  { id: 'usr_064', name: 'Scott Emmett'}, { id: 'usr_065', name: 'Craig Temporal'}, { id: 'usr_066', name: 'Andy Senior'},
+  { id: 'usr_067', name: 'Dan Brown'}, { id: 'usr_068', name: 'Rupert Massey'}, { id: 'usr_069', name: 'Matt Howard'},
+  { id: 'usr_070', name: 'Justin Downing'}, { id: 'usr_071', name: 'Sam Burgess'}, { id: 'usr_072', name: 'George Roberts'},
+  { id: 'usr_073', name: 'Leyton Collings'}, { id: 'usr_074', name: 'Ben Cox'}, { id: 'usr_075', name: 'Adam F Bain'},
+  { id: 'usr_076', name: 'Amy Parkinson'}, { id: 'usr_077', name: 'Stven Bain'}, { id: 'usr_078', name: 'Ian Scotland'},
+  { id: 'usr_079', name: 'Ben Dawes'}, { id: 'usr_080', name: 'Tom Bywater'}, { id: 'usr_081', name: 'Jack Murray'},
+  { id: 'usr_082', name: 'Rob Mabon'}, { id: 'usr_083', name: 'Andrew Trafford'}, { id: 'usr_084', name: 'Luca Trafford'},
+  { id: 'usr_085', name: 'Craig Stevens'}, { id: 'usr_086', name: 'George Butterworth'}, { id: 'usr_087', name: 'Ashley Davies'},
+  { id: 'usr_088', name: 'Duncan Holder'}, { id: 'usr_089', name: 'Arthur Gwyn-Davies'}, { id: 'usr_090', name: 'Paul Stonier'},
+  { id: 'usr_091', name: 'Jember Weekes'}, { id: 'usr_092', name: 'Tom Kehoe'}, { id: 'usr_093', name: 'Chris Burston'},
+  { id: 'usr_094', name: 'Malcolm Sinclair'}, { id: 'usr_095', name: 'Dan Parkinson'}, { id: 'usr_096', name: 'Alfie Skingley'},
+  { id: 'usr_097', name: 'Bev Skingley'}, { id: 'usr_098', name: 'Dan Skingley'}, { id: 'usr_099', name: 'Ken Skingley'},
+  { id: 'usr_100', name: 'Lyndsey Preece'}, { id: 'usr_101', name: 'Kane Sullivan'}, { id: 'usr_102', name: 'Graeme Bailie'},
+  { id: 'usr_103', name: 'Dan Dawson'}, { id: 'usr_104', name: 'Alix Nicholls'}, { id: 'usr_105', name: 'Alistair Whitfield'},
+  { id: 'usr_106', name: 'THE PREM-MEM', isPro: true }, { id: 'usr_107', name: 'THE AI', isPro: true }, { id: 'usr_108', name: 'THE SUPERCOMPUTER', isPro: true }, { id: 'usr_109', name: 'Alex Liston' }
 ];
 
 const userList = userListRaw.map(u => ({ ...u, name: u.isPro ? u.name : u.name.replace(/\b\w/g, l => l.toUpperCase()).replace(/\B[A-Z]/g, l => l.toLowerCase()) }));
@@ -256,7 +262,7 @@ const userPredictionsRaw: { [key: string]: string[] } = {
     "usr_038":["Liverpool","Arsenal","Man City","Chelsea","Aston Villa","Newcastle","Man Utd","Brighton","Tottenham","Notts Forest","Crystal Palace","Everton","Bournemouth","Fulham","West Ham","Brentford","Wolves","Burnley","Leeds","Sunderland"],
     "usr_039":["Liverpool","Arsenal","Man City","Chelsea","Man Utd","Aston Villa","Tottenham","Newcastle","Notts Forest","Brighton","Fulham","Bournemouth","Everton","Crystal Palace","Brentford","West Ham","Leeds","Wolves","Burnley","Sunderland"],
     "usr_040":["Liverpool","Man City","Man Utd","Chelsea","Tottenham","Arsenal","Aston Villa","Everton","Fulham","Crystal Palace","Newcastle","Notts Forest","West Ham","Brighton","Bournemouth","Sunderland","Wolves","Burnley","Brentford","Leeds"],
-    "usr_041":["Man City","Chelsea","Liverpool","Arsenal","Tottenham","Aston Villa","Man Utd","Newcastle","Everton","Brighton","Notts Forest","Crystal Palace","West Ham","Fulham","Wolves","Leeds","Brentford","Bournemouth","Sunderland","Burnley"],
+    "usr_041":["MAN CITY","CHELSEA","LIVERPOOL","ARSENAL","TOTTENHAM","ASTON VILLA","MAN UTD","NEWCASTLE","EVERTON","BRIGHTON","NOTTS FOREST","CRYSTAL PALACE","WEST HAM","FULHAM","WOLVES","LEEDS","BRENTFORD","BOURNEMOUTH","SUNDERLAND","BURNLEY"],
     "usr_042":["Liverpool","Man City","Chelsea","Arsenal","Aston Villa","Newcastle","Man Utd","Tottenham","Crystal Palace","Brighton","Bournemouth","Notts Forest","Fulham","West Ham","Everton","Wolves","Leeds","Sunderland","Brentford","Burnley"],
     "usr_043":["Liverpool","Arsenal","Man City","Chelsea","Newcastle","Tottenham","Aston Villa","Brighton","Man Utd","Crystal Palace","Notts Forest","Bournemouth","Everton","Wolves","Fulham","West Ham","Brentford","Leeds","Sunderland","Burnley"],
     "usr_044":["Liverpool","Chelsea","Arsenal","Man City","Tottenham","Man Utd","Newcastle","Aston Villa","Brighton","Notts Forest","Crystal Palace","Everton","West Ham","Bournemouth","Fulham","Brentford","Wolves","Leeds","Sunderland","Burnley"],
@@ -329,7 +335,14 @@ const userPredictionsRaw: { [key: string]: string[] } = {
 
 const userPredictionTeamIds: { [key: string]: string[] } = {};
 for (const userId in userPredictionsRaw) {
-    userPredictionTeamIds[userId] = userPredictionsRaw[userId].map(teamName => teamNameMapping[teamName.toLowerCase().trim()]).filter(Boolean);
+    userPredictionTeamIds[userId] = userPredictionsRaw[userId].map(teamName => {
+      const cleanedTeamName = teamName.toLowerCase().trim().replace("leicester city", "leicester").replace("ipswich town", "ipswich");
+      const teamId = teamNameMapping[cleanedTeamName];
+      if (!teamId) {
+        console.warn(`Could not find team ID for team name: "${teamName}" for user ${userId}`);
+      }
+      return teamId;
+    }).filter(Boolean);
 }
 
 export const fullPredictions: Prediction[] = Object.entries(userPredictionTeamIds).map(([userId, rankings]) => ({
@@ -575,7 +588,7 @@ export const matches: Match[] = [
     { week: 24, homeTeamId: 'team_12', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
     { week: 24, homeTeamId: 'team_11', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
     { week: 24, homeTeamId: 'team_09', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
-    { week: 24, homeTeamId: 'team_05', awayTeamId: 'team_06', homeScore: -1, awayScore: -1 },
+    { week: 24, homeTeamId 'team_05', awayTeamId: 'team_06', homeScore: -1, awayScore: -1 },
     { week: 24, homeTeamId: 'team_04', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
     { week: 24, homeTeamId: 'team_01', awayTeamId: 'team_13', homeScore: -1, awayScore: -1 },
     { week: 25, homeTeamId: 'team_16', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
@@ -718,218 +731,4 @@ export const matches: Match[] = [
     { week: 38, homeTeamId: 'team_05', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
     { week: 38, homeTeamId: 'team_02', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
     { week: 38, homeTeamId: 'team_01', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 }
-];
-
-// Calculate Standings
-const calculateStandings = (matchesToProcess: Match[]): CurrentStanding[] => {
-    const teamStats: { [key: string]: Omit<CurrentStanding, 'teamId' | 'rank'> } = teams.reduce((acc, team) => {
-        acc[team.id] = { gamesPlayed: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, points: 0, goalDifference: 0 };
-        return acc;
-    }, {} as { [key: string]: Omit<CurrentStanding, 'teamId' | 'rank'> });
-
-    matchesToProcess.forEach(match => {
-        if (match.homeScore === -1) return;
-
-        const home = teamStats[match.homeTeamId];
-        const away = teamStats[match.awayTeamId];
-
-        home.gamesPlayed++;
-        away.gamesPlayed++;
-        home.goalsFor += match.homeScore;
-        away.goalsFor += match.awayScore;
-        home.goalsAgainst += match.awayScore;
-        away.goalsAgainst += match.homeScore;
-        home.goalDifference = home.goalsFor - home.goalsAgainst;
-        away.goalDifference = away.goalsFor - away.goalsAgainst;
-
-        if (match.homeScore > match.awayScore) {
-            home.wins++;
-            home.points += 3;
-            away.losses++;
-        } else if (match.homeScore < match.awayScore) {
-            away.wins++;
-            away.points += 3;
-            home.losses++;
-        } else {
-            home.draws++;
-            away.draws++;
-            home.points++;
-            away.points++;
-        }
-    });
-
-    const sortedStandings = Object.entries(teamStats).map(([teamId, stats]) => ({ teamId, ...stats }))
-        .sort((a, b) => {
-            if (b.points !== a.points) return b.points - a.points;
-            if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
-            if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
-            return a.teamId.localeCompare(b.teamId);
-        });
-
-    return sortedStandings.map((team, index) => ({ ...team, rank: index + 1 }));
-};
-
-export const standings: CurrentStanding[] = calculateStandings(matches.filter(m => m.homeScore !== -1));
-
-const teamIdToRankMap = new Map(standings.map(s => [s.teamId, s.rank]));
-
-// Calculate Player Team Scores
-export const playerTeamScores: PlayerTeamScore[] = [];
-fullPredictions.forEach(prediction => {
-    teams.forEach(team => {
-        const predictedRank = prediction.rankings.indexOf(team.id) + 1;
-        const actualRank = teamIdToRankMap.get(team.id) || 0;
-        if (predictedRank > 0 && actualRank > 0) {
-            const score = 5 - Math.abs(predictedRank - actualRank);
-            playerTeamScores.push({
-                userId: prediction.userId,
-                teamId: team.id,
-                score: score
-            });
-        }
-    });
-});
-
-// Calculate Weekly Data
-const weeklyStandingsMap: Map<number, CurrentStanding[]> = new Map();
-const maxWeek = Math.max(...matches.filter(m => m.homeScore !== -1).map(m => m.week), 0);
-
-for (let week = 1; week <= maxWeek; week++) {
-    const matchesForWeek = matches.filter(m => m.week <= week && m.homeScore !== -1);
-    weeklyStandingsMap.set(week, calculateStandings(matchesForWeek));
-}
-
-export const weeklyTeamStandings: WeeklyTeamStanding[] = [];
-weeklyStandingsMap.forEach((standings, week) => {
-    standings.forEach(standing => {
-        weeklyTeamStandings.push({
-            week: week,
-            teamId: standing.teamId,
-            rank: standing.rank
-        });
-    });
-});
-
-export const fullUserHistories: UserHistory[] = userList.map(user => {
-    const weeklyScores: WeeklyScore[] = [];
-    for (let week = 1; week <= maxWeek; week++) {
-        const weeklyStandings = weeklyStandingsMap.get(week) || [];
-        const weeklyTeamRankMap = new Map(weeklyStandings.map(s => [s.teamId, s.rank]));
-        
-        let score = 0;
-        const userPrediction = fullPredictions.find(p => p.userId === user.id);
-        if (userPrediction) {
-            teams.forEach(team => {
-                const predictedRank = userPrediction.rankings.indexOf(team.id) + 1;
-                const actualRank = weeklyTeamRankMap.get(team.id);
-                if (predictedRank > 0 && actualRank) {
-                    score += 5 - Math.abs(predictedRank - actualRank);
-                }
-            });
-        }
-        weeklyScores.push({ week, score, rank: 0 }); // Rank will be calculated later
-    }
-
-    // Calculate rank for each week
-    for (let week = 1; week <= maxWeek; week++) {
-        const scoresForWeek = fullUserHistories.map(h => h.weeklyScores.find(s => s.week === week)?.score || -Infinity);
-        scoresForWeek.push(weeklyScores.find(s => s.week === week)!.score);
-        scoresForWeek.sort((a, b) => b - a);
-        const currentWeekScore = weeklyScores.find(s => s.week === week)!.score;
-        const rank = scoresForWeek.indexOf(currentWeekScore) + 1;
-        weeklyScores.find(s => s.week === week)!.rank = rank;
-    }
-
-
-    return { userId: user.id, weeklyScores };
-});
-
-// Calculate current user scores and ranks
-export const fullUsers: User[] = userList.map(user => {
-    const currentWeek = maxWeek;
-    const previousWeek = currentWeek - 1;
-
-    const currentHistory = fullUserHistories.find(h => h.userId === user.id)?.weeklyScores;
-    
-    const currentWeekData = currentHistory?.find(s => s.week === currentWeek) || { score: 0, rank: 0 };
-    const previousWeekData = currentHistory?.find(s => s.week === previousWeek) || { score: 0, rank: 0 };
-    
-    const allScoresThisSeason = currentHistory?.filter(s => s.week > 0).map(s => s.score) || [0];
-    const allRanksThisSeason = currentHistory?.filter(s => s.week > 0).map(s => s.rank) || [0];
-
-    return {
-        id: user.id,
-        name: user.name,
-        avatar: String((userList.findIndex(u => u.id === user.id) % 49) + 1),
-        score: currentWeekData.score,
-        rank: currentWeekData.rank,
-        previousRank: previousWeekData.rank,
-        previousScore: previousWeekData.score,
-        maxRank: Math.min(...allRanksThisSeason),
-        minRank: Math.max(...allRanksThisSeason),
-        maxScore: Math.max(...allScoresThisSeason),
-        minScore: Math.min(...allScoresThisSeason),
-        rankChange: previousWeekData.rank - currentWeekData.rank, // e.g. 10 -> 8 = +2
-        scoreChange: currentWeekData.score - previousWeekData.score,
-        isPro: user.isPro || false,
-        email: `${user.name.split(' ').join('.').toLowerCase()}@prempred.com`,
-        joinDate: '2025-08-01T12:00:00Z',
-    };
-}).sort((a,b) => a.rank - b.rank);
-
-// Re-calculate ranks for current users to break ties
-const sortedUsers = [...fullUsers].sort((a, b) => b.score - a.score);
-let currentRank = 1;
-for (let i = 0; i < sortedUsers.length; i++) {
-    if (i > 0 && sortedUsers[i].score < sortedUsers[i-1].score) {
-        currentRank = i + 1;
-    }
-    const userIndex = fullUsers.findIndex(u => u.id === sortedUsers[i].id);
-    if(userIndex !== -1) {
-        fullUsers[userIndex].rank = currentRank;
-    }
-}
-
-
-export const teamRecentResults: TeamRecentResult[] = teams.map(team => {
-    const results: ('W' | 'D' | 'L' | '-')[] = [];
-    for (let i = 0; i < 6; i++) {
-        const week = maxWeek - i;
-        if (week > 0) {
-            const match = matches.find(m => m.week === week && (m.homeTeamId === team.id || m.awayTeamId === team.id));
-            if (match && match.homeScore !== -1) {
-                if (match.homeTeamId === team.id) {
-                    results.unshift(match.homeScore > match.awayScore ? 'W' : match.homeScore < match.awayScore ? 'L' : 'D');
-                } else {
-                    results.unshift(match.awayScore > match.homeScore ? 'W' : match.awayScore < match.homeScore ? 'L' : 'D');
-                }
-            } else {
-                results.unshift('-');
-            }
-        } else {
-            results.unshift('-');
-        }
-    }
-    return { teamId: team.id, results };
-});
-
-
-export const seasonMonths: SeasonMonth[] = [
-  { id: 'sm_01', month: 'August', year: 2025, abbreviation: 'AUG' },
-  { id: 'sm_02', month: 'September', year: 2025, abbreviation: 'SEP' },
-  { id: 'sm_03', month: 'October', year: 2025, abbreviation: 'OCT' },
-  { id: 'sm_04', month: 'November', year: 2025, abbreviation: 'NOV' },
-  { id: 'sm_05', month: 'December', year: 2025, abbreviation: 'DEC' },
-  { id: 'sm_06', month: 'Christmas No. 1', year: 2025, abbreviation: 'XMAS', special: 'Christmas No. 1' },
-  { id: 'sm_07', month: 'January', year: 2026, abbreviation: 'JAN' },
-  { id: 'sm_08', month: 'February', year: 2026, abbreviation: 'FEB' },
-  { id: 'sm_09', month: 'March', year: 2026, abbreviation: 'MAR' },
-  { id: 'sm_10', month: 'April', year: 2026, abbreviation: 'APR' },
-  { id: 'sm_11', month: 'May', year: 2026, abbreviation: 'MAY' }
-];
-
-export const monthlyMimoM: MonthlyMimoM[] = [
-    { id: 'mimm_01', month: 'August', year: 2025, userId: 'usr_038', type: 'winner' },
-    { id: 'mimm_02', month: 'September', year: 2025, userId: 'usr_026', type: 'winner' },
-    { id: 'mimm_03', month: 'October', year: 2025, userId: 'usr_050', type: 'winner' },
-];
+]
