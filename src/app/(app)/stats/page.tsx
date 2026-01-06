@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -30,7 +31,7 @@ export default function StatsPage() {
   const scoresQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'playerTeamScores') : null, [firestore, isUserLoading]);
   
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
-  const { data: teams, isLoading: teamsLoading } = useCollection<Team>(scoresQuery);
+  const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
   const { data: playerTeamScores, isLoading: scoresLoading } = useCollection<PlayerTeamScore>(scoresQuery);
 
   const isLoading = isUserLoading || usersLoading || teamsLoading || scoresLoading;
@@ -84,12 +85,12 @@ export default function StatsPage() {
                                     </div>
                                 </TableHead>
                                 <TableHead className="text-center p-0 w-[40px] border-l border-dashed border-border">
-                                    <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-bold h-[92px] w-full flex items-center justify-center">TOTAL</div>
+                                    <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-bold h-[92px] w-full flex items-center justify-end">TOTAL</div>
                                 </TableHead>
                                 {sortedTeams.map((team) => {
                                     return (
                                     <TableHead key={team.id} className="text-left p-0 w-[40px] border-l border-dashed border-border">
-                                        <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium h-[92px] w-full flex items-center justify-center">{team.name}</div>
+                                        <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium h-[92px] w-full flex items-end">{team.name}</div>
                                     </TableHead>
                                 )})}
                             </TableRow>
