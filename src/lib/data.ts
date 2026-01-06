@@ -326,6 +326,7 @@ const userPredictionsRaw: { [key: string]: string[] } = {
     "usr_108":["Man City","Arsenal","Liverpool","Chelsea","Man Utd","Aston Villa","Tottenham","Newcastle","West Ham","Everton","Brighton","Wolves","Brentford","Fulham","Crystal Palace","Bournemouth","Notts Forest","Burnley","Sunderland","Leeds"],
     "usr_109":["Liverpool","Man City","Arsenal","Chelsea","Man Utd","Notts Forest","Tottenham","Aston Villa","Newcastle","Brighton","Bournemouth","Fulham","Crystal Palace","Everton","West Ham","Sunderland","Leeds","Brentford","Wolves","Burnley"]
 };
+
 const userPredictionTeamIds: { [key: string]: string[] } = {};
 for (const userId in userPredictionsRaw) {
     userPredictionTeamIds[userId] = userPredictionsRaw[userId].map(teamName => teamNameMapping[teamName.toLowerCase().trim()]).filter(Boolean);
@@ -718,25 +719,217 @@ export const matches: Match[] = [
     { week: 38, homeTeamId: 'team_02', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
     { week: 38, homeTeamId: 'team_01', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 }
 ];
-const teamScores: { [team: string]: number[] } = {
-    "Arsenal": [1, 5, -1, 3, -1, -1, 4, 4, 1, 2, 2, 2, 0, 4, 2, 3, 2, -1, 0, 0],
-    "Aston Villa": [-5, 0, -3, 0, 1, 0, 3, 1, 1, -2, -3, -1, -2, -4, 0, -2, -2, 2, 2, 0],
-    "Bournemouth": [2, 1, -1, 2, 1, 2, 2, 1, 2, -1, -2, -2, -4, -3, 2, -1, 3, 0, 2, -2],
-    "Brentford": [-1, 1, 2, 0, 2, -1, 0, 1, -3, -2, 0, 1, -2, 0, -2, 0, 2, 1, 1, -2],
-    "Brighton": [1, 2, -1, -2, 2, 1, 1, 2, 0, -1, -3, -3, -1, -1, 0, 0, -1, -1, -2, -1],
-    "Chelsea": [0, 4, 2, 4, 5, 5, 2, 4, 4, 4, 4, 4, 4, 4, 5, -1, 1, 1, 5, 5],
-    "Crystal Palace": [0, 2, 3, 0, -1, 1, 3, 1, 1, -2, -2, 0, 0, 0, -1, -1, 1, 1, 2, 1],
-    "Everton": [-1, 2, 0, -2, -1, -1, 2, 1, 0, -1, 1, 2, 2, 1, 2, 0, -1, 1, 0, 0],
-    "Fulham": [1, 1, 0, 1, -1, 1, 1, 1, 0, 1, -1, -1, 0, 0, -1, 0, 0, -1, -1, -2],
-    "Leeds": [-1, -3, -2, -1, -1, 0, -2, -1, -2, 0, -2, -2, -1, -1, -1, 0, 0, -1, -1, -1],
-    "Burnley": [0, -2, -1, 0, 0, -2, -1, 0, -2, -1, 0, 1, 0, -1, 0, -2, -2, -2, -2, -2],
-    "Liverpool": [4, 5, 5, 5, 3, 4, 4, 5, 5, 5, 5, 3, 5, 5, 4, 3, 4, 5, 5, 3],
-    "Man City": [4, 4, 3, 4, 4, 4, 5, 4, 4, 5, 4, 5, 3, 3, 3, 4, 3, 3, 3, 3],
-    "Man Utd": [-4, -1, -1, 0, -2, -1, 2, 0, 2, 2, 2, 2, 3, 2, 2, 1, 1, 2, 2, -2],
-    "Newcastle": [0, 0, 1, 0, 1, 0, 1, 2, -1, -1, 2, 2, 3, 3, 1, 1, 1, 2, 1, 0],
-    "Notts Forest": [3, 2, 1, 1, 1, 1, 2, 1, 3, 1, 1, 1, 1, 1, -1, 3, 2, 3, 2, 0],
-    "Sunderland": [3, -2, -2, -2, -2, -3, -1, -1, -2, 0, -1, -1, -1, -2, -1, -1, -1, 0, -1, -2],
-    "Tottenham": [3, 0, 0, 2, 1, 1, 3, 2, 2, 2, 2, 3, 2, 2, 2, 1, 1, 2, 2, -1],
-    "West Ham": [0, -3, 0, 0, -1, 0, -2, -1, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, -1],
-    "Wolves": [-4, -1, -1, -1, -1, 0, -1, -2, -2, -1, -1, -1, -2, -1, -1, -2, -1, -1, -1, -1]
+
+// Calculate Standings
+const calculateStandings = (matchesToProcess: Match[]): CurrentStanding[] => {
+    const teamStats: { [key: string]: Omit<CurrentStanding, 'teamId' | 'rank'> } = teams.reduce((acc, team) => {
+        acc[team.id] = { gamesPlayed: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, points: 0, goalDifference: 0 };
+        return acc;
+    }, {} as { [key: string]: Omit<CurrentStanding, 'teamId' | 'rank'> });
+
+    matchesToProcess.forEach(match => {
+        if (match.homeScore === -1) return;
+
+        const home = teamStats[match.homeTeamId];
+        const away = teamStats[match.awayTeamId];
+
+        home.gamesPlayed++;
+        away.gamesPlayed++;
+        home.goalsFor += match.homeScore;
+        away.goalsFor += match.awayScore;
+        home.goalsAgainst += match.awayScore;
+        away.goalsAgainst += match.homeScore;
+        home.goalDifference = home.goalsFor - home.goalsAgainst;
+        away.goalDifference = away.goalsFor - away.goalsAgainst;
+
+        if (match.homeScore > match.awayScore) {
+            home.wins++;
+            home.points += 3;
+            away.losses++;
+        } else if (match.homeScore < match.awayScore) {
+            away.wins++;
+            away.points += 3;
+            home.losses++;
+        } else {
+            home.draws++;
+            away.draws++;
+            home.points++;
+            away.points++;
+        }
+    });
+
+    const sortedStandings = Object.entries(teamStats).map(([teamId, stats]) => ({ teamId, ...stats }))
+        .sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+            if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
+            return a.teamId.localeCompare(b.teamId);
+        });
+
+    return sortedStandings.map((team, index) => ({ ...team, rank: index + 1 }));
 };
+
+export const standings: CurrentStanding[] = calculateStandings(matches.filter(m => m.homeScore !== -1));
+
+const teamIdToRankMap = new Map(standings.map(s => [s.teamId, s.rank]));
+
+// Calculate Player Team Scores
+export const playerTeamScores: PlayerTeamScore[] = [];
+fullPredictions.forEach(prediction => {
+    teams.forEach(team => {
+        const predictedRank = prediction.rankings.indexOf(team.id) + 1;
+        const actualRank = teamIdToRankMap.get(team.id) || 0;
+        if (predictedRank > 0 && actualRank > 0) {
+            const score = 5 - Math.abs(predictedRank - actualRank);
+            playerTeamScores.push({
+                userId: prediction.userId,
+                teamId: team.id,
+                score: score
+            });
+        }
+    });
+});
+
+// Calculate Weekly Data
+const weeklyStandingsMap: Map<number, CurrentStanding[]> = new Map();
+const maxWeek = Math.max(...matches.filter(m => m.homeScore !== -1).map(m => m.week), 0);
+
+for (let week = 1; week <= maxWeek; week++) {
+    const matchesForWeek = matches.filter(m => m.week <= week && m.homeScore !== -1);
+    weeklyStandingsMap.set(week, calculateStandings(matchesForWeek));
+}
+
+export const weeklyTeamStandings: WeeklyTeamStanding[] = [];
+weeklyStandingsMap.forEach((standings, week) => {
+    standings.forEach(standing => {
+        weeklyTeamStandings.push({
+            week: week,
+            teamId: standing.teamId,
+            rank: standing.rank
+        });
+    });
+});
+
+export const fullUserHistories: UserHistory[] = userList.map(user => {
+    const weeklyScores: WeeklyScore[] = [];
+    for (let week = 1; week <= maxWeek; week++) {
+        const weeklyStandings = weeklyStandingsMap.get(week) || [];
+        const weeklyTeamRankMap = new Map(weeklyStandings.map(s => [s.teamId, s.rank]));
+        
+        let score = 0;
+        const userPrediction = fullPredictions.find(p => p.userId === user.id);
+        if (userPrediction) {
+            teams.forEach(team => {
+                const predictedRank = userPrediction.rankings.indexOf(team.id) + 1;
+                const actualRank = weeklyTeamRankMap.get(team.id);
+                if (predictedRank > 0 && actualRank) {
+                    score += 5 - Math.abs(predictedRank - actualRank);
+                }
+            });
+        }
+        weeklyScores.push({ week, score, rank: 0 }); // Rank will be calculated later
+    }
+
+    // Calculate rank for each week
+    for (let week = 1; week <= maxWeek; week++) {
+        const scoresForWeek = fullUserHistories.map(h => h.weeklyScores.find(s => s.week === week)?.score || -Infinity);
+        scoresForWeek.push(weeklyScores.find(s => s.week === week)!.score);
+        scoresForWeek.sort((a, b) => b - a);
+        const currentWeekScore = weeklyScores.find(s => s.week === week)!.score;
+        const rank = scoresForWeek.indexOf(currentWeekScore) + 1;
+        weeklyScores.find(s => s.week === week)!.rank = rank;
+    }
+
+
+    return { userId: user.id, weeklyScores };
+});
+
+// Calculate current user scores and ranks
+export const fullUsers: User[] = userList.map(user => {
+    const currentWeek = maxWeek;
+    const previousWeek = currentWeek - 1;
+
+    const currentHistory = fullUserHistories.find(h => h.userId === user.id)?.weeklyScores;
+    
+    const currentWeekData = currentHistory?.find(s => s.week === currentWeek) || { score: 0, rank: 0 };
+    const previousWeekData = currentHistory?.find(s => s.week === previousWeek) || { score: 0, rank: 0 };
+    
+    const allScoresThisSeason = currentHistory?.filter(s => s.week > 0).map(s => s.score) || [0];
+    const allRanksThisSeason = currentHistory?.filter(s => s.week > 0).map(s => s.rank) || [0];
+
+    return {
+        id: user.id,
+        name: user.name,
+        avatar: String((userList.findIndex(u => u.id === user.id) % 49) + 1),
+        score: currentWeekData.score,
+        rank: currentWeekData.rank,
+        previousRank: previousWeekData.rank,
+        previousScore: previousWeekData.score,
+        maxRank: Math.min(...allRanksThisSeason),
+        minRank: Math.max(...allRanksThisSeason),
+        maxScore: Math.max(...allScoresThisSeason),
+        minScore: Math.min(...allScoresThisSeason),
+        rankChange: previousWeekData.rank - currentWeekData.rank, // e.g. 10 -> 8 = +2
+        scoreChange: currentWeekData.score - previousWeekData.score,
+        isPro: user.isPro || false,
+        email: `${user.name.split(' ').join('.').toLowerCase()}@prempred.com`,
+        joinDate: '2025-08-01T12:00:00Z',
+    };
+}).sort((a,b) => a.rank - b.rank);
+
+// Re-calculate ranks for current users to break ties
+const sortedUsers = [...fullUsers].sort((a, b) => b.score - a.score);
+let currentRank = 1;
+for (let i = 0; i < sortedUsers.length; i++) {
+    if (i > 0 && sortedUsers[i].score < sortedUsers[i-1].score) {
+        currentRank = i + 1;
+    }
+    const userIndex = fullUsers.findIndex(u => u.id === sortedUsers[i].id);
+    if(userIndex !== -1) {
+        fullUsers[userIndex].rank = currentRank;
+    }
+}
+
+
+export const teamRecentResults: TeamRecentResult[] = teams.map(team => {
+    const results: ('W' | 'D' | 'L' | '-')[] = [];
+    for (let i = 0; i < 6; i++) {
+        const week = maxWeek - i;
+        if (week > 0) {
+            const match = matches.find(m => m.week === week && (m.homeTeamId === team.id || m.awayTeamId === team.id));
+            if (match && match.homeScore !== -1) {
+                if (match.homeTeamId === team.id) {
+                    results.unshift(match.homeScore > match.awayScore ? 'W' : match.homeScore < match.awayScore ? 'L' : 'D');
+                } else {
+                    results.unshift(match.awayScore > match.homeScore ? 'W' : match.awayScore < match.homeScore ? 'L' : 'D');
+                }
+            } else {
+                results.unshift('-');
+            }
+        } else {
+            results.unshift('-');
+        }
+    }
+    return { teamId: team.id, results };
+});
+
+
+export const seasonMonths: SeasonMonth[] = [
+  { id: 'sm_01', month: 'August', year: 2025, abbreviation: 'AUG' },
+  { id: 'sm_02', month: 'September', year: 2025, abbreviation: 'SEP' },
+  { id: 'sm_03', month: 'October', year: 2025, abbreviation: 'OCT' },
+  { id: 'sm_04', month: 'November', year: 2025, abbreviation: 'NOV' },
+  { id: 'sm_05', month: 'December', year: 2025, abbreviation: 'DEC' },
+  { id: 'sm_06', month: 'Christmas No. 1', year: 2025, abbreviation: 'XMAS', special: 'Christmas No. 1' },
+  { id: 'sm_07', month: 'January', year: 2026, abbreviation: 'JAN' },
+  { id: 'sm_08', month: 'February', year: 2026, abbreviation: 'FEB' },
+  { id: 'sm_09', month: 'March', year: 2026, abbreviation: 'MAR' },
+  { id: 'sm_10', month: 'April', year: 2026, abbreviation: 'APR' },
+  { id: 'sm_11', month: 'May', year: 2026, abbreviation: 'MAY' }
+];
+
+export const monthlyMimoM: MonthlyMimoM[] = [
+    { id: 'mimm_01', month: 'August', year: 2025, userId: 'usr_038', type: 'winner' },
+    { id: 'mimm_02', month: 'September', year: 2025, userId: 'usr_026', type: 'winner' },
+    { id: 'mimm_03', month: 'October', year: 2025, userId: 'usr_050', type: 'winner' },
+];
