@@ -36,9 +36,9 @@ import {
   weeklyTeamStandings,
   teamRecentResults,
 } from '@/lib/data';
-import { collection, doc, writeBatch, getDocs, QuerySnapshot, DocumentData } from 'firebase/firestore';
+import { collection, doc, writeBatch, getDocs, QuerySnapshot, DocumentData, Firestore } from 'firebase/firestore';
 
-async function importClientSideData(db: any): Promise<{ success: boolean; message: string }> {
+async function importClientSideData(db: Firestore | null): Promise<{ success: boolean; message: string }> {
   if (!db) {
     return { success: false, message: 'Firestore is not initialized.' };
   }
