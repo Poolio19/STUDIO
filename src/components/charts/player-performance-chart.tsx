@@ -50,7 +50,7 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers, ch
               bottom: 20,
             }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" />
             <XAxis
               dataKey="week"
               tickLine={false}
