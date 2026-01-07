@@ -39,11 +39,12 @@ export default function PredictPage() {
   const { toast } = useToast();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const currentUserId = 'usr_009';
 
   const teamsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'teams') : null, [firestore, isUserLoading]);
   const prevStandingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'previousSeasonStandings') : null, [firestore, isUserLoading]);
   const currentStandingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'standings')) : null, [firestore, isUserLoading]);
-  const userPredictionDocRef = useMemoFirebase(() => user && firestore ? doc(firestore, 'predictions', user.uid) : null, [user, firestore]);
+  const userPredictionDocRef = useMemoFirebase(() => currentUserId && firestore ? doc(firestore, 'predictions', currentUserId) : null, [currentUserId, firestore]);
 
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
   const { data: previousSeasonStandings, isLoading: prevStandingsLoading } = useCollection<PreviousSeasonStanding>(prevStandingsQuery);
@@ -75,7 +76,7 @@ export default function PredictPage() {
     if (!teams || teams.length === 0) {
       return [];
     }
-
+  
     const teamMap = new Map(teams.map(team => [team.id, {
         id: team.id,
         teamId: team.id,
@@ -86,15 +87,13 @@ export default function PredictPage() {
         bgColourSolid: team.bgColourSolid,
         textColour: team.textColour,
     }]));
-
+  
     if (userPrediction && userPrediction.rankings && userPrediction.rankings.length === teams.length) {
-      // If a valid user prediction exists, use it to order the teams.
       return userPrediction.rankings
         .map(teamId => teamMap.get(teamId))
         .filter((item): item is PredictionItem => !!item);
     }
     
-    // Fallback: If no user prediction, sort by previous season's standings.
     if (!previousSeasonStandings) return [];
     
     const prevStandingsMap = new Map(previousSeasonStandings.map(s => [s.teamId, s.rank]));

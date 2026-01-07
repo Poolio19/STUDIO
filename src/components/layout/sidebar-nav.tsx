@@ -69,12 +69,12 @@ export function SidebarNav() {
       <SidebarFooter className="border-t p-2">
         <div className="flex items-center gap-3 p-2">
           <Avatar>
-            <AvatarImage src="https://picsum.photos/seed/1/100/100" alt="@user" />
-            <AvatarFallback>A</AvatarFallback>
+            <AvatarImage src="https://picsum.photos/seed/9/100/100" alt="@user" />
+            <AvatarFallback>JP</AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
-            <span className="font-semibold">Alex</span>
-            <span className="text-sm text-muted-foreground">alex@example.com</span>
+            <span className="font-semibold">Jim Poole</span>
+            <span className="text-sm text-muted-foreground">jim.poole@example.com</span>
           </div>
         </div>
       </SidebarFooter>

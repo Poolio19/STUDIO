@@ -84,7 +84,7 @@ export default function ProfilePage() {
   const { user: authUser, isUserLoading: isAuthUserLoading } = useUser();
   const firestore = useFirestore();
   
-  const currentUserId = authUser?.uid;
+  const currentUserId = 'usr_009';
 
   const userDocRef = useMemoFirebase(() => {
     return firestore && currentUserId ? doc(firestore, 'users', currentUserId) : null;
