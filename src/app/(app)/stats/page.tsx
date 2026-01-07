@@ -90,7 +90,7 @@ export default function StatsPage() {
                                 {sortedTeams.map((team) => {
                                     return (
                                     <TableHead key={team.id} className="text-left p-0 w-[40px] border-l border-dashed border-border">
-                                        <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium h-[68px] w-full flex items-center justify-center">{team.name}</div>
+                                        <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium h-[68px] w-full flex items-center justify-end">{team.name}</div>
                                     </TableHead>
                                 )})}
                             </TableRow>
@@ -99,7 +99,7 @@ export default function StatsPage() {
                             {sortedUsers.map((user) => (
                                 <TableRow key={user.id} className="h-10">
                                     <TableCell className="sticky left-0 z-10 bg-card whitespace-nowrap font-medium p-0 w-[250px]">
-                                        <div className="flex items-center justify-between gap-3 h-10 pl-2">
+                                        <div className="flex items-center justify-between gap-3 h-full pl-2">
                                             <div className="flex items-center gap-3">
                                                 <Avatar className="h-8 w-8">
                                                     <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
