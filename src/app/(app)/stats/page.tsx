@@ -92,7 +92,6 @@ export default function StatsPage() {
                                 <TableHead className="text-center p-0 w-[40px] border-l border-dashed border-border">
                                      <div
                                         className="[writing-mode:vertical-rl] transform-gpu rotate-180 font-bold h-full w-full flex justify-start"
-                                        style={{ transform: 'rotate(180deg) translateX(-12px)' }}
                                     >
                                         TOTAL
                                     </div>
@@ -102,7 +101,6 @@ export default function StatsPage() {
                                     <TableHead key={team.id} className="text-left p-0 w-[40px] border-l border-dashed border-border">
                                         <div
                                             className="[writing-mode:vertical-rl] transform-gpu rotate-180 font-medium h-full w-full flex justify-start"
-                                            style={{ transform: 'rotate(180deg) translateX(-12px)' }}
                                         >
                                             {team.name}
                                         </div>
