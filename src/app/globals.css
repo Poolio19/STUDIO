@@ -133,6 +133,9 @@ body {
     --chart-color-104: 50 95% 55%;
     --chart-color-105: 170 75% 40%;
     --chart-color-106: 280 80% 65%;
+    --chart-color-107: 10 80% 50%;
+    --chart-color-108: 260 70% 50%;
+    --chart-color-109: 140 85% 45%;
     --radius: 0.5rem;
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 222.2 84% 4.9%;
@@ -269,6 +272,9 @@ body {
     --chart-color-104: 50 95% 55%;
     --chart-color-105: 170 75% 40%;
     --chart-color-106: 280 80% 65%;
+    --chart-color-107: 10 80% 50%;
+    --chart-color-108: 260 70% 50%;
+    --chart-color-109: 140 85% 45%;
     --sidebar-background: 222.2 84% 4.9%;
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 197.1 71.1% 52.4%;
