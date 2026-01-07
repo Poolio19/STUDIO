@@ -28,16 +28,12 @@ export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers, chartConf
   const yAxisTicks = React.useMemo(() => {
     if (!yAxisDomain) return [];
     
-    const ticks: number[] = [1];
-    for (let i = 5; i <= 109; i += 5) {
+    const ticks: number[] = [0, 1];
+    for (let i = 5; i <= yAxisDomain[1]; i += 5) {
       ticks.push(i);
     }
-    if (!ticks.includes(109)) {
-        ticks.push(109);
-    }
-
     return ticks.sort((a, b) => a - b);
-  }, []);
+  }, [yAxisDomain]);
 
 
   return (
