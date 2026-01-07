@@ -7,13 +7,13 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
-import { Table, TableBody, TableCell, TableRow, TableHeader, TableHead } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { Icons, IconName } from '@/components/icons';
 import { Reorder } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import type { Team, PreviousSeasonStanding, CurrentStanding } from '@/lib/data';
-import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import type { Team, PreviousSeasonStanding, CurrentStanding, Prediction as PredictionType } from '@/lib/data';
+import { useUser, useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, setDoc, getDoc, query } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent } from '@/components/ui/card';
@@ -33,7 +33,7 @@ const formSchema = z.object({
   predictions: z.array(predictionSchema),
 });
 
-type Prediction = z.infer<typeof predictionSchema>;
+type PredictionItem = z.infer<typeof predictionSchema>;
 
 export default function PredictPage() {
   const { toast } = useToast();
@@ -43,14 +43,15 @@ export default function PredictPage() {
   const teamsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'teams') : null, [firestore, isUserLoading]);
   const prevStandingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'previousSeasonStandings') : null, [firestore, isUserLoading]);
   const currentStandingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'standings')) : null, [firestore, isUserLoading]);
+  const userPredictionDocRef = useMemoFirebase(() => user && firestore ? doc(firestore, 'predictions', user.uid) : null, [user, firestore]);
 
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
   const { data: previousSeasonStandings, isLoading: prevStandingsLoading } = useCollection<PreviousSeasonStanding>(prevStandingsQuery);
   const { data: currentStandings, isLoading: currentStandingsLoading } = useCollection<CurrentStanding>(currentStandingsQuery);
+  const { data: userPrediction, isLoading: predictionLoading } = useDoc<PredictionType>(userPredictionDocRef);
 
-
-  const { sortedTeamsForPrediction, standingsWithTeamData } = React.useMemo(() => {
-    if (!teams || !previousSeasonStandings) return { sortedTeamsForPrediction: [], standingsWithTeamData: [] };
+  const { sortedPreviousStandings } = React.useMemo(() => {
+    if (!teams || !previousSeasonStandings) return { sortedPreviousStandings: [] };
     
     const allTeamsMap = new Map(teams.map(t => [t.id, t]));
     
@@ -62,23 +63,7 @@ export default function PredictPage() {
       .filter((item): item is NonNullable<typeof item> => item !== null)
       .sort((a, b) => a!.rank - b!.rank);
 
-    const teamsForPrediction = teams.map(team => {
-      const prevStanding = previousSeasonStandings.find(s => s.teamId === team.id);
-      const sortRank = prevStanding ? prevStanding.rank : 21; 
-      return {
-        id: team.id,
-        teamId: team.id,
-        teamName: team?.name || 'Unknown Team',
-        teamLogo: team?.logo || 'match',
-        iconColour: team?.iconColour,
-        bgColourFaint: team?.bgColourFaint,
-        bgColourSolid: team?.bgColourSolid,
-        textColour: team?.textColour,
-        sortRank: sortRank,
-      };
-    }).sort((a, b) => a.sortRank - b.sortRank);
-
-    return { sortedTeamsForPrediction: teamsForPrediction, standingsWithTeamData: fullStandingsWithData };
+    return { sortedPreviousStandings: fullStandingsWithData };
   }, [teams, previousSeasonStandings]);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -88,58 +73,50 @@ export default function PredictPage() {
     },
   });
 
-  const [items, setItems] = React.useState<Prediction[]>([]);
-  const [isPredictionLoading, setIsPredictionLoading] = React.useState(true);
+  const [items, setItems] = React.useState<PredictionItem[]>([]);
 
+  const defaultSortedItems = React.useMemo(() => {
+      if (!teams) return [];
+      const prevStandingsMap = new Map(previousSeasonStandings?.map(s => [s.teamId, s.rank]));
+      return teams.map(team => ({
+        id: team.id,
+        teamId: team.id,
+        teamName: team.name || 'Unknown Team',
+        teamLogo: team.logo || 'match',
+        iconColour: team.iconColour,
+        bgColourFaint: team.bgColourFaint,
+        bgColourSolid: team.bgColourSolid,
+        textColour: team.textColour,
+        sortRank: prevStandingsMap.get(team.id) ?? 21,
+      })).sort((a, b) => a.sortRank - b.sortRank);
+  }, [teams, previousSeasonStandings]);
+
+
+  React.useEffect(() => {
+      if (predictionLoading || teamsLoading) return;
+  
+      if (userPrediction && userPrediction.rankings && teams) {
+          const teamMap = new Map(defaultSortedItems.map(t => [t.teamId, t]));
+          const orderedItems = userPrediction.rankings
+              .map((teamId: string) => teamMap.get(teamId))
+              .filter(Boolean) as PredictionItem[];
+          setItems(orderedItems);
+      } else if (!predictionLoading && !userPrediction && defaultSortedItems.length > 0) {
+          setItems(defaultSortedItems);
+      }
+  }, [userPrediction, predictionLoading, teams, teamsLoading, defaultSortedItems]);
+
+
+  React.useEffect(() => {
+    form.setValue('predictions', items);
+  }, [items, form]);
+  
   const currentWeek = React.useMemo(() => {
     if (!currentStandings || currentStandings.length === 0) return 0;
     return Math.max(...currentStandings.map(s => s.gamesPlayed), 0);
   }, [currentStandings]);
   
   const seasonStarted = currentWeek > 0;
-
-  React.useEffect(() => {
-    if (isUserLoading || !firestore || sortedTeamsForPrediction.length === 0) {
-      return;
-    }
-  
-    const fetchPrediction = async () => {
-      if (user) {
-        setIsPredictionLoading(true);
-        const predictionRef = doc(firestore, 'predictions', user.uid);
-        try {
-          const predictionSnap = await getDoc(predictionRef);
-  
-          if (predictionSnap.exists()) {
-            const userPrediction = predictionSnap.data();
-            const rankedTeamIds = userPrediction.rankings;
-            
-            const teamMap = new Map(sortedTeamsForPrediction.map(t => [t.teamId, t]));
-            const orderedItems = rankedTeamIds.map((teamId: string) => teamMap.get(teamId)).filter(Boolean) as Prediction[];
-            setItems(orderedItems);
-          } else {
-            setItems(sortedTeamsForPrediction);
-          }
-        } catch (error) {
-          console.error("Error fetching prediction:", error);
-          // Fallback to default if there's an error
-          setItems(sortedTeamsForPrediction);
-        } finally {
-          setIsPredictionLoading(false);
-        }
-      } else {
-        setIsPredictionLoading(false);
-      }
-    };
-  
-    fetchPrediction();
-    
-  }, [sortedTeamsForPrediction, user, firestore, isUserLoading]);
-
-
-  React.useEffect(() => {
-    form.setValue('predictions', items);
-  }, [items, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user || !firestore) {
@@ -174,9 +151,9 @@ export default function PredictPage() {
     });
   }
   
-  const isLoading = isUserLoading || teamsLoading || prevStandingsLoading || isPredictionLoading || currentStandingsLoading;
+  const isLoading = isUserLoading || teamsLoading || prevStandingsLoading || predictionLoading || currentStandingsLoading;
 
-  if (isLoading) {
+  if (isLoading && items.length === 0) {
     return <div className="flex justify-center items-center h-full">Loading your predictions...</div>;
   }
 
@@ -220,7 +197,7 @@ export default function PredictPage() {
                                   </div>
                                 </div>
                               </TableCell>
-                              <TableCell className="font-medium text-sm rounded-r-md">{item.teamName}</TableCell>
+                              <TableCell className="font-medium text-sm rounded-r-md pl-4">{item.teamName}</TableCell>
                             </TableRow>
                           );
                         })}
@@ -267,7 +244,7 @@ export default function PredictPage() {
                 <CardContent className="p-0">
                   <Table className="h-full">
                     <TableBody>
-                      {standingsWithTeamData.map(team => {
+                      {sortedPreviousStandings.map(team => {
                         if (!team) return null;
                         const TeamIcon = Icons[team.logo as IconName] || Icons.match;
                         const isLiverpool = team.id === 'team_12';
