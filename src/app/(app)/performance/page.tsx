@@ -68,18 +68,17 @@ export default function PerformancePage() {
     
     const numCols = 9;
     const numRows = Math.ceil(sortedUsers.length / numCols);
-    const columnOrderedUsers: User[] = [];
-    for (let i = 0; i < numRows; i++) {
-        for (let j = 0; j < numCols; j++) {
-            const index = j * numRows + i;
-            if (index < sortedUsers.length) {
-                columnOrderedUsers.push(sortedUsers[index]);
-            }
+    const columnOrderedUsers: User[] = new Array(sortedUsers.length);
+    sortedUsers.forEach((user, index) => {
+        const col = Math.floor(index / numRows);
+        const row = index % numRows;
+        const newIndex = row * numCols + col;
+        if (newIndex < sortedUsers.length) {
+          columnOrderedUsers[newIndex] = user;
         }
-    }
+    });
 
-
-    return { chartData: transformedData, yAxisDomain, chartConfig: config, legendUsers: columnOrderedUsers };
+    return { chartData: transformedData, yAxisDomain, chartConfig: config, legendUsers: columnOrderedUsers.filter(Boolean) };
   }, [users, userHistories, sortedUsers]);
 
   const surnameCounts = useMemo(() => {
@@ -131,6 +130,7 @@ export default function PerformancePage() {
             <CardContent>
                 <div className="grid grid-cols-9 gap-x-4 gap-y-0 text-xs mb-6">
                     {legendUsers.map((user: User) => {
+                    if (!user) return null;
                     const userConfig = chartConfig[user.name];
                     if (!userConfig) return null;
                     const formattedName = formatNameForLegend(user.name);
