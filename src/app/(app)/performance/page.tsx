@@ -40,7 +40,11 @@ export default function PerformancePage() {
     
     const minScore = Math.min(...allScores);
     const maxScore = Math.max(...allScores);
-    const yAxisDomain: [number, number] = [minScore - 5, maxScore + 5];
+    
+    const roundedMin = Math.floor(minScore / 10) * 10;
+    const roundedMax = Math.ceil(maxScore / 10) * 10;
+    
+    const yAxisDomain: [number, number] = [roundedMin, roundedMax];
 
     const weeks = [...new Set(userHistories.flatMap(h => h.weeklyScores.map(w => w.week)))].sort((a,b) => a-b);
     
