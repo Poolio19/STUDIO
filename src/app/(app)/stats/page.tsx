@@ -43,9 +43,12 @@ export default function StatsPage() {
   
   const sortedTeams = useMemo(() => {
     if (!teams) return [];
+    // Ensure all team objects have a `name` property before sorting
     return [...teams].sort((a, b) => {
-      if (!a?.name || !b?.name) return 0;
-      return a.name.localeCompare(b.name);
+      if (a?.name && b?.name) {
+        return a.name.localeCompare(b.name);
+      }
+      return 0; // Keep original order if a name is missing
     });
   }, [teams]);
 
@@ -88,14 +91,14 @@ export default function StatsPage() {
                                     </div>
                                 </TableHead>
                                 <TableHead className="text-center p-0 w-[40px] border-l border-dashed border-border">
-                                    <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-bold h-[92px] w-full flex justify-start pb-1">
+                                    <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-bold h-[92px] w-full flex justify-start pl-1 pb-1">
                                         TOTAL
                                     </div>
                                 </TableHead>
                                 {sortedTeams.map((team) => {
                                     return (
                                     <TableHead key={team.id} className="text-left p-0 w-[40px] border-l border-dashed border-border">
-                                        <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium h-[92px] w-full flex justify-start pb-1">
+                                        <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium h-[92px] w-full flex justify-start pl-1 pb-1">
                                             {team.name}
                                         </div>
                                     </TableHead>
@@ -140,4 +143,3 @@ export default function StatsPage() {
     </div>
   );
 }
-
