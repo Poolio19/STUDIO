@@ -14,9 +14,9 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
-import type { User, Team, PlayerTeamScore } from '@/lib/data';
+import type { User, Team, PlayerTeamScore, CurrentStanding } from '@/lib/data';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { collection, query, orderBy } from 'firebase/firestore';
 
 const getAvatarUrl = (avatarId: string) => {
   return PlaceHolderImages.find((img) => img.id === avatarId)?.imageUrl || '';
@@ -26,15 +26,17 @@ export default function StatsPage() {
   const firestore = useFirestore();
   const { isUserLoading } = useUser();
 
-  const usersQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'users') : null, [firestore, isUserLoading]);
+  const usersQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'users'), orderBy('rank', 'asc')) : null, [firestore, isUserLoading]);
   const teamsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'teams') : null, [firestore, isUserLoading]);
   const scoresQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'playerTeamScores') : null, [firestore, isUserLoading]);
+  const standingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'standings'), orderBy('rank', 'asc')) : null, [firestore, isUserLoading]);
   
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
   const { data: playerTeamScores, isLoading: scoresLoading } = useCollection<PlayerTeamScore>(scoresQuery);
+  const { data: standings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsQuery);
 
-  const isLoading = isUserLoading || usersLoading || teamsLoading || scoresLoading;
+  const isLoading = isUserLoading || usersLoading || teamsLoading || scoresLoading || standingsLoading;
   
   const sortedUsers = useMemo(() => {
     if (!users) return [];
@@ -42,15 +44,13 @@ export default function StatsPage() {
   }, [users]);
   
   const sortedTeams = useMemo(() => {
-    if (!teams) return [];
-    // Ensure all team objects have a `name` property before sorting
-    return [...teams].sort((a, b) => {
-      if (a?.name && b?.name) {
-        return a.name.localeCompare(b.name);
-      }
-      return 0; // Keep original order if a name is missing
-    });
-  }, [teams]);
+    if (!teams || !standings) return [];
+    const teamMap = new Map(teams.map(t => [t.id, t]));
+    return standings
+      .sort((a, b) => a.rank - b.rank)
+      .map(standing => teamMap.get(standing.teamId))
+      .filter((team): team is Team => !!team);
+  }, [teams, standings]);
 
 
   const getScoreColour = (score: number) => {
@@ -85,14 +85,14 @@ export default function StatsPage() {
                     <Table className="min-w-full border-collapse">
                         <TableHeader>
                             <TableRow className="h-[102px]">
-                                <TableHead className="sticky left-0 z-10 bg-card whitespace-nowrap w-[250px] p-0">
-                                    <div className="flex items-end h-full pb-1 pl-12">
+                                <TableHead className="sticky left-0 z-10 bg-card whitespace-nowrap w-[250px] p-0 pl-12">
+                                    <div className="flex items-end h-full pb-1">
                                         <span className="text-xl font-bold text-black dark:text-white">Player</span>
                                     </div>
                                 </TableHead>
                                 <TableHead className="text-center p-0 border-l border-dashed border-border w-[40px]">
                                      <div
-                                        className="[writing-mode:vertical-rl] transform-gpu rotate-180 font-bold h-full w-full flex justify-start pb-1 whitespace-nowrap"
+                                        className="[writing-mode:vertical-rl] transform-gpu rotate-180 flex justify-start font-bold h-full w-full pb-1 whitespace-nowrap"
                                     >
                                         TOTAL
                                     </div>
@@ -101,7 +101,7 @@ export default function StatsPage() {
                                     return (
                                     <TableHead key={team.id} className="text-left p-0 border-l border-dashed border-border w-[40px]">
                                         <div
-                                            className="[writing-mode:vertical-rl] transform-gpu rotate-180 font-medium h-full w-full flex justify-start pb-1 whitespace-nowrap"
+                                            className="[writing-mode:vertical-rl] transform-gpu rotate-180 flex justify-start font-medium h-full w-full pb-1 whitespace-nowrap"
                                         >
                                             {team.name}
                                         </div>
