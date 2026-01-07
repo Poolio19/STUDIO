@@ -43,7 +43,10 @@ export default function StatsPage() {
   
   const sortedTeams = useMemo(() => {
     if (!teams) return [];
-    return [...teams].sort((a, b) => a.name.localeCompare(b.name));
+    return [...teams].sort((a, b) => {
+      if (!a?.name || !b?.name) return 0;
+      return a.name.localeCompare(b.name);
+    });
   }, [teams]);
 
 
@@ -85,14 +88,14 @@ export default function StatsPage() {
                                     </div>
                                 </TableHead>
                                 <TableHead className="text-center p-0 w-[40px] border-l border-dashed border-border">
-                                    <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-bold h-[92px] w-full flex items-end justify-center">
+                                    <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-bold h-[92px] w-full flex justify-center pb-1">
                                         TOTAL
                                     </div>
                                 </TableHead>
                                 {sortedTeams.map((team) => {
                                     return (
                                     <TableHead key={team.id} className="text-left p-0 w-[40px] border-l border-dashed border-border">
-                                        <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium h-[92px] w-full flex items-end justify-center">
+                                        <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium h-[92px] w-full flex justify-center pb-1">
                                             {team.name}
                                         </div>
                                     </TableHead>
