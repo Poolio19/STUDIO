@@ -68,15 +68,12 @@ export default function PerformancePage() {
     
     const numCols = 9;
     const numRows = Math.ceil(sortedUsers.length / numCols);
-    const columnOrderedUsers: User[] = new Array(sortedUsers.length);
-    sortedUsers.forEach((user, index) => {
-        const col = Math.floor(index / numRows);
-        const row = index % numRows;
-        const newIndex = row * numCols + col;
-        if (newIndex < sortedUsers.length) {
-          columnOrderedUsers[newIndex] = user;
-        }
-    });
+    const columnOrderedUsers: User[] = [];
+    for (let i = 0; i < sortedUsers.length; i++) {
+        const user = sortedUsers[i];
+        const newIndex = (i % numRows) * numCols + Math.floor(i / numRows);
+        columnOrderedUsers[newIndex] = user;
+    }
 
     return { chartData: transformedData, yAxisDomain, chartConfig: config, legendUsers: columnOrderedUsers.filter(Boolean) };
   }, [users, userHistories, sortedUsers]);
