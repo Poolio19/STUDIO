@@ -89,15 +89,21 @@ export default function StatsPage() {
                                         <span className="text-xl font-bold text-black dark:text-white">Player</span>
                                     </div>
                                 </TableHead>
-                                <TableHead className="text-center p-0 w-[40px] border-l border-dashed border-border pb-3">
-                                    <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-bold h-full w-full">
+                                <TableHead className="text-center p-0 w-[40px] border-l border-dashed border-border">
+                                     <div
+                                        className="[writing-mode:vertical-rl] transform-gpu rotate-180 font-bold h-full w-full flex justify-start"
+                                        style={{ transform: 'rotate(180deg) translateX(12px)' }}
+                                    >
                                         TOTAL
                                     </div>
                                 </TableHead>
                                 {sortedTeams.map((team) => {
                                     return (
-                                    <TableHead key={team.id} className="text-left p-0 w-[40px] border-l border-dashed border-border pb-3">
-                                        <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium h-full w-full">
+                                    <TableHead key={team.id} className="text-left p-0 w-[40px] border-l border-dashed border-border">
+                                        <div
+                                            className="[writing-mode:vertical-rl] transform-gpu rotate-180 font-medium h-full w-full flex justify-start"
+                                            style={{ transform: 'rotate(180deg) translateX(12px)' }}
+                                        >
                                             {team.name}
                                         </div>
                                     </TableHead>
