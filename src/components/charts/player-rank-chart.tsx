@@ -32,6 +32,7 @@ export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers, chartConf
     for (let i = 5; i <= max; i += 5) {
       ticks.push(i);
     }
+    ticks.push(max);
     return [...new Set(ticks)].sort((a,b) => a-b);
   }, [yAxisDomain]);
 
