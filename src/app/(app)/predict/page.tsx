@@ -14,7 +14,7 @@ import { Reorder } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import type { Team, PreviousSeasonStanding, CurrentStanding, Prediction as PredictionType } from '@/lib/data';
 import { useUser, useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, doc, setDoc, getDoc, query } from 'firebase/firestore';
+import { collection, doc, query } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -95,16 +95,21 @@ export default function PredictPage() {
   React.useEffect(() => {
       if (predictionLoading || teamsLoading) return;
   
-      if (userPrediction && userPrediction.rankings && teams) {
+      if (userPrediction && userPrediction.rankings && defaultSortedItems.length > 0) {
           const teamMap = new Map(defaultSortedItems.map(t => [t.teamId, t]));
           const orderedItems = userPrediction.rankings
               .map((teamId: string) => teamMap.get(teamId))
-              .filter(Boolean) as PredictionItem[];
-          setItems(orderedItems);
+              .filter((item): item is PredictionItem => !!item);
+          
+          if (orderedItems.length === defaultSortedItems.length) {
+            setItems(orderedItems);
+          } else {
+             setItems(defaultSortedItems);
+          }
       } else if (!predictionLoading && !userPrediction && defaultSortedItems.length > 0) {
           setItems(defaultSortedItems);
       }
-  }, [userPrediction, predictionLoading, teams, teamsLoading, defaultSortedItems]);
+  }, [userPrediction, predictionLoading, teamsLoading, defaultSortedItems]);
 
 
   React.useEffect(() => {
@@ -284,5 +289,3 @@ export default function PredictPage() {
     </div>
   );
 }
-
-    
