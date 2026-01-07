@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import type { Team, PreviousSeasonStanding } from '@/lib/data';
 import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, setDoc, getDoc, query } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 const predictionSchema = z.object({
   id: z.string(),
@@ -84,37 +85,46 @@ export default function PredictPage() {
   });
 
   const [items, setItems] = React.useState<Prediction[]>([]);
-  const [initialLoad, setInitialLoad] = React.useState(true);
+  const [isPredictionLoading, setIsPredictionLoading] = React.useState(true);
 
   React.useEffect(() => {
-    if (isUserLoading || !firestore || sortedTeamsForPrediction.length === 0 || !initialLoad) {
+    if (isUserLoading || !firestore || sortedTeamsForPrediction.length === 0) {
       return;
     }
-
+  
     const fetchPrediction = async () => {
       if (user) {
+        setIsPredictionLoading(true);
         const predictionRef = doc(firestore, 'predictions', user.uid);
-        const predictionSnap = await getDoc(predictionRef);
-
-        if (predictionSnap.exists()) {
-          const userPrediction = predictionSnap.data();
-          const rankedTeamIds = userPrediction.rankings;
-          
-          const teamMap = new Map(sortedTeamsForPrediction.map(t => [t.teamId, t]));
-          const orderedItems = rankedTeamIds.map((teamId: string) => teamMap.get(teamId)).filter(Boolean) as Prediction[];
-          setItems(orderedItems);
-          form.reset({ predictions: orderedItems });
-        } else {
+        try {
+          const predictionSnap = await getDoc(predictionRef);
+  
+          if (predictionSnap.exists()) {
+            const userPrediction = predictionSnap.data();
+            const rankedTeamIds = userPrediction.rankings;
+            
+            const teamMap = new Map(sortedTeamsForPrediction.map(t => [t.teamId, t]));
+            const orderedItems = rankedTeamIds.map((teamId: string) => teamMap.get(teamId)).filter(Boolean) as Prediction[];
+            setItems(orderedItems);
+          } else {
+            setItems(sortedTeamsForPrediction);
+          }
+        } catch (error) {
+          console.error("Error fetching prediction:", error);
+          // Fallback to default if there's an error
           setItems(sortedTeamsForPrediction);
-          form.reset({ predictions: sortedTeamsForPrediction });
+        } finally {
+          setIsPredictionLoading(false);
         }
-        setInitialLoad(false);
+      } else {
+        // Handle case where user is not logged in but loading is finished
+        setIsPredictionLoading(false);
       }
     };
-
+  
     fetchPrediction();
     
-  }, [sortedTeamsForPrediction, user, firestore, form, isUserLoading, initialLoad]);
+  }, [sortedTeamsForPrediction, user, firestore, isUserLoading]);
 
 
   React.useEffect(() => {
@@ -139,7 +149,7 @@ export default function PredictPage() {
 
     try {
       const predictionRef = doc(firestore, 'predictions', user.uid);
-      await setDoc(predictionRef, predictionData, { merge: true });
+      setDocumentNonBlocking(predictionRef, predictionData, { merge: true });
       toast({
           title: 'Season Predictions Submitted!',
           description: 'Your final standings prediction has been saved. Good luck!',
@@ -154,7 +164,7 @@ export default function PredictPage() {
     }
   }
   
-  const isLoading = isUserLoading || teamsLoading || standingsLoading || items.length === 0;
+  const isLoading = isUserLoading || teamsLoading || standingsLoading || isPredictionLoading;
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-full">Loading your predictions...</div>;
@@ -250,5 +260,3 @@ export default function PredictPage() {
     </div>
   );
 }
-
-    

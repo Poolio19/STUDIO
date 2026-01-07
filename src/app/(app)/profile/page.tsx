@@ -87,21 +87,19 @@ export default function ProfilePage() {
   const currentUserId = authUser?.uid;
 
   const userDocRef = useMemoFirebase(() => {
-    if (firestore && currentUserId && !isAuthUserLoading) {
-      return doc(firestore, 'users', currentUserId);
-    }
-    return null;
-  }, [firestore, currentUserId, isAuthUserLoading]);
+    return firestore && currentUserId ? doc(firestore, 'users', currentUserId) : null;
+  }, [firestore, currentUserId]);
 
   const userHistoryDocRef = useMemoFirebase(() => {
-    if (firestore && currentUserId && !isAuthUserLoading) {
-      return doc(firestore, 'userHistories', currentUserId);
-    }
-    return null; 
-  }, [firestore, currentUserId, isAuthUserLoading]);
+    return firestore && currentUserId ? doc(firestore, 'userHistories', currentUserId) : null; 
+  }, [firestore, currentUserId]);
 
-  const teamsQuery = useMemoFirebase(() => !isAuthUserLoading && firestore ? collection(firestore, 'teams') : null, [firestore, isAuthUserLoading]);
-  const mimoMQuery = useMemoFirebase(() => !isAuthUserLoading && firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore, isAuthUserLoading]);
+  const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
+  
+  const mimoMQuery = useMemoFirebase(() => {
+    return firestore && currentUserId ? collection(firestore, 'monthlyMimoM') : null
+  }, [firestore, currentUserId]);
+
 
   const { data: user, isLoading: userLoading } = useDoc<User>(userDocRef);
   const { data: userHistory, isLoading: historyLoading } = useDoc<UserHistory>(userHistoryDocRef);
