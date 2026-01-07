@@ -33,10 +33,9 @@ export default function RankingsPage() {
 
 
   const { chartData, yAxisDomain, chartConfig, legendUsers } = useMemo(() => {
-    if (!users || !userHistories || !sortedUsers) return { chartData: [], yAxisDomain: [1, 20], chartConfig: {}, legendUsers: [] };
+    if (!users || !userHistories || !sortedUsers) return { chartData: [], yAxisDomain: [0, 110], chartConfig: {}, legendUsers: [] };
     
-    const totalPlayers = users.length > 0 ? users.length : 20;
-    const yAxisDomain: [number, number] = [1, totalPlayers];
+    const yAxisDomain: [number, number] = [0, 110];
 
     const weeks = [...new Set(userHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.week)))].sort((a,b) => a-b);
     
