@@ -7,14 +7,11 @@ import {
   CartesianGrid,
   XAxis,
   YAxis,
-  Tooltip,
   ResponsiveContainer,
 } from 'recharts';
 
 import {
   ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
 } from '@/components/ui/chart';
 import { User } from '@/lib/data';
 import * as React from 'react';
@@ -28,6 +25,16 @@ interface PlayerRankChartProps {
 
 export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers, chartConfig }: PlayerRankChartProps) {
   
+  const yAxisTicks = React.useMemo(() => {
+    if (!yAxisDomain) return [];
+    const [min, max] = yAxisDomain;
+    const ticks = [1];
+    for (let i = 5; i <= max; i += 5) {
+      ticks.push(i);
+    }
+    return [...new Set(ticks)].sort((a,b) => a-b);
+  }, [yAxisDomain]);
+
   return (
     <div className="relative">
       <ChartContainer config={chartConfig} className="h-[600px] w-full">
@@ -54,25 +61,7 @@ export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers, chartConf
               tickMargin={8}
               reversed
               domain={yAxisDomain}
-              tickCount={yAxisDomain[1]}
-            />
-            <Tooltip
-              cursor={{ strokeDasharray: '3 3' }}
-              content={
-                  <ChartTooltipContent
-                      labelKey="name"
-                      indicator="dot"
-                      formatter={(value, name) => {
-                          return (
-                           <div className="flex items-center gap-2">
-                            <div className="size-2.5 rounded-sm" style={{ backgroundColor: chartConfig[name]?.colour }}/>
-                            <span className="font-medium">{name}:</span>
-                            <span className="text-muted-foreground">Rank {value}</span>
-                           </div>
-                        )
-                      }}
-                  />
-              }
+              ticks={yAxisTicks}
             />
               {sortedUsers.map((user) => (
                   <Line
