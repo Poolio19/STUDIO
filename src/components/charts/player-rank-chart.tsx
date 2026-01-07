@@ -68,7 +68,6 @@ export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers, chartConf
               axisLine={false}
               tickMargin={8}
               reversed
-              domain={yAxisDomain}
               ticks={yAxisTicks}
             />
               {sortedUsers.map((user) => (
