@@ -128,7 +128,7 @@ export default function PerformancePage() {
                             className="inline-block h-2 w-2 rounded-sm shrink-0"
                             style={{ backgroundColor: userConfig.colour }}
                         ></span>
-                        <span className="truncate" title={`${user.name} ${user.score}`}>{`${formattedName} ${user.score}`}</span>
+                        <span className="truncate" title={`${user.name} ${user.score}`}>{`${user.score} ${formattedName}`}</span>
                         </div>
                     );
                     })}
