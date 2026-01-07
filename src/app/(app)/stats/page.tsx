@@ -85,14 +85,14 @@ export default function StatsPage() {
                                     </div>
                                 </TableHead>
                                 <TableHead className="text-center p-0 w-[40px] border-l border-dashed border-border">
-                                    <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-bold h-[92px] w-full flex items-end">{/* bottom-left */}
+                                    <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-bold h-[92px] w-full flex items-end justify-center">
                                         TOTAL
                                     </div>
                                 </TableHead>
                                 {sortedTeams.map((team) => {
                                     return (
                                     <TableHead key={team.id} className="text-left p-0 w-[40px] border-l border-dashed border-border">
-                                        <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium h-[92px] w-full flex items-end">{/* bottom-left */}
+                                        <div className="[writing-mode:vertical-rl] transform-gpu rotate-180 whitespace-nowrap font-medium h-[92px] w-full flex items-end justify-center">
                                             {team.name}
                                         </div>
                                     </TableHead>
