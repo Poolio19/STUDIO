@@ -31,12 +31,12 @@ export default function PerformancePage() {
     return [...users].sort((a, b) => a.rank - b.rank);
   }, [users]);
 
-  const { chartData, yAxisDomain, chartConfig } = useMemo(() => {
-    if (!users || !userHistories) return { chartData: [], yAxisDomain: [0, 0], chartConfig: {} };
+  const { chartData, yAxisDomain, chartConfig, legendUsers } = useMemo(() => {
+    if (!users || !userHistories || !sortedUsers) return { chartData: [], yAxisDomain: [0, 0], chartConfig: {}, legendUsers: [] };
     
     const allScores = userHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.score));
 
-    if (allScores.length === 0) return { chartData: [], yAxisDomain: [0, 10], chartConfig: {} };
+    if (allScores.length === 0) return { chartData: [], yAxisDomain: [0, 10], chartConfig: {}, legendUsers: [] };
     
     const minScore = Math.min(...allScores);
     const maxScore = Math.max(...allScores);
@@ -65,9 +65,21 @@ export default function PerformancePage() {
       };
       return config;
     }, {} as any);
+    
+    const numCols = 9;
+    const numRows = Math.ceil(sortedUsers.length / numCols);
+    const columnOrderedUsers: User[] = [];
+    for (let i = 0; i < numRows; i++) {
+        for (let j = 0; j < numCols; j++) {
+            const index = j * numRows + i;
+            if (index < sortedUsers.length) {
+                columnOrderedUsers.push(sortedUsers[index]);
+            }
+        }
+    }
 
 
-    return { chartData: transformedData, yAxisDomain, chartConfig: config };
+    return { chartData: transformedData, yAxisDomain, chartConfig: config, legendUsers: columnOrderedUsers };
   }, [users, userHistories, sortedUsers]);
 
   const surnameCounts = useMemo(() => {
@@ -118,7 +130,7 @@ export default function PerformancePage() {
             </CardHeader>
             <CardContent>
                 <div className="grid grid-cols-9 gap-x-4 gap-y-0 text-xs mb-6">
-                    {sortedUsers.map((user: User) => {
+                    {legendUsers.map((user: User) => {
                     const userConfig = chartConfig[user.name];
                     if (!userConfig) return null;
                     const formattedName = formatNameForLegend(user.name);
