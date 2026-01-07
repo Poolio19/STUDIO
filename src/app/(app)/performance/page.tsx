@@ -66,16 +66,18 @@ export default function PerformancePage() {
       return config;
     }, {} as any);
     
-    const numCols = 9;
-    const numRows = Math.ceil(sortedUsers.length / numCols);
-    const columnOrderedUsers: User[] = [];
-    for (let i = 0; i < sortedUsers.length; i++) {
-        const user = sortedUsers[i];
-        const newIndex = (i % numRows) * numCols + Math.floor(i / numRows);
-        columnOrderedUsers[newIndex] = user;
-    }
+    const numRows = 13;
+    const numCols = Math.ceil(sortedUsers.length / numRows);
+    const columnOrderedUsers: (User | undefined)[] = new Array(numCols * numRows).fill(undefined);
 
-    return { chartData: transformedData, yAxisDomain, chartConfig: config, legendUsers: columnOrderedUsers.filter(Boolean) };
+    sortedUsers.forEach((user, i) => {
+        const col = Math.floor(i / numRows);
+        const row = i % numRows;
+        const newIndex = row * numCols + col;
+        columnOrderedUsers[newIndex] = user;
+    });
+
+    return { chartData: transformedData, yAxisDomain, chartConfig: config, legendUsers: columnOrderedUsers };
   }, [users, userHistories, sortedUsers]);
 
   const surnameCounts = useMemo(() => {
@@ -126,8 +128,8 @@ export default function PerformancePage() {
             </CardHeader>
             <CardContent>
                 <div className="grid grid-cols-9 gap-x-4 gap-y-0 text-xs mb-6">
-                    {legendUsers.map((user: User) => {
-                    if (!user) return null;
+                    {legendUsers.map((user, index) => {
+                    if (!user) return <div key={`empty-${index}`} />;
                     const userConfig = chartConfig[user.name];
                     if (!userConfig) return null;
                     const formattedName = formatNameForLegend(user.name);
