@@ -50,20 +50,18 @@ export default function PredictPage() {
   const { data: currentStandings, isLoading: currentStandingsLoading } = useCollection<CurrentStanding>(currentStandingsQuery);
   const { data: userPrediction, isLoading: predictionLoading } = useDoc<PredictionType>(userPredictionDocRef);
 
-  const { sortedPreviousStandings } = React.useMemo(() => {
-    if (!teams || !previousSeasonStandings) return { sortedPreviousStandings: [] };
+  const sortedPreviousStandings = React.useMemo(() => {
+    if (!teams || !previousSeasonStandings) return [];
     
-    const allTeamsMap = new Map(teams.map(t => [t.id, t]));
+    const teamMap = new Map(teams.map(t => [t.id, t]));
     
-    const fullStandingsWithData = previousSeasonStandings
+    return previousSeasonStandings
       .map(standing => {
-        const team = allTeamsMap.get(standing.teamId);
+        const team = teamMap.get(standing.teamId);
         return team ? { ...standing, ...team } : null;
       })
       .filter((item): item is NonNullable<typeof item> => item !== null)
-      .sort((a, b) => a!.rank - b!.rank);
-
-    return { sortedPreviousStandings: fullStandingsWithData };
+      .sort((a, b) => a.rank - b.rank);
   }, [teams, previousSeasonStandings]);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -72,13 +70,13 @@ export default function PredictPage() {
       predictions: [],
     },
   });
+  
+  const orderedItems = React.useMemo(() => {
+    if (!teams || teams.length === 0) {
+      return [];
+    }
 
-  const [items, setItems] = React.useState<PredictionItem[]>([]);
-
-  const defaultSortedItems = React.useMemo(() => {
-      if (!teams) return [];
-      const prevStandingsMap = new Map(previousSeasonStandings?.map(s => [s.teamId, s.rank]));
-      return teams.map(team => ({
+    const teamMap = new Map(teams.map(team => [team.id, {
         id: team.id,
         teamId: team.id,
         teamName: team.name || 'Unknown Team',
@@ -87,33 +85,37 @@ export default function PredictPage() {
         bgColourFaint: team.bgColourFaint,
         bgColourSolid: team.bgColourSolid,
         textColour: team.textColour,
-        sortRank: prevStandingsMap.get(team.id) ?? 21,
-      })).sort((a, b) => a.sortRank - b.sortRank);
-  }, [teams, previousSeasonStandings]);
+    }]));
+
+    if (userPrediction && userPrediction.rankings && userPrediction.rankings.length === teams.length) {
+      // If a valid user prediction exists, use it to order the teams.
+      return userPrediction.rankings
+        .map(teamId => teamMap.get(teamId))
+        .filter((item): item is PredictionItem => !!item);
+    }
+    
+    // Fallback: If no user prediction, sort by previous season's standings.
+    if (!previousSeasonStandings) return [];
+    
+    const prevStandingsMap = new Map(previousSeasonStandings.map(s => [s.teamId, s.rank]));
+    return [...teams]
+      .sort((a, b) => (prevStandingsMap.get(a.id) ?? 21) - (prevStandingsMap.get(b.id) ?? 21))
+      .map(team => teamMap.get(team.id))
+      .filter((item): item is PredictionItem => !!item);
+      
+  }, [userPrediction, teams, previousSeasonStandings]);
 
 
-  React.useEffect(() => {
-      if (predictionLoading || teamsLoading) return;
-  
-      if (userPrediction && userPrediction.rankings && defaultSortedItems.length > 0) {
-          const teamMap = new Map(defaultSortedItems.map(t => [t.teamId, t]));
-          const orderedItems = userPrediction.rankings
-              .map((teamId: string) => teamMap.get(teamId))
-              .filter((item): item is PredictionItem => !!item);
-          
-          if (orderedItems.length === defaultSortedItems.length) {
-            setItems(orderedItems);
-          } else {
-             setItems(defaultSortedItems);
-          }
-      } else if (!predictionLoading && !userPrediction && defaultSortedItems.length > 0) {
-          setItems(defaultSortedItems);
-      }
-  }, [userPrediction, predictionLoading, teamsLoading, defaultSortedItems]);
-
+  const [items, setItems] = React.useState<PredictionItem[]>(orderedItems);
 
   React.useEffect(() => {
-    form.setValue('predictions', items);
+      setItems(orderedItems);
+  }, [orderedItems]);
+
+  React.useEffect(() => {
+    if(items.length > 0) {
+      form.setValue('predictions', items);
+    }
   }, [items, form]);
   
   const currentWeek = React.useMemo(() => {
