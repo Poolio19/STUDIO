@@ -81,7 +81,7 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
-  const { user: authUser, isUserLoading: isAuthUserLoading } = useUser();
+  const { isUserLoading: isAuthUserLoading } = useUser();
   const firestore = useFirestore();
   
   const currentUserId = 'usr_009';
@@ -191,8 +191,8 @@ export default function ProfilePage() {
   }
 
   // Show a message if the user isn't logged in after loading
-  if (!user || !authUser) {
-    return <div className="flex justify-center items-center h-full">Please log in to view your profile.</div>;
+  if (!user) {
+    return <div className="flex justify-center items-center h-full">Could not load user profile. Please try again later.</div>;
   }
 
 
