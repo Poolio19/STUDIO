@@ -23,18 +23,10 @@ interface PlayerRankChartProps {
     chartData: any[];
     yAxisDomain: [number, number];
     sortedUsers: User[];
+    chartConfig: any;
 }
 
-export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers }: PlayerRankChartProps) {
-  const chartConfig = React.useMemo(() => {
-    return sortedUsers.reduce((config, user, index) => {
-      config[user.name] = {
-        label: user.name,
-        colour: `hsl(var(--chart-color-${index + 1}))`,
-      };
-      return config;
-    }, {} as any);
-  }, [sortedUsers]);
+export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers, chartConfig }: PlayerRankChartProps) {
   
   return (
     <div className="relative">
@@ -44,12 +36,12 @@ export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers }: PlayerR
             data={chartData}
             margin={{
               top: 20,
-              right: 130,
+              right: 20,
               left: -20,
               bottom: 20,
             }}
           >
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" />
             <XAxis
               dataKey="week"
               tickLine={false}
@@ -95,32 +87,6 @@ export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers }: PlayerR
           </LineChart>
         </ResponsiveContainer>
       </ChartContainer>
-       <ul
-        className="absolute flex h-full flex-col justify-between"
-        style={{
-          right: 0,
-          top: '-25px',
-          bottom: '20px',
-          width: '130px',
-          paddingLeft: '1rem',
-          fontSize: '11px',
-        }}
-      >
-        <p className="font-medium mb-2">Player, Rank</p>
-          {sortedUsers.map((user: User) => {
-            const userConfig = chartConfig[user.name];
-            if (!userConfig) return null;
-            return (
-              <li key={user.id} className="flex items-center space-x-2">
-                <span
-                  className="inline-block h-2 w-2 rounded-sm"
-                  style={{ backgroundColor: userConfig.colour }}
-                ></span>
-                <span>{`${user.name}, ${user.rank}`}</span>
-              </li>
-            );
-          })}
-      </ul>
     </div>
   );
 }
