@@ -26,6 +26,17 @@ interface PlayerPerformanceChartProps {
 
 export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers, chartConfig }: PlayerPerformanceChartProps) {
   
+  const yAxisTicks = React.useMemo(() => {
+    if (!yAxisDomain) return [];
+    const [min, max] = yAxisDomain;
+    const ticks = [];
+    const start = Math.ceil(min / 10) * 10;
+    for (let i = start; i <= max; i += 10) {
+      ticks.push(i);
+    }
+    return ticks;
+  }, [yAxisDomain]);
+
   return (
     <div className="relative">
       <ChartContainer config={chartConfig} className="h-[600px] w-full">
@@ -39,7 +50,7 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers, ch
               bottom: 20,
             }}
           >
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" />
             <XAxis
               dataKey="week"
               tickLine={false}
@@ -51,6 +62,7 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers, ch
               axisLine={false}
               tickMargin={8}
               domain={yAxisDomain}
+              ticks={yAxisTicks}
             />
               {sortedUsers.map((user) => (
                   <Line
