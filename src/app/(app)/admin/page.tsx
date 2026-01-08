@@ -22,6 +22,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useFirebase } from '@/firebase';
+import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 import {
   teams,
   standings,
@@ -162,6 +163,7 @@ export default function AdminPage() {
   const { toast } = useToast();
   const { firestore } = useFirebase();
   const [isImporting, setIsImporting] = React.useState(false);
+  const [isUpdatingMatches, setIsUpdatingMatches] = React.useState(false);
   const [isAlertOpen, setIsAlertOpen] = React.useState(false);
 
   const performImport = async () => {
@@ -191,10 +193,60 @@ export default function AdminPage() {
       });
       return;
     }
-
-    // Always show the alert because this is a destructive action
     setIsAlertOpen(true);
   };
+  
+  const handleUpdateMatches = async () => {
+    setIsUpdatingMatches(true);
+    toast({
+      title: 'Updating Match Results...',
+      description: 'Sending fixture data to the server for a safe update.',
+    });
+
+    try {
+      // Group results by week
+      const resultsByWeek = matches.reduce((acc, match) => {
+        const week = match.week;
+        if (!acc[week]) {
+          acc[week] = [];
+        }
+        acc[week].push({
+          matchId: `${match.week}-${match.homeTeamId}-${match.awayTeamId}`,
+          homeScore: match.homeScore,
+          awayScore: match.awayScore,
+        });
+        return acc;
+      }, {} as { [week: number]: { matchId: string; homeScore: number; awayScore: number }[] });
+
+      let totalUpdated = 0;
+      for (const week in resultsByWeek) {
+        const input = {
+          week: parseInt(week),
+          results: resultsByWeek[week],
+        };
+        const result = await updateMatchResults(input);
+        if (!result.success) {
+          throw new Error(`Failed to update matches for week ${week}.`);
+        }
+        totalUpdated += result.updatedCount;
+      }
+
+      toast({
+        title: 'Match Results Updated!',
+        description: `${totalUpdated} match records were successfully updated in the database.`,
+      });
+    } catch (error: any) {
+      console.error('Error updating match results:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Update Failed',
+        description: error.message || 'An unexpected error occurred while updating matches.',
+      });
+    } finally {
+      setIsUpdatingMatches(false);
+    }
+  };
+
 
   return (
     <>
@@ -210,14 +262,35 @@ export default function AdminPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <Card>
-              <CardHeader>
-              <CardTitle>Import Application Data</CardTitle>
+            <CardHeader>
+              <CardTitle>Update Match Results</CardTitle>
               <CardDescription>
-                  Click the button below to purge and repopulate your Firestore database with all the required application data. This is a destructive action and cannot be undone.
+                Safely add or update match results in Firestore. This action is non-destructive and will not affect any other data collections like users or predictions.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={handleUpdateMatches} disabled={isUpdatingMatches || !firestore}>
+                {isUpdatingMatches ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating Matches...
+                  </>
+                ) : (
+                  'Update Match Results'
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card>
+              <CardHeader>
+              <CardTitle>Purge and Import All Data</CardTitle>
+              <CardDescription>
+                  This is a destructive action. It will delete all data in your database and replace it with the initial data set from the code. Use this only to reset your app to a clean state.
               </CardDescription>
               </CardHeader>
-              <CardContent className="flex flex-col space-y-4">
-                <Button onClick={handleDataImport} disabled={isImporting || !firestore}>
+              <CardContent>
+                <Button variant="destructive" onClick={handleDataImport} disabled={isImporting || !firestore}>
                     {isImporting ? (
                     <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />

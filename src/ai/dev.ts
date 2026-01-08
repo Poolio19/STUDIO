@@ -3,4 +3,3 @@ config();
 
 import '@/ai/flows/calculate-prediction-scores.ts';
 import '@/ai/flows/update-match-results-flow.ts';
-import '@/ai/flows/update-match-results-flow-types.ts';

@@ -37,10 +37,14 @@ const updateMatchResultsFlow = ai.defineFlow(
 
     validResults.forEach(result => {
       const docRef = matchesCollectionRef.doc(result.matchId);
-      batch.update(docRef, { 
+      batch.set(docRef, { 
+          week: week,
+          homeTeamId: result.matchId.split('-')[1],
+          awayTeamId: result.matchId.split('-')[2],
+          matchDate: new Date().toISOString(), // This is a placeholder as date is not passed
           homeScore: result.homeScore, 
           awayScore: result.awayScore 
-      });
+      }, { merge: true });
     });
 
     try {

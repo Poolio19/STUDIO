@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Types and schemas for the update-match-results-flow.
  */
