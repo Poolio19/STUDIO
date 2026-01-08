@@ -486,13 +486,13 @@ export const matches: Match[] = [
     { week: 12, matchDate: '2025-11-23T15:00:00.000Z', homeTeamId: 'team_01', awayTeamId: 'team_18', homeScore: 4, awayScore: 1 },
     { week: 12, matchDate: '2025-11-24T15:00:00.000Z', homeTeamId: 'team_14', awayTeamId: 'team_08', homeScore: 0, awayScore: 1 },
     { week: 13, matchDate: '2025-11-29T15:00:00.000Z', homeTeamId: 'team_18', awayTeamId: 'team_09', homeScore: 1, awayScore: 2 },
-    { week: 13, matchDate: '2025-11-29T15:00:00.000Z', homeTeamId: 'team_17', awayTeamId: 'team_03', homeScore: 3, awayScore: 2 },
     { week: 13, matchDate: '2025-11-29T15:00:00.000Z', homeTeamId: 'team_08', awayTeamId: 'team_15', homeScore: 1, awayScore: 4 },
+    { week: 13, matchDate: '2025-11-29T15:00:00.000Z', homeTeamId: 'team_17', awayTeamId: 'team_03', homeScore: 3, awayScore: 2 },
+    { week: 13, matchDate: '2025-11-29T15:00:00.000Z', homeTeamId: 'team_13', awayTeamId: 'team_10', homeScore: 3, awayScore: 2 },
     { week: 13, matchDate: '2025-11-29T15:00:00.000Z', homeTeamId: 'team_04', awayTeamId: 'team_11', homeScore: 3, awayScore: 1 },
     { week: 13, matchDate: '2025-11-30T15:00:00.000Z', homeTeamId: 'team_06', awayTeamId: 'team_01', homeScore: 1, awayScore: 1 },
     { week: 13, matchDate: '2025-11-30T15:00:00.000Z', homeTeamId: 'team_19', awayTeamId: 'team_12', homeScore: 0, awayScore: 2 },
     { week: 13, matchDate: '2025-11-30T15:00:00.000Z', homeTeamId: 'team_16', awayTeamId: 'team_05', homeScore: 0, awayScore: 2 },
-    { week: 13, matchDate: '2025-11-30T15:00:00.000Z', homeTeamId: 'team_13', awayTeamId: 'team_10', homeScore: 3, awayScore: 2 },
     { week: 13, matchDate: '2025-11-30T15:00:00.000Z', homeTeamId: 'team_07', awayTeamId: 'team_14', homeScore: 1, awayScore: 2 },
     { week: 13, matchDate: '2025-11-30T15:00:00.000Z', homeTeamId: 'team_02', awayTeamId: 'team_20', homeScore: 1, awayScore: 0 },
     { week: 14, matchDate: '2025-12-02T15:00:00.000Z', homeTeamId: 'team_15', awayTeamId: 'team_18', homeScore: 2, awayScore: 2 },
@@ -588,7 +588,7 @@ export const weeklyTeamStandings: WeeklyTeamStanding[] = (() => {
     teamScores[team.id] = [];
   });
 
-  const maxWeek = Math.max(...playedMatches.map(m => m.week), 0);
+  const maxWeek = Math.max(...matches.map(m => m.week), 0);
 
   for (let week = 1; week <= maxWeek; week++) {
     const weeklyMatches = playedMatches.filter(m => m.week <= week);
@@ -733,7 +733,7 @@ userList.forEach(user => {
     weeklyScoresByUser[user.id] = [];
     const prediction = fullPredictions.find(p => p.userId === user.id);
     if (!prediction) return;
-    const maxWeek = Math.max(...playedMatches.map(m => m.week), 0);
+    const maxWeek = Math.max(...matches.map(m => m.week), 0);
 
     for (let week = 1; week <= maxWeek; week++) {
         let totalScore = 0;
@@ -755,7 +755,7 @@ userList.forEach(user => {
 });
 
 // Calculate ranks for each week
-const maxWeek = Math.max(...playedMatches.map(m => m.week), 0);
+const maxWeek = Math.max(...matches.map(m => m.week), 0);
 for (let week = 1; week <= maxWeek; week++) {
     const scoresForWeek = userList.map(user => ({
         userId: user.id,
@@ -874,4 +874,6 @@ export const monthlyMimoM: MonthlyMimoM[] = [
 ];
 
     
+    
+
     
