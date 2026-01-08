@@ -18,7 +18,7 @@ const TARGET_PROJECT_ID = 'prempred-43933';
 function initializeAdminApp(databaseId?: string): admin.app.App {
   // Create a unique name for the app instance to avoid conflicts.
   // If a databaseId is provided, use it to ensure a unique instance for that database.
-  const appName = databaseId ? `${TARGET_PROJECT_ID}-${databaseId}` : TARGET_PROJECT_ID;
+  const appName = databaseId ? `${TARGET_PROJECT_ID}-${databaseId}` : `__${TARGET_PROJECT_ID}__`;
   
   if (appInstances.has(appName)) {
     return appInstances.get(appName)!;
