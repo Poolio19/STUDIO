@@ -103,8 +103,7 @@ async function importClientSideData(db: Firestore | null): Promise<{ success: bo
     });
 
     matches.forEach(item => {
-      const matchId = `${item.week}-${item.homeTeamId}-${item.awayTeamId}`;
-      const docRef = doc(db, 'matches', matchId);
+      const docRef = doc(db, 'matches', item.id);
       batch.set(docRef, item);
     });
 
@@ -156,7 +155,6 @@ async function importClientSideData(db: Firestore | null): Promise<{ success: bo
 }
 
 type EditableMatch = Match & {
-    id: string;
     homeTeam: Team;
     awayTeam: Team;
 };
@@ -178,10 +176,8 @@ export default function AdminPage() {
     const week = parseInt(weekStr);
     setSelectedWeek(week);
     const fixturesForWeek = matches.filter(m => m.week === week).map(match => {
-        const matchId = `${match.week}-${match.homeTeamId}-${match.awayTeamId}`;
         return {
             ...match,
-            id: matchId,
             homeTeam: teamMap.get(match.homeTeamId)!,
             awayTeam: teamMap.get(match.awayTeamId)!,
         };
@@ -217,7 +213,7 @@ export default function AdminPage() {
         const results = Object.entries(scores).map(([matchId, score]) => {
             const match = weekFixtures.find(f => f.id === matchId)!;
             return {
-                matchId: matchId,
+                matchId: match.id,
                 week: match.week,
                 homeTeamId: match.homeTeamId,
                 awayTeamId: match.awayTeamId,
@@ -291,7 +287,7 @@ export default function AdminPage() {
   
     try {
       const allResults = matches.map(match => ({
-        matchId: `${match.week}-${match.homeTeamId}-${match.awayTeamId}`,
+        matchId: match.id,
         week: match.week,
         homeTeamId: match.homeTeamId,
         awayTeamId: match.awayTeamId,
