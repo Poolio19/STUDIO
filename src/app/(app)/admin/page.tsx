@@ -261,7 +261,10 @@ export default function AdminPage() {
         awayScore: match.awayScore,
       }));
   
-      // This is the critical change: wrapping the array in a 'results' object.
+      if (allResults.length === 0) {
+        throw new Error('No match data found to sync. The local data file might be empty.');
+      }
+      
       const input = {
         results: allResults,
       };
