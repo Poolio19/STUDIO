@@ -2,7 +2,7 @@
 // This is a public configuration and is safe to be exposed to the client.
 
 export const firebaseConfig = {
-  apiKey: "AIzaSyAzT45wWbkj3Co-xY2Z2xJcM-example",
+  apiKey: "AIzaSyDPb-f11qf_e-XyM49LDFV_1098_EXAMPLE",
   authDomain: "prempred-43933.firebaseapp.com",
   projectId: "prempred-43933",
   storageBucket: "prempred-43933.appspot.com",
