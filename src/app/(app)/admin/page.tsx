@@ -261,6 +261,7 @@ export default function AdminPage() {
         awayScore: match.awayScore,
       }));
   
+      // This is the critical change: wrapping the array in a 'results' object.
       const input = {
         results: allResults,
       };
@@ -436,5 +437,3 @@ export default function AdminPage() {
     </>
   );
 }
-
-    
