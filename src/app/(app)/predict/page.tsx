@@ -65,7 +65,7 @@ const TeamRow = ({ team, rank, children }: { team: any; rank: number, children?:
           </div>
         </div>
       </TableCell>
-      <TableCell className="font-medium">{team.name}</TableCell>
+      <TableCell className="font-medium">{team.name || team.teamName}</TableCell>
       {children}
     </TableRow>
   );
