@@ -65,86 +65,51 @@ async function importClientSideData(db: Firestore | null): Promise<{ success: bo
         'userHistories', 'playerTeamScores', 'weeklyTeamStandings', 'teamRecentResults'
     ];
     
-    const deleteCollection = async (collectionName: string) => {
-        const collectionRef = collection(db, collectionName);
+    // Use a map for faster lookups
+    const collectionDataMap = new Map([
+        ['teams', teams],
+        ['standings', standings.map(s => ({...s, id: s.teamId}))], // ensure id for doc ref
+        ['users', fullUsers],
+        ['predictions', fullPredictions.map(p => ({...p, id: p.userId}))],
+        ['matches', matches],
+        ['previousSeasonStandings', previousSeasonStandings.map(s => ({...s, id: s.teamId}))],
+        ['seasonMonths', seasonMonths],
+        ['monthlyMimoM', monthlyMimoM],
+        ['userHistories', fullUserHistories.map(h => ({...h, id: h.userId}))],
+        ['playerTeamScores', playerTeamScores.map(s => ({...s, id: `${s.userId}_${s.teamId}`}))],
+        ['weeklyTeamStandings', weeklyTeamStandings.map(w => ({...w, id: `${w.week}_${w.teamId}`}))],
+        ['teamRecentResults', teamRecentResults.map(r => ({...r, id: r.teamId}))],
+    ]);
+
+    for (const name of collectionNames) {
+        const collectionRef = collection(db, name);
         const snapshot: QuerySnapshot<DocumentData> = await getDocs(collectionRef);
         snapshot.docs.forEach((doc) => {
             batch.delete(doc.ref);
         });
-        console.log(`Queued deletion for all ${snapshot.size} documents in '${collectionName}'.`);
-    };
-
-    for (const name of collectionNames) {
-        await deleteCollection(name);
+        console.log(`Queued deletion for all ${snapshot.size} documents in '${name}'.`);
     }
-    
-    teams.forEach(item => {
-      const docRef = doc(db, 'teams', item.id);
-      batch.set(docRef, item);
-    });
-
-    standings.forEach(item => {
-      if (item.teamId) {
-        const docRef = doc(db, 'standings', item.teamId);
-        batch.set(docRef, item);
-      }
-    });
-    
-    fullUsers.forEach(item => {
-        const docRef = doc(db, 'users', item.id);
-        batch.set(docRef, item);
-    });
-
-    fullPredictions.forEach(item => {
-      if (item.userId) {
-        const docRef = doc(db, 'predictions', item.userId);
-        batch.set(docRef, item);
-      }
-    });
-
-    matches.forEach(item => {
-      const docRef = doc(db, 'matches', item.id);
-      batch.set(docRef, item);
-    });
-
-    previousSeasonStandings.forEach(item => {
-      const docRef = doc(db, 'previousSeasonStandings', item.teamId);
-      batch.set(docRef, item);
-    });
-
-    seasonMonths.forEach(item => {
-      const docRef = doc(db, 'seasonMonths', item.id);
-      batch.set(docRef, item);
-    });
-
-    monthlyMimoM.forEach(item => {
-      const docRef = doc(db, 'monthlyMimoM', item.id);
-      batch.set(docRef, item);
-    });
-
-    fullUserHistories.forEach(item => {
-      const docRef = doc(db, 'userHistories', item.userId);
-      batch.set(docRef, item);
-    });
-    
-    playerTeamScores.forEach(item => {
-        const docId = `${item.userId}_${item.teamId}`;
-        const docRef = doc(db, 'playerTeamScores', docId);
-        batch.set(docRef, item);
-    });
-
-    weeklyTeamStandings.forEach(item => {
-        const docId = `${item.week}_${item.teamId}`;
-        const docRef = doc(db, 'weeklyTeamStandings', docId);
-        batch.set(docRef, item);
-    });
-
-    teamRecentResults.forEach(item => {
-        const docRef = doc(db, 'teamRecentResults', item.teamId);
-        batch.set(docRef, item);
-    });
 
     await batch.commit();
+    
+    // Create a new batch for setting data
+    const setBatch = writeBatch(db);
+
+    for (const name of collectionNames) {
+      const data = collectionDataMap.get(name);
+      if (data) {
+        data.forEach((item: any) => {
+          if (item.id) {
+            const docRef = doc(db, name, item.id);
+            setBatch.set(docRef, item);
+          } else {
+            console.warn(`Skipping item in '${name}' due to missing id:`, item);
+          }
+        });
+      }
+    }
+
+    await setBatch.commit();
 
     return { success: true, message: 'All application data has been purged and re-imported successfully.' };
 
@@ -425,7 +390,7 @@ export default function AdminPage() {
                         Updating All Matches...
                       </>
                     ) : (
-                      'Sync All Local Matches'
+                      'Sync All Local Matches to DB'
                     )}
                   </Button>
               </div>
@@ -471,3 +436,5 @@ export default function AdminPage() {
     </>
   );
 }
+
+    
