@@ -38,9 +38,8 @@ const updateMatchResultsFlow = ai.defineFlow(
     validResults.forEach(result => {
       const docRef = matchesCollectionRef.doc(result.matchId);
       // Use set without merge to ensure the document is created or fully overwritten.
-      // This is more robust than merging, especially after a purge.
+      // The payload no longer contains a redundant `id` field.
       batch.set(docRef, { 
-          id: result.matchId,
           week: result.week,
           homeTeamId: result.homeTeamId,
           awayTeamId: result.awayTeamId,
