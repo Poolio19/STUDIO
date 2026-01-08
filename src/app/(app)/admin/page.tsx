@@ -57,7 +57,7 @@ async function importClientSideData(db: Firestore | null): Promise<{ success: bo
   }
 
   try {
-    const batch = writeBatch(db);
+    const deleteBatch = writeBatch(db);
 
     const collectionNames = [
         'teams', 'standings', 'users', 'predictions', 'matches', 
@@ -65,49 +65,35 @@ async function importClientSideData(db: Firestore | null): Promise<{ success: bo
         'userHistories', 'playerTeamScores', 'weeklyTeamStandings', 'teamRecentResults'
     ];
     
-    // Use a map for faster lookups
-    const collectionDataMap = new Map([
-        ['teams', teams],
-        ['standings', standings.map(s => ({...s, id: s.teamId}))], // ensure id for doc ref
-        ['users', fullUsers],
-        ['predictions', fullPredictions.map(p => ({...p, id: p.userId}))],
-        ['matches', matches],
-        ['previousSeasonStandings', previousSeasonStandings.map(s => ({...s, id: s.teamId}))],
-        ['seasonMonths', seasonMonths],
-        ['monthlyMimoM', monthlyMimoM],
-        ['userHistories', fullUserHistories.map(h => ({...h, id: h.userId}))],
-        ['playerTeamScores', playerTeamScores.map(s => ({...s, id: `${s.userId}_${s.teamId}`}))],
-        ['weeklyTeamStandings', weeklyTeamStandings.map(w => ({...w, id: `${w.week}_${w.teamId}`}))],
-        ['teamRecentResults', teamRecentResults.map(r => ({...r, id: r.teamId}))],
-    ]);
-
+    // Deleting all documents from all collections
     for (const name of collectionNames) {
         const collectionRef = collection(db, name);
         const snapshot: QuerySnapshot<DocumentData> = await getDocs(collectionRef);
         snapshot.docs.forEach((doc) => {
-            batch.delete(doc.ref);
+            deleteBatch.delete(doc.ref);
         });
         console.log(`Queued deletion for all ${snapshot.size} documents in '${name}'.`);
     }
 
-    await batch.commit();
-    
+    await deleteBatch.commit();
+    console.log("All collections have been purged.");
+
     // Create a new batch for setting data
     const setBatch = writeBatch(db);
-
-    for (const name of collectionNames) {
-      const data = collectionDataMap.get(name);
-      if (data) {
-        data.forEach((item: any) => {
-          if (item.id) {
-            const docRef = doc(db, name, item.id);
-            setBatch.set(docRef, item);
-          } else {
-            console.warn(`Skipping item in '${name}' due to missing id:`, item);
-          }
-        });
-      }
-    }
+    
+    // Re-import all data
+    teams.forEach(item => setBatch.set(doc(db, 'teams', item.id), item));
+    standings.forEach(item => setBatch.set(doc(db, 'standings', item.teamId), item));
+    fullUsers.forEach(item => setBatch.set(doc(db, 'users', item.id), item));
+    fullPredictions.forEach(item => setBatch.set(doc(db, 'predictions', item.userId), item));
+    matches.forEach(item => setBatch.set(doc(db, 'matches', item.id), item));
+    previousSeasonStandings.forEach(item => setBatch.set(doc(db, 'previousSeasonStandings', item.teamId), item));
+    seasonMonths.forEach(item => setBatch.set(doc(db, 'seasonMonths', item.id), item));
+    monthlyMimoM.forEach(item => setBatch.set(doc(db, 'monthlyMimoM', item.id), item));
+    fullUserHistories.forEach(item => setBatch.set(doc(db, 'userHistories', item.userId), item));
+    playerTeamScores.forEach(item => setBatch.set(doc(db, 'playerTeamScores', `${item.userId}_${item.teamId}`), item));
+    weeklyTeamStandings.forEach(item => setBatch.set(doc(db, 'weeklyTeamStandings', `${item.week}_${item.teamId}`), item));
+    teamRecentResults.forEach(item => setBatch.set(doc(db, 'teamRecentResults', item.teamId), item));
 
     await setBatch.commit();
 
