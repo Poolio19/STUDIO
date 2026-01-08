@@ -169,15 +169,20 @@ export default function AdminPage() {
                 homeTeamId: match.homeTeamId,
                 awayTeamId: match.awayTeamId,
                 matchDate: match.matchDate,
-                homeScore: parseInt(score.homeScore),
-                awayScore: parseInt(score.awayScore),
+                homeScore: parseInt(score.homeScore, 10),
+                awayScore: parseInt(score.awayScore, 10),
             };
         });
+        
+        const validResults = results.filter(r => !isNaN(r.homeScore) && !isNaN(r.awayScore));
 
-        const input = {
-            results: results.filter(r => !isNaN(r.homeScore) && !isNaN(r.awayScore)),
-        };
+        if (validResults.length === 0) {
+            throw new Error('No valid scores entered for this week.');
+        }
+
+        const input = { results: validResults };
         const result = await updateMatchResults(input);
+
         if (!result.success) {
           throw new Error(`Failed to update matches for week ${selectedWeek}.`);
         }
