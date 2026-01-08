@@ -26,7 +26,7 @@ const updateMatchResultsFlow = ai.defineFlow(
     inputSchema: UpdateMatchResultsInputSchema,
     outputSchema: UpdateMatchResultsOutputSchema,
   },
-  async ({ week, results }) => {
+  async ({ results }) => {
     const db = getAdminFirestore('prempred-master');
     const batch = db.batch();
     const matchesCollectionRef = db.collection('matches');
@@ -38,10 +38,10 @@ const updateMatchResultsFlow = ai.defineFlow(
     validResults.forEach(result => {
       const docRef = matchesCollectionRef.doc(result.matchId);
       batch.set(docRef, { 
-          week: week,
-          homeTeamId: result.matchId.split('-')[1],
-          awayTeamId: result.matchId.split('-')[2],
-          matchDate: new Date().toISOString(), // This is a placeholder as date is not passed
+          week: result.week,
+          homeTeamId: result.homeTeamId,
+          awayTeamId: result.awayTeamId,
+          matchDate: result.matchDate,
           homeScore: result.homeScore, 
           awayScore: result.awayScore 
       }, { merge: true });
@@ -51,7 +51,7 @@ const updateMatchResultsFlow = ai.defineFlow(
       await batch.commit();
       return { success: true, updatedCount: validResults.length };
     } catch (error) {
-      console.error(`Error updating match results for week ${week}:`, error);
+      console.error(`Error updating match results:`, error);
       throw new Error('Failed to update match results.');
     }
   }

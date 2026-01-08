@@ -5,12 +5,15 @@ import { z } from 'zod';
 
 const MatchResultSchema = z.object({
     matchId: z.string(),
+    week: z.number().int(),
+    homeTeamId: z.string(),
+    awayTeamId: z.string(),
     homeScore: z.number().int(),
     awayScore: z.number().int(),
+    matchDate: z.string(),
 });
 
 export const UpdateMatchResultsInputSchema = z.object({
-  week: z.number().int(),
   results: z.array(MatchResultSchema),
 });
 export type UpdateMatchResultsInput = z.infer<

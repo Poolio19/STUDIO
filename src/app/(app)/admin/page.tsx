@@ -214,14 +214,20 @@ export default function AdminPage() {
     });
 
     try {
-        const results = Object.entries(scores).map(([matchId, score]) => ({
-            matchId: matchId,
-            homeScore: parseInt(score.homeScore),
-            awayScore: parseInt(score.awayScore),
-        }));
+        const results = Object.entries(scores).map(([matchId, score]) => {
+            const match = weekFixtures.find(f => f.id === matchId)!;
+            return {
+                matchId: matchId,
+                week: match.week,
+                homeTeamId: match.homeTeamId,
+                awayTeamId: match.awayTeamId,
+                matchDate: match.matchDate,
+                homeScore: parseInt(score.homeScore),
+                awayScore: parseInt(score.awayScore),
+            };
+        });
 
         const input = {
-            week: selectedWeek,
             results: results.filter(r => !isNaN(r.homeScore) && !isNaN(r.awayScore)),
         };
         const result = await updateMatchResults(input);
@@ -280,46 +286,39 @@ export default function AdminPage() {
     setIsUpdatingMatches(true);
     toast({
       title: 'Updating All Match Results...',
-      description: 'Sending all fixture data to the server for a safe update.',
+      description: 'Sending all fixture data to the server for a safe, non-destructive update.',
     });
-
+  
     try {
-      const resultsByWeek = matches.reduce((acc, match) => {
-        const week = match.week;
-        if (!acc[week]) {
-          acc[week] = [];
-        }
-        acc[week].push({
-          matchId: `${match.week}-${match.homeTeamId}-${match.awayTeamId}`,
-          homeScore: match.homeScore,
-          awayScore: match.awayScore,
-        });
-        return acc;
-      }, {} as { [week: number]: { matchId: string; homeScore: number; awayScore: number }[] });
-
-      let totalUpdated = 0;
-      for (const week in resultsByWeek) {
-        if (parseInt(week, 10) === 0) continue;
-        const input = {
-          week: parseInt(week),
-          results: resultsByWeek[week],
-        };
-        const result = await updateMatchResults(input);
-        if (!result.success) {
-          throw new Error(`Failed to update matches for week ${week}.`);
-        }
-        totalUpdated += result.updatedCount;
+      const allResults = matches.map(match => ({
+        matchId: `${match.week}-${match.homeTeamId}-${match.awayTeamId}`,
+        week: match.week,
+        homeTeamId: match.homeTeamId,
+        awayTeamId: match.awayTeamId,
+        matchDate: match.matchDate,
+        homeScore: match.homeScore,
+        awayScore: match.awayScore,
+      }));
+  
+      const input = {
+        results: allResults,
+      };
+  
+      const result = await updateMatchResults(input);
+  
+      if (!result.success) {
+        throw new Error('The bulk match update process failed on the server.');
       }
-
+  
       toast({
         title: 'All Match Results Updated!',
-        description: `${totalUpdated} match records were successfully updated in the database.`,
+        description: `${result.updatedCount} match records were successfully updated in the database.`,
       });
     } catch (error: any) {
-      console.error('Error updating match results:', error);
+      console.error('Error in bulk updating match results:', error);
       toast({
         variant: 'destructive',
-        title: 'Update Failed',
+        title: 'Bulk Update Failed',
         description: error.message || 'An unexpected error occurred while updating matches.',
       });
     } finally {
@@ -421,8 +420,8 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                  <h3 className="font-semibold">Update All Match Results</h3>
-                  <p className="text-sm text-muted-foreground mb-2">Safely adds or updates all match results from the local data file. This is non-destructive.</p>
+                  <h3 className="font-semibold">Sync All Local Matches to DB</h3>
+                  <p className="text-sm text-muted-foreground mb-2">Safely adds or updates all match results from the local data file to the database. This is non-destructive.</p>
                   <Button onClick={handleBulkUpdateMatches} disabled={isUpdatingMatches || !firestore}>
                     {isUpdatingMatches ? (
                       <>
@@ -430,12 +429,12 @@ export default function AdminPage() {
                         Updating All Matches...
                       </>
                     ) : (
-                      'Bulk Update All Matches'
+                      'Sync All Local Matches'
                     )}
                   </Button>
               </div>
               <div>
-                  <h3 className="font-semibold text-red-600">Purge and Import All Data</h3>
+                  <h3 className="font-semibold text-red-600">Purge and Re-Import All Data</h3>
                   <p className="text-sm text-muted-foreground mb-2">
                       <span className="font-bold text-red-500">Destructive:</span> Deletes all data and replaces it with the initial dataset. Use to reset the app to a clean state.
                   </p>
@@ -446,7 +445,7 @@ export default function AdminPage() {
                           Importing Data...
                       </>
                       ) : (
-                      'Purge and Import All Data'
+                      'Purge and Re-Import All Data'
                       )}
                   </Button>
               </div>
