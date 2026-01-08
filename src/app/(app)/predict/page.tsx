@@ -17,6 +17,7 @@ import { useUser, useCollection, useDoc, useFirestore, useMemoFirebase } from '@
 import { collection, doc, query } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent } from '@/components/ui/card';
+import { ArrowDown, ArrowUp, Minus } from 'lucide-react';
 
 const predictionSchema = z.object({
   id: z.string(),
@@ -34,6 +35,41 @@ const formSchema = z.object({
 });
 
 type PredictionItem = z.infer<typeof predictionSchema>;
+
+const RankDifference = ({ diff }: { diff: number }) => {
+  const Icon = diff > 0 ? ArrowDown : diff < 0 ? ArrowUp : Minus;
+  const color = diff > 0 ? 'text-red-500' : diff < 0 ? 'text-green-500' : 'text-gray-400';
+
+  return (
+    <div className={cn("flex flex-col items-center justify-center h-[53px]", color)}>
+      <Icon className="size-4" />
+      <span className="text-xs font-bold">{Math.abs(diff)}</span>
+    </div>
+  );
+};
+
+const TeamRow = ({ team, rank, children }: { team: any; rank: number, children?: React.ReactNode }) => {
+  const TeamIcon = Icons[team.logo as IconName] || Icons.match;
+  const isLiverpool = team.id === 'team_12';
+  return (
+    <TableRow
+      key={team.id}
+      className="h-[53px]"
+      style={{ backgroundColor: team.bgColourFaint, color: team.textColour }}
+    >
+      <TableCell className="font-medium w-[50px] opacity-80 rounded-l-md">{rank}</TableCell>
+      <TableCell className="w-[48px] p-0">
+        <div className="flex items-center justify-center h-full">
+          <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}>
+            <TeamIcon className={cn("size-5", isLiverpool && "scale-x-[-1]")} style={{ color: team.iconColour }} />
+          </div>
+        </div>
+      </TableCell>
+      <TableCell className="font-medium">{team.name}</TableCell>
+      {children}
+    </TableRow>
+  );
+};
 
 export default function PredictPage() {
   const { toast } = useToast();
@@ -64,6 +100,20 @@ export default function PredictPage() {
       .filter((item): item is NonNullable<typeof item> => item !== null)
       .sort((a, b) => a.rank - b.rank);
   }, [teams, previousSeasonStandings]);
+
+  const currentStandingsWithTeamData = React.useMemo(() => {
+    if (!teams || !currentStandings) return [];
+
+    const teamMap = new Map(teams.map(t => [t.id, t]));
+    
+    return currentStandings
+        .map(standing => {
+            const team = teamMap.get(standing.teamId);
+            return team ? { ...standing, ...team } : null;
+        })
+        .filter((item): item is NonNullable<typeof item> => item !== null)
+        .sort((a, b) => a.rank - b.rank);
+  }, [teams, currentStandings]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -159,6 +209,12 @@ export default function PredictPage() {
   
   const isLoading = isUserLoading || teamsLoading || prevStandingsLoading || predictionLoading || currentStandingsLoading;
 
+  const getRankMap = (standings: any[]) => new Map(standings.map((s, i) => [s.teamId, i + 1]));
+
+  const predRankMap = getRankMap(items);
+  const currentRankMap = getRankMap(currentStandingsWithTeamData);
+  const prevRankMap = getRankMap(sortedPreviousStandings);
+
   if (isLoading && items.length === 0) {
     return <div className="flex justify-center items-center h-full">Loading your predictions...</div>;
   }
@@ -176,9 +232,10 @@ export default function PredictPage() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
-            <div className="lg:col-span-3 flex flex-col">
-              <div className="font-medium pb-2 text-muted-foreground">
+          <div className="grid grid-cols-1 lg:grid-cols-[3fr_auto_3fr_auto_3fr] gap-4 items-start">
+             {/* Your Prediction */}
+            <div className="flex flex-col">
+              <div className="font-medium pb-2 text-muted-foreground text-center">
                 {seasonStarted ? 'Your Submitted Prediction (2025-26)' : 'Your Prediction (2025-26)'}
               </div>
               <Card>
@@ -186,27 +243,7 @@ export default function PredictPage() {
                   {seasonStarted ? (
                     <Table>
                       <TableBody>
-                        {items.map((item, index) => {
-                          const TeamIcon = Icons[item.teamLogo as IconName] || Icons.match;
-                          const isLiverpool = item.id === 'team_12';
-                          return (
-                            <TableRow
-                              key={item.teamId}
-                              className="h-[53px]"
-                              style={{ backgroundColor: item.bgColourFaint, color: item.textColour }}
-                            >
-                              <TableCell className="font-medium w-12 text-center opacity-80 rounded-l-md">{index + 1}</TableCell>
-                              <TableCell className="w-12 p-0">
-                                <div className="flex items-center justify-center h-full">
-                                  <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: item.bgColourSolid }}>
-                                    <TeamIcon className={cn("size-5", isLiverpool && "scale-x-[-1]")} style={{ color: item.iconColour }} />
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell className="font-medium text-sm rounded-r-md pl-4">{item.teamName}</TableCell>
-                            </TableRow>
-                          );
-                        })}
+                        {items.map((item, index) => <TeamRow key={item.teamId} team={item} rank={index + 1} />)}
                       </TableBody>
                     </Table>
                   ) : (
@@ -238,7 +275,60 @@ export default function PredictPage() {
                 </CardContent>
               </Card>
             </div>
-            <div className="lg:col-span-2 flex flex-col">
+
+            {/* Difference 1 */}
+            <div className="flex flex-col">
+              <div className="font-medium pb-2 text-muted-foreground invisible">Diff</div>
+              <div className="relative">
+                {items.map((item) => {
+                  const predRank = predRankMap.get(item.teamId);
+                  const currentRank = currentRankMap.get(item.teamId);
+                  const diff = (predRank !== undefined && currentRank !== undefined) ? currentRank - predRank : 0;
+                  return <RankDifference key={item.teamId} diff={diff} />;
+                })}
+              </div>
+            </div>
+            
+            {/* Current Standings */}
+            <div className="flex flex-col">
+              <div className="font-medium pb-2 text-muted-foreground flex justify-between">
+                <span>Current Standings (2025-26)</span>
+                <div className="flex">
+                  <span className="w-16 text-right">Pts</span>
+                  <span className="w-16 text-right">GD</span>
+                </div>
+              </div>
+              <Card>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableBody>
+                      {currentStandingsWithTeamData.map(team => (
+                        <TeamRow key={team.id} team={team} rank={team.rank}>
+                           <TableCell className="text-right font-semibold w-16">{team.points}</TableCell>
+                           <TableCell className="text-right w-16 rounded-r-md">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
+                        </TeamRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Difference 2 */}
+             <div className="flex flex-col">
+              <div className="font-medium pb-2 text-muted-foreground invisible">Diff</div>
+              <div className="relative">
+                {currentStandingsWithTeamData.map((team) => {
+                  const currentRank = currentRankMap.get(team.teamId);
+                  const prevRank = prevRankMap.get(team.teamId);
+                  const diff = (currentRank !== undefined && prevRank !== undefined) ? prevRank - currentRank : 0;
+                  return <RankDifference key={team.teamId} diff={diff} />;
+                })}
+              </div>
+            </div>
+
+            {/* Last Season */}
+            <div className="flex flex-col">
               <div className="font-medium pb-2 text-muted-foreground flex justify-between">
                 <span>Last Season (2024-25)</span>
                 <div className="flex">
@@ -248,39 +338,20 @@ export default function PredictPage() {
               </div>
               <Card>
                 <CardContent className="p-0">
-                  <Table className="h-full">
+                  <Table>
                     <TableBody>
-                      {sortedPreviousStandings.map(team => {
-                        if (!team) return null;
-                        const TeamIcon = Icons[team.logo as IconName] || Icons.match;
-                        const isLiverpool = team.id === 'team_12';
-                        return (
-                          <TableRow
-                            key={team.id}
-                            className="h-[53px]"
-                            style={{ backgroundColor: team.bgColourFaint, color: team.textColour }}
-                          >
-                            <TableCell className="font-medium w-[50px] opacity-80 rounded-l-md">{team.rank}</TableCell>
-                            <TableCell className="w-[48px] p-0">
-                              <div className="flex items-center justify-center h-full">
-                                <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}>
-                                  <TeamIcon className={cn("size-5", isLiverpool && "scale-x-[-1]")} style={{ color: team.iconColour }} />
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <span className="truncate">{team.name}</span>
-                            </TableCell>
-                            <TableCell className="text-right font-semibold w-16">{team.points}</TableCell>
-                            <TableCell className="text-right w-16 rounded-r-md">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
-                          </TableRow>
-                        );
-                      })}
+                      {sortedPreviousStandings.map(team => (
+                         <TeamRow key={team.id} team={team} rank={team.rank}>
+                           <TableCell className="text-right font-semibold w-16">{team.points}</TableCell>
+                           <TableCell className="text-right w-16 rounded-r-md">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
+                         </TeamRow>
+                      ))}
                     </TableBody>
                   </Table>
                 </CardContent>
               </Card>
             </div>
+
           </div>
           {!seasonStarted && (
             <Button type="submit">Submit Final Prediction</Button>
