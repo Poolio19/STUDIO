@@ -19,6 +19,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useFirebase } from '@/firebase';
@@ -36,8 +45,11 @@ import {
   playerTeamScores,
   weeklyTeamStandings,
   teamRecentResults,
+  type Match,
+  type Team
 } from '@/lib/data';
 import { collection, doc, writeBatch, getDocs, QuerySnapshot, DocumentData, Firestore } from 'firebase/firestore';
+import { Icons, IconName } from '@/components/icons';
 
 async function importClientSideData(db: Firestore | null): Promise<{ success: boolean; message: string }> {
   if (!db) {
@@ -53,7 +65,6 @@ async function importClientSideData(db: Firestore | null): Promise<{ success: bo
         'userHistories', 'playerTeamScores', 'weeklyTeamStandings', 'teamRecentResults'
     ];
     
-    // Helper function to delete all documents in a collection
     const deleteCollection = async (collectionName: string) => {
         const collectionRef = collection(db, collectionName);
         const snapshot: QuerySnapshot<DocumentData> = await getDocs(collectionRef);
@@ -63,19 +74,15 @@ async function importClientSideData(db: Firestore | null): Promise<{ success: bo
         console.log(`Queued deletion for all ${snapshot.size} documents in '${collectionName}'.`);
     };
 
-    // Queue delete operations for all documents in all collections first
     for (const name of collectionNames) {
         await deleteCollection(name);
     }
     
-    // Now, queue the set operations to add the new data
-    // Teams
     teams.forEach(item => {
       const docRef = doc(db, 'teams', item.id);
       batch.set(docRef, item);
     });
 
-    // Standings
     standings.forEach(item => {
       if (item.teamId) {
         const docRef = doc(db, 'standings', item.teamId);
@@ -83,13 +90,11 @@ async function importClientSideData(db: Firestore | null): Promise<{ success: bo
       }
     });
     
-    // Users
     fullUsers.forEach(item => {
         const docRef = doc(db, 'users', item.id);
         batch.set(docRef, item);
     });
 
-    // Predictions
     fullPredictions.forEach(item => {
       if (item.userId) {
         const docRef = doc(db, 'predictions', item.userId);
@@ -97,58 +102,49 @@ async function importClientSideData(db: Firestore | null): Promise<{ success: bo
       }
     });
 
-    // Matches
     matches.forEach(item => {
       const matchId = `${item.week}-${item.homeTeamId}-${item.awayTeamId}`;
       const docRef = doc(db, 'matches', matchId);
       batch.set(docRef, item);
     });
 
-    // Previous Season Standings
     previousSeasonStandings.forEach(item => {
       const docRef = doc(db, 'previousSeasonStandings', item.teamId);
       batch.set(docRef, item);
     });
 
-    // Season Months
     seasonMonths.forEach(item => {
       const docRef = doc(db, 'seasonMonths', item.id);
       batch.set(docRef, item);
     });
 
-    // Monthly MimoM
     monthlyMimoM.forEach(item => {
       const docRef = doc(db, 'monthlyMimoM', item.id);
       batch.set(docRef, item);
     });
 
-    // User Histories
     fullUserHistories.forEach(item => {
       const docRef = doc(db, 'userHistories', item.userId);
       batch.set(docRef, item);
     });
     
-    // Player Team Scores
     playerTeamScores.forEach(item => {
         const docId = `${item.userId}_${item.teamId}`;
         const docRef = doc(db, 'playerTeamScores', docId);
         batch.set(docRef, item);
     });
 
-    // Weekly Team Standings
     weeklyTeamStandings.forEach(item => {
         const docId = `${item.week}_${item.teamId}`;
         const docRef = doc(db, 'weeklyTeamStandings', docId);
         batch.set(docRef, item);
     });
 
-    // Team Recent Results
     teamRecentResults.forEach(item => {
         const docRef = doc(db, 'teamRecentResults', item.teamId);
         batch.set(docRef, item);
     });
 
-    // Atomically commit all deletions and additions
     await batch.commit();
 
     return { success: true, message: 'All application data has been purged and re-imported successfully.' };
@@ -159,12 +155,96 @@ async function importClientSideData(db: Firestore | null): Promise<{ success: bo
   }
 }
 
+type EditableMatch = Match & {
+    id: string;
+    homeTeam: Team;
+    awayTeam: Team;
+};
+
 export default function AdminPage() {
   const { toast } = useToast();
   const { firestore } = useFirebase();
   const [isImporting, setIsImporting] = React.useState(false);
   const [isUpdatingMatches, setIsUpdatingMatches] = React.useState(false);
   const [isAlertOpen, setIsAlertOpen] = React.useState(false);
+
+  const [selectedWeek, setSelectedWeek] = React.useState<number | null>(null);
+  const [weekFixtures, setWeekFixtures] = React.useState<EditableMatch[]>([]);
+  const [scores, setScores] = React.useState<{[matchId: string]: {homeScore: string, awayScore: string}}>({});
+
+  const teamMap = React.useMemo(() => new Map(teams.map(t => [t.id, t])), []);
+
+  const handleWeekChange = (weekStr: string) => {
+    const week = parseInt(weekStr);
+    setSelectedWeek(week);
+    const fixturesForWeek = matches.filter(m => m.week === week).map(match => {
+        const matchId = `${match.week}-${match.homeTeamId}-${match.awayTeamId}`;
+        return {
+            ...match,
+            id: matchId,
+            homeTeam: teamMap.get(match.homeTeamId)!,
+            awayTeam: teamMap.get(match.awayTeamId)!,
+        };
+    });
+    setWeekFixtures(fixturesForWeek);
+
+    const initialScores = fixturesForWeek.reduce((acc, match) => {
+        acc[match.id] = { homeScore: String(match.homeScore), awayScore: String(match.awayScore) };
+        return acc;
+    }, {} as {[matchId: string]: {homeScore: string, awayScore: string}});
+    setScores(initialScores);
+  };
+
+  const handleScoreChange = (matchId: string, team: 'home' | 'away', value: string) => {
+    setScores(prev => ({
+        ...prev,
+        [matchId]: {
+            ...prev[matchId],
+            [team === 'home' ? 'homeScore' : 'awayScore']: value,
+        }
+    }));
+  };
+
+  const handleSaveWeekResults = async () => {
+    if (selectedWeek === null) return;
+    setIsUpdatingMatches(true);
+    toast({
+      title: `Updating Week ${selectedWeek} Results...`,
+      description: 'Sending fixture data to the server for a safe update.',
+    });
+
+    try {
+        const results = Object.entries(scores).map(([matchId, score]) => ({
+            matchId: matchId,
+            homeScore: parseInt(score.homeScore),
+            awayScore: parseInt(score.awayScore),
+        }));
+
+        const input = {
+            week: selectedWeek,
+            results: results.filter(r => !isNaN(r.homeScore) && !isNaN(r.awayScore)),
+        };
+        const result = await updateMatchResults(input);
+        if (!result.success) {
+          throw new Error(`Failed to update matches for week ${selectedWeek}.`);
+        }
+
+        toast({
+            title: `Week ${selectedWeek} Updated!`,
+            description: `${result.updatedCount} match records were successfully updated.`,
+        });
+
+    } catch (error: any) {
+         console.error(`Error updating match results for week ${selectedWeek}:`, error);
+        toast({
+            variant: 'destructive',
+            title: 'Update Failed',
+            description: error.message || 'An unexpected error occurred.',
+        });
+    } finally {
+        setIsUpdatingMatches(false);
+    }
+  };
 
   const performImport = async () => {
     setIsImporting(true);
@@ -196,15 +276,14 @@ export default function AdminPage() {
     setIsAlertOpen(true);
   };
   
-  const handleUpdateMatches = async () => {
+  const handleBulkUpdateMatches = async () => {
     setIsUpdatingMatches(true);
     toast({
-      title: 'Updating Match Results...',
-      description: 'Sending fixture data to the server for a safe update.',
+      title: 'Updating All Match Results...',
+      description: 'Sending all fixture data to the server for a safe update.',
     });
 
     try {
-      // Group results by week
       const resultsByWeek = matches.reduce((acc, match) => {
         const week = match.week;
         if (!acc[week]) {
@@ -220,6 +299,7 @@ export default function AdminPage() {
 
       let totalUpdated = 0;
       for (const week in resultsByWeek) {
+        if (parseInt(week, 10) === 0) continue;
         const input = {
           week: parseInt(week),
           results: resultsByWeek[week],
@@ -232,7 +312,7 @@ export default function AdminPage() {
       }
 
       toast({
-        title: 'Match Results Updated!',
+        title: 'All Match Results Updated!',
         description: `${totalUpdated} match records were successfully updated in the database.`,
       });
     } catch (error: any) {
@@ -260,49 +340,118 @@ export default function AdminPage() {
           </p>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <Card>
+        <Card>
             <CardHeader>
-              <CardTitle>Update Match Results</CardTitle>
-              <CardDescription>
-                Safely add or update match results in Firestore. This action is non-destructive and will not affect any other data collections like users or predictions.
-              </CardDescription>
+                <CardTitle>Update Match Results</CardTitle>
+                <CardDescription>
+                    Select a week to view its fixtures, enter the scores, and save the results to the database. Use a value of -1 for scores that are not yet final.
+                </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button onClick={handleUpdateMatches} disabled={isUpdatingMatches || !firestore}>
-                {isUpdatingMatches ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Updating Matches...
-                  </>
-                ) : (
-                  'Update Match Results'
+            <CardContent className="space-y-4">
+                 <Select onValueChange={handleWeekChange}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select a week" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {Array.from({ length: 38 }, (_, i) => i + 1).map(week => (
+                            <SelectItem key={week} value={String(week)}>Week {week}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
+                {selectedWeek !== null && (
+                    <div className="space-y-4 pt-4">
+                        <h3 className="font-semibold">Fixtures for Week {selectedWeek}</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           {weekFixtures.map(match => {
+                                const HomeIcon = Icons[match.homeTeam.logo as IconName] || Icons.match;
+                                const AwayIcon = Icons[match.awayTeam.logo as IconName] || Icons.match;
+                                return (
+                                <div key={match.id} className="flex items-center gap-2 p-2 border rounded-lg">
+                                     <div className="flex items-center gap-2 justify-end w-2/5">
+                                        <Label htmlFor={`${match.id}-home`} className="text-right">{match.homeTeam.name}</Label>
+                                        <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.homeTeam.bgColourSolid }}>
+                                            <HomeIcon className="size-5" style={{ color: match.homeTeam.iconColour }} />
+                                        </div>
+                                    </div>
+                                    <Input
+                                        id={`${match.id}-home`}
+                                        type="number"
+                                        value={scores[match.id]?.homeScore ?? ''}
+                                        onChange={(e) => handleScoreChange(match.id, 'home', e.target.value)}
+                                        className="w-16 text-center"
+                                    />
+                                    <span>-</span>
+                                     <Input
+                                        id={`${match.id}-away`}
+                                        type="number"
+                                        value={scores[match.id]?.awayScore ?? ''}
+                                        onChange={(e) => handleScoreChange(match.id, 'away', e.target.value)}
+                                        className="w-16 text-center"
+                                    />
+                                    <div className="flex items-center gap-2 w-2/5">
+                                        <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.awayTeam.bgColourSolid }}>
+                                            <AwayIcon className="size-5" style={{ color: match.awayTeam.iconColour }} />
+                                        </div>
+                                        <Label htmlFor={`${match.id}-away`}>{match.awayTeam.name}</Label>
+                                    </div>
+                                </div>
+                            )})}
+                        </div>
+                        <Button onClick={handleSaveWeekResults} disabled={isUpdatingMatches || !firestore}>
+                            {isUpdatingMatches ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Saving...
+                                </>
+                            ) : `Save Week ${selectedWeek} Results`}
+                        </Button>
+                    </div>
                 )}
-              </Button>
+
             </CardContent>
-          </Card>
-          
-          <Card>
-              <CardHeader>
-              <CardTitle>Purge and Import All Data</CardTitle>
-              <CardDescription>
-                  This is a destructive action. It will delete all data in your database and replace it with the initial data set from the code. Use this only to reset your app to a clean state.
-              </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="destructive" onClick={handleDataImport} disabled={isImporting || !firestore}>
-                    {isImporting ? (
-                    <>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Bulk Data Operations</CardTitle>
+                <CardDescription>
+                    Use these actions to perform large-scale data updates. Be cautious as some actions are destructive.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                  <h3 className="font-semibold">Update All Match Results</h3>
+                  <p className="text-sm text-muted-foreground mb-2">Safely adds or updates all match results from the local data file. This is non-destructive.</p>
+                  <Button onClick={handleBulkUpdateMatches} disabled={isUpdatingMatches || !firestore}>
+                    {isUpdatingMatches ? (
+                      <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Importing Data...
-                    </>
+                        Updating All Matches...
+                      </>
                     ) : (
-                    'Purge and Import All Data'
+                      'Bulk Update All Matches'
                     )}
-                </Button>
-              </CardContent>
-          </Card>
-        </div>
+                  </Button>
+              </div>
+              <div>
+                  <h3 className="font-semibold text-red-600">Purge and Import All Data</h3>
+                  <p className="text-sm text-muted-foreground mb-2">
+                      <span className="font-bold text-red-500">Destructive:</span> Deletes all data and replaces it with the initial dataset. Use to reset the app to a clean state.
+                  </p>
+                  <Button variant="destructive" onClick={handleDataImport} disabled={isImporting || !firestore}>
+                      {isImporting ? (
+                      <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Importing Data...
+                      </>
+                      ) : (
+                      'Purge and Import All Data'
+                      )}
+                  </Button>
+              </div>
+            </CardContent>
+        </Card>
       </div>
 
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
