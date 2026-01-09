@@ -1,3 +1,4 @@
+
 'use client';
 
 import { firebaseConfig } from '@/firebase/config';
@@ -21,7 +22,8 @@ export function initializeFirebase(): {
   const firestore = getFirestore(app);
   
   // Explicitly enable the network for Firestore. This is crucial for environments
-  // where the SDK might default to an offline state.
+  // where the SDK might default to an offline state. It returns a promise which
+  // we don't need to await here, as subsequent Firestore operations will be queued.
   enableNetwork(firestore).catch((err) => {
     console.error("Firebase: Failed to enable network.", err);
   });

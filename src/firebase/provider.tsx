@@ -21,7 +21,6 @@ interface UserAuthState {
 }
 
 export interface FirebaseContextState {
-  areServicesAvailable: boolean;
   firebaseApp: FirebaseApp | null;
   firestore: Firestore | null;
   auth: Auth | null;
@@ -71,7 +70,8 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
         if (firebaseUser) {
           setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
         } else {
-          // If no user is logged in, sign them in anonymously.
+          // If no user is logged in, sign them in anonymously. This is a common pattern for apps
+          // that need a stable UID for all visitors.
           signInAnonymously(auth).catch((error) => {
              console.error("FirebaseProvider: Anonymous sign-in failed:", error);
              setUserAuthState({ user: null, isUserLoading: false, userError: error });
@@ -86,18 +86,12 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     return () => unsubscribe();
   }, [auth]);
 
-  const contextValue = useMemo((): FirebaseContextState => {
-    const servicesAvailable = !!(firebaseApp && firestore && auth);
-    return {
-      areServicesAvailable: servicesAvailable,
-      firebaseApp: servicesAvailable ? firebaseApp : null,
-      firestore: servicesAvailable ? firestore : null,
-      auth: servicesAvailable ? auth : null,
-      user: userAuthState.user,
-      isUserLoading: userAuthState.isUserLoading,
-      userError: userAuthState.userError,
-    };
-  }, [firebaseApp, firestore, auth, userAuthState]);
+  const contextValue = useMemo((): FirebaseContextState => ({
+    firebaseApp,
+    firestore,
+    auth,
+    ...userAuthState,
+  }), [firebaseApp, firestore, auth, userAuthState]);
 
   return (
     <FirebaseContext.Provider value={contextValue}>
@@ -107,17 +101,19 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   );
 };
 
-export const useFirebase = (): FirebaseServicesAndUser => {
+function useFirebaseContext() {
   const context = useContext(FirebaseContext);
-
   if (context === undefined) {
-    throw new Error('useFirebase must be used within a FirebaseProvider.');
+    throw new Error('useFirebaseContext must be used within a FirebaseProvider.');
   }
+  return context;
+}
 
-  if (!context.areServicesAvailable || !context.firebaseApp || !context.firestore || !context.auth) {
-    throw new Error('Firebase core services not available. Check FirebaseProvider props.');
+export const useFirebase = (): FirebaseServicesAndUser => {
+  const context = useFirebaseContext();
+  if (!context.firebaseApp || !context.firestore || !context.auth) {
+    throw new Error('Firebase core services not available. Check FirebaseProvider setup.');
   }
-
   return {
     firebaseApp: context.firebaseApp,
     firestore: context.firestore,
@@ -128,28 +124,12 @@ export const useFirebase = (): FirebaseServicesAndUser => {
   };
 };
 
-export const useAuth = (): Auth | null => {
-  const context = useContext(FirebaseContext);
-   if (context === undefined) {
-    throw new Error('useAuth must be used within a FirebaseProvider.');
-  }
-  return context.auth;
-};
-
-export const useFirestore = (): Firestore | null => {
-  const context = useContext(FirebaseContext);
-   if (context === undefined) {
-    throw new Error('useFirestore must be used within a FirebaseProvider.');
-  }
-  return context.firestore;
-};
-
-export const useFirebaseApp = (): FirebaseApp | null => {
-  const context = useContext(FirebaseContext);
-   if (context === undefined) {
-    throw new Error('useFirebaseApp must be used within a FirebaseProvider.');
-  }
-  return context.firebaseApp;
+export const useAuth = (): Auth | null => useFirebaseContext().auth;
+export const useFirestore = (): Firestore | null => useFirebaseContext().firestore;
+export const useFirebaseApp = (): FirebaseApp | null => useFirebaseContext().firebaseApp;
+export const useUser = (): UserHookResult => {
+    const { user, isUserLoading, userError } = useFirebaseContext();
+    return { user, isUserLoading, userError };
 };
 
 type MemoFirebase <T> = T & {__memo?: boolean};
@@ -163,11 +143,3 @@ export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | 
   
   return memoized;
 }
-
-export const useUser = (): UserHookResult => {
-  const context = useContext(FirebaseContext);
-   if (context === undefined) {
-    throw new Error('useUser must be used within a FirebaseProvider.');
-  }
-  return { user: context.user, isUserLoading: context.isUserLoading, userError: context.userError };
-};
