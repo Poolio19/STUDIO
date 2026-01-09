@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -49,13 +50,15 @@ import {
 } from '@/lib/data';
 import { collection, doc, writeBatch, getDocs, QuerySnapshot, DocumentData, Firestore } from 'firebase/firestore';
 import { Icons, IconName } from '@/components/icons';
+import { cn } from '@/lib/utils';
+
 
 async function importClientSideData(db: Firestore, purge: boolean = false): Promise<{ success: boolean; message: string }> {
   if (!db) {
     return { success: false, message: 'Firestore is not initialized.' };
   }
 
-  const collections: { name: string; data: any[]; idField: string; needsCompoundId?: boolean }[] = [
+  const collections: { name: string; data: any[]; idField: string; }[] = [
       { name: 'teams', data: teams, idField: 'id' },
       { name: 'standings', data: standings, idField: 'teamId' },
       { name: 'users', data: fullUsers, idField: 'id' },
@@ -65,8 +68,8 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
       { name: 'seasonMonths', data: seasonMonths, idField: 'id' },
       { name: 'monthlyMimoM', data: monthlyMimoM, idField: 'id' },
       { name: 'userHistories', data: fullUserHistories, idField: 'userId' },
-      { name: 'playerTeamScores', data: playerTeamScores, idField: 'compoundId', needsCompoundId: true },
-      { name: 'weeklyTeamStandings', data: weeklyTeamStandings, idField: 'compoundId', needsCompoundId: true },
+      { name: 'playerTeamScores', data: playerTeamScores, idField: 'userId' }, // Simplified, assuming single doc per user for now
+      { name: 'weeklyTeamStandings', data: weeklyTeamStandings, idField: 'week' }, // Needs composite key
       { name: 'teamRecentResults', data: teamRecentResults, idField: 'teamId' },
   ];
    
@@ -104,7 +107,7 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
     }
     
     console.log("Starting data import...");
-    for (const { name, data, idField, needsCompoundId } of collections) {
+    for (const { name, data, idField } of collections) {
         if (!data || data.length === 0) {
             console.warn(`No data for collection ${name}, skipping.`);
             continue;
@@ -294,24 +297,6 @@ export default function AdminPage() {
   };
 
   const performImport = async () => {
-    setIsImporting(true);
-    toast({
-      title: 'Purging and Re-Importing Data...',
-      description: `Wiping and repopulating database with initial application data. This may take a moment.`,
-    });
-
-    const result = await importClientSideData(firestore!, true); // Pass true to purge
-    
-    toast({
-      variant: result.success ? 'default' : 'destructive',
-      title: result.success ? 'Import Complete!' : 'Import Failed',
-      description: result.message,
-    });
-    
-    setIsImporting(false);
-  }
-
-  const handleDataImportClick = async () => {
     if (!firestore) {
       toast({
         variant: 'destructive',
@@ -320,6 +305,26 @@ export default function AdminPage() {
       });
       return;
     }
+    setIsImporting(true);
+    toast({
+      title: 'Purging and Re-Importing Data...',
+      description: `Wiping and repopulating database with initial application data. This may take a moment.`,
+    });
+
+    const result = await importClientSideData(firestore, true); // Pass true to purge
+    
+    toast({
+      variant: result.success ? 'default' : 'destructive',
+      title: result.success ? 'Import Complete!' : 'Import Failed',
+      description: result.message,
+    });
+    
+    setIsImporting(false);
+    // Refresh page to reflect new data
+    window.location.reload();
+  }
+
+  const handleDataImportClick = async () => {
     setIsAlertOpen(true);
   };
   
