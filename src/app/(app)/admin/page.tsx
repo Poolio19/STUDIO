@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -47,7 +48,7 @@ import {
   type Match,
   type Team
 } from '@/lib/data';
-import { collection, doc, writeBatch, getDocs, QuerySnapshot, DocumentData, Firestore } from 'firebase/firestore';
+import { collection, doc, writeBatch, getDocs, Firestore } from 'firebase/firestore';
 import { Icons, IconName } from '@/components/icons';
 import { cn } from '@/lib/utils';
 
@@ -57,7 +58,7 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
     return { success: false, message: 'Firestore is not initialized.' };
   }
 
-  const collections: { name: string; data: any[]; idField: string; }[] = [
+  const collections: { name: string; data: any[]; idField: string | string[]; }[] = [
       { name: 'teams', data: teams, idField: 'id' },
       { name: 'standings', data: standings, idField: 'teamId' },
       { name: 'users', data: fullUsers, idField: 'id' },
@@ -67,8 +68,8 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
       { name: 'seasonMonths', data: seasonMonths, idField: 'id' },
       { name: 'monthlyMimoM', data: monthlyMimoM, idField: 'id' },
       { name: 'userHistories', data: fullUserHistories, idField: 'userId' },
-      { name: 'playerTeamScores', data: playerTeamScores, idField: 'userId' },
-      { name: 'weeklyTeamStandings', data: weeklyTeamStandings, idField: 'week' },
+      { name: 'playerTeamScores', data: playerTeamScores, idField: ['userId', 'teamId'] },
+      { name: 'weeklyTeamStandings', data: weeklyTeamStandings, idField: ['week', 'teamId'] },
       { name: 'teamRecentResults', data: teamRecentResults, idField: 'teamId' },
   ];
    
@@ -79,26 +80,25 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
         const collectionRef = collection(db, name);
         const snapshot = await getDocs(collectionRef);
         if (snapshot.empty) {
-          console.log(`Collection '${name}' is already empty. Skipping delete.`);
+          console.log(`Collection '${name}' is already empty. Skipping purge.`);
           continue;
         }
         
-        let deleteBatch = writeBatch(db);
-        let deleteCount = 0;
-        console.log(`Preparing to delete ${snapshot.size} documents from '${name}'...`);
+        let batch = writeBatch(db);
+        let count = 0;
         for (const document of snapshot.docs) {
-          deleteBatch.delete(document.ref);
-          deleteCount++;
-          if (deleteCount >= 499) { 
-            await deleteBatch.commit();
-            console.log(`Committed deletion of ${deleteCount} documents from '${name}'.`);
-            deleteBatch = writeBatch(db);
-            deleteCount = 0;
+          batch.delete(document.ref);
+          count++;
+          if (count === 499) {
+            await batch.commit();
+            console.log(`Committed deletion of ${count} documents from '${name}'.`);
+            batch = writeBatch(db);
+            count = 0;
           }
         }
-        if (deleteCount > 0) {
-          await deleteBatch.commit();
-          console.log(`Committed final deletion of ${deleteCount} documents from '${name}'.`);
+        if (count > 0) {
+          await batch.commit();
+          console.log(`Committed final deletion of ${count} documents from '${name}'.`);
         }
         console.log(`Purged collection: ${name}`);
       }
@@ -112,15 +112,13 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
             continue;
         }
       
-        let setBatch = writeBatch(db);
-        let setCount = 0;
+        let batch = writeBatch(db);
+        let count = 0;
         
         for (const item of data) {
-            let docId;
-            if (name === 'playerTeamScores') {
-                docId = `${item.userId}_${item.teamId}`;
-            } else if (name === 'weeklyTeamStandings') {
-                docId = `${item.week}_${item.teamId}`;
+            let docId: string;
+            if (Array.isArray(idField)) {
+                docId = idField.map(field => item[field]).join('_');
             } else {
                 docId = item[idField];
             }
@@ -131,24 +129,26 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
             }
             const docRef = doc(db, name, String(docId));
             
+            // Create a separate data object for Firestore to avoid modifying the original item.
             const itemData = {...item};
-            // Do not delete the idField for playerTeamScores and weeklyTeamStandings as they are composite keys
-            if (name !== 'playerTeamScores' && name !== 'weeklyTeamStandings') {
+            // Do not delete the idField for composite keys as they are part of the data.
+            if (!Array.isArray(idField)) {
                 delete itemData[idField];
             }
-            setBatch.set(docRef, itemData);
+            
+            batch.set(docRef, itemData);
 
-            setCount++;
-            if (setCount >= 499) {
-                await setBatch.commit();
-                console.log(`Committed ${setCount} documents to '${name}'.`);
-                setBatch = writeBatch(db);
-                setCount = 0;
+            count++;
+            if (count === 499) {
+                await batch.commit();
+                console.log(`Committed ${count} documents to '${name}'.`);
+                batch = writeBatch(db);
+                count = 0;
             }
         }
-        if (setCount > 0) {
-            await setBatch.commit();
-            console.log(`Committed final ${setCount} documents to '${name}'.`);
+        if (count > 0) {
+            await batch.commit();
+            console.log(`Committed final ${count} documents to '${name}'.`);
         }
         console.log(`Imported collection: ${name}`);
     }
@@ -348,21 +348,32 @@ export default function AdminPage() {
         throw new Error('No local match data found to sync.');
       }
       
-      const batch = writeBatch(firestore);
+      let batch = writeBatch(firestore);
       const matchesCollectionRef = collection(firestore, 'matches');
+      let count = 0;
       
-      matches.forEach(match => {
+      for (const match of matches) {
           const docRef = doc(matchesCollectionRef, match.id);
-          if (typeof match.homeScore === 'number' && typeof match.awayScore === 'number') {
+          // Only sync matches that have a final score
+          if (typeof match.homeScore === 'number' && match.homeScore !== -1 && 
+              typeof match.awayScore === 'number' && match.awayScore !== -1) {
             batch.set(docRef, match, { merge: true });
+            count++;
           }
-      });
+          if (count === 499) {
+            await batch.commit();
+            batch = writeBatch(firestore);
+            count = 0;
+          }
+      }
       
-      await batch.commit();
+      if (count > 0) {
+        await batch.commit();
+      }
   
       toast({
         title: 'All Match Results Synced!',
-        description: `${matches.length} match records were successfully synced to the database.`,
+        description: `${matches.filter(m => m.homeScore !== -1).length} match records were successfully synced to the database.`,
       });
     } catch (error: any) {
       console.error('Error in bulk updating match results:', error);
@@ -548,3 +559,5 @@ export default function AdminPage() {
     </>
   );
 }
+
+    
