@@ -44,6 +44,7 @@ import {
   Volleyball,
   LineChart,
   Spline,
+  ShieldCheck
 } from 'lucide-react';
 
 export const Icons = {
@@ -79,6 +80,7 @@ export const Icons = {
   rabbit: Rabbit,
   home: Home,
   shieldHalf: ShieldHalf,
+  shieldCheck: ShieldCheck,
   mapPin: MapPin,
   origami: Origami,
   sailboat: Sailboat,

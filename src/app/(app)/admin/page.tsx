@@ -10,27 +10,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useFirebase } from '@/firebase';
 import {
   teams,
@@ -44,15 +27,21 @@ import {
   fullUserHistories,
   playerTeamScores,
   weeklyTeamStandings,
+  teamRecentResults,
   type Match,
   type Team
 } from '@/lib/data';
 import { collection, doc, writeBatch, getDocs, Firestore, getDoc } from 'firebase/firestore';
 import { Icons, IconName } from '@/components/icons';
-import { cn } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
-
-async function importClientSideData(db: Firestore, purge: boolean = false): Promise<{ success: boolean; message: string }> {
+async function importClientSideData(db: Firestore, setProgress: (message: string) => void): Promise<{ success: boolean; message: string }> {
   if (!db) {
     return { success: false, message: 'Firestore is not initialized.' };
   }
@@ -73,90 +62,69 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
   ];
    
   try {
-    if (purge) {
-      console.log("Starting data purge...");
-      for (const { name } of collections) {
-        const collectionRef = collection(db, name);
-        const snapshot = await getDocs(collectionRef);
-        if (snapshot.empty) {
-          console.log(`Collection '${name}' is already empty. Skipping purge.`);
-          continue;
-        }
-        
-        // Firestore allows a maximum of 500 operations in a single batch.
-        const BATCH_SIZE = 499;
-        let batch = writeBatch(db);
-        let count = 0;
-        for (const document of snapshot.docs) {
-            batch.delete(document.ref);
-            count++;
-            if (count % BATCH_SIZE === 0) {
-                await batch.commit();
-                console.log(`Deleted ${count} documents from '${name}'.`);
-                batch = writeBatch(db);
-            }
-        }
-        // Commit any remaining documents in the last batch
-        if (count % BATCH_SIZE !== 0) {
-          await batch.commit();
-          console.log(`Deleted final ${count % BATCH_SIZE} documents from '${name}'.`);
-        }
-        console.log(`Purged collection: ${name}`);
+    setProgress("Purging existing data...");
+    for (const { name } of collections) {
+      const collectionRef = collection(db, name);
+      const snapshot = await getDocs(collectionRef);
+      if (snapshot.empty) {
+        continue;
       }
-      console.log("All collections have been purged.");
+      
+      const BATCH_SIZE = 499;
+      let i = 0;
+      while (i < snapshot.docs.length) {
+        const batch = writeBatch(db);
+        const chunk = snapshot.docs.slice(i, i + BATCH_SIZE);
+        chunk.forEach(document => {
+            batch.delete(document.ref);
+        });
+        await batch.commit();
+        i += BATCH_SIZE;
+      }
+      setProgress(`Purged collection: ${name}`);
     }
     
-    console.log("Starting data import...");
+    setProgress("Importing new data...");
     for (const { name, data, idField } of collections) {
         if (!data || data.length === 0) {
-            console.warn(`No data for collection ${name}, skipping.`);
             continue;
         }
       
         const BATCH_SIZE = 499;
-        let batch = writeBatch(db);
-        let count = 0;
-        for(const item of data) {
-            let docId: string;
-            if (Array.isArray(idField)) {
-                docId = idField.map(field => item[field]).join('_');
-            } else {
-                docId = item[idField];
-            }
+        let i = 0;
+        while(i < data.length) {
+            const batch = writeBatch(db);
+            const chunk = data.slice(i, i + BATCH_SIZE);
 
-            if (!docId) {
-                console.warn(`Missing ID for item in collection ${name}`, item);
-                continue; // Continue with the next item
-            }
+            chunk.forEach(item => {
+                let docId: string;
+                if (Array.isArray(idField)) {
+                    docId = idField.map(field => item[field]).join('_');
+                } else {
+                    docId = item[idField];
+                }
 
-            const docRef = doc(db, name, String(docId));
-            
-            // For composite keys, the ID fields are part of the data.
-            // For single keys, we typically don't want the ID field in the document data.
-            const itemData = {...item};
-            if (!Array.isArray(idField) && idField in itemData) {
-              delete itemData[idField as keyof typeof itemData];
-            }
-            
-            batch.set(docRef, itemData);
-            count++;
+                if (!docId) {
+                    console.warn(`Missing ID for item in collection ${name}`, item);
+                    return;
+                }
 
-            if(count % BATCH_SIZE === 0) {
-              await batch.commit();
-              console.log(`Committed a batch of documents to '${name}'.`);
-              batch = writeBatch(db);
-            }
-        }
-
-        if (count % BATCH_SIZE !== 0) {
+                const docRef = doc(db, name, String(docId));
+                
+                const itemData = {...item};
+                if (!Array.isArray(idField)) {
+                  delete itemData[idField as keyof typeof itemData];
+                }
+                
+                batch.set(docRef, itemData);
+            });
             await batch.commit();
-            console.log(`Committed final batch of documents to '${name}'.`);
+            i += BATCH_SIZE;
         }
-
-        console.log(`Imported collection: ${name}`);
+        setProgress(`Imported collection: ${name}`);
     }
 
-    return { success: true, message: `All application data has been ${purge ? 'purged and' : ''} re-imported successfully.` };
+    return { success: true, message: `All application data has been purged and re-imported successfully.` };
 
   } catch (error: any) {
     console.error('Client-side data operation failed:', error);
@@ -169,55 +137,45 @@ type EditableMatch = Match & {
     awayTeam: Team;
 };
 
-type DbStatus = {
-  status: 'pending' | 'success' | 'error';
-  message: string;
-};
-
 export default function AdminPage() {
   const { toast } = useToast();
   const { firestore } = useFirebase();
-  const [isImporting, setIsImporting] = React.useState(false);
+  const [isImporting, setIsImporting] = React.useState(true);
+  const [importProgress, setImportProgress] = React.useState("Initializing data reset...");
+  const [importCompleted, setImportCompleted] = React.useState(false);
+
   const [isUpdatingMatches, setIsUpdatingMatches] = React.useState(false);
-  const [isAlertOpen, setIsAlertOpen] = React.useState(false);
 
   const [selectedWeek, setSelectedWeek] = React.useState<number | null>(null);
   const [weekFixtures, setWeekFixtures] = React.useState<EditableMatch[]>([]);
   const [scores, setScores] = React.useState<{[matchId: string]: {homeScore: string, awayScore: string}}>({});
 
-  const [dbStatus, setDbStatus] = React.useState<DbStatus>({
-    status: 'pending',
-    message: 'Checking database connection...',
-  });
-
   const teamMap = React.useMemo(() => new Map(teams.map(t => [t.id, t])), []);
 
   React.useEffect(() => {
-    const checkDbConnection = async () => {
+    const performImport = async () => {
       if (!firestore) {
-        // We might need to wait a moment for the firestore instance to be available.
-        setTimeout(checkDbConnection, 100);
+        setTimeout(performImport, 100); // Wait for firestore
         return;
       }
-      try {
-        // Attempt to read a non-existent document. This is a lightweight operation.
-        // A 'permission-denied' error is still a sign of successful communication with the backend.
-        await getDoc(doc(firestore, '_internal_test_collection_do_not_delete', 'test_doc'));
-        setDbStatus({ status: 'success', message: 'Successfully connected to the database.' });
-      } catch (error: any) {
-        if (error.code === 'permission-denied') {
-             // If we get a permission denied error, it means we have successfully connected to the DB
-             // but the security rules are just blocking this specific read. For our check, this is a success.
-             setDbStatus({ status: 'success', message: 'Connection confirmed (permission-denied is OK).' });
-        } else {
-            console.error("Database connection check failed:", error);
-            setDbStatus({ status: 'error', message: `Database connection failed: ${error.message}` });
-        }
-      }
-    };
+      setIsImporting(true);
+      setImportCompleted(false);
 
-    checkDbConnection();
-  }, [firestore]);
+      const result = await importClientSideData(firestore, setImportProgress);
+      
+      toast({
+        variant: result.success ? 'default' : 'destructive',
+        title: result.success ? 'Import Complete!' : 'Import Failed',
+        description: result.message,
+      });
+      
+      setImportProgress(result.message);
+      setIsImporting(false);
+      setImportCompleted(result.success);
+    }
+
+    performImport();
+  }, [firestore, toast]);
 
 
   const handleWeekChange = (weekStr: string) => {
@@ -304,89 +262,6 @@ export default function AdminPage() {
     }
   };
 
-  const performImport = async () => {
-    if (!firestore) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Firestore is not initialized.',
-      });
-      return;
-    }
-    setIsImporting(true);
-    toast({
-      title: 'Purging and Re-Importing Data...',
-      description: `Wiping and repopulating database with initial application data. This may take a moment.`,
-    });
-
-    const result = await importClientSideData(firestore, true);
-    
-    toast({
-      variant: result.success ? 'default' : 'destructive',
-      title: result.success ? 'Import Complete!' : 'Import Failed',
-      description: result.message,
-    });
-    
-    setIsImporting(false);
-    
-    if (result.success) {
-      // Small delay to allow Firestore propagation before reload
-      setTimeout(() => window.location.reload(), 1000);
-    }
-  }
-
-  const handleDataImportClick = async () => {
-    setIsAlertOpen(true);
-  };
-  
-  const handleBulkUpdateMatches = async () => {
-    if (!firestore) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Database not available for bulk update.' });
-        return;
-    }
-    setIsUpdatingMatches(true);
-    toast({
-      title: 'Syncing All Match Results...',
-      description: 'Sending all fixture data directly to the database. This is a non-destructive operation.',
-    });
-  
-    try {
-      if (matches.length === 0) {
-        throw new Error('No local match data found to sync.');
-      }
-      
-      const BATCH_SIZE = 499;
-      const matchesToSync = matches.filter(m => typeof m.homeScore === 'number' && m.homeScore !== -1 && 
-                                               typeof m.awayScore === 'number' && m.awayScore !== -1);
-      
-      for (let i = 0; i < matchesToSync.length; i += BATCH_SIZE) {
-          const batch = writeBatch(firestore);
-          const chunk = matchesToSync.slice(i, i + BATCH_SIZE);
-          chunk.forEach(match => {
-              const docRef = doc(firestore, 'matches', match.id);
-              batch.set(docRef, match, { merge: true });
-          });
-          await batch.commit();
-          console.log(`Synced a batch of ${chunk.length} matches.`);
-      }
-  
-      toast({
-        title: 'All Match Results Synced!',
-        description: `${matchesToSync.length} match records were successfully synced to the database.`,
-      });
-    } catch (error: any) {
-      console.error('Error in bulk updating match results:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Bulk Sync Failed',
-        description: error.message || 'An unexpected error occurred while syncing matches.',
-      });
-    } finally {
-      setIsUpdatingMatches(false);
-    }
-  };
-
-
   return (
     <>
       <div className="space-y-8">
@@ -401,22 +276,19 @@ export default function AdminPage() {
 
         <Card>
             <CardHeader>
-                <CardTitle>Database Connection Status</CardTitle>
+                <CardTitle>Database Reset</CardTitle>
                 <CardDescription>
-                    This is a simple check to see if the application can connect to the Firestore database.
+                    The database is being automatically purged and re-populated with the initial dataset.
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="flex items-center gap-4 rounded-lg border p-4">
-                {dbStatus.status === 'pending' && <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />}
-                {dbStatus.status === 'success' && <CheckCircle className="h-6 w-6 text-green-500" />}
-                {dbStatus.status === 'error' && <XCircle className="h-6 w-6 text-red-500" />}
-                <p className={cn(
-                    'font-medium',
-                    dbStatus.status === 'success' ? 'text-green-600' :
-                    dbStatus.status === 'error' ? 'text-red-600' :
-                    'text-muted-foreground'
-                )}>{dbStatus.message}</p>
+                {isImporting ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                ) : (
+                    importCompleted ? <Icons.shieldCheck className="h-6 w-6 text-green-500" /> : <Icons.bug className="h-6 w-6 text-red-500" />
+                )}
+                <p className="font-medium">{importProgress}</p>
                 </div>
             </CardContent>
         </Card>
@@ -426,11 +298,11 @@ export default function AdminPage() {
             <CardHeader>
                 <CardTitle>Update Match Results</CardTitle>
                 <CardDescription>
-                    Select a week to view its fixtures, enter the scores, and save the results to the database. Use a value of -1 for scores that are not yet final.
+                    Select a week to view its fixtures, enter the scores, and save the results to the database. Use a value of -1 for scores that are not yet final. This is disabled until the data reset is complete.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                 <Select onValueChange={handleWeekChange}>
+                 <Select onValueChange={handleWeekChange} disabled={isImporting || !importCompleted}>
                     <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder="Select a week" />
                     </SelectTrigger>
@@ -462,6 +334,7 @@ export default function AdminPage() {
                                         value={scores[match.id]?.homeScore ?? ''}
                                         onChange={(e) => handleScoreChange(match.id, 'home', e.target.value)}
                                         className="w-16 text-center"
+                                        disabled={isImporting || !importCompleted}
                                     />
                                     <span>-</span>
                                      <Input
@@ -470,6 +343,7 @@ export default function AdminPage() {
                                         value={scores[match.id]?.awayScore ?? ''}
                                         onChange={(e) => handleScoreChange(match.id, 'away', e.target.value)}
                                         className="w-16 text-center"
+                                        disabled={isImporting || !importCompleted}
                                     />
                                     <div className="flex items-center gap-2 w-2/5">
                                         <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.awayTeam.bgColourSolid }}>
@@ -480,7 +354,7 @@ export default function AdminPage() {
                                 </div>
                             )})}
                         </div>
-                        <Button onClick={handleSaveWeekResults} disabled={isUpdatingMatches || dbStatus.status !== 'success'}>
+                        <Button onClick={handleSaveWeekResults} disabled={isUpdatingMatches || isImporting || !importCompleted}>
                             {isUpdatingMatches ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -490,71 +364,9 @@ export default function AdminPage() {
                         </Button>
                     </div>
                 )}
-
-            </CardContent>
-        </Card>
-
-        <Card>
-            <CardHeader>
-                <CardTitle>Bulk Data Operations</CardTitle>
-                <CardDescription>
-                    Use these actions to perform large-scale data updates. Be cautious as some actions are destructive.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                  <h3 className="font-semibold">Sync All Local Matches to DB</h3>
-                  <p className="text-sm text-muted-foreground mb-2">Safely adds or updates all match results from the local data file to the database. This is non-destructive.</p>
-                  <Button onClick={handleBulkUpdateMatches} disabled={isUpdatingMatches || dbStatus.status !== 'success'}>
-                    {isUpdatingMatches ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Syncing Matches...
-                      </>
-                    ) : (
-                      'Sync All Local Matches to DB'
-                    )}
-                  </Button>
-              </div>
-              <div>
-                  <h3 className="font-semibold text-red-600">Purge and Re-Import All Data</h3>
-                  <p className="text-sm text-muted-foreground mb-2">
-                      <span className="font-bold text-red-500">Destructive:</span> Deletes all data and replaces it with the initial dataset. Use to reset the app to a clean state.
-                  </p>
-                  <Button variant="destructive" onClick={handleDataImportClick} disabled={isImporting || dbStatus.status !== 'success'}>
-                      {isImporting ? (
-                      <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Importing Data...
-                      </>
-                      ) : (
-                      'Purge and Re-Import All Data'
-                      )}
-                  </Button>
-              </div>
             </CardContent>
         </Card>
       </div>
-
-      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Overwrite Existing Data?</AlertDialogTitle>
-            <AlertDialogDescription>
-              You are about to delete all data in the collections and replace it with the initial application data. This action cannot be undone. Are you sure you want to continue?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={async () => {
-              setIsAlertOpen(false);
-              await performImport();
-            }}>
-              Purge and Overwrite
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }
