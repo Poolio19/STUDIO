@@ -31,7 +31,6 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { useFirebase } from '@/firebase';
-import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 import {
   teams,
   standings,
@@ -50,7 +49,6 @@ import {
 } from '@/lib/data';
 import { collection, doc, writeBatch, getDocs, QuerySnapshot, DocumentData, Firestore } from 'firebase/firestore';
 import { Icons, IconName } from '@/components/icons';
-import { UpdateMatchResultsInput } from '@/ai/flows/update-match-results-flow-types';
 
 async function importClientSideData(db: Firestore | null): Promise<{ success: boolean; message: string }> {
   if (!db) {
@@ -184,22 +182,24 @@ export default function AdminPage() {
   };
 
   const handleSaveWeekResults = async () => {
-    if (selectedWeek === null) return;
+    if (selectedWeek === null || !firestore) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Cannot save results. Week or database not selected.' });
+        return;
+    }
     setIsUpdatingMatches(true);
     toast({
       title: `Updating Week ${selectedWeek} Results...`,
-      description: 'Sending fixture data to the server for a safe update.',
+      description: 'Saving results directly to the database.',
     });
 
     try {
+        const batch = writeBatch(firestore);
+        const matchesCollectionRef = collection(firestore, 'matches');
+        
         const resultsToUpdate = Object.entries(scores).map(([matchId, score]) => {
             const match = weekFixtures.find(f => f.id === matchId)!;
             return {
-                id: match.id,
-                week: match.week,
-                homeTeamId: match.homeTeamId,
-                awayTeamId: match.awayTeamId,
-                matchDate: match.matchDate,
+                ...match,
                 homeScore: parseInt(score.homeScore, 10),
                 awayScore: parseInt(score.awayScore, 10),
             };
@@ -211,16 +211,17 @@ export default function AdminPage() {
             throw new Error('No valid scores entered for this week.');
         }
 
-        const input: UpdateMatchResultsInput = { results: validResults };
-        const result = await updateMatchResults(input);
+        validResults.forEach(result => {
+            const { homeTeam, awayTeam, ...matchData } = result;
+            const docRef = doc(matchesCollectionRef, result.id);
+            batch.set(docRef, matchData, { merge: true });
+        });
 
-        if (!result.success) {
-          throw new Error(`Failed to update matches for week ${selectedWeek}.`);
-        }
+        await batch.commit();
 
         toast({
             title: `Week ${selectedWeek} Updated!`,
-            description: `${result.updatedCount} match records were successfully updated.`,
+            description: `${validResults.length} match records were successfully updated.`,
         });
 
     } catch (error: any) {
@@ -228,7 +229,7 @@ export default function AdminPage() {
         toast({
             variant: 'destructive',
             title: 'Update Failed',
-            description: error.message || 'An unexpected error occurred.',
+            description: error.message || 'An unexpected error occurred during the client-side batch write.',
         });
     } finally {
         setIsUpdatingMatches(false);
@@ -266,40 +267,34 @@ export default function AdminPage() {
   };
   
   const handleBulkUpdateMatches = async () => {
+    if (!firestore) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Database not available for bulk update.' });
+        return;
+    }
     setIsUpdatingMatches(true);
     toast({
       title: 'Updating All Match Results...',
-      description: 'Sending all fixture data to the server for a safe, non-destructive update.',
+      description: 'Sending all fixture data directly to the database.',
     });
   
     try {
-      const allResults = matches.map(match => ({
-        id: match.id,
-        week: match.week,
-        homeTeamId: match.homeTeamId,
-        awayTeamId: match.awayTeamId,
-        matchDate: match.matchDate,
-        homeScore: match.homeScore,
-        awayScore: match.awayScore,
-      }));
-  
-      if (allResults.length === 0) {
+      if (matches.length === 0) {
         throw new Error('No match data found to sync. The local data file might be empty.');
       }
       
-      const input: UpdateMatchResultsInput = {
-        results: allResults,
-      };
-  
-      const result = await updateMatchResults(input);
-  
-      if (!result.success) {
-        throw new Error('The bulk match update process failed on the server.');
-      }
+      const batch = writeBatch(firestore);
+      const matchesCollectionRef = collection(firestore, 'matches');
+      
+      matches.forEach(match => {
+          const docRef = doc(matchesCollectionRef, match.id);
+          batch.set(docRef, match, { merge: true });
+      });
+      
+      await batch.commit();
   
       toast({
         title: 'All Match Results Updated!',
-        description: `${result.updatedCount} match records were successfully updated in the database.`,
+        description: `${matches.length} match records were successfully updated in the database.`,
       });
     } catch (error: any) {
       console.error('Error in bulk updating match results:', error);
