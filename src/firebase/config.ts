@@ -2,11 +2,11 @@
 // This is a public configuration and is safe to be exposed to the client.
 
 export const firebaseConfig = {
-  apiKey: "AIzaSyCV7Tz2m3L7W7vK82EAEyk9yE_EXAMPLE",
-  authDomain: "prempred-43933.firebaseapp.com",
-  projectId: "prempred-43933",
-  storageBucket: "prempred-43933.appspot.com",
-  messagingSenderId: "54228994464",
-  appId: "1:54228994464:web:d25d2c8035a0921383858c",
-  databaseURL: "https://prempred-43933.firebaseio.com"
+  apiKey: "AIzaSyBMBx8D0F_1t4Gg7x-fSc_EXAMPLE",
+  authDomain: "prempred-43933-2.firebaseapp.com",
+  projectId: "prempred-43933-2",
+  storageBucket: "prempred-43933-2.appspot.com",
+  messagingSenderId: "32952399342",
+  appId: "1:32952399342:web:a8d11c039d57a2e0a6d0c6",
+  databaseURL: "https://prempred-43933-2.firebaseio.com"
 };

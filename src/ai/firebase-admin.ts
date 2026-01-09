@@ -6,7 +6,7 @@ const appInstances = new Map<string, admin.app.App>();
 
 // This is the Google Cloud Project that Firebase Studio has provisioned for your backend.
 // It is used by the Admin SDK to access your project's resources.
-const TARGET_PROJECT_ID = 'prempred-43933';
+const TARGET_PROJECT_ID = 'prempred-43933-2';
 
 /**
  * Initializes and returns a Firebase Admin App instance.
@@ -38,7 +38,7 @@ function initializeAdminApp(databaseId?: string): admin.app.App {
       credential: admin.credential.applicationDefault(),
       projectId: TARGET_PROJECT_ID,
       // If a databaseId is provided, specify the URL. Otherwise, it connects to the default database.
-      databaseURL: databaseId ? `https://prempred-43933.firebaseio.com?database=${databaseId}` : `https://prempred-43933.firebaseio.com`
+      databaseURL: databaseId ? `https://prempred-43933-2.firebaseio.com?database=${databaseId}` : `https://prempred-43933-2.firebaseio.com`
     }, appName);
 
     console.log(`Successfully initialized Firebase Admin SDK for app: ${appName}`);
