@@ -55,7 +55,7 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
     return { success: false, message: 'Firestore is not initialized.' };
   }
 
-  const collections: { name: string; data: any[]; idField: string }[] = [
+  const collections: { name: string; data: any[]; idField: string; needsCompoundId?: boolean }[] = [
       { name: 'teams', data: teams, idField: 'id' },
       { name: 'standings', data: standings, idField: 'teamId' },
       { name: 'users', data: fullUsers, idField: 'id' },
@@ -65,19 +65,14 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
       { name: 'seasonMonths', data: seasonMonths, idField: 'id' },
       { name: 'monthlyMimoM', data: monthlyMimoM, idField: 'id' },
       { name: 'userHistories', data: fullUserHistories, idField: 'userId' },
-      { name: 'playerTeamScores', data: playerTeamScores, idField: 'compoundId' }, // Special handling below
-      { name: 'weeklyTeamStandings', data: weeklyTeamStandings, idField: 'compoundId' }, // Special handling below
+      { name: 'playerTeamScores', data: playerTeamScores, idField: 'compoundId', needsCompoundId: true },
+      { name: 'weeklyTeamStandings', data: weeklyTeamStandings, idField: 'compoundId', needsCompoundId: true },
       { name: 'teamRecentResults', data: teamRecentResults, idField: 'teamId' },
   ];
-   // Add compound IDs for collections that need them
-   playerTeamScores.forEach((item: any) => item.compoundId = `${item.userId}_${item.teamId}`);
-   weeklyTeamStandings.forEach((item: any) => item.compoundId = `${item.week}_${item.teamId}`);
-
-
+   
   try {
     if (purge) {
       console.log("Starting data purge...");
-      // A single batch can only handle 500 operations. We'll do one collection at a time.
       for (const { name } of collections) {
         const collectionRef = collection(db, name);
         const snapshot = await getDocs(collectionRef);
@@ -88,10 +83,11 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
         
         let deleteBatch = writeBatch(db);
         let deleteCount = 0;
+        console.log(`Preparing to delete ${snapshot.size} documents from '${name}'...`);
         for (const document of snapshot.docs) {
           deleteBatch.delete(document.ref);
           deleteCount++;
-          if (deleteCount === 499) { // Commit and start a new batch
+          if (deleteCount >= 499) { 
             await deleteBatch.commit();
             console.log(`Committed deletion of ${deleteCount} documents from '${name}'.`);
             deleteBatch = writeBatch(db);
@@ -100,7 +96,7 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
         }
         if (deleteCount > 0) {
           await deleteBatch.commit();
-          console.log(`Committed deletion of ${deleteCount} documents from '${name}'.`);
+          console.log(`Committed final deletion of ${deleteCount} documents from '${name}'.`);
         }
         console.log(`Purged collection: ${name}`);
       }
@@ -108,36 +104,48 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
     }
     
     console.log("Starting data import...");
-    for (const { name, data, idField } of collections) {
-      if (data.length === 0) continue;
-      
-      let setBatch = writeBatch(db);
-      let setCount = 0;
-      for (const item of data) {
-        const docId = item[idField];
-        if (!docId) {
-            console.warn(`Missing ID for item in collection ${name}`, item);
+    for (const { name, data, idField, needsCompoundId } of collections) {
+        if (!data || data.length === 0) {
+            console.warn(`No data for collection ${name}, skipping.`);
             continue;
         }
-        const docRef = doc(db, name, String(docId));
+      
+        let setBatch = writeBatch(db);
+        let setCount = 0;
         
-        // Remove compound ID before setting document data
-        const { compoundId, ...itemData } = item;
-        setBatch.set(docRef, itemData);
+        for (const item of data) {
+            let docId;
+            if (name === 'playerTeamScores') {
+                docId = `${item.userId}_${item.teamId}`;
+            } else if (name === 'weeklyTeamStandings') {
+                docId = `${item.week}_${item.teamId}`;
+            } else {
+                docId = item[idField];
+            }
 
-        setCount++;
-        if (setCount === 499) {
-          await setBatch.commit();
-          console.log(`Committed ${setCount} documents to '${name}'.`);
-          setBatch = writeBatch(db);
-          setCount = 0;
+            if (!docId) {
+                console.warn(`Missing ID for item in collection ${name}`, item);
+                continue;
+            }
+            const docRef = doc(db, name, String(docId));
+            
+            // The data object itself should not contain its own ID field.
+            const { [idField]: _, ...itemData } = item;
+            setBatch.set(docRef, itemData);
+
+            setCount++;
+            if (setCount >= 499) {
+                await setBatch.commit();
+                console.log(`Committed ${setCount} documents to '${name}'.`);
+                setBatch = writeBatch(db);
+                setCount = 0;
+            }
         }
-      }
-      if (setCount > 0) {
-        await setBatch.commit();
-        console.log(`Committed ${setCount} documents to '${name}'.`);
-      }
-       console.log(`Imported collection: ${name}`);
+        if (setCount > 0) {
+            await setBatch.commit();
+            console.log(`Committed final ${setCount} documents to '${name}'.`);
+        }
+        console.log(`Imported collection: ${name}`);
     }
 
     return { success: true, message: `All application data has been ${purge ? 'purged and' : ''} re-imported successfully.` };
@@ -183,9 +191,14 @@ export default function AdminPage() {
         return;
       }
       try {
+        // Attempt a simple read operation from a known collection
         const teamsCollectionRef = collection(firestore, 'teams');
         const snapshot = await getDocs(teamsCollectionRef);
-        setDbStatus({ status: 'success', message: `Successfully connected. Read ${snapshot.size} docs from 'teams'.` });
+        if (snapshot.docs.length > 0) {
+            setDbStatus({ status: 'success', message: `Successfully connected. Read ${snapshot.size} docs from 'teams'.` });
+        } else {
+             setDbStatus({ status: 'error', message: `Connected, but 'teams' collection is empty or doesn't exist.` });
+        }
       } catch (error: any) {
         console.error("Database connection check failed:", error);
         setDbStatus({ status: 'error', message: `Database connection failed: ${error.message}` });
@@ -283,7 +296,7 @@ export default function AdminPage() {
   const performImport = async () => {
     setIsImporting(true);
     toast({
-      title: 'Purging and Importing Data...',
+      title: 'Purging and Re-Importing Data...',
       description: `Wiping and repopulating database with initial application data. This may take a moment.`,
     });
 
@@ -298,7 +311,7 @@ export default function AdminPage() {
     setIsImporting(false);
   }
 
-  const handleDataImport = async () => {
+  const handleDataImportClick = async () => {
     if (!firestore) {
       toast({
         variant: 'destructive',
@@ -317,13 +330,13 @@ export default function AdminPage() {
     }
     setIsUpdatingMatches(true);
     toast({
-      title: 'Updating All Match Results...',
-      description: 'Sending all fixture data directly to the database.',
+      title: 'Syncing All Match Results...',
+      description: 'Sending all fixture data directly to the database. This is a non-destructive operation.',
     });
   
     try {
       if (matches.length === 0) {
-        throw new Error('No match data found to sync. The local data file might be empty.');
+        throw new Error('No local match data found to sync.');
       }
       
       const batch = writeBatch(firestore);
@@ -331,21 +344,24 @@ export default function AdminPage() {
       
       matches.forEach(match => {
           const docRef = doc(matchesCollectionRef, match.id);
-          batch.set(docRef, match, { merge: true });
+          // Only sync matches with valid scores
+          if (typeof match.homeScore === 'number' && typeof match.awayScore === 'number') {
+            batch.set(docRef, match, { merge: true });
+          }
       });
       
       await batch.commit();
   
       toast({
-        title: 'All Match Results Updated!',
-        description: `${matches.length} match records were successfully updated in the database.`,
+        title: 'All Match Results Synced!',
+        description: `${matches.length} match records were successfully synced to the database.`,
       });
     } catch (error: any) {
       console.error('Error in bulk updating match results:', error);
       toast({
         variant: 'destructive',
-        title: 'Bulk Update Failed',
-        description: error.message || 'An unexpected error occurred while updating matches.',
+        title: 'Bulk Sync Failed',
+        description: error.message || 'An unexpected error occurred while syncing matches.',
       });
     } finally {
       setIsUpdatingMatches(false);
@@ -377,11 +393,12 @@ export default function AdminPage() {
                 {dbStatus.status === 'pending' && <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />}
                 {dbStatus.status === 'success' && <CheckCircle className="h-6 w-6 text-green-500" />}
                 {dbStatus.status === 'error' && <XCircle className="h-6 w-6 text-red-500" />}
-                <p className={
+                <p className={cn(
+                    'font-medium',
                     dbStatus.status === 'success' ? 'text-green-600' :
                     dbStatus.status === 'error' ? 'text-red-600' :
                     'text-muted-foreground'
-                }>{dbStatus.message}</p>
+                )}>{dbStatus.message}</p>
                 </div>
             </CardContent>
         </Card>
@@ -474,7 +491,7 @@ export default function AdminPage() {
                     {isUpdatingMatches ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Updating All Matches...
+                        Syncing Matches...
                       </>
                     ) : (
                       'Sync All Local Matches to DB'
@@ -486,7 +503,7 @@ export default function AdminPage() {
                   <p className="text-sm text-muted-foreground mb-2">
                       <span className="font-bold text-red-500">Destructive:</span> Deletes all data and replaces it with the initial dataset. Use to reset the app to a clean state.
                   </p>
-                  <Button variant="destructive" onClick={handleDataImport} disabled={isImporting || !firestore}>
+                  <Button variant="destructive" onClick={handleDataImportClick} disabled={isImporting || !firestore}>
                       {isImporting ? (
                       <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
