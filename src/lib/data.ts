@@ -130,17 +130,21 @@ export const teams: Team[] = [
     { id: 'team_07', name: 'Crystal Palace', logo: 'castle', bgColourFaint: 'rgba(27, 69, 143, 0.3)', bgColourSolid: '#1B458F', textColour: '#C4122E', iconColour: '#C4122E' },
     { id: 'team_08', name: 'Everton', logo: 'shieldHalf', bgColourFaint: 'rgba(0, 51, 160, 0.3)', bgColourSolid: '#0033A0', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_09', name: 'Fulham', logo: 'rabbit', bgColourFaint: 'rgba(0, 0, 0, 0.3)', bgColourSolid: '#000000', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
-    { id: 'team_10', name: 'Leeds', logo: 'theater', bgColourFaint: 'rgba(255, 205, 0, 0.3)', bgColourSolid: '#FFCD00', textColour: '#1D428A', iconColour: '#1D428A' },
-    { id: 'team_11', name: 'Burnley', logo: 'squirrel', bgColourFaint: 'rgba(108, 29, 69, 0.3)', bgColourSolid: '#6C1D45', textColour: '#99D6EA', iconColour: '#99D6EA' },
+    { id: 'team_10', name: 'Ipswich', logo: 'theater', bgColourFaint: 'rgba(255, 205, 0, 0.3)', bgColourSolid: '#1D428A', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
+    { id: 'team_11', name: 'Leicester', logo: 'squirrel', bgColourFaint: 'rgba(108, 29, 69, 0.3)', bgColourSolid: '#003090', textColour: '#FDBE11', iconColour: '#FDBE11' },
     { id: 'team_12', name: 'Liverpool', logo: 'origami', bgColourFaint: 'rgba(200, 16, 46, 0.3)', bgColourSolid: '#C8102E', textColour: '#000000', iconColour: '#FFFFFF' },
     { id: 'team_13', name: 'Man City', logo: 'sailboat', bgColourFaint: 'rgba(108, 171, 221, 0.3)', bgColourSolid: '#6CABDD', textColour: '#00285E', iconColour: '#00285E' },
     { id: 'team_14', name: 'Man Utd', logo: 'sparkles', bgColourFaint: 'rgba(218, 41, 28, 0.3)', bgColourSolid: '#DA291C', textColour: '#FBE122', iconColour: '#FBE122' },
     { id: 'team_15', name: 'Newcastle', logo: 'shieldUser', bgColourFaint: 'rgba(45, 41, 38, 0.3)', bgColourSolid: '#2D2926', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_16', name: 'Notts Forest', logo: 'treeDeciduous', bgColourFaint: 'rgba(221, 0, 0, 0.3)', bgColourSolid: '#DD0000', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
-    { id: 'team_17', name: 'Sunderland', logo: 'gitlab', bgColourFaint: 'rgba(235, 20, 30, 0.3)', bgColourSolid: '#EB141E', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
+    { id: 'team_17', name: 'Southampton', logo: 'gitlab', bgColourFaint: 'rgba(235, 20, 30, 0.3)', bgColourSolid: '#D71920', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_18', name: 'Tottenham', logo: 'home', bgColourFaint: 'rgba(19, 34, 83, 0.3)', bgColourSolid: '#132257', textColour: '#FFFFFF', iconColour: '#FFFFFF' },
     { id: 'team_19', name: 'West Ham', logo: 'hammer', bgColourFaint: 'rgba(122, 38, 58, 0.3)', bgColourSolid: '#7A263A', textColour: '#FBE122', iconColour: '#FBE122' },
-    { id: 'team_20', name: 'Wolves', logo: 'flower', bgColourFaint: 'rgba(253, 190, 17, 0.3)', bgColourSolid: '#FDBE11', textColour: '#000000', iconColour: '#000000' }
+    { id: 'team_20', name: 'Wolves', logo: 'flower', bgColourFaint: 'rgba(253, 190, 17, 0.3)', bgColourSolid: '#FDBE11', textColour: '#000000', iconColour: '#000000' },
+    // Relegated teams for last season's data
+    { id: 'team_21', name: 'Luton', logo: 'utensilsCrossed', bgColourFaint: 'rgba(247, 143, 30, 0.3)', bgColourSolid: '#F78F1E', textColour: '#000000', iconColour: '#FFFFFF' },
+    { id: 'team_22', name: 'Burnley', logo: 'volleyball', bgColourFaint: 'rgba(108, 29, 69, 0.3)', bgColourSolid: '#6C1D45', textColour: '#99D6EA', iconColour: '#99D6EA' },
+    { id: 'team_23', name: 'Sheffield Utd', logo: 'swords', bgColourFaint: 'rgba(238, 39, 55, 0.3)', bgColourSolid: '#EE2737', textColour: '#FFFFFF', iconColour: '#FFFFFF' }
 ];
 
 const teamNameMapping: { [key: string]: string } = teams.reduce((acc, team) => {
@@ -154,11 +158,15 @@ const teamNameMapping: { [key: string]: string } = teams.reduce((acc, team) => {
       acc['forest'] = team.id;
     }
     // Handle relegated team names from prediction data
-    acc['ipswich town'] = 'team_10'; // Map to Leeds
-    acc['ipswich'] = 'team_10';
-    acc['leicester city'] = 'team_11'; // Map to Burnley
-    acc['leicester'] = 'team_11';
-    acc['southampton'] = 'team_17'; // Map to Sunderland
+    if (lowerCaseName === 'ipswich') {
+        acc['ipswich town'] = team.id;
+    }
+    if (lowerCaseName === 'leicester') {
+        acc['leicester city'] = team.id;
+    }
+    if (lowerCaseName === 'southampton') {
+        // No extra mapping needed
+    }
     
     return acc;
 }, {} as { [key: string]: string });
@@ -223,121 +231,121 @@ export const previousSeasonStandings: PreviousSeasonStanding[] = [
     { teamId: 'team_08', rank: 15, points: 40, goalDifference: -11 },
     { teamId: 'team_04', rank: 16, points: 39, goalDifference: -9 },
     { teamId: 'team_16', rank: 17, points: 32, goalDifference: -18 },
-    { teamId: 'team_11', rank: 18, points: 0, goalDifference: 0 },
-    { teamId: 'team_10', rank: 19, points: 0, goalDifference: 0 },
-    { teamId: 'team_17', rank: 20, points: 0, goalDifference: 0 }
+    { teamId: 'team_21', rank: 18, points: 27, goalDifference: -33 }, // Luton
+    { teamId: 'team_22', rank: 19, points: 24, goalDifference: -37 }, // Burnley
+    { teamId: 'team_23', rank: 20, points: 16, goalDifference: -69 }  // Sheffield Utd
 ];
 
 const userPredictionsRaw: { [key: string]: string[] } = {
-    "usr_001":["Man Utd","Liverpool","Man City","Arsenal","Newcastle","Chelsea","Aston Villa","Notts Forest","Tottenham","Bournemouth","Brighton","Fulham","Brentford","Leeds","Crystal Palace","West Ham","Wolves","Everton","Burnley","Sunderland"],
-    "usr_002":["Liverpool","Man City","Arsenal","Chelsea","Aston Villa","Newcastle","Notts Forest","Crystal Palace","Brighton","Man Utd","Tottenham","Bournemouth","Brentford","Fulham","Everton","Leeds","Wolves","West Ham","Burnley","Sunderland"],
-    "usr_003":["Liverpool","Arsenal","Man City","Chelsea","Newcastle","Man Utd","Aston Villa","Tottenham","Brighton","Bournemouth","Notts Forest","Everton","Crystal Palace","Fulham","West Ham","Brentford","Wolves","Leeds","Burnley","Sunderland"],
-    "usr_004":["Liverpool","Man City","Chelsea","Arsenal","Aston Villa","Newcastle","Brighton","Tottenham","Notts Forest","Fulham","Man Utd","Bournemouth","Everton","Crystal Palace","Wolves","West Ham","Brentford","Leeds","Burnley","Sunderland"],
-    "usr_005":["Chelsea","Man City","Liverpool","Arsenal","Aston Villa","Newcastle","Tottenham","Brighton","Man Utd","Fulham","Bournemouth","Brentford","Leeds","Everton","Crystal Palace","Wolves","West Ham","Notts Forest","Burnley","Sunderland"],
-    "usr_006":["Chelsea","Man City","Liverpool","Arsenal","Newcastle","Man Utd","Everton","Aston Villa","Crystal Palace","Brighton","Notts Forest","Leeds","West Ham","Sunderland","Tottenham","Wolves","Bournemouth","Fulham","Brentford","Burnley"],
-    "usr_007":["Man City","Liverpool","Arsenal","Chelsea","Newcastle","Aston Villa","Tottenham","Man Utd","Bournemouth","Notts Forest","Fulham","Brighton","Wolves","Crystal Palace","West Ham","Leeds","Everton","Brentford","Sunderland","Burnley"],
-    "usr_008":["Liverpool","Man City","Arsenal","Chelsea","Aston Villa","Man Utd","Tottenham","Newcastle","Bournemouth","Brighton","Everton","West Ham","Fulham","Crystal Palace","Wolves","Notts Forest","Brentford","Leeds","Sunderland","Burnley"],
-    "usr_009":["Liverpool","Man City","Arsenal","Chelsea","Aston Villa","Newcastle","Tottenham","Man Utd","Notts Forest","Everton","Brighton","Brentford","West Ham","Bournemouth","Fulham","Crystal Palace","Wolves","Burnley","Leeds","Sunderland"],
-    "usr_010":["Man City","Liverpool","Arsenal","Chelsea","Tottenham","Man Utd","Aston Villa","Newcastle","West Ham","Everton","Brighton","Wolves","Brentford","Fulham","Crystal Palace","Bournemouth","Notts Forest","Leeds","Burnley","Sunderland"],
-    "usr_011":["Man City","Liverpool","Arsenal","Chelsea","Aston Villa","Man Utd","Tottenham","Newcastle","Everton","Brighton","Crystal Palace","Fulham","West Ham","Brentford","Bournemouth","Notts Forest","Sunderland","Wolves","Burnley","Leeds"],
-    "usr_012":["Man City","Arsenal","Liverpool","Chelsea","Aston Villa","Newcastle","Brentford","Bournemouth","Notts Forest","Brighton","Crystal Palace","Everton","Man Utd","Tottenham","Fulham","West Ham","Wolves","Sunderland","Burnley","Leeds"],
-    "usr_013":["Liverpool","Man City","Arsenal","Newcastle","Man Utd","Chelsea","Tottenham","Everton","Aston Villa","West Ham","Crystal Palace","Brighton","Fulham","Brentford","Notts Forest","Wolves","Bournemouth","Sunderland","Leeds","Burnley"],
-    "usr_014":["Liverpool","Arsenal","Newcastle","Chelsea","Man City","Man Utd","Tottenham","Aston Villa","Everton","Bournemouth","Brighton","West Ham","Fulham","Crystal Palace","Sunderland","Wolves","Brentford","Notts Forest","Leeds","Burnley"],
-    "usr_015":["Liverpool","Chelsea","Man City","Arsenal","Aston Villa","Man Utd","Newcastle","Tottenham","West Ham","Brighton","Notts Forest","Everton","Fulham","Crystal Palace","Wolves","Bournemouth","Sunderland","Brentford","Burnley","Leeds"],
-    "usr_016":["Man City","Liverpool","Arsenal","Chelsea","Man Utd","Aston Villa","Newcastle","Tottenham","Notts Forest","Bournemouth","Crystal Palace","Everton","Brighton","West Ham","Brentford","Wolves","Fulham","Leeds","Burnley","Sunderland"],
-    "usr_017":["Liverpool","Man City","Arsenal","Chelsea","Brighton","Notts Forest","Man Utd","Tottenham","Fulham","Crystal Palace","Everton","Aston Villa","West Ham","Newcastle","Leeds","Wolves","Bournemouth","Brentford","Sunderland","Burnley"],
-    "usr_018":["Liverpool","Arsenal","Man City","Chelsea","Newcastle","Man Utd","Aston Villa","Tottenham","Notts Forest","Brighton","Bournemouth","Crystal Palace","Everton","Wolves","Fulham","West Ham","Brentford","Leeds","Sunderland","Burnley"],
-    "usr_019":["Arsenal","Liverpool","Chelsea","Man City","Aston Villa","Notts Forest","Newcastle","Brighton","Bournemouth","Tottenham","Brentford","Fulham","Man Utd","Everton","West Ham","Crystal Palace","Wolves","Leeds","Sunderland","Burnley"],
-    "usr_020":["Liverpool","Arsenal","Chelsea","Man City","Aston Villa","Man Utd","Newcastle","Crystal Palace","Notts Forest","Brighton","Bournemouth","Everton","Tottenham","Brentford","Fulham","West Ham","Wolves","Leeds","Burnley","Sunderland"],
-    "usr_021":["Liverpool","Arsenal","Man City","Man Utd","Chelsea","Aston Villa","Tottenham","Newcastle","Crystal Palace","Brighton","Notts Forest","Bournemouth","Brentford","Everton","West Ham","Fulham","Wolves","Leeds","Burnley","Sunderland"],
-    "usr_022":["Liverpool","Man City","Chelsea","Arsenal","Aston Villa","Bournemouth","Man Utd","Newcastle","Crystal Palace","Brighton","Notts Forest","Fulham","Brentford","West Ham","Everton","Tottenham","Wolves","Burnley","Leeds","Sunderland"],
-    "usr_023":["Arsenal","Man City","Liverpool","Newcastle","Chelsea","Notts Forest","Man Utd","Tottenham","Wolves","Fulham","West Ham","Crystal Palace","Brentford","Brighton","Everton","Bournemouth","Leeds","Aston Villa","Sunderland","Burnley"],
-    "usr_024":["Liverpool","Man City","Arsenal","Chelsea","Newcastle","Everton","Bournemouth","Aston Villa","Brighton","Notts Forest","Crystal Palace","Fulham","Man Utd","West Ham","Wolves","Tottenham","Leeds","Brentford","Sunderland","Burnley"],
-    "usr_025":["Arsenal","Man City","Liverpool","Chelsea","Man Utd","Aston Villa","Crystal Palace","Newcastle","Tottenham","Brighton","Everton","Bournemouth","Notts Forest","Brentford","Fulham","West Ham","Wolves","Leeds","Burnley","Sunderland"],
-    "usr_026":["Chelsea","Man City","Liverpool","Arsenal","Aston Villa","Newcastle","Everton","Bournemouth","Man Utd","Crystal Palace","Brighton","Tottenham","Notts Forest","West Ham","Fulham","Wolves","Leeds","Brentford","Sunderland","Burnley"],
-    "usr_027":["Chelsea","Liverpool","Man City","Arsenal","Aston Villa","Newcastle","Tottenham","Man Utd","Notts Forest","Brighton","Brentford","Leeds","Everton","Bournemouth","Crystal Palace","Fulham","Burnley","West Ham","Sunderland","Wolves"],
-    "usr_028":["Liverpool","Chelsea","Arsenal","Notts Forest","Man City","Bournemouth","Newcastle","Tottenham","Wolves","Aston Villa","Brighton","Everton","Crystal Palace","Man Utd","West Ham","Fulham","Leeds","Burnley","Brentford","Sunderland"],
-    "usr_029":["Liverpool","Arsenal","Man City","Chelsea","Aston Villa","Newcastle","Tottenham","Man Utd","Brighton","Notts Forest","Everton","Bournemouth","Crystal Palace","Fulham","West Ham","Brentford","Wolves","Leeds","Sunderland","Burnley"],
-    "usr_030":["Man City","Arsenal","Liverpool","Chelsea","Newcastle","Aston Villa","Tottenham","Man Utd","Crystal Palace","Fulham","Notts Forest","Brighton","Bournemouth","Everton","West Ham","Leeds","Wolves","Brentford","Burnley","Sunderland"],
-    "usr_031":["Liverpool","Man City","Arsenal","Chelsea","Tottenham","Aston Villa","Newcastle","Brighton","Man Utd","Crystal Palace","Everton","West Ham","Notts Forest","Bournemouth","Wolves","Fulham","Leeds","Brentford","Burnley","Sunderland"],
-    "usr_032":["Liverpool","Man City","Arsenal","Chelsea","Aston Villa","Newcastle","Man Utd","Tottenham","Notts Forest","Brighton","Everton","Bournemouth","Fulham","Brentford","West Ham","Crystal Palace","Leeds","Wolves","Burnley","Sunderland"],
-    "usr_033":["Man City","Arsenal","Chelsea","Liverpool","Man Utd","Aston Villa","Tottenham","Brighton","Newcastle","Bournemouth","Everton","Fulham","Crystal Palace","West Ham","Notts Forest","Brentford","Sunderland","Wolves","Leeds","Burnley"],
-    "usr_034":["Man City","Liverpool","Chelsea","Arsenal","Aston Villa","Tottenham","Man Utd","Brighton","Newcastle","Crystal Palace","Bournemouth","Notts Forest","Fulham","Everton","West Ham","Brentford","Leeds","Sunderland","Wolves","Burnley"],
-    "usr_035":["Arsenal","Liverpool","Aston Villa","Man City","Chelsea","Man Utd","Tottenham","Brighton","Newcastle","Bournemouth","Notts Forest","Everton","Fulham","Crystal Palace","Wolves","Sunderland","Leeds","West Ham","Brentford","Burnley"],
-    "usr_036":["Liverpool","Man City","Arsenal","Chelsea","Man Utd","Aston Villa","Newcastle","Brighton","Tottenham","Everton","Fulham","Bournemouth","West Ham","Crystal Palace","Notts Forest","Brentford","Wolves","Leeds","Burnley","Sunderland"],
-    "usr_037":["Liverpool","Man City","Chelsea","Arsenal","Man Utd","Aston Villa","Tottenham","Everton","Newcastle","Crystal Palace","Brighton","Bournemouth","Notts Forest","Fulham","West Ham","Brentford","Wolves","Burnley","Leeds","Sunderland"],
-    "usr_038":["Liverpool","Arsenal","Man City","Chelsea","Aston Villa","Newcastle","Man Utd","Brighton","Tottenham","Notts Forest","Crystal Palace","Everton","Bournemouth","Fulham","West Ham","Brentford","Wolves","Burnley","Leeds","Sunderland"],
-    "usr_039":["Liverpool","Arsenal","Man City","Chelsea","Man Utd","Aston Villa","Tottenham","Newcastle","Notts Forest","Brighton","Fulham","Bournemouth","Everton","Crystal Palace","Brentford","West Ham","Leeds","Wolves","Burnley","Sunderland"],
-    "usr_040":["Liverpool","Man City","Man Utd","Chelsea","Tottenham","Arsenal","Aston Villa","Everton","Fulham","Crystal Palace","Newcastle","Notts Forest","West Ham","Brighton","Bournemouth","Sunderland","Wolves","Burnley","Brentford","Leeds"],
-    "usr_041":["MAN CITY","CHELSEA","LIVERPOOL","ARSENAL","TOTTENHAM","ASTON VILLA","MAN UTD","NEWCASTLE","EVERTON","BRIGHTON","NOTTS FOREST","CRYSTAL PALACE","WEST HAM","FULHAM","WOLVES","LEEDS","BRENTFORD","BOURNEMOUTH","SUNDERLAND","BURNLEY"],
-    "usr_042":["Liverpool","Man City","Chelsea","Arsenal","Aston Villa","Newcastle","Man Utd","Tottenham","Crystal Palace","Brighton","Bournemouth","Notts Forest","Fulham","West Ham","Everton","Wolves","Leeds","Sunderland","Brentford","Burnley"],
-    "usr_043":["Liverpool","Arsenal","Man City","Chelsea","Newcastle","Tottenham","Aston Villa","Brighton","Man Utd","Crystal Palace","Notts Forest","Bournemouth","Everton","Wolves","Fulham","West Ham","Brentford","Leeds","Sunderland","Burnley"],
-    "usr_044":["Liverpool","Chelsea","Arsenal","Man City","Tottenham","Man Utd","Newcastle","Aston Villa","Brighton","Notts Forest","Crystal Palace","Everton","West Ham","Bournemouth","Fulham","Brentford","Wolves","Leeds","Sunderland","Burnley"],
-    "usr_045":["Man City","Arsenal","Man Utd","Newcastle","Liverpool","Chelsea","Tottenham","Brighton","Aston Villa","West Ham","Brentford","Crystal Palace","Fulham","Wolves","Notts Forest","Everton","Bournemouth","Sunderland","Burnley","Leeds"],
-    "usr_046":["Man City","Arsenal","Liverpool","Chelsea","Newcastle","Man Utd","Brighton","Aston Villa","Tottenham","Notts Forest","Fulham","Crystal Palace","Everton","Bournemouth","Burnley","Brentford","Leeds","Wolves","West Ham","Sunderland"],
-    "usr_047":["Chelsea","Liverpool","Man City","Man Utd","Arsenal","Newcastle","Crystal Palace","Brighton","Aston Villa","Notts Forest","Tottenham","Everton","Wolves","Bournemouth","Fulham","Leeds","West Ham","Burnley","Brentford","Sunderland"],
-    "usr_048":["Chelsea","Liverpool","Man City","Arsenal","Newcastle","Man Utd","Aston Villa","Tottenham","Brighton","Fulham","Crystal Palace","Notts Forest","Wolves","Leeds","Bournemouth","Brentford","Everton","Burnley","West Ham","Sunderland"],
-    "usr_049":["Liverpool","Chelsea","Man City","Arsenal","Newcastle","Man Utd","Crystal Palace","Aston Villa","Brighton","Fulham","Tottenham","Notts Forest","Wolves","Everton","Bournemouth","Brentford","Leeds","Burnley","West Ham","Sunderland"],
-    "usr_050":["Chelsea","Liverpool","Man City","Arsenal","Tottenham","Newcastle","Aston Villa","Notts Forest","Crystal Palace","Man Utd","Bournemouth","Brighton","West Ham","Fulham","Everton","Wolves","Sunderland","Brentford","Leeds","Burnley"],
-    "usr_051":["Liverpool","Chelsea","Man City","Arsenal","Aston Villa","Newcastle","Notts Forest","Brighton","Bournemouth","Man Utd","Everton","Brentford","West Ham","Crystal Palace","Fulham","Tottenham","Wolves","Burnley","Leeds","Sunderland"],
-    "usr_052":["Man City","Chelsea","Liverpool","Arsenal","Man Utd","Aston Villa","Newcastle","Everton","Tottenham","Crystal Palace","Brighton","West Ham","Fulham","Notts Forest","Sunderland","Bournemouth","Burnley","Leeds","Brentford","Wolves"],
-    "usr_053":["Arsenal","Liverpool","Man City","Chelsea","Aston Villa","Newcastle","Tottenham","Man Utd","Everton","Notts Forest","Brighton","Brentford","West Ham","Fulham","Leeds","Crystal Palace","Wolves","Bournemouth","Sunderland","Burnley"],
-    "usr_054":["Liverpool","Man City","Chelsea","Tottenham","Newcastle","Man Utd","Aston Villa","Notts Forest","Arsenal","Everton","Crystal Palace","Brighton","Fulham","Bournemouth","Leeds","Sunderland","West Ham","Brentford","Wolves","Burnley"],
-    "usr_055":["Chelsea","Liverpool","Man City","Arsenal","Newcastle","Aston Villa","Notts Forest","Everton","Man Utd","Crystal Palace","Brighton","Bournemouth","Fulham","Brentford","Tottenham","West Ham","Leeds","Wolves","Burnley","Sunderland"],
-    "usr_056":["Liverpool","Man City","Chelsea","Arsenal","Newcastle","Tottenham","Man Utd","Brighton","Aston Villa","Bournemouth","Brentford","Everton","Notts Forest","West Ham","Fulham","Crystal Palace","Leeds","Sunderland","Wolves","Burnley"],
-    "usr_057":["Liverpool","Man City","Arsenal","Chelsea","Notts Forest","Man Utd","Brighton","Aston Villa","Newcastle","Crystal Palace","Everton","Tottenham","Fulham","Bournemouth","West Ham","Brentford","Sunderland","Wolves","Leeds","Burnley"],
-    "usr_058":["Arsenal","Liverpool","Man City","Man Utd","Chelsea","Aston Villa","Newcastle","Brighton","Notts Forest","Tottenham","Fulham","Crystal Palace","Everton","Wolves","Bournemouth","West Ham","Leeds","Burnley","Brentford","Sunderland"],
-    "usr_059":["Arsenal","Chelsea","Man City","liverpool","man utd","Aston Villa","Tottenham","Notts Forest","Crystal Palace","Newcastle","Bournemouth","Brighton","Fulham","everton","West Ham","wolves","Sunderland","Leeds","Brentford","Burnley"],
-    "usr_060":["Liverpool","Arsenal","Chelsea","Man City","Newcastle","Tottenham","Aston Villa","Man Utd","Bournemouth","Brighton","Notts Forest","Crystal Palace","West Ham","Brentford","Fulham","Wolves","Everton","Leeds","Burnley","Sunderland"],
-    "usr_061":["Liverpool","Arsenal","Man City","Chelsea","Aston Villa","Crystal Palace","Newcastle","Brighton","Bournemouth","Notts Forest","Tottenham","Man Utd","Brentford","Fulham","Everton","West Ham","Wolves","Burnley","Leeds","Sunderland"],
-    "usr_062":["Liverpool","Man City","Arsenal","Chelsea","Tottenham","Man Utd","Newcastle","Aston Villa","Everton","Brighton","Notts Forest","Brentford","Bournemouth","Crystal Palace","West Ham","Fulham","Wolves","Leeds","Burnley","Sunderland"],
-    "usr_063":["Liverpool","Arsenal","Man City","Chelsea","Aston villa","Notts forest","Crystal palace","Newcastle","brighton","bournemouth","Tottenham","Man utd","Brentford","West Ham","Everton","Fulham","Leeds","Wolves","Burnley","Sunderland"],
-    "usr_064":["Liverpool","Man City","Chelsea","Arsenal","Aston Villa","Tottenham","Man Utd","Newcastle","Brighton","Notts Forest","Crystal Palace","Everton","Bournemouth","West Ham","Brentford","Fulham","Sunderland","Leeds","Wolves","Burnley"],
-    "usr_065":["Chelsea","Liverpool","Man City","Arsenal","Brighton","Aston Villa","Man Utd","Newcastle","Notts Forest","Tottenham","Everton","Leeds","Crystal Palace","West Ham","Fulham","Sunderland","Wolves","Bournemouth","Brentford","Burnley"],
-    "usr_066":["Liverpool","Chelsea","Arsenal","Man City","Newcastle","Aston Villa","Tottenham","Man Utd","Brighton","Bournemouth","Notts Forest","Fulham","Everton","Brentford","Crystal Palace","West Ham","Sunderland","Wolves","Leeds","Burnley"],
-    "usr_067":["Liverpool","Arsenal","Chelsea","Man City","Newcastle","Aston Villa","Tottenham","Man Utd","Brighton","Crystal Palace","Bournemouth","Fulham","Everton","Wolves","Notts Forest","Brentford","West Ham","Leeds","Burnley","Sunderland"],
-    "usr_068":["Liverpool","Arsenal","Man City","Chelsea","Man Utd","Newcastle","Aston Villa","Everton","Tottenham","Brighton","Notts Forest","Crystal Palace","Bournemouth","Fulham","West Ham","Wolves","Leeds","Brentford","Burnley","Sunderland"],
-    "usr_069":["Arsenal","Man City","Liverpool","Man Utd","Chelsea","Aston Villa","Tottenham","Newcastle","Notts Forest","Brighton","Bournemouth","Everton","Crystal Palace","Brentford","Fulham","West Ham","Wolves","Leeds","Burnley","Sunderland"],
-    "usr_070":["Liverpool","Arsenal","Man City","Newcastle","Chelsea","Aston Villa","Brighton","Crystal Palace","Brentford","Notts Forest","Man Utd","Tottenham","Bournemouth","Everton","Fulham","West Ham","Leeds","Wolves","Burnley","Sunderland"],
-    "usr_071":["Man City","Chelsea","Liverpool","Arsenal","Aston Villa","Newcastle","Tottenham","Man Utd","Notts Forest","West Ham","Fulham","Brighton","Everton","Crystal Palace","Bournemouth","Leeds","Brentford","Wolves","Sunderland","Burnley"],
-    "usr_072":["Arsenal","Liverpool","Man City","Chelsea","Aston Villa","Newcastle","Man Utd","Brighton","Tottenham","Bournemouth","Notts Forest","Wolves","Fulham","Crystal Palace","Everton","Brentford","Sunderland","West Ham","Burnley","Leeds"],
-    "usr_073":["Liverpool","Man City","Chelsea","Arsenal","Newcastle","Man Utd","Aston Villa","Notts Forest","Fulham","Tottenham","Everton","Crystal Palace","Brighton","Bournemouth","West Ham","Brentford","Wolves","Leeds","Burnley","Sunderland"],
-    "usr_074":["Liverpool","Man City","Chelsea","Arsenal","Aston Villa","Man Utd","Newcastle","Notts Forest","Crystal Palace","Everton","Tottenham","Bournemouth","Fulham","Brighton","Wolves","Leeds","West Ham","Brentford","Sunderland","Burnley"],
-    "usr_075":["Liverpool","Man City","Chelsea","Arsenal","Tottenham","Man Utd","Newcastle","Aston Villa","Leeds","Crystal Palace","Brighton","Wolves","Everton","Notts Forest","Sunderland","West Ham","Fulham","Brentford","Bournemouth","Burnley"],
-    "usr_076":["Liverpool","Arsenal","Man City","Chelsea","Newcastle","Aston Villa","Crystal Palace","Notts Forest","Brighton","Brentford","Bournemouth","Man Utd","Fulham","Everton","Tottenham","West Ham","Burnley","Wolves","Leeds","Sunderland"],
-    "usr_077":["Liverpool","Arsenal","Chelsea","Man City","Aston Villa","Newcastle","Crystal Palace","Brighton","Man Utd","Tottenham","Everton","Sunderland","Notts Forest","Brentford","West Ham","Leeds","Fulham","Wolves","Bournemouth","Burnley"],
-    "usr_078":["Man City","Liverpool","Chelsea","Arsenal","Notts Forest","Man Utd","Tottenham","Brighton","Newcastle","Bournemouth","Aston Villa","Everton","Fulham","Crystal Palace","Brentford","West Ham","Burnley","Wolves","Leeds","Sunderland"],
-    "usr_079":["Liverpool","Chelsea","Man City","Arsenal","Man Utd","Aston Villa","Newcastle","Tottenham","Everton","Crystal Palace","Notts Forest","Bournemouth","Brighton","Brentford","West Ham","Fulham","Burnley","Leeds","Wolves","Sunderland"],
-    "usr_080":["Liverpool","Arsenal","Man City","Chelsea","Aston Villa","Newcastle","Tottenham","Man Utd","Brighton","Crystal Palace","Notts Forest","Everton","Wolves","West Ham","Fulham","Bournemouth","Brentford","Leeds","Sunderland","Burnley"],
-    "usr_081":["Arsenal","Liverpool","Chelsea","Man City","Man Utd","Newcastle","Aston Villa","Tottenham","Brighton","Notts Forest","Crystal Palace","West Ham","Wolves","Everton","Brentford","Sunderland","Fulham","Leeds","Bournemouth","Burnley"],
-    "usr_082":["Liverpool","Arsenal","Man City","Chelsea","Aston Villa","Man Utd","Tottenham","Newcastle","Brighton","Notts Forest","Crystal Palace","Everton","Bournemouth","Fulham","West Ham","Wolves","Leeds","Burnley","Sunderland","Brentford"],
-    "usr_083":["Arsenal","Liverpool","Crystal Palace","Chelsea","Man City","Aston Villa","Newcastle","Brighton","Man Utd","Notts Forest","Tottenham","Everton","Bournemouth","Brentford","Wolves","Fulham","Leeds","West Ham","Sunderland","Burnley"],
-    "usr_084":["Liverpool","Arsenal","Man City","Chelsea","Newcastle","Aston Villa","Brighton","West Ham","Man Utd","Tottenham","Crystal Palace","Wolves","Fulham","Brentford","Bournemouth","Notts Forest","Everton","Leeds","Burnley","Sunderland"],
-    "usr_085":["Liverpool","Man City","Chelsea","Arsenal","Newcastle","Tottenham","Man Utd","Aston Villa","Crystal Palace","Brighton","Notts Forest","Bournemouth","Everton","Fulham","West Ham","Leeds","Wolves","Brentford","Sunderland","Burnley"],
-    "usr_086":["Arsenal","Liverpool","Man City","Chelsea","Aston Villa","Newcastle","Notts Forest","Everton","Bournemouth","Brighton","Crystal Palace","Tottenham","Fulham","Man Utd","Brentford","West Ham","Wolves","Leeds","Sunderland","Burnley"],
-    "usr_087":["Liverpool","Man City","Arsenal","Chelsea","Newcastle","Aston Villa","Man Utd","Brighton","Tottenham","Crystal Palace","Notts Forest","Bournemouth","Fulham","Everton","West Ham","Wolves","Sunderland","Brentford","Leeds","Burnley"],
-    "usr_088":["Liverpool","Chelsea","Arsenal","Man City","Man Utd","Tottenham","Aston Villa","Crystal Palace","Newcastle","Everton","West Ham","Fulham","Brighton","Brentford","Notts Forest","Bournemouth","Leeds","Burnley","Wolves","Sunderland"],
-    "usr_089":["Liverpool","Arsenal","Chelsea","Man City","Newcastle","Aston Villa","Man Utd","Brighton","Crystal Palace","Tottenham","Notts Forest","Bournemouth","Fulham","Brentford","Everton","West Ham","Wolves","Sunderland","Leeds","Burnley"],
-    "usr_090":["Man Utd","Liverpool","Arsenal","Man City","Aston Villa","Chelsea","Tottenham","Burnley","Bournemouth","Brighton","Notts Forest","Fulham","Newcastle","Brentford","Crystal Palace","Sunderland","Leeds","Everton","Wolves","West Ham"],
-    "usr_091":["Man City","Arsenal","Liverpool","Aston Villa","Chelsea","Crystal Palace","Tottenham","Man Utd","Newcastle","Fulham","Leeds","Bournemouth","Burnley","Wolves","Notts Forest","Brentford","Brighton","Everton","Sunderland","West Ham"],
-    "usr_092":["Liverpool","Arsenal","Man City","Chelsea","Aston Villa","Newcastle","Tottenham","Man Utd","Brighton","Crystal Palace","Notts Forest","Fulham","Brentford","West Ham","Bournemouth","Everton","Wolves","Leeds","Sunderland","Burnley"],
-    "usr_093":["Liverpool","Arsenal","Man City","Chelsea","Aston Villa","Tottenham","Newcastle","Brighton","Man Utd","Notts Forest","Crystal Palace","Brentford","Bournemouth","Everton","Fulham","West Ham","Wolves","Burnley","Leeds","Sunderland"],
-    "usr_094":["Liverpool","Man City","Chelsea","Arsenal","Aston Villa","Man Utd","Newcastle","Tottenham","Brighton","Everton","Bournemouth","Notts Forest","Crystal Palace","Fulham","West Ham","Leeds","Brentford","Burnley","Wolves","Sunderland"],
-    "usr_095":["Liverpool","Man City","Chelsea","Arsenal","Newcastle","Man Utd","Aston Villa","Tottenham","Brighton","Crystal Palace","Bournemouth","West Ham","Fulham","Everton","Notts Forest","Wolves","Burnley","Leeds","Brentford","Sunderland"],
-    "usr_096":["Arsenal","Liverpool","Man City","Chelsea","Aston Villa","Tottenham","Man Utd","Crystal Palace","Newcastle","Notts Forest","Everton","Brighton","West Ham","Fulham","Bournemouth","Brentford","Leeds","Sunderland","Wolves","Burnley"],
-    "usr_097":["Arsenal","Liverpool","Chelsea","Man City","Aston Villa","Tottenham","Notts Forest","Crystal Palace","Man Utd","Brighton","Everton","Brentford","Newcastle","West Ham","Leeds","Wolves","Fulham","Sunderland","Burnley","Bournemouth"],
-    "usr_098":["Arsenal","Chelsea","Liverpool","Man City","Tottenham","Man Utd","Crystal Palace","Aston Villa","Everton","Newcastle","Brighton","Notts Forest","West Ham","Fulham","Bournemouth","Brentford","Leeds","Wolves","Burnley","Sunderland"],
-    "usr_099":["Arsenal","Liverpool","Man City","Chelsea","Man Utd","Newcastle","Notts Forest","Aston Villa","Bournemouth","Tottenham","Brighton","Brentford","Crystal Palace","Leeds","West Ham","Everton","Fulham","Wolves","Burnley","Sunderland"],
-    "usr_100":["Arsenal","Man City","Liverpool","Chelsea","Man Utd","Fulham","Notts Forest","Aston Villa","Newcastle","Leeds","Crystal Palace","Tottenham","Bournemouth","Everton","Sunderland","Brighton","West Ham","Brentford","Wolves","Burnley"],
-    "usr_101":["Liverpool","Arsenal","Man City","Chelsea","Newcastle","Man Utd","Aston Villa","Tottenham","West Ham","Everton","Brighton","Wolves","Brentford","Fulham","Crystal Palace","Bournemouth","Notts Forest","Leeds","Sunderland","Burnley"],
-    "usr_102":["Man Utd","Liverpool","Arsenal","Man City","Aston Villa","Chelsea","Tottenham","Newcastle","Crystal Palace","Brighton","Everton","Leeds","Fulham","Sunderland","Bournemouth","West Ham","Notts Forest","Brentford","Wolves","Burnley"],
-    "usr_103":["Man City","Liverpool","Arsenal","Chelsea","Tottenham","Aston Villa","Newcastle","Man Utd","Notts Forest","Crystal Palace","Everton","West Ham","Bournemouth","Brighton","Wolves","Fulham","Leeds","Brentford","Sunderland","Burnley"],
-    "usr_104":["Liverpool","Arsenal","Man City","Chelsea","Newcastle","Tottenham","Man Utd","Aston Villa","Brighton","Fulham","Notts Forest","Everton","Crystal Palace","Brentford","Bournemouth","Wolves","West Ham","Leeds","Burnley","Sunderland"],
-    "usr_105":["Arsenal","Man City","Liverpool","Chelsea","Aston Villa","Tottenham","Man Utd","Newcastle","Fulham","Everton","Crystal Palace","Bournemouth","Wolves","Brighton","West Ham","Notts Forest","Leeds","Burnley","Sunderland","Brentford"],
-    "usr_106":["Liverpool","Man City","Arsenal","Chelsea","Aston Villa","Newcastle","Man Utd","Tottenham","Brighton","Notts Forest","Crystal Palace","Everton","Bournemouth","Fulham","West Ham","Brentford","Wolves","Leeds","Sunderland","Burnley"],
-    "usr_107":["Liverpool","Arsenal","Man City","Newcastle","Chelsea","Aston Villa","Notts Forest","Tottenham","Brighton","Fulham","Man Utd","Everton","West Ham","Bournemouth","Brentford","Leeds","Crystal Palace","Wolves","Burnley","Sunderland"],
-    "usr_108":["Man City","Arsenal","Liverpool","Chelsea","Man Utd","Aston Villa","Tottenham","Newcastle","West Ham","Everton","Brighton","Wolves","Brentford","Fulham","Crystal Palace","Bournemouth","Notts Forest","Burnley","Sunderland","Leeds"],
-    "usr_109":["Liverpool","Man City","Arsenal","Chelsea","Man Utd","Notts Forest","Tottenham","Aston Villa","Newcastle","Brighton","Bournemouth","Fulham","Crystal Palace","Everton","West Ham","Sunderland","Leeds","Brentford","Wolves","Burnley"]
+    "usr_001":["Man Utd","Liverpool","Man City","Arsenal","Newcastle","Chelsea","Aston Villa","Notts Forest","Tottenham","Bournemouth","Brighton","Fulham","Brentford","Ipswich","Crystal Palace","West Ham","Wolves","Everton","Leicester","Southampton"],
+    "usr_002":["Liverpool","Man City","Arsenal","Chelsea","Aston Villa","Newcastle","Notts Forest","Crystal Palace","Brighton","Man Utd","Tottenham","Bournemouth","Brentford","Fulham","Everton","Ipswich","Wolves","West Ham","Leicester","Southampton"],
+    "usr_003":["Liverpool","Arsenal","Man City","Chelsea","Newcastle","Man Utd","Aston Villa","Tottenham","Brighton","Bournemouth","Notts Forest","Everton","Crystal Palace","Fulham","West Ham","Brentford","Wolves","Ipswich","Leicester","Southampton"],
+    "usr_004":["Liverpool","Man City","Chelsea","Arsenal","Aston Villa","Newcastle","Brighton","Tottenham","Notts Forest","Fulham","Man Utd","Bournemouth","Everton","Crystal Palace","Wolves","West Ham","Brentford","Ipswich","Leicester","Southampton"],
+    "usr_005":["Chelsea","Man City","Liverpool","Arsenal","Aston Villa","Newcastle","Tottenham","Brighton","Man Utd","Fulham","Bournemouth","Brentford","Ipswich","Everton","Crystal Palace","Wolves","West Ham","Notts Forest","Leicester","Southampton"],
+    "usr_006":["Chelsea","Man City","Liverpool","Arsenal","Newcastle","Man Utd","Everton","Aston Villa","Crystal Palace","Brighton","Notts Forest","Ipswich","West Ham","Southampton","Tottenham","Wolves","Bournemouth","Fulham","Brentford","Leicester"],
+    "usr_007":["Man City","Liverpool","Arsenal","Chelsea","Newcastle","Aston Villa","Tottenham","Man Utd","Bournemouth","Notts Forest","Fulham","Brighton","Wolves","Crystal Palace","West Ham","Ipswich","Everton","Brentford","Southampton","Leicester"],
+    "usr_008":["Liverpool","Man City","Arsenal","Chelsea","Aston Villa","Man Utd","Tottenham","Newcastle","Bournemouth","Brighton","Everton","West Ham","Fulham","Crystal Palace","Wolves","Notts Forest","Brentford","Ipswich","Southampton","Leicester"],
+    "usr_009":["Liverpool","Man City","Arsenal","Chelsea","Aston Villa","Newcastle","Tottenham","Man Utd","Notts Forest","Everton","Brighton","Brentford","West Ham","Bournemouth","Fulham","Crystal Palace","Wolves","Leicester","Ipswich","Southampton"],
+    "usr_010":["Man City","Liverpool","Arsenal","Chelsea","Tottenham","Man Utd","Aston Villa","Newcastle","West Ham","Everton","Brighton","Wolves","Brentford","Fulham","Crystal Palace","Bournemouth","Notts Forest","Ipswich","Leicester","Southampton"],
+    "usr_011":["Man City","Liverpool","Arsenal","Chelsea","Aston Villa","Man Utd","Tottenham","Newcastle","Everton","Brighton","Crystal Palace","Fulham","West Ham","Brentford","Bournemouth","Notts Forest","Southampton","Wolves","Leicester","Ipswich"],
+    "usr_012":["Man City","Arsenal","Liverpool","Chelsea","Aston Villa","Newcastle","Brentford","Bournemouth","Notts Forest","Brighton","Crystal Palace","Everton","Man Utd","Tottenham","Fulham","West Ham","Wolves","Southampton","Leicester","Ipswich"],
+    "usr_013":["Liverpool","Man City","Arsenal","Newcastle","Man Utd","Chelsea","Tottenham","Everton","Aston Villa","West Ham","Crystal Palace","Brighton","Fulham","Brentford","Notts Forest","Wolves","Bournemouth","Southampton","Ipswich","Leicester"],
+    "usr_014":["Liverpool","Arsenal","Newcastle","Chelsea","Man City","Man Utd","Tottenham","Aston Villa","Everton","Bournemouth","Brighton","West Ham","Fulham","Crystal Palace","Southampton","Wolves","Brentford","Notts Forest","Ipswich","Leicester"],
+    "usr_015":["Liverpool","Chelsea","Man City","Arsenal","Aston Villa","Man Utd","Newcastle","Tottenham","West Ham","Brighton","Notts Forest","Everton","Fulham","Crystal Palace","Wolves","Bournemouth","Southampton","Brentford","Leicester","Ipswich"],
+    "usr_016":["Man City","Liverpool","Arsenal","Chelsea","Man Utd","Aston Villa","Newcastle","Tottenham","Notts Forest","Bournemouth","Crystal Palace","Everton","Brighton","West Ham","Brentford","Wolves","Fulham","Ipswich","Leicester","Southampton"],
+    "usr_017":["Liverpool","Man City","Arsenal","Chelsea","Brighton","Notts Forest","Man Utd","Tottenham","Fulham","Crystal Palace","Everton","Aston Villa","West Ham","Newcastle","Ipswich","Wolves","Bournemouth","Brentford","Southampton","Leicester"],
+    "usr_018":["Liverpool","Arsenal","Man City","Chelsea","Newcastle","Man Utd","Aston Villa","Tottenham","Notts Forest","Brighton","Bournemouth","Crystal Palace","Everton","Wolves","Fulham","West Ham","Brentford","Ipswich","Southampton","Leicester"],
+    "usr_019":["Arsenal","Liverpool","Chelsea","Man City","Aston Villa","Notts Forest","Newcastle","Brighton","Bournemouth","Tottenham","Brentford","Fulham","Man Utd","Everton","West Ham","Crystal Palace","Wolves","Ipswich","Southampton","Leicester"],
+    "usr_020":["Liverpool","Arsenal","Chelsea","Man City","Aston Villa","Man Utd","Newcastle","Crystal Palace","Notts Forest","Brighton","Bournemouth","Everton","Tottenham","Brentford","Fulham","West Ham","Wolves","Ipswich","Leicester","Southampton"],
+    "usr_021":["Liverpool","Arsenal","Man City","Man Utd","Chelsea","Aston Villa","Tottenham","Newcastle","Crystal Palace","Brighton","Notts Forest","Bournemouth","Brentford","Everton","West Ham","Fulham","Wolves","Ipswich","Leicester","Southampton"],
+    "usr_022":["Liverpool","Man City","Chelsea","Arsenal","Aston Villa","Bournemouth","Man Utd","Newcastle","Crystal Palace","Brighton","Notts Forest","Fulham","Brentford","West Ham","Everton","Tottenham","Wolves","Leicester","Ipswich","Southampton"],
+    "usr_023":["Arsenal","Man City","Liverpool","Newcastle","Chelsea","Notts Forest","Man Utd","Tottenham","Wolves","Fulham","West Ham","Crystal Palace","Brentford","Brighton","Everton","Bournemouth","Ipswich","Aston Villa","Southampton","Leicester"],
+    "usr_024":["Liverpool","Man City","Arsenal","Chelsea","Newcastle","Everton","Bournemouth","Aston Villa","Brighton","Notts Forest","Crystal Palace","Fulham","Man Utd","West Ham","Wolves","Tottenham","Ipswich","Brentford","Southampton","Leicester"],
+    "usr_025":["Arsenal","Man City","Liverpool","Chelsea","Man Utd","Aston Villa","Crystal Palace","Newcastle","Tottenham","Brighton","Everton","Bournemouth","Notts Forest","Brentford","Fulham","West Ham","Wolves","Ipswich","Leicester","Southampton"],
+    "usr_026":["Chelsea","Man City","Liverpool","Arsenal","Aston Villa","Newcastle","Everton","Bournemouth","Man Utd","Crystal Palace","Brighton","Tottenham","Notts Forest","West Ham","Fulham","Wolves","Ipswich","Brentford","Southampton","Leicester"],
+    "usr_027":["Chelsea","Liverpool","Man City","Arsenal","Aston Villa","Newcastle","Tottenham","Man Utd","Notts Forest","Brighton","Brentford","Ipswich","Everton","Bournemouth","Crystal Palace","Fulham","Leicester","West Ham","Southampton","Wolves"],
+    "usr_028":["Liverpool","Chelsea","Arsenal","Notts Forest","Man City","Bournemouth","Newcastle","Tottenham","Wolves","Aston Villa","Brighton","Everton","Crystal Palace","Man Utd","West Ham","Fulham","Ipswich","Leicester","Brentford","Southampton"],
+    "usr_029":["Liverpool","Arsenal","Man City","Chelsea","Aston Villa","Newcastle","Tottenham","Man Utd","Brighton","Notts Forest","Everton","Bournemouth","Crystal Palace","Fulham","West Ham","Brentford","Wolves","Ipswich","Southampton","Leicester"],
+    "usr_030":["Man City","Arsenal","Liverpool","Chelsea","Newcastle","Aston Villa","Tottenham","Man Utd","Crystal Palace","Fulham","Notts Forest","Brighton","Bournemouth","Everton","West Ham","Ipswich","Wolves","Brentford","Leicester","Southampton"],
+    "usr_031":["Liverpool","Man City","Arsenal","Chelsea","Tottenham","Aston Villa","Newcastle","Brighton","Man Utd","Crystal Palace","Everton","West Ham","Notts Forest","Bournemouth","Wolves","Fulham","Ipswich","Brentford","Leicester","Southampton"],
+    "usr_032":["Liverpool","Man City","Arsenal","Chelsea","Aston Villa","Newcastle","Man Utd","Tottenham","Notts Forest","Brighton","Everton","Bournemouth","Fulham","Brentford","West Ham","Crystal Palace","Ipswich","Wolves","Leicester","Southampton"],
+    "usr_033":["Man City","Arsenal","Chelsea","Liverpool","Man Utd","Aston Villa","Tottenham","Brighton","Newcastle","Bournemouth","Everton","Fulham","Crystal Palace","West Ham","Notts Forest","Brentford","Southampton","Wolves","Ipswich","Leicester"],
+    "usr_034":["Man City","Liverpool","Chelsea","Arsenal","Aston Villa","Tottenham","Man Utd","Brighton","Newcastle","Crystal Palace","Bournemouth","Notts Forest","Fulham","Everton","West Ham","Brentford","Ipswich","Southampton","Wolves","Leicester"],
+    "usr_035":["Arsenal","Liverpool","Aston Villa","Man City","Chelsea","Man Utd","Tottenham","Brighton","Newcastle","Bournemouth","Notts Forest","Everton","Fulham","Crystal Palace","Wolves","Southampton","Ipswich","West Ham","Brentford","Leicester"],
+    "usr_036":["Liverpool","Man City","Arsenal","Chelsea","Man Utd","Aston Villa","Newcastle","Brighton","Tottenham","Everton","Fulham","Bournemouth","West Ham","Crystal Palace","Notts Forest","Brentford","Wolves","Ipswich","Leicester","Southampton"],
+    "usr_037":["Liverpool","Man City","Chelsea","Arsenal","Man Utd","Aston Villa","Tottenham","Everton","Newcastle","Crystal Palace","Brighton","Bournemouth","Notts Forest","Fulham","West Ham","Brentford","Wolves","Leicester","Ipswich","Southampton"],
+    "usr_038":["Liverpool","Arsenal","Man City","Chelsea","Aston Villa","Newcastle","Man Utd","Brighton","Tottenham","Notts Forest","Crystal Palace","Everton","Bournemouth","Fulham","West Ham","Brentford","Wolves","Leicester","Ipswich","Southampton"],
+    "usr_039":["Liverpool","Arsenal","Man City","Chelsea","Man Utd","Aston Villa","Tottenham","Newcastle","Notts Forest","Brighton","Fulham","Bournemouth","Everton","Crystal Palace","Brentford","West Ham","Ipswich","Wolves","Leicester","Southampton"],
+    "usr_040":["Liverpool","Man City","Man Utd","Chelsea","Tottenham","Arsenal","Aston Villa","Everton","Fulham","Crystal Palace","Newcastle","Notts Forest","West Ham","Brighton","Bournemouth","Southampton","Wolves","Leicester","Brentford","Ipswich"],
+    "usr_041":["MAN CITY","CHELSEA","LIVERPOOL","ARSENAL","TOTTENHAM","ASTON VILLA","MAN UTD","NEWCASTLE","EVERTON","BRIGHTON","NOTTS FOREST","CRYSTAL PALACE","WEST HAM","FULHAM","WOLVES","IPSWICH","BRENTFORD","BOURNEMOUTH","SOUTHAMPTON","LEICESTER"],
+    "usr_042":["Liverpool","Man City","Chelsea","Arsenal","Aston Villa","Newcastle","Man Utd","Tottenham","Crystal Palace","Brighton","Bournemouth","Notts Forest","Fulham","West Ham","Everton","Wolves","Ipswich","Southampton","Brentford","Leicester"],
+    "usr_043":["Liverpool","Arsenal","Man City","Chelsea","Newcastle","Tottenham","Aston Villa","Brighton","Man Utd","Crystal Palace","Notts Forest","Bournemouth","Everton","Wolves","Fulham","West Ham","Brentford","Ipswich","Southampton","Leicester"],
+    "usr_044":["Liverpool","Chelsea","Arsenal","Man City","Tottenham","Man Utd","Newcastle","Aston Villa","Brighton","Notts Forest","Crystal Palace","Everton","West Ham","Bournemouth","Fulham","Brentford","Wolves","Ipswich","Southampton","Leicester"],
+    "usr_045":["Man City","Arsenal","Man Utd","Newcastle","Liverpool","Chelsea","Tottenham","Brighton","Aston Villa","West Ham","Brentford","Crystal Palace","Fulham","Wolves","Notts Forest","Everton","Bournemouth","Southampton","Leicester","Ipswich"],
+    "usr_046":["Man City","Arsenal","Liverpool","Chelsea","Newcastle","Man Utd","Brighton","Aston Villa","Tottenham","Notts Forest","Fulham","Crystal Palace","Everton","Bournemouth","Leicester","Brentford","Ipswich","Wolves","West Ham","Southampton"],
+    "usr_047":["Chelsea","Liverpool","Man City","Man Utd","Arsenal","Newcastle","Crystal Palace","Brighton","Aston Villa","Notts Forest","Tottenham","Everton","Wolves","Bournemouth","Fulham","Ipswich","West Ham","Leicester","Brentford","Southampton"],
+    "usr_048":["Chelsea","Liverpool","Man City","Arsenal","Newcastle","Man Utd","Aston Villa","Tottenham","Brighton","Fulham","Crystal Palace","Notts Forest","Wolves","Ipswich","Bournemouth","Brentford","Everton","Leicester","West Ham","Southampton"],
+    "usr_049":["Liverpool","Chelsea","Man City","Arsenal","Newcastle","Man Utd","Crystal Palace","Aston Villa","Brighton","Fulham","Tottenham","Notts Forest","Wolves","Everton","Bournemouth","Brentford","Ipswich","Leicester","West Ham","Southampton"],
+    "usr_050":["Chelsea","Liverpool","Man City","Arsenal","Tottenham","Newcastle","Aston Villa","Notts Forest","Crystal Palace","Man Utd","Bournemouth","Brighton","West Ham","Fulham","Everton","Wolves","Southampton","Brentford","Ipswich","Leicester"],
+    "usr_051":["Liverpool","Chelsea","Man City","Arsenal","Aston Villa","Newcastle","Notts Forest","Brighton","Bournemouth","Man Utd","Everton","Brentford","West Ham","Crystal Palace","Fulham","Tottenham","Wolves","Leicester","Ipswich","Southampton"],
+    "usr_052":["Man City","Chelsea","Liverpool","Arsenal","Man Utd","Aston Villa","Newcastle","Everton","Tottenham","Crystal Palace","Brighton","West Ham","Fulham","Notts Forest","Southampton","Bournemouth","Leicester","Ipswich","Brentford","Wolves"],
+    "usr_053":["Arsenal","Liverpool","Man City","Chelsea","Aston Villa","Newcastle","Tottenham","Man Utd","Everton","Notts Forest","Brighton","Brentford","West Ham","Fulham","Ipswich","Crystal Palace","Wolves","Bournemouth","Southampton","Leicester"],
+    "usr_054":["Liverpool","Man City","Chelsea","Tottenham","Newcastle","Man Utd","Aston Villa","Notts Forest","Arsenal","Everton","Crystal Palace","Brighton","Fulham","Bournemouth","Ipswich","Southampton","West Ham","Brentford","Wolves","Leicester"],
+    "usr_055":["Chelsea","Liverpool","Man City","Arsenal","Newcastle","Aston Villa","Notts Forest","Everton","Man Utd","Crystal Palace","Brighton","Bournemouth","Fulham","Brentford","Tottenham","West Ham","Ipswich","Wolves","Leicester","Southampton"],
+    "usr_056":["Liverpool","Man City","Chelsea","Arsenal","Newcastle","Tottenham","Man Utd","Brighton","Aston Villa","Bournemouth","Brentford","Everton","Notts Forest","West Ham","Fulham","Crystal Palace","Ipswich","Southampton","Wolves","Leicester"],
+    "usr_057":["Liverpool","Man City","Arsenal","Chelsea","Notts Forest","Man Utd","Brighton","Aston Villa","Newcastle","Crystal Palace","Everton","Tottenham","Fulham","Bournemouth","West Ham","Brentford","Southampton","Wolves","Ipswich","Leicester"],
+    "usr_058":["Arsenal","Liverpool","Man City","Man Utd","Chelsea","Aston Villa","Newcastle","Brighton","Notts Forest","Tottenham","Fulham","Crystal Palace","Everton","Wolves","Bournemouth","West Ham","Ipswich","Leicester","Brentford","Southampton"],
+    "usr_059":["Arsenal","Chelsea","Man City","liverpool","man utd","Aston Villa","Tottenham","Notts Forest","Crystal Palace","Newcastle","Bournemouth","Brighton","Fulham","everton","West Ham","wolves","Southampton","Ipswich","Brentford","Leicester"],
+    "usr_060":["Liverpool","Arsenal","Chelsea","Man City","Newcastle","Tottenham","Aston Villa","Man Utd","Bournemouth","Brighton","Notts Forest","Crystal Palace","West Ham","Brentford","Fulham","Wolves","Everton","Ipswich","Leicester","Southampton"],
+    "usr_061":["Liverpool","Arsenal","Man City","Chelsea","Aston Villa","Crystal Palace","Newcastle","Brighton","Bournemouth","Notts Forest","Tottenham","Man Utd","Brentford","Fulham","Everton","West Ham","Wolves","Leicester","Ipswich","Southampton"],
+    "usr_062":["Liverpool","Man City","Arsenal","Chelsea","Tottenham","Man Utd","Newcastle","Aston Villa","Everton","Brighton","Notts Forest","Brentford","Bournemouth","Crystal Palace","West Ham","Fulham","Wolves","Ipswich","Leicester","Southampton"],
+    "usr_063":["Liverpool","Arsenal","Man City","Chelsea","Aston villa","Notts forest","Crystal palace","Newcastle","brighton","bournemouth","Tottenham","Man utd","Brentford","West Ham","Everton","Fulham","Ipswich","Wolves","Leicester","Southampton"],
+    "usr_064":["Liverpool","Man City","Chelsea","Arsenal","Aston Villa","Tottenham","Man Utd","Newcastle","Brighton","Notts Forest","Crystal Palace","Everton","Bournemouth","West Ham","Brentford","Fulham","Southampton","Ipswich","Wolves","Leicester"],
+    "usr_065":["Chelsea","Liverpool","Man City","Arsenal","Brighton","Aston Villa","Man Utd","Newcastle","Notts Forest","Tottenham","Everton","Ipswich","Crystal Palace","West Ham","Fulham","Southampton","Wolves","Bournemouth","Brentford","Leicester"],
+    "usr_066":["Liverpool","Chelsea","Arsenal","Man City","Newcastle","Aston Villa","Tottenham","Man Utd","Brighton","Bournemouth","Notts Forest","Fulham","Everton","Brentford","Crystal Palace","West Ham","Southampton","Wolves","Ipswich","Leicester"],
+    "usr_067":["Liverpool","Arsenal","Chelsea","Man City","Newcastle","Aston Villa","Tottenham","Man Utd","Brighton","Crystal Palace","Bournemouth","Fulham","Everton","Wolves","Notts Forest","Brentford","West Ham","Ipswich","Leicester","Southampton"],
+    "usr_068":["Liverpool","Arsenal","Man City","Chelsea","Man Utd","Newcastle","Aston Villa","Everton","Tottenham","Brighton","Notts Forest","Crystal Palace","Bournemouth","Fulham","West Ham","Wolves","Ipswich","Brentford","Leicester","Southampton"],
+    "usr_069":["Arsenal","Man City","Liverpool","Man Utd","Chelsea","Aston Villa","Tottenham","Newcastle","Notts Forest","Brighton","Bournemouth","Everton","Crystal Palace","Brentford","Fulham","West Ham","Wolves","Ipswich","Leicester","Southampton"],
+    "usr_070":["Liverpool","Arsenal","Man City","Newcastle","Chelsea","Aston Villa","Brighton","Crystal Palace","Brentford","Notts Forest","Man Utd","Tottenham","Bournemouth","Everton","Fulham","West Ham","Ipswich","Wolves","Leicester","Southampton"],
+    "usr_071":["Man City","Chelsea","Liverpool","Arsenal","Aston Villa","Newcastle","Tottenham","Man Utd","Notts Forest","West Ham","Fulham","Brighton","Everton","Crystal Palace","Bournemouth","Ipswich","Brentford","Wolves","Southampton","Leicester"],
+    "usr_072":["Arsenal","Liverpool","Man City","Chelsea","Aston Villa","Newcastle","Man Utd","Brighton","Tottenham","Bournemouth","Notts Forest","Wolves","Fulham","Crystal Palace","Everton","Brentford","Southampton","West Ham","Leicester","Ipswich"],
+    "usr_073":["Liverpool","Man City","Chelsea","Arsenal","Newcastle","Man Utd","Aston Villa","Notts Forest","Fulham","Tottenham","Everton","Crystal Palace","Brighton","Bournemouth","West Ham","Brentford","Wolves","Ipswich","Leicester","Southampton"],
+    "usr_074":["Liverpool","Man City","Chelsea","Arsenal","Aston Villa","Man Utd","Newcastle","Notts Forest","Crystal Palace","Everton","Tottenham","Bournemouth","Fulham","Brighton","Wolves","Ipswich","West Ham","Brentford","Southampton","Leicester"],
+    "usr_075":["Liverpool","Man City","Chelsea","Arsenal","Tottenham","Man Utd","Newcastle","Aston Villa","Ipswich","Crystal Palace","Brighton","Wolves","Everton","Notts Forest","Southampton","West Ham","Fulham","Brentford","Bournemouth","Leicester"],
+    "usr_076":["Liverpool","Arsenal","Man City","Chelsea","Newcastle","Aston Villa","Crystal Palace","Notts Forest","Brighton","Brentford","Bournemouth","Man Utd","Fulham","Everton","Tottenham","West Ham","Leicester","Wolves","Ipswich","Southampton"],
+    "usr_077":["Liverpool","Arsenal","Chelsea","Man City","Aston Villa","Newcastle","Crystal Palace","Brighton","Man Utd","Tottenham","Everton","Southampton","Notts Forest","Brentford","West Ham","Ipswich","Fulham","Wolves","Bournemouth","Leicester"],
+    "usr_078":["Man City","Liverpool","Chelsea","Arsenal","Notts Forest","Man Utd","Tottenham","Brighton","Newcastle","Bournemouth","Aston Villa","Everton","Fulham","Crystal Palace","Brentford","West Ham","Leicester","Wolves","Ipswich","Southampton"],
+    "usr_079":["Liverpool","Chelsea","Man City","Arsenal","Man Utd","Aston Villa","Newcastle","Tottenham","Everton","Crystal Palace","Notts Forest","Bournemouth","Brighton","Brentford","West Ham","Fulham","Leicester","Ipswich","Wolves","Southampton"],
+    "usr_080":["Liverpool","Arsenal","Man City","Chelsea","Aston Villa","Newcastle","Tottenham","Man Utd","Brighton","Crystal Palace","Notts Forest","Everton","Wolves","West Ham","Fulham","Bournemouth","Brentford","Ipswich","Southampton","Leicester"],
+    "usr_081":["Arsenal","Liverpool","Chelsea","Man City","Man Utd","Newcastle","Aston Villa","Tottenham","Brighton","Notts Forest","Crystal Palace","West Ham","Wolves","Everton","Brentford","Southampton","Fulham","Ipswich","Bournemouth","Leicester"],
+    "usr_082":["Liverpool","Arsenal","Man City","Chelsea","Aston Villa","Man Utd","Tottenham","Newcastle","Brighton","Notts Forest","Crystal Palace","Everton","Bournemouth","Fulham","West Ham","Wolves","Ipswich","Leicester","Southampton","Brentford"],
+    "usr_083":["Arsenal","Liverpool","Crystal Palace","Chelsea","Man City","Aston Villa","Newcastle","Brighton","Man Utd","Notts Forest","Tottenham","Everton","Bournemouth","Brentford","Wolves","Fulham","Ipswich","West Ham","Southampton","Leicester"],
+    "usr_084":["Liverpool","Arsenal","Man City","Chelsea","Newcastle","Aston Villa","Brighton","West Ham","Man Utd","Tottenham","Crystal Palace","Wolves","Fulham","Brentford","Bournemouth","Notts Forest","Everton","Ipswich","Leicester","Southampton"],
+    "usr_085":["Liverpool","Man City","Chelsea","Arsenal","Newcastle","Tottenham","Man Utd","Aston Villa","Crystal Palace","Brighton","Notts Forest","Bournemouth","Everton","Fulham","West Ham","Ipswich","Wolves","Brentford","Southampton","Leicester"],
+    "usr_086":["Arsenal","Liverpool","Man City","Chelsea","Aston Villa","Newcastle","Notts Forest","Everton","Bournemouth","Brighton","Crystal Palace","Tottenham","Fulham","Man Utd","Brentford","West Ham","Wolves","Ipswich","Southampton","Leicester"],
+    "usr_087":["Liverpool","Man City","Arsenal","Chelsea","Newcastle","Aston Villa","Man Utd","Brighton","Tottenham","Crystal Palace","Notts Forest","Bournemouth","Fulham","Everton","West Ham","Wolves","Southampton","Brentford","Ipswich","Leicester"],
+    "usr_088":["Liverpool","Chelsea","Arsenal","Man City","Man Utd","Tottenham","Aston Villa","Crystal Palace","Newcastle","Everton","West Ham","Fulham","Brighton","Brentford","Notts Forest","Bournemouth","Ipswich","Leicester","Wolves","Southampton"],
+    "usr_089":["Liverpool","Arsenal","Chelsea","Man City","Newcastle","Aston Villa","Man Utd","Brighton","Crystal Palace","Tottenham","Notts Forest","Bournemouth","Fulham","Brentford","Everton","West Ham","Wolves","Southampton","Ipswich","Leicester"],
+    "usr_090":["Man Utd","Liverpool","Arsenal","Man City","Aston Villa","Chelsea","Tottenham","Leicester","Bournemouth","Brighton","Notts Forest","Fulham","Newcastle","Brentford","Crystal Palace","Southampton","Ipswich","Everton","Wolves","West Ham"],
+    "usr_091":["Man City","Arsenal","Liverpool","Aston Villa","Chelsea","Crystal Palace","Tottenham","Man Utd","Newcastle","Fulham","Ipswich","Bournemouth","Leicester","Wolves","Notts Forest","Brentford","Brighton","Everton","Southampton","West Ham"],
+    "usr_092":["Liverpool","Arsenal","Man City","Chelsea","Aston Villa","Newcastle","Tottenham","Man Utd","Brighton","Crystal Palace","Notts Forest","Fulham","Brentford","West Ham","Bournemouth","Everton","Wolves","Ipswich","Southampton","Leicester"],
+    "usr_093":["Liverpool","Arsenal","Man City","Chelsea","Aston Villa","Tottenham","Newcastle","Brighton","Man Utd","Notts Forest","Crystal Palace","Brentford","Bournemouth","Everton","Fulham","West Ham","Wolves","Leicester","Ipswich","Southampton"],
+    "usr_094":["Liverpool","Man City","Chelsea","Arsenal","Aston Villa","Man Utd","Newcastle","Tottenham","Brighton","Everton","Bournemouth","Notts Forest","Crystal Palace","Fulham","West Ham","Ipswich","Brentford","Leicester","Wolves","Southampton"],
+    "usr_095":["Liverpool","Man City","Chelsea","Arsenal","Newcastle","Man Utd","Aston Villa","Tottenham","Brighton","Crystal Palace","Bournemouth","West Ham","Fulham","Everton","Notts Forest","Wolves","Leicester","Ipswich","Brentford","Southampton"],
+    "usr_096":["Arsenal","Liverpool","Man City","Chelsea","Aston Villa","Tottenham","Man Utd","Crystal Palace","Newcastle","Notts Forest","Everton","Brighton","West Ham","Fulham","Bournemouth","Brentford","Ipswich","Southampton","Wolves","Leicester"],
+    "usr_097":["Arsenal","Liverpool","Chelsea","Man City","Aston Villa","Tottenham","Notts Forest","Crystal Palace","Man Utd","Brighton","Everton","Brentford","Newcastle","West Ham","Ipswich","Wolves","Fulham","Southampton","Leicester","Bournemouth"],
+    "usr_098":["Arsenal","Chelsea","Liverpool","Man City","Tottenham","Man Utd","Crystal Palace","Aston Villa","Everton","Newcastle","Brighton","Notts Forest","West Ham","Fulham","Bournemouth","Brentford","Ipswich","Wolves","Leicester","Southampton"],
+    "usr_099":["Arsenal","Liverpool","Man City","Chelsea","Man Utd","Newcastle","Notts Forest","Aston Villa","Bournemouth","Tottenham","Brighton","Brentford","Crystal Palace","Ipswich","West Ham","Everton","Fulham","Wolves","Leicester","Southampton"],
+    "usr_100":["Arsenal","Man City","Liverpool","Chelsea","Man Utd","Fulham","Notts Forest","Aston Villa","Newcastle","Ipswich","Crystal Palace","Tottenham","Bournemouth","Everton","Southampton","Brighton","West Ham","Brentford","Wolves","Leicester"],
+    "usr_101":["Liverpool","Arsenal","Man City","Chelsea","Newcastle","Man Utd","Aston Villa","Tottenham","West Ham","Everton","Brighton","Wolves","Brentford","Fulham","Crystal Palace","Bournemouth","Notts Forest","Ipswich","Southampton","Leicester"],
+    "usr_102":["Man Utd","Liverpool","Arsenal","Man City","Aston Villa","Chelsea","Tottenham","Newcastle","Crystal Palace","Brighton","Everton","Ipswich","Fulham","Southampton","Bournemouth","West Ham","Notts Forest","Brentford","Wolves","Leicester"],
+    "usr_103":["Man City","Liverpool","Arsenal","Chelsea","Tottenham","Aston Villa","Newcastle","Man Utd","Notts Forest","Crystal Palace","Everton","West Ham","Bournemouth","Brighton","Wolves","Fulham","Ipswich","Brentford","Southampton","Leicester"],
+    "usr_104":["Liverpool","Arsenal","Man City","Chelsea","Newcastle","Tottenham","Man Utd","Aston Villa","Brighton","Fulham","Notts Forest","Everton","Crystal Palace","Brentford","Bournemouth","Wolves","West Ham","Ipswich","Leicester","Southampton"],
+    "usr_105":["Arsenal","Man City","Liverpool","Chelsea","Aston Villa","Tottenham","Man Utd","Newcastle","Fulham","Everton","Crystal Palace","Bournemouth","Wolves","Brighton","West Ham","Notts Forest","Ipswich","Leicester","Southampton","Brentford"],
+    "usr_106":["Liverpool","Man City","Arsenal","Chelsea","Aston Villa","Newcastle","Man Utd","Tottenham","Brighton","Notts Forest","Crystal Palace","Everton","Bournemouth","Fulham","West Ham","Brentford","Wolves","Ipswich","Southampton","Leicester"],
+    "usr_107":["Liverpool","Arsenal","Man City","Newcastle","Chelsea","Aston Villa","Notts Forest","Tottenham","Brighton","Fulham","Man Utd","Everton","West Ham","Bournemouth","Brentford","Ipswich","Crystal Palace","Wolves","Leicester","Southampton"],
+    "usr_108":["Man City","Arsenal","Liverpool","Chelsea","Man Utd","Aston Villa","Tottenham","Newcastle","West Ham","Everton","Brighton","Wolves","Brentford","Fulham","Crystal Palace","Bournemouth","Notts Forest","Leicester","Southampton","Ipswich"],
+    "usr_109":["Liverpool","Man City","Arsenal","Chelsea","Man Utd","Notts Forest","Tottenham","Aston Villa","Newcastle","Brighton","Bournemouth","Fulham","Crystal Palace","Everton","West Ham","Southampton","Ipswich","Brentford","Wolves","Leicester"]
 };
 
 // Helper function to convert 'DD/MM/YYYY HH:mm' to ISO 8601 format
@@ -696,58 +704,57 @@ export const matches: Match[] = [
     { id: '33-team_14-team_06', week: 33, matchDate: '2026-04-18T15:00:00.000Z', homeTeamId: 'team_14', awayTeamId: 'team_06', homeScore: -1, awayScore: -1 },
     { id: '33-team_09-team_04', week: 33, matchDate: '2026-04-18T15:00:00.000Z', homeTeamId: 'team_09', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
     { id: '33-team_17-team_02', week: 33, matchDate: '2026-04-18T15:00:00.000Z', homeTeamId: 'team_17', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
-    { id: '34-team_20-team_19', week: 34, matchDate: '2026-04-25T15:00:00.000Z', homeTeamId: 'team_20', awayTeamId: 'team_19', homeScore: -1, awayScore: -1 },
-    { id: '34-team_18-team_05', week: 34, matchDate: '2026-04-25T15:00:00.000Z', homeTeamId: 'team_18', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
-    { id: '34-team_16-team_17', week: 34, matchDate: '2026-04-25T15:00:00.000Z', homeTeamId: 'team_16', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
-    { id: '34-team_15-team_01', week: 34, matchDate: '2026-04-25T15:00:00.000Z', homeTeamId: 'team_15', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
-    { id: '34-team_13-team_11', week: 34, matchDate: '2026-04-25T15:00:00.000Z', homeTeamId: 'team_13', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
-    { id: '34-team_10-team_03', week: 34, matchDate: '2026-04-25T15:00:00.000Z', homeTeamId: 'team_10', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
-    { id: '34-team_08-team_19', week: 34, matchDate: '2026-04-25T15:00:00.000Z', homeTeamId: 'team_08', awayTeamId: 'team_19', homeScore: -1, awayScore: -1 },
-    { id: '34-team_07-team_12', week: 34, matchDate: '2026-04-25T15:00:00.000Z', homeTeamId: 'team_07', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
-    { id: '34-team_06-team_14', week: 34, matchDate: '2026-04-25T15:00:00.000Z', homeTeamId: 'team_06', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
-    { id: '34-team_04-team_18', week: 34, matchDate: '2026-04-25T15:00:00.000Z', homeTeamId: 'team_04', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
-    { id: '34-team_02-team_09', week: 34, matchDate: '2026-04-25T15:00:00.000Z', homeTeamId: 'team_02', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
-    { id: '35-team_20-team_15', week: 35, matchDate: '2026-05-02T15:00:00.000Z', homeTeamId: 'team_20', awayTeamId: 'team_15', homeScore: -1, awayScore: -1 },
-    { id: '35-team_19-team_02', week: 35, matchDate: '2026-05-02T15:00:00.000Z', homeTeamId: 'team_19', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
-    { id: '35-team_18-team_07', week: 35, matchDate: '2026-05-02T15:00:00.000Z', homeTeamId: 'team_18', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
-    { id: '35-team_17-team_04', week: 35, matchDate: '2026-05-02T15:00:00.000Z', homeTeamId: 'team_17', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
-    { id: '35-team_16-team_06', week: 35, matchDate: '2026-05-02T15:00:00.000Z', homeTeamId: 'team_16', awayTeamId: 'team_06', homeScore: -1, awayScore: -1 },
-    { id: '35-team_14-team_08', week: 35, matchDate: '2026-05-02T15:00:00.000Z', homeTeamId: 'team_14', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
-    { id: '35-team_13-team_04', week: 35, matchDate: '2026-05-02T15:00:00.000Z', homeTeamId: 'team_13', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
-    { id: '35-team_12-team_07', week: 35, matchDate: '2026-05-02T15:00:00.000Z', homeTeamId: 'team_12', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
-    { id: '35-team_11-team_01', week: 35, matchDate: '2026-05-02T15:00:00.000Z', homeTeamId: 'team_11', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
-    { id: '35-team_10-team_05', week: 35, matchDate: '2026-05-02T15:00:00.000Z', homeTeamId: 'team_10', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
-    { id: '35-team_09-team_03', week: 35, matchDate: '2026-05-02T15:00:00.000Z', homeTeamId: 'team_09', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
-    { id: '36-team_19-team_12', week: 36, matchDate: '2026-05-09T15:00:00.000Z', homeTeamId: 'team_19', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
-    { id: '36-team_15-team_05', week: 36, matchDate: '2026-05-09T15:00:00.000Z', homeTeamId: 'team_15', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
-    { id: '36-team_13-team_10', week: 36, matchDate: '2026-05-09T15:00:00.000Z', homeTeamId: 'team_13', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
-    { id: '36-team_08-team_18', week: 36, matchDate: '2026-05-09T15:00:00.000Z', homeTeamId: 'team_08', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
-    { id: '36-team_07-team_14', week: 36, matchDate: '2026-05-09T15:00:00.000Z', homeTeamId: 'team_07', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
-    { id: '36-team_06-team_16', week: 36, matchDate: '2026-05-09T15:00:00.000Z', homeTeamId: 'team_06', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
-    { id: '36-team_04-team_11', week: 36, matchDate: '2026-05-09T15:00:00.000Z', homeTeamId: 'team_04', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
-    { id: '36-team_02-team_20', week: 36, matchDate: '2026-05-09T15:00:00.000Z', homeTeamId: 'team_02', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
-    { id: '36-team_01-team_09', week: 36, matchDate: '2026-05-09T15:00:00.000Z', homeTeamId: 'team_01', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
-    { id: '36-team_03-team_17', week: 36, matchDate: '2026-05-09T15:00:00.000Z', homeTeamId: 'team_03', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
-    { id: '37-team_18-team_06', week: 37, matchDate: '2026-05-17T15:00:00.000Z', homeTeamId: 'team_18', awayTeamId: 'team_06', homeScore: -1, awayScore: -1 },
-    { id: '37-team_17-team_08', week: 37, matchDate: '2026-05-17T15:00:00.000Z', homeTeamId: 'team_17', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
-    { id: '37-team_16-team_01', week: 37, matchDate: '2026-05-17T15:00:00.000Z', homeTeamId: 'team_16', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
-    { id: '37-team_14-team_20', week: 37, matchDate: '2026-05-17T15:00:00.000Z', homeTeamId: 'team_14', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
-    { id: '37-team_12-team_04', week: 37, matchDate: '2026-05-17T15:00:00.000Z', homeTeamId: 'team_12', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
-    { id: '37-team_11-team_02', week: 37, matchDate: '2026-05-17T15:00:00.000Z', homeTeamId: 'team_11', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
-    { id: '37-team_10-team_19', week: 37, matchDate: '2026-05-17T15:00:00.000Z', homeTeamId: 'team_10', awayTeamId: 'team_19', homeScore: -1, awayScore: -1 },
-    { id: '37-team_09-team_15', week: 37, matchDate: '2026-05-17T15:00:00.000Z', homeTeamId: 'team_09', awayTeamId: 'team_15', homeScore: -1, awayScore: -1 },
-    { id: '37-team_07-team_03', week: 37, matchDate: '2026-05-17T15:00:00.000Z', homeTeamId: 'team_07', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
-    { id: '37-team_05-team_13', week: 37, matchDate: '2026-05-17T15:00:00.000Z', homeTeamId: 'team_05', awayTeamId: 'team_13', homeScore: -1, awayScore: -1 },
-    { id: '38-team_20-team_08', week: 38, matchDate: '2026-05-24T15:00:00.000Z', homeTeamId: 'team_20', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
-    { id: '38-team_19-team_15', week: 38, matchDate: '2026-05-24T15:00:00.000Z', homeTeamId: 'team_19', awayTeamId: 'team_15', homeScore: -1, awayScore: -1 },
-    { id: '38-team_18-team_01', week: 38, matchDate: '2026-05-24T15:00:00.000Z', homeTeamId: 'team_18', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
-    { id: '38-team_17-team_14', week: 38, matchDate: '2026-05-24T15:00:00.000Z', homeTeamId: 'team_17', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
-    { id: '38-team_13-team_02', week: 38, matchDate: '2026-05-24T15:00:00.000Z', homeTeamId: 'team_13', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
-    { id: '38-team_11-team_05', week: 38, matchDate: '2026-05-24T15:00:00.000Z', homeTeamId: 'team_11', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
-    { id: '38-team_10-team_09', week: 38, matchDate: '2026-05-24T15:00:00.000Z', homeTeamId: 'team_10', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
-    { id: '38-team_06-team_12', week: 38, matchDate: '2026-05-24T15:00:00.000Z', homeTeamId: 'team_06', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
-    { id: '38-team_04-team_07', week: 38, matchDate: '2026-05-24T15:00:00.000Z', homeTeamId: 'team_04', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
-    { id: '38-team_03-team_16', week: 38, matchDate: '2026-05-24T15:00:00.000Z', homeTeamId: 'team_03', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 }
+    { id: '34-team_15-team_05', week: 34, matchDate: '2026-04-25T15:00:00.000Z', homeTeamId: 'team_15', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
+    { id: '34-team_08-team_14', week: 34, matchDate: '2026-04-25T15:00:00.000Z', homeTeamId: 'team_08', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
+    { id: '34-team_13-team_12', week: 34, matchDate: '2026-04-25T15:00:00.000Z', homeTeamId: 'team_13', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
+    { id: '34-team_07-team_01', week: 34, matchDate: '2026-04-25T15:00:00.000Z', homeTeamId: 'team_07', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
+    { id: '34-team_06-team_11', week: 34, matchDate: '2026-04-25T15:00:00.000Z', homeTeamId: 'team_06', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
+    { id: '34-team_04-team_16', week: 34, matchDate: '2026-04-25T15:00:00.000Z', homeTeamId: 'team_04', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
+    { id: '34-team_03-team_10', week: 34, matchDate: '2026-04-25T15:00:00.000Z', homeTeamId: 'team_03', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
+    { id: '34-team_02-team_18', week: 34, matchDate: '2026-04-25T15:00:00.000Z', homeTeamId: 'team_02', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
+    { id: '34-team_09-team_20', week: 34, matchDate: '2026-04-25T15:00:00.000Z', homeTeamId: 'team_09', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
+    { id: '34-team_17-team_19', week: 34, matchDate: '2026-04-25T15:00:00.000Z', homeTeamId: 'team_17', awayTeamId: 'team_19', homeScore: -1, awayScore: -1 },
+    { id: '35-team_19-team_08', week: 35, matchDate: '2026-05-02T15:00:00.000Z', homeTeamId: 'team_19', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
+    { id: '35-team_18-team_04', week: 35, matchDate: '2026-05-02T15:00:00.000Z', homeTeamId: 'team_18', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
+    { id: '35-team_14-team_17', week: 35, matchDate: '2026-05-02T15:00:00.000Z', homeTeamId: 'team_14', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
+    { id: '35-team_12-team_06', week: 35, matchDate: '2026-05-02T15:00:00.000Z', homeTeamId: 'team_12', awayTeamId: 'team_06', homeScore: -1, awayScore: -1 },
+    { id: '35-team_11-team_13', week: 35, matchDate: '2026-05-02T15:00:00.000Z', homeTeamId: 'team_11', awayTeamId: 'team_13', homeScore: -1, awayScore: -1 },
+    { id: '35-team_10-team_03', week: 35, matchDate: '2026-05-02T15:00:00.000Z', homeTeamId: 'team_10', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
+    { id: '35-team_09-team_02', week: 35, matchDate: '2026-05-02T15:00:00.000Z', homeTeamId: 'team_09', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
+    { id: '35-team_07-team_19', week: 35, matchDate: '2026-05-02T15:00:00.000Z', homeTeamId: 'team_07', awayTeamId: 'team_19', homeScore: -1, awayScore: -1 },
+    { id: '35-team_05-team_15', week: 35, matchDate: '2026-05-02T15:00:00.000Z', homeTeamId: 'team_05', awayTeamId: 'team_15', homeScore: -1, awayScore: -1 },
+    { id: '35-team_01-team_18', week: 35, matchDate: '2026-05-02T15:00:00.000Z', homeTeamId: 'team_01', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
+    { id: '36-team_19-team_10', week: 36, matchDate: '2026-05-09T15:00:00.000Z', homeTeamId: 'team_19', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
+    { id: '36-team_18-team_12', week: 36, matchDate: '2026-05-09T15:00:00.000Z', homeTeamId: 'team_18', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
+    { id: '36-team_17-team_09', week: 36, matchDate: '2026-05-09T15:00:00.000Z', homeTeamId: 'team_17', awayTeamId: 'team_09', homeScore: -1, awayScore: -1 },
+    { id: '36-team_15-team_16', week: 36, matchDate: '2026-05-09T15:00:00.000Z', homeTeamId: 'team_15', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 },
+    { id: '36-team_13-team_05', week: 36, matchDate: '2026-05-09T15:00:00.000Z', homeTeamId: 'team_13', awayTeamId: 'team_05', homeScore: -1, awayScore: -1 },
+    { id: '36-team_08-team_17', week: 36, matchDate: '2026-05-09T15:00:00.000Z', homeTeamId: 'team_08', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
+    { id: '36-team_07-team_04', week: 36, matchDate: '2026-05-09T15:00:00.000Z', homeTeamId: 'team_07', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
+    { id: '36-team_06-team_18', week: 36, matchDate: '2026-05-09T15:00:00.000Z', homeTeamId: 'team_06', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
+    { id: '36-team_03-team_14', week: 36, matchDate: '2026-05-09T15:00:00.000Z', homeTeamId: 'team_03', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
+    { id: '36-team_02-team_11', week: 36, matchDate: '2026-05-09T15:00:00.000Z', homeTeamId: 'team_02', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
+    { id: '37-team_19-team_01', week: 37, matchDate: '2026-05-17T15:00:00.000Z', homeTeamId: 'team_19', awayTeamId: 'team_01', homeScore: -1, awayScore: -1 },
+    { id: '37-team_18-team_10', week: 37, matchDate: '2026-05-17T15:00:00.000Z', homeTeamId: 'team_18', awayTeamId: 'team_10', homeScore: -1, awayScore: -1 },
+    { id: '37-team_17-team_06', week: 37, matchDate: '2026-05-17T15:00:00.000Z', homeTeamId: 'team_17', awayTeamId: 'team_06', homeScore: -1, awayScore: -1 },
+    { id: '37-team_16-team_15', week: 37, matchDate: '2026-05-17T15:00:00.000Z', homeTeamId: 'team_16', awayTeamId: 'team_15', homeScore: -1, awayScore: -1 },
+    { id: '37-team_14-team_12', week: 37, matchDate: '2026-05-17T15:00:00.000Z', homeTeamId: 'team_14', awayTeamId: 'team_12', homeScore: -1, awayScore: -1 },
+    { id: '37-team_11-team_03', week: 37, matchDate: '2026-05-17T15:00:00.000Z', homeTeamId: 'team_11', awayTeamId: 'team_03', homeScore: -1, awayScore: -1 },
+    { id: '37-team_09-team_07', week: 37, matchDate: '2026-05-17T15:00:00.000Z', homeTeamId: 'team_09', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
+    { id: '37-team_08-team_13', week: 37, matchDate: '2026-05-17T15:00:00.000Z', homeTeamId: 'team_08', awayTeamId: 'team_13', homeScore: -1, awayScore: -1 },
+    { id: '37-team_05-team_20', week: 37, matchDate: '2026-05-17T15:00:00.000Z', homeTeamId: 'team_05', awayTeamId: 'team_20', homeScore: -1, awayScore: -1 },
+    { id: '37-team_04-team_02', week: 37, matchDate: '2026-05-17T15:00:00.000Z', homeTeamId: 'team_04', awayTeamId: 'team_02', homeScore: -1, awayScore: -1 },
+    { id: '38-team_20-team_17', week: 38, matchDate: '2026-05-24T15:00:00.000Z', homeTeamId: 'team_20', awayTeamId: 'team_17', homeScore: -1, awayScore: -1 },
+    { id: '38-team_15-team_19', week: 38, matchDate: '2026-05-24T15:00:00.000Z', homeTeamId: 'team_15', awayTeamId: 'team_19', homeScore: -1, awayScore: -1 },
+    { id: '38-team_13-team_08', week: 38, matchDate: '2026-05-24T15:00:00.000Z', homeTeamId: 'team_13', awayTeamId: 'team_08', homeScore: -1, awayScore: -1 },
+    { id: '38-team_12-team_06', week: 38, matchDate: '2026-05-24T15:00:00.000Z', homeTeamId: 'team_12', awayTeamId: 'team_06', homeScore: -1, awayScore: -1 },
+    { id: '38-team_10-team_18', week: 38, matchDate: '2026-05-24T15:00:00.000Z', homeTeamId: 'team_10', awayTeamId: 'team_18', homeScore: -1, awayScore: -1 },
+    { id: '38-team_09-team_14', week: 38, matchDate: '2026-05-24T15:00:00.000Z', homeTeamId: 'team_09', awayTeamId: 'team_14', homeScore: -1, awayScore: -1 },
+    { id: '38-team_07-team_04', week: 38, matchDate: '2026-05-24T15:00:00.000Z', homeTeamId: 'team_07', awayTeamId: 'team_04', homeScore: -1, awayScore: -1 },
+    { id: '38-team_05-team_11', week: 38, matchDate: '2026-05-24T15:00:00.000Z', homeTeamId: 'team_05', awayTeamId: 'team_11', homeScore: -1, awayScore: -1 },
+    { id: '38-team_03-team_07', week: 38, matchDate: '2026-05-24T15:00:00.000Z', homeTeamId: 'team_03', awayTeamId: 'team_07', homeScore: -1, awayScore: -1 },
+    { id: '38-team_02-team_13', week: 38, matchDate: '2026-05-24T15:00:00.000Z', homeTeamId: 'team_02', awayTeamId: 'team_13', homeScore: -1, awayScore: -1 },
+    { id: '38-team_01-team_16', week: 38, matchDate: '2026-05-24T15:00:00.000Z', homeTeamId: 'team_01', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 }
 ];
 
 const playedMatches = matches.filter(m => m.homeScore !== -1);
@@ -772,6 +779,7 @@ export const weeklyTeamStandings: WeeklyTeamStanding[] = (() => {
     });
 
     weeklyMatches.forEach(match => {
+      if (!standings[match.homeTeamId] || !standings[match.awayTeamId]) return;
       const home = standings[match.homeTeamId];
       const away = standings[match.awayTeamId];
       
@@ -796,7 +804,10 @@ export const weeklyTeamStandings: WeeklyTeamStanding[] = (() => {
       if (standingB.points !== standingA.points) return standingB.points - standingA.points;
       if (standingB.goalDifference !== standingA.goalDifference) return standingB.goalDifference - standingA.goalDifference;
       if (standingB.goalsFor !== standingA.goalsFor) return standingB.goalsFor - standingA.goalsFor;
-      return teams.find(t => t.id === a)!.name.localeCompare(teams.find(t => t.id === b)!.name);
+      const teamA = teams.find(t => t.id === a);
+      const teamB = teams.find(t => t.id === b);
+      if (!teamA || !teamB) return 0;
+      return teamA.name.localeCompare(teamB.name);
     });
 
     sortedTeamIds.forEach((teamId, index) => {
@@ -809,7 +820,7 @@ export const weeklyTeamStandings: WeeklyTeamStanding[] = (() => {
 
 export const standings: CurrentStanding[] = (() => {
     if (playedMatches.length === 0) {
-        return teams.map(team => ({
+        return teams.slice(0, 20).map(team => ({
             teamId: team.id,
             rank: 0,
             points: 0,
@@ -825,7 +836,7 @@ export const standings: CurrentStanding[] = (() => {
 
     const teamStats: { [key: string]: Omit<CurrentStanding, 'teamId' | 'rank'> } = {};
 
-    teams.forEach(team => {
+    teams.slice(0, 20).forEach(team => {
         teamStats[team.id] = {
             points: 0,
             gamesPlayed: 0,
@@ -841,6 +852,8 @@ export const standings: CurrentStanding[] = (() => {
     playedMatches.forEach(match => {
         const homeStats = teamStats[match.homeTeamId];
         const awayStats = teamStats[match.awayTeamId];
+
+        if (!homeStats || !awayStats) return;
 
         homeStats.gamesPlayed++;
         awayStats.gamesPlayed++;
@@ -874,7 +887,10 @@ export const standings: CurrentStanding[] = (() => {
             if (b.points !== a.points) return b.points - a.points;
             if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
             if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
-            return teams.find(t => t.id === a.teamId)!.name.localeCompare(teams.find(t => t.id === b.teamId)!.name);
+            const teamA = teams.find(t => t.id === a.teamId);
+            const teamB = teams.find(t => t.id === b.teamId);
+            if (!teamA || !teamB) return 0;
+            return teamA.name.localeCompare(teamB.name);
         });
 
     return sortedStandings.map((team, index) => ({
@@ -1050,4 +1066,5 @@ export const monthlyMimoM: MonthlyMimoM[] = [
     
 
     
+
 
