@@ -3,7 +3,7 @@
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
-import { getFirestore, type Firestore } from 'firebase/firestore';
+import { getFirestore, type Firestore, enableNetwork } from 'firebase/firestore';
 
 // This function now robustly initializes Firebase, ensuring it only happens once.
 export function initializeFirebase(): {
@@ -11,20 +11,25 @@ export function initializeFirebase(): {
   auth: Auth;
   firestore: Firestore;
 } {
-  if (getApps().length) {
-    const app = getApp();
-    return {
-      firebaseApp: app,
-      auth: getAuth(app),
-      firestore: getFirestore(app),
-    };
+  let app: FirebaseApp;
+  if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = getApp();
   }
-  // Directly initialize with the explicit config from config.ts
-  const firebaseApp = initializeApp(firebaseConfig);
+  
+  const firestore = getFirestore(app);
+  
+  // Explicitly enable the network for Firestore. This is crucial for environments
+  // where the SDK might default to an offline state.
+  enableNetwork(firestore).catch((err) => {
+    console.error("Firebase: Failed to enable network.", err);
+  });
+
   return {
-    firebaseApp,
-    auth: getAuth(firebaseApp),
-    firestore: getFirestore(firebaseApp),
+    firebaseApp: app,
+    auth: getAuth(app),
+    firestore: firestore,
   };
 }
 
