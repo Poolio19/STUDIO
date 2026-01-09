@@ -67,8 +67,8 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
       { name: 'seasonMonths', data: seasonMonths, idField: 'id' },
       { name: 'monthlyMimoM', data: monthlyMimoM, idField: 'id' },
       { name: 'userHistories', data: fullUserHistories, idField: 'userId' },
-      { name: 'playerTeamScores', data: playerTeamScores, idField: 'userId' }, // Simplified, assuming single doc per user for now
-      { name: 'weeklyTeamStandings', data: weeklyTeamStandings, idField: 'week' }, // Needs composite key
+      { name: 'playerTeamScores', data: playerTeamScores, idField: 'userId' },
+      { name: 'weeklyTeamStandings', data: weeklyTeamStandings, idField: 'week' },
       { name: 'teamRecentResults', data: teamRecentResults, idField: 'teamId' },
   ];
    
@@ -92,7 +92,7 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
           if (deleteCount >= 499) { 
             await deleteBatch.commit();
             console.log(`Committed deletion of ${deleteCount} documents from '${name}'.`);
-            deleteBatch = writeBatch(db); // Re-initialize the batch
+            deleteBatch = writeBatch(db);
             deleteCount = 0;
           }
         }
@@ -132,14 +132,17 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
             const docRef = doc(db, name, String(docId));
             
             const itemData = {...item};
-            delete itemData[idField];
+            // Do not delete the idField for playerTeamScores and weeklyTeamStandings as they are composite keys
+            if (name !== 'playerTeamScores' && name !== 'weeklyTeamStandings') {
+                delete itemData[idField];
+            }
             setBatch.set(docRef, itemData);
 
             setCount++;
             if (setCount >= 499) {
                 await setBatch.commit();
                 console.log(`Committed ${setCount} documents to '${name}'.`);
-                setBatch = writeBatch(db); // Re-initialize the batch
+                setBatch = writeBatch(db);
                 setCount = 0;
             }
         }
@@ -320,7 +323,8 @@ export default function AdminPage() {
     setIsImporting(false);
     
     if (result.success) {
-      window.location.reload();
+      // Small delay to allow Firestore propagation before reload
+      setTimeout(() => window.location.reload(), 1000);
     }
   }
 
