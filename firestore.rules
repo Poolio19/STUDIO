@@ -3,76 +3,10 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    match /users/{userId} {
-      allow read, list: if isAuthenticated();
-      allow write: if isOwner(userId);
-    }
-
-    match /predictions/{userId} {
-      allow list: if isAuthenticated();
-      allow read: if isAuthenticated() && isOwner(userId);
-      allow write: if isOwner(userId);
-    }
-    
-    match /playerTeamScores/{scoreId} {
-        allow read, list: if isAuthenticated();
-        // Allow server-side processes to write this data
-        allow write: if true; 
-    }
-
-    match /userHistories/{userId} {
-        allow read, list: if isAuthenticated();
-        // Allow server-side processes to write this data
-        allow write: if true;
-    }
-
-    match /teams/{teamId} {
-      allow read, list: if isAuthenticated();
-    }
-
-    match /standings/{standingId} {
-      allow read, list: if isAuthenticated();
-    }
-
-    match /previousSeasonStandings/{standingId} {
-      allow read, list: if isAuthenticated();
-    }
-
-     match /weeklyTeamStandings/{standingId} {
-      allow read, list: if isAuthenticated();
-    }
-
-    match /teamRecentResults/{resultId} {
-      allow read, list: if isAuthenticated();
-    }
-
-    match /monthlyMimoM/{awardId} {
-      allow read, list: if isAuthenticated();
-    }
-    
-    match /seasonMonths/{monthId} {
-      allow read, list: if isAuthenticated();
-    }
-
-    match /matches/{matchId} {
-      allow read, list: if isAuthenticated();
-      // Allow server-side processes to update scores
-      allow update: if true;
-      allow create: if true;
-    }
-    
-    // Default deny all writes to public collections that haven't been explicitly defined
-    match /{collection}/{doc} {
-        allow write: if false;
+    // WARNING: These rules are insecure and are for debugging purposes only.
+    // They allow anyone to read and write to your entire database.
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
 }
