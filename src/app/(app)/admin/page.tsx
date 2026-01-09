@@ -50,6 +50,7 @@ import {
 } from '@/lib/data';
 import { collection, doc, writeBatch, getDocs, QuerySnapshot, DocumentData, Firestore } from 'firebase/firestore';
 import { Icons, IconName } from '@/components/icons';
+import { UpdateMatchResultsInput } from '@/ai/flows/update-match-results-flow-types';
 
 async function importClientSideData(db: Firestore | null): Promise<{ success: boolean; message: string }> {
   if (!db) {
@@ -191,7 +192,7 @@ export default function AdminPage() {
     });
 
     try {
-        const results = Object.entries(scores).map(([matchId, score]) => {
+        const resultsToUpdate = Object.entries(scores).map(([matchId, score]) => {
             const match = weekFixtures.find(f => f.id === matchId)!;
             return {
                 id: match.id,
@@ -204,13 +205,13 @@ export default function AdminPage() {
             };
         });
         
-        const validResults = results.filter(r => !isNaN(r.homeScore) && !isNaN(r.awayScore));
+        const validResults = resultsToUpdate.filter(r => !isNaN(r.homeScore) && !isNaN(r.awayScore));
 
         if (validResults.length === 0) {
             throw new Error('No valid scores entered for this week.');
         }
 
-        const input = { results: validResults };
+        const input: UpdateMatchResultsInput = { results: validResults };
         const result = await updateMatchResults(input);
 
         if (!result.success) {
@@ -286,7 +287,7 @@ export default function AdminPage() {
         throw new Error('No match data found to sync. The local data file might be empty.');
       }
       
-      const input = {
+      const input: UpdateMatchResultsInput = {
         results: allResults,
       };
   
