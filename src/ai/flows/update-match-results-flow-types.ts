@@ -3,8 +3,9 @@
  */
 import { z } from 'zod';
 
+// The ID is now correctly identified as the document ID, not part of the data.
 const MatchResultSchema = z.object({
-    matchId: z.string(),
+    id: z.string(),
     week: z.number().int(),
     homeTeamId: z.string(),
     awayTeamId: z.string(),

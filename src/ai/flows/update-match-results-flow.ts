@@ -47,8 +47,9 @@ const updateMatchResultsFlow = ai.defineFlow(
       const batch = db.batch();
 
       chunk.forEach(result => {
-        const docRef = matchesCollectionRef.doc(result.matchId);
-        // This payload is clean and does not contain a redundant `id`.
+        // The result.id is the document ID (e.g., "1-team_12-team_03")
+        const docRef = matchesCollectionRef.doc(result.id);
+        // The payload no longer contains a redundant `matchId` field.
         batch.set(docRef, {
           week: result.week,
           homeTeamId: result.homeTeamId,

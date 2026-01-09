@@ -194,7 +194,7 @@ export default function AdminPage() {
         const results = Object.entries(scores).map(([matchId, score]) => {
             const match = weekFixtures.find(f => f.id === matchId)!;
             return {
-                matchId: match.id,
+                id: match.id,
                 week: match.week,
                 homeTeamId: match.homeTeamId,
                 awayTeamId: match.awayTeamId,
@@ -273,7 +273,7 @@ export default function AdminPage() {
   
     try {
       const allResults = matches.map(match => ({
-        matchId: match.id,
+        id: match.id,
         week: match.week,
         homeTeamId: match.homeTeamId,
         awayTeamId: match.awayTeamId,
