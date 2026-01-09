@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -93,7 +92,7 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
           if (deleteCount >= 499) { 
             await deleteBatch.commit();
             console.log(`Committed deletion of ${deleteCount} documents from '${name}'.`);
-            deleteBatch = writeBatch(db);
+            deleteBatch = writeBatch(db); // Re-initialize the batch
             deleteCount = 0;
           }
         }
@@ -132,15 +131,15 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
             }
             const docRef = doc(db, name, String(docId));
             
-            // The data object itself should not contain its own ID field.
-            const { [idField]: _, ...itemData } = item;
+            const itemData = {...item};
+            delete itemData[idField];
             setBatch.set(docRef, itemData);
 
             setCount++;
             if (setCount >= 499) {
                 await setBatch.commit();
                 console.log(`Committed ${setCount} documents to '${name}'.`);
-                setBatch = writeBatch(db);
+                setBatch = writeBatch(db); // Re-initialize the batch
                 setCount = 0;
             }
         }
@@ -194,7 +193,6 @@ export default function AdminPage() {
         return;
       }
       try {
-        // Attempt a simple read operation from a known collection
         const teamsCollectionRef = collection(firestore, 'teams');
         const snapshot = await getDocs(teamsCollectionRef);
         if (snapshot.docs.length > 0) {
@@ -311,7 +309,7 @@ export default function AdminPage() {
       description: `Wiping and repopulating database with initial application data. This may take a moment.`,
     });
 
-    const result = await importClientSideData(firestore, true); // Pass true to purge
+    const result = await importClientSideData(firestore, true);
     
     toast({
       variant: result.success ? 'default' : 'destructive',
@@ -320,8 +318,10 @@ export default function AdminPage() {
     });
     
     setIsImporting(false);
-    // Refresh page to reflect new data
-    window.location.reload();
+    
+    if (result.success) {
+      window.location.reload();
+    }
   }
 
   const handleDataImportClick = async () => {
@@ -349,7 +349,6 @@ export default function AdminPage() {
       
       matches.forEach(match => {
           const docRef = doc(matchesCollectionRef, match.id);
-          // Only sync matches with valid scores
           if (typeof match.homeScore === 'number' && typeof match.awayScore === 'number') {
             batch.set(docRef, match, { merge: true });
           }
