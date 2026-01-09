@@ -3,11 +3,49 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // WARNING: These rules are insecure and are for debugging purposes only.
-    // They allow anyone to read and write to your entire database.
-    // This is a temporary measure to ensure security rules are not blocking
-    // the data import process.
-    match /{document=**} {
+    // Allow a specific, non-existent document to be read for connectivity testing.
+    // This is a safe way to check if the client can reach the database.
+    match /____connectivity-test____/{docId} {
+      allow read: if true;
+    }
+
+    // WARNING: The rest of the rules are insecure for production.
+    // They are for debugging and initial development purposes.
+    // TODO: Secure these rules before deploying to a production environment.
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+    match /teams/{teamId} {
+      allow read, write: if true;
+    }
+    match /standings/{standingId} {
+        allow read, write: if true;
+    }
+    match /previousSeasonStandings/{standingId} {
+        allow read, write: if true;
+    }
+    match /predictions/{userId} {
+        allow read, write: if true;
+    }
+    match /playerTeamScores/{scoreId} {
+      allow read, write: if true;
+    }
+    match /userHistories/{userId} {
+        allow read, write: if true;
+    }
+    match /weeklyTeamStandings/{standingId} {
+        allow read, write: if true;
+    }
+    match /teamRecentResults/{resultId} {
+        allow read, write: if true;
+    }
+    match /monthlyMimoM/{awardId} {
+        allow read, write: if true;
+    }
+    match /seasonMonths/{monthId} {
+        allow read, write: if true;
+    }
+    match /matches/{matchId} {
       allow read, write: if true;
     }
   }
