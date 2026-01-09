@@ -5,6 +5,8 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // WARNING: These rules are insecure and are for debugging purposes only.
     // They allow anyone to read and write to your entire database.
+    // This is a temporary measure to ensure security rules are not blocking
+    // the data import process.
     match /{document=**} {
       allow read, write: if true;
     }
