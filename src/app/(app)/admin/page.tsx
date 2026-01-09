@@ -162,15 +162,12 @@ export default function AdminPage() {
         return;
       }
       try {
-        // Attempt a simple and fast read operation to a non-existent document.
-        // We only care if the request succeeds or fails due to permissions, not if the doc exists.
         const docRef = doc(firestore, '____connectivity-test____', '____test____');
         await getDoc(docRef);
-        // If it reaches here, we have a connection, even if we get a permission error.
         setDbStatus({ connected: true, message: 'Database is connected.' });
       } catch (error: any) {
          if (error.code === 'permission-denied') {
-            setDbStatus({ connected: true, message: 'Database is connected (with permissions).' });
+            setDbStatus({ connected: true, message: 'Database is connected (with secure rules).' });
         } else if (error.code === 'unavailable' || error.message.includes('offline')) {
             setDbStatus({ connected: false, message: 'Database connection failed: Client is offline.' });
         } else {
