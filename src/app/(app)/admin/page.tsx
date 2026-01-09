@@ -86,12 +86,20 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
         
         // Firestore allows a maximum of 500 operations in a single batch.
         const BATCH_SIZE = 499;
-        for (let i = 0; i < snapshot.docs.length; i += BATCH_SIZE) {
-          const batch = writeBatch(db);
-          const chunk = snapshot.docs.slice(i, i + BATCH_SIZE);
-          chunk.forEach(document => batch.delete(document.ref));
+        let batch = writeBatch(db);
+        let count = 0;
+        for (const document of snapshot.docs) {
+            batch.delete(document.ref);
+            count++;
+            if (count % BATCH_SIZE === 0) {
+                await batch.commit();
+                console.log(`Deleted ${count} documents from '${name}'.`);
+                batch = writeBatch(db);
+            }
+        }
+        if (count % BATCH_SIZE !== 0) {
           await batch.commit();
-          console.log(`Deleted ${chunk.length} documents from '${name}'.`);
+          console.log(`Deleted final ${count % BATCH_SIZE} documents from '${name}'.`);
         }
         console.log(`Purged collection: ${name}`);
       }
@@ -106,38 +114,47 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
         }
       
         const BATCH_SIZE = 499;
-        for (let i = 0; i < data.length; i += BATCH_SIZE) {
-            const batch = writeBatch(db);
-            const chunk = data.slice(i, i + BATCH_SIZE);
+        let batch = writeBatch(db);
+        let count = 0;
+        for(const item of data) {
+            let docId: string;
+            if (Array.isArray(idField)) {
+                docId = idField.map(field => item[field]).join('_');
+            } else {
+                docId = item[idField];
+            }
 
-            chunk.forEach(item => {
-                let docId: string;
-                if (Array.isArray(idField)) {
-                    docId = idField.map(field => item[field]).join('_');
-                } else {
-                    docId = item[idField];
-                }
+            if (!docId) {
+                console.warn(`Missing ID for item in collection ${name}`, item);
+                continue; // Continue with the next item
+            }
 
-                if (!docId) {
-                    console.warn(`Missing ID for item in collection ${name}`, item);
-                    return; // Continue with the next item
-                }
-
-                const docRef = doc(db, name, String(docId));
-                
-                // For composite keys, the ID fields are also data fields.
+            const docRef = doc(db, name, String(docId));
+            
+            const itemData = {...item};
+            if (!Array.isArray(idField)) {
                 // For simple keys, we typically don't store the ID in the document body.
-                const itemData = {...item};
-                if (!Array.isArray(idField)) {
+                // But only if the idField exists on the itemData itself.
+                if (idField in itemData) {
                     delete itemData[idField];
                 }
-                
-                batch.set(docRef, itemData);
-            });
+            }
             
-            await batch.commit();
-            console.log(`Committed ${chunk.length} documents to '${name}'.`);
+            batch.set(docRef, itemData);
+            count++;
+
+            if(count % BATCH_SIZE === 0) {
+              await batch.commit();
+              console.log(`Committed a batch of documents to '${name}'.`);
+              batch = writeBatch(db);
+            }
         }
+
+        if (count % BATCH_SIZE !== 0) {
+            await batch.commit();
+            console.log(`Committed final batch of documents to '${name}'.`);
+        }
+
         console.log(`Imported collection: ${name}`);
     }
 
@@ -184,15 +201,16 @@ export default function AdminPage() {
         return;
       }
       try {
-        // Attempt to read the root reference of the database. This is a lightweight operation.
-        // It will fail if permissions are insufficient, but succeed if the DB is reachable.
-        await getDoc(doc(firestore, '/')); 
+        // Attempt to read a non-existent document. This is a lightweight operation
+        // that will succeed if we have a connection, even if the document doesn't exist.
+        // It's more reliable than checking for a collection's existence.
+        await getDoc(doc(firestore, '_internal_test_collection_do_not_delete', 'test_doc'));
         setDbStatus({ status: 'success', message: 'Successfully connected to the database.' });
       } catch (error: any) {
-        // Firestore security rules might prevent reading the root. 
+        // Firestore security rules might prevent reading. 
         // A "permission-denied" error still means we are connected.
         if (error.code === 'permission-denied') {
-             setDbStatus({ status: 'success', message: 'Connection confirmed (permission-denied on root is OK).' });
+             setDbStatus({ status: 'success', message: 'Connection confirmed (permission-denied is OK).' });
         } else {
             console.error("Database connection check failed:", error);
             setDbStatus({ status: 'error', message: `Database connection failed: ${error.message}` });
@@ -542,5 +560,3 @@ export default function AdminPage() {
     </>
   );
 }
-
-    
