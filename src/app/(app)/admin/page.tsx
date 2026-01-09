@@ -29,7 +29,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { useFirebase } from '@/firebase';
 import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 import {
@@ -110,6 +110,11 @@ type EditableMatch = Match & {
     awayTeam: Team;
 };
 
+type DbStatus = {
+  status: 'pending' | 'success' | 'error';
+  message: string;
+};
+
 export default function AdminPage() {
   const { toast } = useToast();
   const { firestore } = useFirebase();
@@ -121,7 +126,32 @@ export default function AdminPage() {
   const [weekFixtures, setWeekFixtures] = React.useState<EditableMatch[]>([]);
   const [scores, setScores] = React.useState<{[matchId: string]: {homeScore: string, awayScore: string}}>({});
 
+  const [dbStatus, setDbStatus] = React.useState<DbStatus>({
+    status: 'pending',
+    message: 'Checking database connection...',
+  });
+
   const teamMap = React.useMemo(() => new Map(teams.map(t => [t.id, t])), []);
+
+  React.useEffect(() => {
+    const checkDbConnection = async () => {
+      if (!firestore) {
+        setDbStatus({ status: 'error', message: 'Firestore client is not available.' });
+        return;
+      }
+      try {
+        const teamsCollectionRef = collection(firestore, 'teams');
+        const snapshot = await getDocs(teamsCollectionRef);
+        setDbStatus({ status: 'success', message: `Successfully connected and read ${snapshot.size} documents from the 'teams' collection.` });
+      } catch (error: any) {
+        console.error("Database connection check failed:", error);
+        setDbStatus({ status: 'error', message: `Database connection failed: ${error.message}` });
+      }
+    };
+
+    checkDbConnection();
+  }, [firestore]);
+
 
   const handleWeekChange = (weekStr: string) => {
     const week = parseInt(weekStr);
@@ -294,6 +324,28 @@ export default function AdminPage() {
             Manage your application's data sources and imports.
           </p>
         </header>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Database Connection Status</CardTitle>
+                <CardDescription>
+                    This is a simple check to see if the application can connect to and read from the Firestore database.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="flex items-center gap-4 rounded-lg border p-4">
+                {dbStatus.status === 'pending' && <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />}
+                {dbStatus.status === 'success' && <CheckCircle className="h-6 w-6 text-green-500" />}
+                {dbStatus.status === 'error' && <XCircle className="h-6 w-6 text-red-500" />}
+                <p className={
+                    dbStatus.status === 'success' ? 'text-green-600' :
+                    dbStatus.status === 'error' ? 'text-red-600' :
+                    'text-muted-foreground'
+                }>{dbStatus.message}</p>
+                </div>
+            </CardContent>
+        </Card>
+
 
         <Card>
             <CardHeader>
