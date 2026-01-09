@@ -43,6 +43,7 @@ import {
 import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 import { MatchResultSchema } from '@/ai/flows/update-match-results-flow-types';
 import { cn } from '@/lib/utils';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 
 async function importClientSideData(db: Firestore, setProgress: (message: string) => void): Promise<{ success: boolean; message: string }> {
@@ -141,9 +142,10 @@ type EditableMatch = Match & {
 export default function AdminPage() {
   const { toast } = useToast();
   const { firestore } = useFirebase();
-  const [isImporting, setIsImporting] = React.useState(true);
-  const [importProgress, setImportProgress] = React.useState("Initializing data reset...");
-  const [importCompleted, setImportCompleted] = React.useState(false);
+  const [isImporting, setIsImporting] = React.useState(false);
+  const [importProgress, setImportProgress] = React.useState<string | null>(null);
+
+  const [dbStatus, setDbStatus] = React.useState<{ connected: boolean, message: string }>({ connected: false, message: 'Checking connection...' });
 
   const [isUpdatingMatches, setIsUpdatingMatches] = React.useState(false);
 
@@ -154,29 +156,52 @@ export default function AdminPage() {
   const teamMap = React.useMemo(() => new Map(teams.map(t => [t.id, t])), []);
 
   React.useEffect(() => {
-    const performImport = async () => {
+    const checkConnection = async () => {
       if (!firestore) {
-        setTimeout(performImport, 100); // Wait for firestore
+        setTimeout(checkConnection, 200); // Retry if firestore isn't initialized yet
         return;
       }
-      setIsImporting(true);
-      setImportCompleted(false);
+      try {
+        // Attempt a simple and fast read operation to a non-existent document.
+        // We only care if the request succeeds or fails due to permissions, not if the doc exists.
+        const docRef = doc(firestore, '____connectivity-test____', '____test____');
+        await getDoc(docRef);
+        // If it reaches here, we have a connection, even if we get a permission error.
+        setDbStatus({ connected: true, message: 'Database is connected.' });
+      } catch (error: any) {
+         if (error.code === 'permission-denied') {
+            setDbStatus({ connected: true, message: 'Database is connected (with permissions).' });
+        } else if (error.code === 'unavailable' || error.message.includes('offline')) {
+            setDbStatus({ connected: false, message: 'Database connection failed: Client is offline.' });
+        } else {
+            console.error("Database connection check failed:", error);
+            setDbStatus({ connected: false, message: `Connection failed: ${error.message}` });
+        }
+      }
+    };
+    checkConnection();
+  }, [firestore]);
 
-      const result = await importClientSideData(firestore, setImportProgress);
-      
-      toast({
-        variant: result.success ? 'default' : 'destructive',
-        title: result.success ? 'Import Complete!' : 'Import Failed',
-        description: result.message,
-      });
-      
-      setImportProgress(result.message);
-      setIsImporting(false);
-      setImportCompleted(result.success);
+
+  const handlePurgeAndImport = async () => {
+    if (!firestore) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Database not available.' });
+      return;
     }
-
-    performImport();
-  }, [firestore, toast]);
+    setIsImporting(true);
+    setImportProgress("Initializing data reset...");
+    
+    const result = await importClientSideData(firestore, setImportProgress);
+    
+    toast({
+      variant: result.success ? 'default' : 'destructive',
+      title: result.success ? 'Import Complete!' : 'Import Failed',
+      description: result.message,
+    });
+    
+    setImportProgress(result.message);
+    setIsImporting(false);
+  }
 
 
   const handleWeekChange = (weekStr: string) => {
@@ -285,20 +310,58 @@ export default function AdminPage() {
 
         <Card>
             <CardHeader>
-                <CardTitle>Database Reset</CardTitle>
+                <CardTitle>Database Status</CardTitle>
                 <CardDescription>
-                    The database is being automatically purged and re-populated with the initial dataset. This process runs once when the page is loaded.
+                    Check the connection to the Firestore database.
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="flex items-center gap-4 rounded-lg border p-4">
-                {isImporting ? (
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                ) : (
-                    importCompleted ? <Icons.shieldCheck className="h-6 w-6 text-green-500" /> : <Icons.bug className="h-6 w-6 text-red-500" />
-                )}
-                <p className="font-medium">{importProgress}</p>
+                {dbStatus.connected ? <Icons.shieldCheck className="h-6 w-6 text-green-500" /> : <Icons.bug className="h-6 w-6 text-red-500" />}
+                <p className="font-medium">{dbStatus.message}</p>
                 </div>
+            </CardContent>
+        </Card>
+        
+        <Card>
+            <CardHeader>
+                <CardTitle>Database Reset</CardTitle>
+                <CardDescription>
+                    This will permanently delete all data in all collections and re-populate it with the initial dataset. This action cannot be undone.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                         <Button variant="destructive" disabled={!dbStatus.connected || isImporting}>
+                            {isImporting ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Resetting Database...
+                                </>
+                            ) : "Purge and Re-Import All Data"}
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete all collections and documents in your database and replace them with the original seed data. This action cannot be undone.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handlePurgeAndImport}>Yes, reset the database</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+
+                {importProgress && (
+                     <div className="flex items-center gap-4 rounded-lg border p-4 mt-4">
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                        <p className="font-medium">{importProgress}</p>
+                    </div>
+                )}
             </CardContent>
         </Card>
 
@@ -307,11 +370,11 @@ export default function AdminPage() {
             <CardHeader>
                 <CardTitle>Update Match Results</CardTitle>
                 <CardDescription>
-                    Select a week to view its fixtures, enter the scores, and save the results to the database. Use a value of -1 for scores that are not yet final. This is disabled until the data reset is complete.
+                    Select a week to view its fixtures, enter the scores, and save the results to the database. Use a value of -1 for scores that are not yet final. This is disabled until the database is connected.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                 <Select onValueChange={handleWeekChange} disabled={isImporting || !importCompleted}>
+                 <Select onValueChange={handleWeekChange} disabled={!dbStatus.connected}>
                     <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder="Select a week" />
                     </SelectTrigger>
@@ -343,7 +406,7 @@ export default function AdminPage() {
                                         value={scores[match.id]?.homeScore ?? ''}
                                         onChange={(e) => handleScoreChange(match.id, 'home', e.target.value)}
                                         className="w-16 text-center"
-                                        disabled={isImporting || !importCompleted}
+                                        disabled={!dbStatus.connected}
                                     />
                                     <span>-</span>
                                      <Input
@@ -352,7 +415,7 @@ export default function AdminPage() {
                                         value={scores[match.id]?.awayScore ?? ''}
                                         onChange={(e) => handleScoreChange(match.id, 'away', e.target.value)}
                                         className="w-16 text-center"
-                                        disabled={isImporting || !importCompleted}
+                                        disabled={!dbStatus.connected}
                                     />
                                     <div className="flex items-center gap-2 w-2/5">
                                         <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.awayTeam.bgColourSolid }}>
@@ -363,7 +426,7 @@ export default function AdminPage() {
                                 </div>
                             )})}
                         </div>
-                        <Button onClick={handleSaveWeekResults} disabled={isUpdatingMatches || isImporting || !importCompleted}>
+                        <Button onClick={handleSaveWeekResults} disabled={isUpdatingMatches || !dbStatus.connected}>
                             {isUpdatingMatches ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
