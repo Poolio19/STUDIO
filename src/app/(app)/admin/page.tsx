@@ -44,7 +44,6 @@ import {
   fullUserHistories,
   playerTeamScores,
   weeklyTeamStandings,
-  teamRecentResults,
   type Match,
   type Team
 } from '@/lib/data';
@@ -97,6 +96,7 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
                 batch = writeBatch(db);
             }
         }
+        // Commit any remaining documents in the last batch
         if (count % BATCH_SIZE !== 0) {
           await batch.commit();
           console.log(`Deleted final ${count % BATCH_SIZE} documents from '${name}'.`);
@@ -131,6 +131,8 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
 
             const docRef = doc(db, name, String(docId));
             
+            // For composite keys, the ID fields are part of the data.
+            // For single keys, we typically don't want the ID field in the document data.
             const itemData = {...item};
             if (!Array.isArray(idField) && idField in itemData) {
               delete itemData[idField as keyof typeof itemData];
@@ -193,14 +195,19 @@ export default function AdminPage() {
   React.useEffect(() => {
     const checkDbConnection = async () => {
       if (!firestore) {
-        setDbStatus({ status: 'error', message: 'Firestore client is not available.' });
+        // We might need to wait a moment for the firestore instance to be available.
+        setTimeout(checkDbConnection, 100);
         return;
       }
       try {
+        // Attempt to read a non-existent document. This is a lightweight operation.
+        // A 'permission-denied' error is still a sign of successful communication with the backend.
         await getDoc(doc(firestore, '_internal_test_collection_do_not_delete', 'test_doc'));
         setDbStatus({ status: 'success', message: 'Successfully connected to the database.' });
       } catch (error: any) {
         if (error.code === 'permission-denied') {
+             // If we get a permission denied error, it means we have successfully connected to the DB
+             // but the security rules are just blocking this specific read. For our check, this is a success.
              setDbStatus({ status: 'success', message: 'Connection confirmed (permission-denied is OK).' });
         } else {
             console.error("Database connection check failed:", error);

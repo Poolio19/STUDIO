@@ -69,7 +69,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       auth,
       (firebaseUser) => {
         setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
-        if (!firebaseUser) {
+        if (!firebaseUser && !userAuthState.isUserLoading) {
           // If no user is logged in after the initial check, we initiate anonymous sign-in.
           // This is a more robust pattern than doing it directly in the initial state.
           signInAnonymously(auth).catch((error) => {
@@ -84,7 +84,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       }
     );
     return () => unsubscribe();
-  }, [auth]);
+  }, [auth, userAuthState.isUserLoading]);
 
   const contextValue = useMemo((): FirebaseContextState => ({
     firebaseApp,
