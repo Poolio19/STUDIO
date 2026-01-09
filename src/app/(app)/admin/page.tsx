@@ -40,13 +40,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
+import { MatchResultSchema } from '@/ai/flows/update-match-results-flow-types';
+import { cn } from '@/lib/utils';
+
 
 async function importClientSideData(db: Firestore, setProgress: (message: string) => void): Promise<{ success: boolean; message: string }> {
   if (!db) {
     return { success: false, message: 'Firestore is not initialized.' };
   }
 
-  const collections: { name: string; data: any[]; idField: string | string[]; }[] = [
+  const collections: { name: string; data: any[]; idField: string | string[] | null; }[] = [
       { name: 'teams', data: teams, idField: 'id' },
       { name: 'standings', data: standings, idField: 'teamId' },
       { name: 'users', data: fullUsers, idField: 'id' },
@@ -67,38 +71,40 @@ async function importClientSideData(db: Firestore, setProgress: (message: string
       const collectionRef = collection(db, name);
       const snapshot = await getDocs(collectionRef);
       if (snapshot.empty) {
+        setProgress(`Collection ${name} is already empty.`);
         continue;
       }
       
       const BATCH_SIZE = 499;
-      let i = 0;
-      while (i < snapshot.docs.length) {
+      for (let i = 0; i < snapshot.docs.length; i += BATCH_SIZE) {
         const batch = writeBatch(db);
         const chunk = snapshot.docs.slice(i, i + BATCH_SIZE);
         chunk.forEach(document => {
             batch.delete(document.ref);
         });
         await batch.commit();
-        i += BATCH_SIZE;
+        setProgress(`Purged ${chunk.length} documents from ${name}...`);
       }
-      setProgress(`Purged collection: ${name}`);
+      setProgress(`Finished purging collection: ${name}.`);
     }
     
     setProgress("Importing new data...");
     for (const { name, data, idField } of collections) {
         if (!data || data.length === 0) {
+            setProgress(`Skipping empty collection: ${name}.`);
             continue;
         }
       
         const BATCH_SIZE = 499;
-        let i = 0;
-        while(i < data.length) {
+        for (let i = 0; i < data.length; i += BATCH_SIZE) {
             const batch = writeBatch(db);
             const chunk = data.slice(i, i + BATCH_SIZE);
 
             chunk.forEach(item => {
                 let docId: string;
-                if (Array.isArray(idField)) {
+                if(idField === null) {
+                    docId = doc(collection(db, name)).id;
+                } else if (Array.isArray(idField)) {
                     docId = idField.map(field => item[field]).join('_');
                 } else {
                     docId = item[idField];
@@ -110,18 +116,13 @@ async function importClientSideData(db: Firestore, setProgress: (message: string
                 }
 
                 const docRef = doc(db, name, String(docId));
-                
-                const itemData = {...item};
-                if (!Array.isArray(idField)) {
-                  delete itemData[idField as keyof typeof itemData];
-                }
-                
-                batch.set(docRef, itemData);
+                batch.set(docRef, item);
             });
+
             await batch.commit();
-            i += BATCH_SIZE;
+            setProgress(`Imported ${chunk.length} documents into ${name}...`);
         }
-        setProgress(`Imported collection: ${name}`);
+        setProgress(`Finished importing collection: ${name}.`);
     }
 
     return { success: true, message: `All application data has been purged and re-imported successfully.` };
@@ -208,54 +209,62 @@ export default function AdminPage() {
   };
 
   const handleSaveWeekResults = async () => {
-    if (selectedWeek === null || !firestore) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Cannot save results. Week or database not selected.' });
+    if (selectedWeek === null) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Cannot save results. Week not selected.' });
         return;
     }
     setIsUpdatingMatches(true);
     toast({
       title: `Updating Week ${selectedWeek} Results...`,
-      description: 'Saving results directly to the database.',
+      description: 'Saving results via AI flow.',
     });
-
+    
     try {
-        const batch = writeBatch(firestore);
-        const matchesCollectionRef = collection(firestore, 'matches');
-        
-        const resultsToUpdate = Object.entries(scores).map(([matchId, score]) => {
+        const resultsToUpdate = Object.entries(scores).map(([matchId, scoreData]) => {
             const match = weekFixtures.find(f => f.id === matchId)!;
             return {
-                ...match,
-                homeScore: parseInt(score.homeScore, 10),
-                awayScore: parseInt(score.awayScore, 10),
+                id: match.id,
+                week: match.week,
+                homeTeamId: match.homeTeamId,
+                awayTeamId: match.awayTeamId,
+                homeScore: parseInt(scoreData.homeScore, 10),
+                awayScore: parseInt(scoreData.awayScore, 10),
+                matchDate: match.matchDate,
             };
         });
+
+        // Validate with Zod before sending to the flow
+        const parsedResults = MatchResultSchema.array().safeParse(resultsToUpdate);
+
+        if (!parsedResults.success) {
+            console.error("Zod validation failed:", parsedResults.error);
+            const errorMessages = parsedResults.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+            throw new Error(`Data validation failed: ${errorMessages}`);
+        }
         
-        const validResults = resultsToUpdate.filter(r => !isNaN(r.homeScore) && !isNaN(r.awayScore));
+        const validResults = parsedResults.data.filter(r => !isNaN(r.homeScore) && !isNaN(r.awayScore));
 
         if (validResults.length === 0) {
             throw new Error('No valid scores entered for this week.');
         }
 
-        validResults.forEach(result => {
-            const { homeTeam, awayTeam, ...matchData } = result;
-            const docRef = doc(matchesCollectionRef, result.id);
-            batch.set(docRef, matchData, { merge: true });
-        });
-
-        await batch.commit();
+        const flowResult = await updateMatchResults({ results: validResults });
+        
+        if (!flowResult.success) {
+            throw new Error(`The AI flow reported an error during the update.`);
+        }
 
         toast({
             title: `Week ${selectedWeek} Updated!`,
-            description: `${validResults.length} match records were successfully updated.`,
+            description: `${flowResult.updatedCount} match records were successfully updated via the AI flow.`,
         });
 
     } catch (error: any) {
-         console.error(`Error updating match results for week ${selectedWeek}:`, error);
+        console.error(`Error updating match results for week ${selectedWeek}:`, error);
         toast({
             variant: 'destructive',
             title: 'Update Failed',
-            description: error.message || 'An unexpected error occurred during the client-side batch write.',
+            description: error.message || 'An unexpected error occurred.',
         });
     } finally {
         setIsUpdatingMatches(false);
@@ -278,7 +287,7 @@ export default function AdminPage() {
             <CardHeader>
                 <CardTitle>Database Reset</CardTitle>
                 <CardDescription>
-                    The database is being automatically purged and re-populated with the initial dataset.
+                    The database is being automatically purged and re-populated with the initial dataset. This process runs once when the page is loaded.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -370,3 +379,5 @@ export default function AdminPage() {
     </>
   );
 }
+
+    
