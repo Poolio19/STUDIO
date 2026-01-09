@@ -2,11 +2,11 @@
 // This is a public configuration and is safe to be exposed to the client.
 
 export const firebaseConfig = {
-  apiKey: "AIzaSyCV3-1s2a3d4f5g6h7j8k9l0m_NEW_EXAMPLE",
-  authDomain: "predictatron-app-2.firebaseapp.com",
-  projectId: "predictatron-app-2",
-  storageBucket: "predictatron-app-2.appspot.com",
-  messagingSenderId: "987654321098",
-  appId: "1:987654321098:web:fedcba9876543210fedcba",
-  databaseURL: "https://predictatron-app-2.firebaseio.com"
+  apiKey: "AIzaSyB_fAkeApIKeY-eXamPleCoNfigDAta",
+  authDomain: "predictatron-app-4.firebaseapp.com",
+  projectId: "predictatron-app-4",
+  storageBucket: "predictatron-app-4.appspot.com",
+  messagingSenderId: "1029384756",
+  appId: "1:1029384756:web:a1b2c3d4e5f6a1b2c3d4e5",
+  databaseURL: "https://predictatron-app-4.firebaseio.com"
 };
