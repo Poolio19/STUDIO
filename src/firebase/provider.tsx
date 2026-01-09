@@ -67,9 +67,11 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     const unsubscribe = onAuthStateChanged(
       auth,
       (firebaseUser) => {
-        setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
-        // Only attempt anonymous sign-in if the initial check completes and there's no user.
-        if (!firebaseUser && !userAuthState.isUserLoading) {
+        if (firebaseUser) {
+          setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+        } else {
+          // If no user is logged in after the initial check, sign in anonymously.
+          // This prevents a race condition on the initial load.
           signInAnonymously(auth).catch((error) => {
              console.error("FirebaseProvider: Anonymous sign-in failed:", error);
              setUserAuthState({ user: null, isUserLoading: false, userError: error });
@@ -82,7 +84,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       }
     );
     return () => unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth]);
 
   const contextValue = useMemo((): FirebaseContextState => ({
