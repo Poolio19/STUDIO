@@ -48,7 +48,7 @@ import {
   type Match,
   type Team
 } from '@/lib/data';
-import { collection, doc, writeBatch, getDocs, Firestore } from 'firebase/firestore';
+import { collection, doc, writeBatch, getDocs, Firestore, getDoc } from 'firebase/firestore';
 import { Icons, IconName } from '@/components/icons';
 import { cn } from '@/lib/utils';
 
@@ -84,21 +84,14 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
           continue;
         }
         
-        let batch = writeBatch(db);
-        let count = 0;
-        for (const document of snapshot.docs) {
-          batch.delete(document.ref);
-          count++;
-          if (count === 499) {
-            await batch.commit();
-            console.log(`Committed deletion of ${count} documents from '${name}'.`);
-            batch = writeBatch(db);
-            count = 0;
-          }
-        }
-        if (count > 0) {
+        // Firestore allows a maximum of 500 operations in a single batch.
+        const BATCH_SIZE = 499;
+        for (let i = 0; i < snapshot.docs.length; i += BATCH_SIZE) {
+          const batch = writeBatch(db);
+          const chunk = snapshot.docs.slice(i, i + BATCH_SIZE);
+          chunk.forEach(document => batch.delete(document.ref));
           await batch.commit();
-          console.log(`Committed final deletion of ${count} documents from '${name}'.`);
+          console.log(`Deleted ${chunk.length} documents from '${name}'.`);
         }
         console.log(`Purged collection: ${name}`);
       }
@@ -112,43 +105,38 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
             continue;
         }
       
-        let batch = writeBatch(db);
-        let count = 0;
-        
-        for (const item of data) {
-            let docId: string;
-            if (Array.isArray(idField)) {
-                docId = idField.map(field => item[field]).join('_');
-            } else {
-                docId = item[idField];
-            }
+        const BATCH_SIZE = 499;
+        for (let i = 0; i < data.length; i += BATCH_SIZE) {
+            const batch = writeBatch(db);
+            const chunk = data.slice(i, i + BATCH_SIZE);
 
-            if (!docId) {
-                console.warn(`Missing ID for item in collection ${name}`, item);
-                continue;
-            }
-            const docRef = doc(db, name, String(docId));
-            
-            // Create a separate data object for Firestore to avoid modifying the original item.
-            const itemData = {...item};
-            // Do not delete the idField for composite keys as they are part of the data.
-            if (!Array.isArray(idField)) {
-                delete itemData[idField];
-            }
-            
-            batch.set(docRef, itemData);
+            chunk.forEach(item => {
+                let docId: string;
+                if (Array.isArray(idField)) {
+                    docId = idField.map(field => item[field]).join('_');
+                } else {
+                    docId = item[idField];
+                }
 
-            count++;
-            if (count === 499) {
-                await batch.commit();
-                console.log(`Committed ${count} documents to '${name}'.`);
-                batch = writeBatch(db);
-                count = 0;
-            }
-        }
-        if (count > 0) {
+                if (!docId) {
+                    console.warn(`Missing ID for item in collection ${name}`, item);
+                    return; // Continue with the next item
+                }
+
+                const docRef = doc(db, name, String(docId));
+                
+                // For composite keys, the ID fields are also data fields.
+                // For simple keys, we typically don't store the ID in the document body.
+                const itemData = {...item};
+                if (!Array.isArray(idField)) {
+                    delete itemData[idField];
+                }
+                
+                batch.set(docRef, itemData);
+            });
+            
             await batch.commit();
-            console.log(`Committed final ${count} documents to '${name}'.`);
+            console.log(`Committed ${chunk.length} documents to '${name}'.`);
         }
         console.log(`Imported collection: ${name}`);
     }
@@ -196,16 +184,19 @@ export default function AdminPage() {
         return;
       }
       try {
-        const teamsCollectionRef = collection(firestore, 'teams');
-        const snapshot = await getDocs(teamsCollectionRef);
-        if (snapshot.docs.length > 0) {
-            setDbStatus({ status: 'success', message: `Successfully connected. Read ${snapshot.size} docs from 'teams'.` });
-        } else {
-             setDbStatus({ status: 'error', message: `Connected, but 'teams' collection is empty or doesn't exist.` });
-        }
+        // Attempt to read the root reference of the database. This is a lightweight operation.
+        // It will fail if permissions are insufficient, but succeed if the DB is reachable.
+        await getDoc(doc(firestore, '/')); 
+        setDbStatus({ status: 'success', message: 'Successfully connected to the database.' });
       } catch (error: any) {
-        console.error("Database connection check failed:", error);
-        setDbStatus({ status: 'error', message: `Database connection failed: ${error.message}` });
+        // Firestore security rules might prevent reading the root. 
+        // A "permission-denied" error still means we are connected.
+        if (error.code === 'permission-denied') {
+             setDbStatus({ status: 'success', message: 'Connection confirmed (permission-denied on root is OK).' });
+        } else {
+            console.error("Database connection check failed:", error);
+            setDbStatus({ status: 'error', message: `Database connection failed: ${error.message}` });
+        }
       }
     };
 
@@ -348,32 +339,24 @@ export default function AdminPage() {
         throw new Error('No local match data found to sync.');
       }
       
-      let batch = writeBatch(firestore);
-      const matchesCollectionRef = collection(firestore, 'matches');
-      let count = 0;
+      const BATCH_SIZE = 499;
+      const matchesToSync = matches.filter(m => typeof m.homeScore === 'number' && m.homeScore !== -1 && 
+                                               typeof m.awayScore === 'number' && m.awayScore !== -1);
       
-      for (const match of matches) {
-          const docRef = doc(matchesCollectionRef, match.id);
-          // Only sync matches that have a final score
-          if (typeof match.homeScore === 'number' && match.homeScore !== -1 && 
-              typeof match.awayScore === 'number' && match.awayScore !== -1) {
-            batch.set(docRef, match, { merge: true });
-            count++;
-          }
-          if (count === 499) {
-            await batch.commit();
-            batch = writeBatch(firestore);
-            count = 0;
-          }
-      }
-      
-      if (count > 0) {
-        await batch.commit();
+      for (let i = 0; i < matchesToSync.length; i += BATCH_SIZE) {
+          const batch = writeBatch(firestore);
+          const chunk = matchesToSync.slice(i, i + BATCH_SIZE);
+          chunk.forEach(match => {
+              const docRef = doc(firestore, 'matches', match.id);
+              batch.set(docRef, match, { merge: true });
+          });
+          await batch.commit();
+          console.log(`Synced a batch of ${chunk.length} matches.`);
       }
   
       toast({
         title: 'All Match Results Synced!',
-        description: `${matches.filter(m => m.homeScore !== -1).length} match records were successfully synced to the database.`,
+        description: `${matchesToSync.length} match records were successfully synced to the database.`,
       });
     } catch (error: any) {
       console.error('Error in bulk updating match results:', error);
@@ -404,7 +387,7 @@ export default function AdminPage() {
             <CardHeader>
                 <CardTitle>Database Connection Status</CardTitle>
                 <CardDescription>
-                    This is a simple check to see if the application can connect to and read from the Firestore database.
+                    This is a simple check to see if the application can connect to the Firestore database.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -481,7 +464,7 @@ export default function AdminPage() {
                                 </div>
                             )})}
                         </div>
-                        <Button onClick={handleSaveWeekResults} disabled={isUpdatingMatches || !firestore}>
+                        <Button onClick={handleSaveWeekResults} disabled={isUpdatingMatches || dbStatus.status !== 'success'}>
                             {isUpdatingMatches ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -506,7 +489,7 @@ export default function AdminPage() {
               <div>
                   <h3 className="font-semibold">Sync All Local Matches to DB</h3>
                   <p className="text-sm text-muted-foreground mb-2">Safely adds or updates all match results from the local data file to the database. This is non-destructive.</p>
-                  <Button onClick={handleBulkUpdateMatches} disabled={isUpdatingMatches || !firestore}>
+                  <Button onClick={handleBulkUpdateMatches} disabled={isUpdatingMatches || dbStatus.status !== 'success'}>
                     {isUpdatingMatches ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -522,7 +505,7 @@ export default function AdminPage() {
                   <p className="text-sm text-muted-foreground mb-2">
                       <span className="font-bold text-red-500">Destructive:</span> Deletes all data and replaces it with the initial dataset. Use to reset the app to a clean state.
                   </p>
-                  <Button variant="destructive" onClick={handleDataImportClick} disabled={isImporting || !firestore}>
+                  <Button variant="destructive" onClick={handleDataImportClick} disabled={isImporting || dbStatus.status !== 'success'}>
                       {isImporting ? (
                       <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -559,5 +542,3 @@ export default function AdminPage() {
     </>
   );
 }
-
-    
