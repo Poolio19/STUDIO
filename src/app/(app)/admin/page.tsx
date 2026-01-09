@@ -50,57 +50,101 @@ import {
 import { collection, doc, writeBatch, getDocs, QuerySnapshot, DocumentData, Firestore } from 'firebase/firestore';
 import { Icons, IconName } from '@/components/icons';
 
-async function importClientSideData(db: Firestore | null): Promise<{ success: boolean; message: string }> {
+async function importClientSideData(db: Firestore, purge: boolean = false): Promise<{ success: boolean; message: string }> {
   if (!db) {
     return { success: false, message: 'Firestore is not initialized.' };
   }
 
-  try {
-    const deleteBatch = writeBatch(db);
+  const collections: { name: string; data: any[]; idField: string }[] = [
+      { name: 'teams', data: teams, idField: 'id' },
+      { name: 'standings', data: standings, idField: 'teamId' },
+      { name: 'users', data: fullUsers, idField: 'id' },
+      { name: 'predictions', data: fullPredictions, idField: 'userId' },
+      { name: 'matches', data: matches, idField: 'id' },
+      { name: 'previousSeasonStandings', data: previousSeasonStandings, idField: 'teamId' },
+      { name: 'seasonMonths', data: seasonMonths, idField: 'id' },
+      { name: 'monthlyMimoM', data: monthlyMimoM, idField: 'id' },
+      { name: 'userHistories', data: fullUserHistories, idField: 'userId' },
+      { name: 'playerTeamScores', data: playerTeamScores, idField: 'compoundId' }, // Special handling below
+      { name: 'weeklyTeamStandings', data: weeklyTeamStandings, idField: 'compoundId' }, // Special handling below
+      { name: 'teamRecentResults', data: teamRecentResults, idField: 'teamId' },
+  ];
+   // Add compound IDs for collections that need them
+   playerTeamScores.forEach((item: any) => item.compoundId = `${item.userId}_${item.teamId}`);
+   weeklyTeamStandings.forEach((item: any) => item.compoundId = `${item.week}_${item.teamId}`);
 
-    const collectionNames = [
-        'teams', 'standings', 'users', 'predictions', 'matches', 
-        'previousSeasonStandings', 'seasonMonths', 'monthlyMimoM', 
-        'userHistories', 'playerTeamScores', 'weeklyTeamStandings', 'teamRecentResults'
-    ];
-    
-    // Deleting all documents from all collections
-    for (const name of collectionNames) {
+
+  try {
+    if (purge) {
+      console.log("Starting data purge...");
+      // A single batch can only handle 500 operations. We'll do one collection at a time.
+      for (const { name } of collections) {
         const collectionRef = collection(db, name);
-        const snapshot: QuerySnapshot<DocumentData> = await getDocs(collectionRef);
-        snapshot.docs.forEach((doc) => {
-            deleteBatch.delete(doc.ref);
-        });
-        console.log(`Queued deletion for all ${snapshot.size} documents in '${name}'.`);
+        const snapshot = await getDocs(collectionRef);
+        if (snapshot.empty) {
+          console.log(`Collection '${name}' is already empty. Skipping delete.`);
+          continue;
+        }
+        
+        let deleteBatch = writeBatch(db);
+        let deleteCount = 0;
+        for (const document of snapshot.docs) {
+          deleteBatch.delete(document.ref);
+          deleteCount++;
+          if (deleteCount === 499) { // Commit and start a new batch
+            await deleteBatch.commit();
+            console.log(`Committed deletion of ${deleteCount} documents from '${name}'.`);
+            deleteBatch = writeBatch(db);
+            deleteCount = 0;
+          }
+        }
+        if (deleteCount > 0) {
+          await deleteBatch.commit();
+          console.log(`Committed deletion of ${deleteCount} documents from '${name}'.`);
+        }
+        console.log(`Purged collection: ${name}`);
+      }
+      console.log("All collections have been purged.");
+    }
+    
+    console.log("Starting data import...");
+    for (const { name, data, idField } of collections) {
+      if (data.length === 0) continue;
+      
+      let setBatch = writeBatch(db);
+      let setCount = 0;
+      for (const item of data) {
+        const docId = item[idField];
+        if (!docId) {
+            console.warn(`Missing ID for item in collection ${name}`, item);
+            continue;
+        }
+        const docRef = doc(db, name, String(docId));
+        
+        // Remove compound ID before setting document data
+        const { compoundId, ...itemData } = item;
+        setBatch.set(docRef, itemData);
+
+        setCount++;
+        if (setCount === 499) {
+          await setBatch.commit();
+          console.log(`Committed ${setCount} documents to '${name}'.`);
+          setBatch = writeBatch(db);
+          setCount = 0;
+        }
+      }
+      if (setCount > 0) {
+        await setBatch.commit();
+        console.log(`Committed ${setCount} documents to '${name}'.`);
+      }
+       console.log(`Imported collection: ${name}`);
     }
 
-    await deleteBatch.commit();
-    console.log("All collections have been purged.");
-
-    // Create a new batch for setting data
-    const setBatch = writeBatch(db);
-    
-    // Re-import all data
-    teams.forEach(item => setBatch.set(doc(db, 'teams', item.id), item));
-    standings.forEach(item => setBatch.set(doc(db, 'standings', item.teamId), item));
-    fullUsers.forEach(item => setBatch.set(doc(db, 'users', item.id), item));
-    fullPredictions.forEach(item => setBatch.set(doc(db, 'predictions', item.userId), item));
-    matches.forEach(item => setBatch.set(doc(db, 'matches', item.id), item));
-    previousSeasonStandings.forEach(item => setBatch.set(doc(db, 'previousSeasonStandings', item.teamId), item));
-    seasonMonths.forEach(item => setBatch.set(doc(db, 'seasonMonths', item.id), item));
-    monthlyMimoM.forEach(item => setBatch.set(doc(db, 'monthlyMimoM', item.id), item));
-    fullUserHistories.forEach(item => setBatch.set(doc(db, 'userHistories', item.userId), item));
-    playerTeamScores.forEach(item => setBatch.set(doc(db, 'playerTeamScores', `${item.userId}_${item.teamId}`), item));
-    weeklyTeamStandings.forEach(item => setBatch.set(doc(db, 'weeklyTeamStandings', `${item.week}_${item.teamId}`), item));
-    teamRecentResults.forEach(item => setBatch.set(doc(db, 'teamRecentResults', item.teamId), item));
-
-    await setBatch.commit();
-
-    return { success: true, message: 'All application data has been purged and re-imported successfully.' };
+    return { success: true, message: `All application data has been ${purge ? 'purged and' : ''} re-imported successfully.` };
 
   } catch (error: any) {
-    console.error('Client-side data import failed:', error);
-    return { success: false, message: `Import failed: ${error.message}` };
+    console.error('Client-side data operation failed:', error);
+    return { success: false, message: `Operation failed: ${error.message}` };
   }
 }
 
@@ -141,7 +185,7 @@ export default function AdminPage() {
       try {
         const teamsCollectionRef = collection(firestore, 'teams');
         const snapshot = await getDocs(teamsCollectionRef);
-        setDbStatus({ status: 'success', message: `Successfully connected and read ${snapshot.size} documents from the 'teams' collection.` });
+        setDbStatus({ status: 'success', message: `Successfully connected. Read ${snapshot.size} docs from 'teams'.` });
       } catch (error: any) {
         console.error("Database connection check failed:", error);
         setDbStatus({ status: 'error', message: `Database connection failed: ${error.message}` });
@@ -243,7 +287,7 @@ export default function AdminPage() {
       description: `Wiping and repopulating database with initial application data. This may take a moment.`,
     });
 
-    const result = await importClientSideData(firestore);
+    const result = await importClientSideData(firestore!, true); // Pass true to purge
     
     toast({
       variant: result.success ? 'default' : 'destructive',
