@@ -49,7 +49,7 @@ const RankDifference = ({ diff }: { diff: number }) => {
 };
 
 const TeamRow = ({ team, rank, children }: { team: any; rank: number, children?: React.ReactNode }) => {
-  const TeamIcon = Icons[team.logo as IconName] || Icons.match;
+  const TeamIcon = Icons[team.teamLogo as IconName] || Icons.match;
   const isLiverpool = team.id === 'team_12';
   return (
     <TableRow
@@ -109,7 +109,7 @@ export default function PredictPage() {
     return currentStandings
         .map(standing => {
             const team = teamMap.get(standing.teamId);
-            return team ? { ...standing, ...team } : null;
+            return team ? { ...standing, teamLogo: team.logo, ...team } : null;
         })
         .filter((item): item is NonNullable<typeof item> => item !== null)
         .sort((a, b) => a.rank - b.rank);
