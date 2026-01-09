@@ -132,12 +132,8 @@ async function importClientSideData(db: Firestore, purge: boolean = false): Prom
             const docRef = doc(db, name, String(docId));
             
             const itemData = {...item};
-            if (!Array.isArray(idField)) {
-                // For simple keys, we typically don't store the ID in the document body.
-                // But only if the idField exists on the itemData itself.
-                if (idField in itemData) {
-                    delete itemData[idField];
-                }
+            if (!Array.isArray(idField) && idField in itemData) {
+              delete itemData[idField as keyof typeof itemData];
             }
             
             batch.set(docRef, itemData);
@@ -201,14 +197,9 @@ export default function AdminPage() {
         return;
       }
       try {
-        // Attempt to read a non-existent document. This is a lightweight operation
-        // that will succeed if we have a connection, even if the document doesn't exist.
-        // It's more reliable than checking for a collection's existence.
         await getDoc(doc(firestore, '_internal_test_collection_do_not_delete', 'test_doc'));
         setDbStatus({ status: 'success', message: 'Successfully connected to the database.' });
       } catch (error: any) {
-        // Firestore security rules might prevent reading. 
-        // A "permission-denied" error still means we are connected.
         if (error.code === 'permission-denied') {
              setDbStatus({ status: 'success', message: 'Connection confirmed (permission-denied is OK).' });
         } else {
