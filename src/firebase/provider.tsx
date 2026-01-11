@@ -5,7 +5,7 @@ import { FirebaseApp, initializeApp, getApps, getApp } from 'firebase/app';
 import { Firestore, getFirestore, enableNetwork } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged, signInWithEmailAndPassword, getAuth } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
-import { firebaseConfig } from './config';
+import { firebaseConfig as originalFirebaseConfig } from './config';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -60,6 +60,13 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
   useEffect(() => {
     // This effect runs once on the client to initialize Firebase
+    
+    // IMPORTANT: Directly use the environment variable for the API key.
+    const firebaseConfig = {
+      ...originalFirebaseConfig,
+      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    };
+
     const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
     const firestore = getFirestore(app);
     const auth = getAuth(app);
