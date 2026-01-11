@@ -56,6 +56,7 @@ import {
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { AuthForm } from '@/components/auth/auth-form';
 
 
 const profileFormSchema = z.object({
@@ -87,17 +88,17 @@ export default function ProfilePage() {
   const firestore = useFirestore();
   
   const userDocRef = useMemoFirebase(() => {
-    return firestore && authUser ? doc(firestore, 'users', authUser.uid) : null;
+    return firestore && authUser && !authUser.isAnonymous ? doc(firestore, 'users', authUser.uid) : null;
   }, [firestore, authUser]);
 
   const userHistoryDocRef = useMemoFirebase(() => {
-    return firestore && authUser ? doc(firestore, 'userHistories', authUser.uid) : null; 
+    return firestore && authUser && !authUser.isAnonymous ? doc(firestore, 'userHistories', authUser.uid) : null; 
   }, [firestore, authUser]);
 
   const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
   
   const mimoMQuery = useMemoFirebase(() => {
-    return firestore && authUser ? collection(firestore, 'monthlyMimoM') : null
+    return firestore && authUser && !authUser.isAnonymous ? collection(firestore, 'monthlyMimoM') : null
   }, [firestore, authUser]);
 
 
@@ -190,8 +191,6 @@ export default function ProfilePage() {
       reader.onloadend = () => {
         const result = reader.result as string;
         setAvatarPreview(result);
-        // Here you would typically upload the file to Firebase Storage and get a URL.
-        // For now, we will just save the base64 string as the avatar, which is not ideal for performance.
         setDocumentNonBlocking(userDocRef, { avatar: result }, { merge: true });
 
         toast({
@@ -203,7 +202,7 @@ export default function ProfilePage() {
     }
   };
 
-  if (isLoading) {
+  if (isAuthUserLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <Loader2 className="mr-2 h-8 w-8 animate-spin" />
@@ -212,26 +211,18 @@ export default function ProfilePage() {
     );
   }
 
-  if (!isAuthUserLoading && !authUser) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Not Signed In</CardTitle>
-            <CardDescription>
-              You need to be signed in to view your profile. Please check the
-              database connection or try signing in again.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    );
+  if (authUser?.isAnonymous) {
+     return (
+        <div className="flex h-full w-full items-center justify-center">
+            <AuthForm />
+        </div>
+    )
   }
 
-  if (!user) {
+  if (!user && !isLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
-        <p className="text-destructive">Could not load user profile. Please try again later.</p>
+        <p className="text-destructive">Could not load user profile. It might not be created yet.</p>
       </div>
     );
   }
@@ -252,15 +243,15 @@ export default function ProfilePage() {
             <CardContent className="pt-6 flex flex-col items-center gap-4">
               <Avatar className="h-24 w-24 border-4 border-primary">
                 <AvatarImage
-                  src={avatarPreview || user.avatar.startsWith('data:') ? user.avatar : defaultAvatarUrl}
-                  alt={user.name}
+                  src={avatarPreview || user?.avatar?.startsWith('data:') ? user.avatar : defaultAvatarUrl}
+                  alt={user?.name}
                   data-ai-hint="person portrait"
                 />
-                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="text-center">
                 <h2 className="text-2xl font-bold">{form.watch('name')}</h2>
-                <p className="text-muted-foreground font-semibold">Rank: #{user.rank}</p>
+                <p className="text-muted-foreground font-semibold">Rank: #{user?.rank}</p>
               </div>
               <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
                 <Upload className="mr-2 h-4 w-4" />
@@ -278,11 +269,11 @@ export default function ProfilePage() {
                 <h3 className="text-lg font-semibold mb-2">Season Stats</h3>
                 <div className="flex justify-around text-sm">
                   <div className="flex flex-col">
-                    <span className="font-bold text-lg">{user.maxRank}</span>
+                    <span className="font-bold text-lg">{user?.maxRank}</span>
                     <span className="text-muted-foreground">High</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-bold text-lg">{user.minRank}</span>
+                    <span className="font-bold text-lg">{user?.minRank}</span>
                     <span className="text-muted-foreground">Low</span>
                   </div>
                 </div>

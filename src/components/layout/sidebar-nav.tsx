@@ -14,9 +14,10 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Icons } from '@/components/icons';
 import Link from 'next/link';
-import { Award, Database } from 'lucide-react';
-import { useUser } from '@/firebase';
+import { Award, Database, LogOut } from 'lucide-react';
+import { useUser, useAuth } from '@/firebase';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { Button } from '../ui/button';
 
 const navItems = [
   { href: '/standings', icon: 'standings', label: 'Premier League' },
@@ -35,6 +36,13 @@ const navItems = [
 export function SidebarNav() {
   const pathname = usePathname();
   const { user, isUserLoading } = useUser();
+  const auth = useAuth();
+
+  const handleSignOut = () => {
+    if (auth) {
+      auth.signOut();
+    }
+  };
 
   const getAvatarUrl = (avatarId: string | undefined, photoURL: string | null | undefined) => {
     if (photoURL) return photoURL;
@@ -97,14 +105,19 @@ export function SidebarNav() {
             </div>
         ) : user ? (
             <div className="flex items-center gap-3 p-2">
-            <Avatar>
-                <AvatarImage src={getAvatarUrl(user.uid, user.photoURL)} alt={user.displayName || 'User'} />
-                <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col overflow-hidden">
-                <span className="font-semibold truncate">{user.displayName}</span>
-                <span className="text-sm text-muted-foreground truncate">{user.email}</span>
-            </div>
+                <Avatar>
+                    <AvatarImage src={user.isAnonymous ? undefined : getAvatarUrl(user.uid, user.photoURL)} alt={user.displayName || 'User'} />
+                    <AvatarFallback>{user.isAnonymous ? '?' : getInitials(user.displayName)}</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col overflow-hidden">
+                    <span className="font-semibold truncate">{user.isAnonymous ? 'Anonymous' : (user.displayName || 'User')}</span>
+                    <span className="text-sm text-muted-foreground truncate">{user.isAnonymous ? 'Not signed in' : user.email}</span>
+                </div>
+                {!user.isAnonymous && (
+                    <Button variant="ghost" size="icon" onClick={handleSignOut} className="ml-auto">
+                        <LogOut className="size-4" />
+                    </Button>
+                )}
             </div>
         ) : (
             <div className="flex items-center gap-3 p-2">

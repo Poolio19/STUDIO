@@ -4,7 +4,7 @@
 import React, { createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp, initializeApp, getApps, getApp } from 'firebase/app';
 import { Firestore, getFirestore, enableNetwork } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged, getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { Auth, User, onAuthStateChanged, getAuth, signInAnonymously } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { firebaseConfig } from './config';
 
@@ -51,7 +51,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   
   const [userAuthState, setUserAuthState] = useState<UserAuthState>({
     user: null,
-    isUserLoading: !isConfigured, // Start loading if configured, otherwise we're not loading.
+    isUserLoading: true, 
     userError: null,
   });
 
@@ -76,7 +76,15 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       const unsubscribe = onAuthStateChanged(
         auth,
         (firebaseUser) => {
-          setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+          if (firebaseUser) {
+            setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+          } else {
+            // If no user, sign in anonymously
+            signInAnonymously(auth).catch(error => {
+              console.error("Anonymous sign-in failed:", error);
+              setUserAuthState({ user: null, isUserLoading: false, userError: error });
+            });
+          }
         },
         (error) => {
           console.error("FirebaseProvider: onAuthStateChanged error:", error);
@@ -89,24 +97,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
         setUserAuthState({ user: null, isUserLoading: false, userError: error });
     }
   }, [isConfigured]);
-
-  useEffect(() => {
-    // Only run auto-login in development, if services are up, and user isn't already there.
-    if (process.env.NODE_ENV !== 'development' || !services?.auth || userAuthState.user || userAuthState.isUserLoading) return;
-    
-    const defaultEmail = 'jim.poole@prempred.com';
-    const defaultPassword = 'password';
-
-    signInWithEmailAndPassword(services.auth, defaultEmail, defaultPassword)
-      .catch(err => {
-        if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-          createUserWithEmailAndPassword(services.auth, defaultEmail, defaultPassword)
-            .catch(createErr => {
-              console.error("Failed to create default user for development:", createErr);
-            });
-        }
-      });
-  }, [services, userAuthState.user, userAuthState.isUserLoading]);
 
 
   const contextValue = useMemo((): FirebaseContextState => ({
