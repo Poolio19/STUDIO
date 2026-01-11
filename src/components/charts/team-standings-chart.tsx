@@ -16,6 +16,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription
 } from '@/components/ui/card';
 import {
   ChartContainer
@@ -84,6 +85,7 @@ export function TeamStandingsChart({
     <Card>
       <CardHeader className="items-center">
         <CardTitle className="bg-black text-yellow-400 p-2 rounded-md">Team Movement 2025-2026</CardTitle>
+        <CardDescription>Team league position changes over the season.</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="relative">
@@ -149,5 +151,3 @@ export function TeamStandingsChart({
     </Card>
   );
 }
-
-    
