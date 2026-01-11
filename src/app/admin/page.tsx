@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -177,7 +178,7 @@ export default function AdminPage() {
     }
   };
 
-  const isLoading = teamsLoading || matchesLoading;
+  const isLoading = teamsLoading || matchesLoading || !firestore;
   const allWeeks = React.useMemo(() => {
     if (!matchesData) return [];
     return [...new Set(matchesData.map(m => m.week))].sort((a,b) => a-b);

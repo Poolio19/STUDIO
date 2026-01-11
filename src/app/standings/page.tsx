@@ -20,7 +20,7 @@ import { TeamStandingsChart } from '@/components/charts/team-standings-chart';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 
@@ -30,7 +30,6 @@ type StandingWithTeam = CurrentStanding & Team & { recentResults: ('W' | 'D' | '
 
 export default function StandingsPage() {
     const firestore = useFirestore();
-    const { isUserLoading } = useUser();
 
     const teamsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'teams')) : null, [firestore]);
     const matchesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'matches')) : null, [firestore]);
@@ -44,7 +43,7 @@ export default function StandingsPage() {
     const { data: weeklyTeamStandings, isLoading: weeklyStandingsLoading } = useCollection<WeeklyTeamStanding>(weeklyTeamStandingsQuery);
     const { data: teamRecentResults, isLoading: recentResultsLoading } = useCollection<TeamRecentResult>(teamRecentResultsQuery);
 
-    const isLoading = isUserLoading || !firestore || teamsLoading || matchesLoading || standingsLoading || weeklyStandingsLoading || recentResultsLoading;
+    const isLoading = teamsLoading || matchesLoading || standingsLoading || weeklyStandingsLoading || recentResultsLoading;
     
     const { 
         standingsWithTeamData, 

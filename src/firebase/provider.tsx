@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp, initializeApp, getApps, getApp } from 'firebase/app';
 import { Firestore, getFirestore, enableNetwork } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged, signInWithEmailAndPassword, getAuth } from 'firebase/auth';
@@ -22,15 +22,6 @@ export interface FirebaseContextState {
   firebaseApp: FirebaseApp | null;
   firestore: Firestore | null;
   auth: Auth | null;
-  user: User | null;
-  isUserLoading: boolean;
-  userError: Error | null;
-}
-
-export interface FirebaseServicesAndUser {
-  firebaseApp: FirebaseApp;
-  firestore: Firestore;
-  auth: Auth;
   user: User | null;
   isUserLoading: boolean;
   userError: Error | null;
@@ -60,9 +51,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   });
 
   useEffect(() => {
-    // This effect runs once on the client to initialize Firebase
-    
-    // The build system will replace `FIREBASE_API_KEY` with the actual key.
     const firebaseConfig = {
       ...originalFirebaseConfig,
       apiKey: "FIREBASE_API_KEY",
@@ -78,21 +66,18 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
     setServices({ firebaseApp: app, auth, firestore });
 
-    // This effect handles authentication state
     const unsubscribe = onAuthStateChanged(
       auth,
       (firebaseUser) => {
         if (firebaseUser) {
           setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
         } else {
-          // If no user, attempt to sign in with the default user credentials.
           const defaultUserEmail = 'jim.poole@example.com';
           const defaultUserPassword = 'password123';
           
           signInWithEmailAndPassword(auth, defaultUserEmail, defaultUserPassword)
             .catch((error) => {
               console.error("FirebaseProvider: Default user sign-in failed:", error);
-              // If default sign-in fails, we are without a user.
               setUserAuthState({ user: null, isUserLoading: false, userError: error });
             });
         }
@@ -128,21 +113,6 @@ function useFirebaseContext() {
   return context;
 }
 
-export const useFirebase = (): FirebaseServicesAndUser => {
-  const context = useFirebaseContext();
-  if (!context.firebaseApp || !context.firestore || !context.auth) {
-    throw new Error('Firebase core services not available. Check FirebaseProvider setup.');
-  }
-  return {
-    firebaseApp: context.firebaseApp,
-    firestore: context.firestore,
-    auth: context.auth,
-    user: context.user,
-    isUserLoading: context.isUserLoading,
-    userError: context.userError,
-  };
-};
-
 export const useAuth = (): Auth | null => useFirebaseContext().auth;
 export const useFirestore = (): Firestore | null => useFirebaseContext().firestore;
 export const useFirebaseApp = (): FirebaseApp | null => useFirebaseContext().firebaseApp;
@@ -151,24 +121,23 @@ export const useUser = (): UserHookResult => {
     return { user, isUserLoading, userError };
 };
 
-type MemoFirebase <T> = T & {__memo?: boolean};
-
-export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T {
+export function useMemoFirebase<T>(factory: () => T, deps: React.DependencyList): T {
   const memoized = useMemo(factory, deps);
   
-  if(typeof memoized !== 'object' || memoized === null) return memoized;
+  if (typeof memoized !== 'object' || memoized === null || '__memo' in memoized) {
+    return memoized;
+  }
 
-  if (!('__memo' in memoized)) {
-    try {
-        Object.defineProperty(memoized, '__memo', {
-            value: true,
-            enumerable: false, // Make it non-enumerable
-            writable: false,
-            configurable: true, 
-        });
-    } catch (e) {
-      (memoized as MemoFirebase<T>).__memo = true;
-    }
+  try {
+      Object.defineProperty(memoized, '__memo', {
+          value: true,
+          enumerable: false,
+          writable: false,
+          configurable: true, 
+      });
+  } catch (e) {
+    // If defineProperty fails (e.g., on a frozen object), fall back to a less ideal but functional approach.
+    (memoized as T & {__memo?: boolean}).__memo = true;
   }
   
   return memoized;

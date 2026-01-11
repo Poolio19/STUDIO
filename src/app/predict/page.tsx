@@ -86,8 +86,6 @@ export default function PredictPage() {
   const { data: currentStandings, isLoading: currentStandingsLoading } = useCollection<CurrentStanding>(currentStandingsQuery);
   const { data: userPrediction, isLoading: predictionLoading } = useDoc<PredictionType>(userPredictionDocRef);
 
-  const isLoading = isUserLoading || teamsLoading || prevStandingsLoading || predictionLoading || currentStandingsLoading;
-
   const [items, setItems] = React.useState<PredictionItem[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -96,6 +94,52 @@ export default function PredictPage() {
       predictions: [],
     },
   });
+
+  const isLoading = isUserLoading || teamsLoading || prevStandingsLoading || predictionLoading || currentStandingsLoading;
+
+  React.useEffect(() => {
+    // This effect will run whenever the source data changes.
+    // It will set the initial state of the draggable list (`items`).
+    
+    // Do nothing until all required data has been loaded.
+    if (isLoading || !teams || !previousSeasonStandings) {
+      return;
+    }
+  
+    let initialItems: PredictionItem[] = [];
+    const teamMap = new Map(teams.map(team => [team.id, {
+        id: team.id,
+        teamId: team.id,
+        teamName: team.name || 'Unknown Team',
+        teamLogo: team.logo || 'match',
+        iconColour: team.iconColour,
+        bgColourFaint: team.bgColourFaint,
+        bgColourSolid: team.bgColourSolid,
+        textColour: team.textColour,
+    }]));
+  
+    // Priority 1: Use the user's saved prediction if it exists and has rankings.
+    if (userPrediction && userPrediction.rankings && userPrediction.rankings.length > 0) {
+      initialItems = userPrediction.rankings
+        .map(teamId => teamMap.get(teamId))
+        .filter((item): item is PredictionItem => !!item);
+    } 
+    // Priority 2: Fallback to last season's standings.
+    else {
+      const prevStandingsMap = new Map(previousSeasonStandings.map(s => [s.teamId, s.rank]));
+      initialItems = [...teams]
+        .sort((a, b) => (prevStandingsMap.get(a.id) ?? 21) - (prevStandingsMap.get(b.id) ?? 21))
+        .map(team => teamMap.get(team.id))
+        .filter((item): item is PredictionItem => !!item);
+    }
+  
+    // Only update state if the calculated order is different from the current one.
+    if (initialItems.length > 0 && JSON.stringify(initialItems.map(i => i.id)) !== JSON.stringify(items.map(i => i.id))) {
+      setItems(initialItems);
+      form.setValue('predictions', initialItems);
+    }
+  }, [isLoading, teams, userPrediction, previousSeasonStandings, form, items]);
+
 
   const sortedPreviousStandings = React.useMemo(() => {
     if (!teams || !previousSeasonStandings) return [];
@@ -125,40 +169,6 @@ export default function PredictPage() {
         .sort((a, b) => a.rank - b.rank);
   }, [teams, currentStandings]);
 
-
-  React.useEffect(() => {
-    if (!teams) return;
-
-    let initialItems: PredictionItem[] = [];
-    const teamMap = new Map(teams.map(team => [team.id, {
-        id: team.id,
-        teamId: team.id,
-        teamName: team.name || 'Unknown Team',
-        teamLogo: team.logo || 'match',
-        iconColour: team.iconColour,
-        bgColourFaint: team.bgColourFaint,
-        bgColourSolid: team.bgColourSolid,
-        textColour: team.textColour,
-    }]));
-
-    if (userPrediction && userPrediction.rankings && userPrediction.rankings.length > 0) {
-      initialItems = userPrediction.rankings
-        .map(teamId => teamMap.get(teamId))
-        .filter((item): item is PredictionItem => !!item);
-    } else if (previousSeasonStandings) {
-      const prevStandingsMap = new Map(previousSeasonStandings.map(s => [s.teamId, s.rank]));
-      initialItems = [...teams]
-        .sort((a, b) => (prevStandingsMap.get(a.id) ?? 21) - (prevStandingsMap.get(b.id) ?? 21))
-        .map(team => teamMap.get(team.id))
-        .filter((item): item is PredictionItem => !!item);
-    }
-
-    if (initialItems.length > 0) {
-      setItems(initialItems);
-      form.setValue('predictions', initialItems);
-    }
-    
-  }, [teams, userPrediction, previousSeasonStandings, form]);
 
   const currentWeek = React.useMemo(() => {
     if (!currentStandings || currentStandings.length === 0) return 0;
@@ -206,7 +216,7 @@ export default function PredictPage() {
   const currentRankMap = getRankMap(currentStandingsWithTeamData);
   const prevRankMap = getRankMap(sortedPreviousStandings);
 
-  if (isLoading && items.length === 0) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-full">
         <div className="flex items-center gap-2 text-muted-foreground">

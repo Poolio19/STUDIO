@@ -26,7 +26,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ArrowUp, ArrowDown, Minus, Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 
 
@@ -69,19 +69,18 @@ const getMonthForWeek = (week: number): { month: string; year: number } => {
 
 export default function MostImprovedPage() {
   const firestore = useFirestore();
-  const { isUserLoading: isAuthUserLoading } = useUser();
 
-  const usersQuery = useMemoFirebase(() => !isAuthUserLoading && firestore ? collection(firestore, 'users') : null, [firestore, isAuthUserLoading]);
-  const standingsQuery = useMemoFirebase(() => !isAuthUserLoading && firestore ? collection(firestore, 'standings') : null, [firestore, isAuthUserLoading]);
-  const mimoMQuery = useMemoFirebase(() => !isAuthUserLoading && firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore, isAuthUserLoading]);
-  const seasonMonthsQuery = useMemoFirebase(() => !isAuthUserLoading && firestore ? collection(firestore, 'seasonMonths') : null, [firestore, isAuthUserLoading]);
+  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+  const standingsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'standings') : null, [firestore]);
+  const mimoMQuery = useMemoFirebase(() => firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore]);
+  const seasonMonthsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'seasonMonths') : null, [firestore]);
 
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
   const { data: currentStandings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsQuery);
   const { data: monthlyMimoM, isLoading: mimoMLoading } = useCollection<MonthlyMimoM>(mimoMQuery);
   const { data: seasonMonthsData, isLoading: seasonMonthsLoading } = useCollection<SeasonMonth>(seasonMonthsQuery);
 
-  const isLoading = isAuthUserLoading || usersLoading || standingsLoading || mimoMLoading || seasonMonthsLoading;
+  const isLoading = usersLoading || standingsLoading || mimoMLoading || seasonMonthsLoading;
 
   const currentWeek = useMemo(() => {
     if (currentStandings && currentStandings.length > 0) {
@@ -357,5 +356,3 @@ export default function MostImprovedPage() {
     </div>
   );
 }
-
-    

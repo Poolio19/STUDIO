@@ -1,10 +1,11 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Upload, Trophy, Award, ShieldCheck } from 'lucide-react';
+import { Calendar as CalendarIcon, Upload, Trophy, Award, ShieldCheck, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -103,7 +104,6 @@ export default function ProfilePage() {
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
   const { data: monthlyMimoM, isLoading: mimoMLoading } = useCollection<MonthlyMimoM>(mimoMQuery);
 
-  // Combine all loading states
   const isLoading = isAuthUserLoading || userLoading || historyLoading || teamsLoading || mimoMLoading;
 
   const form = useForm<ProfileFormValues>({
@@ -182,14 +182,21 @@ export default function ProfilePage() {
     }
   };
 
-  // Show a loading screen while auth is happening or initial data is fetching
   if (isLoading) {
-    return <div className="flex justify-center items-center h-full">Loading profile...</div>;
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <Loader2 className="mr-2 h-8 w-8 animate-spin" />
+        <span>Loading profile...</span>
+      </div>
+    );
   }
 
-  // Show a message if the user isn't logged in after loading
   if (!user) {
-    return <div className="flex justify-center items-center h-full">Could not load user profile. Please try again later.</div>;
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <p className="text-destructive">Could not load user profile. Please try again later.</p>
+      </div>
+    );
   }
 
 

@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -10,20 +11,20 @@ import {
 import { useMemo } from 'react';
 import { PlayerPerformanceChart } from '@/components/charts/player-performance-chart';
 import type { User, UserHistory } from '@/lib/types';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import { Loader2 } from 'lucide-react';
 
 export default function PerformancePage() {
   const firestore = useFirestore();
-  const { isUserLoading } = useUser();
 
-  const usersQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'users') : null, [firestore, isUserLoading]);
-  const userHistoriesQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'userHistories') : null, [firestore, isUserLoading]);
+  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+  const userHistoriesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'userHistories') : null, [firestore]);
 
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
   const { data: userHistories, isLoading: historiesLoading } = useCollection<UserHistory>(userHistoriesQuery);
   
-  const isLoading = isUserLoading || usersLoading || historiesLoading;
+  const isLoading = usersLoading || historiesLoading;
 
   const sortedUsers = useMemo(() => {
     if (!users) return [];
@@ -120,7 +121,12 @@ export default function PerformancePage() {
       </header>
 
       {isLoading ? (
-          <div className="flex justify-center items-center h-[600px]">Loading chart data...</div>
+          <Card className="flex justify-center items-center h-[600px]">
+            <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="size-5 animate-spin" />
+                <span>Loading chart data...</span>
+            </div>
+          </Card>
       ) : (
           <Card>
             <CardHeader>
