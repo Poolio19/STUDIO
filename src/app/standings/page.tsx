@@ -185,11 +185,7 @@ export default function StandingsPage() {
       <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData as (Team & { rank: number })[]} />
 
       <Card>
-        <CardHeader className="items-center">
-          <CardTitle className="bg-black text-yellow-400 p-2 rounded-md">Team Standings 2025-26</CardTitle>
-           <CardDescription>Points, form, and goal difference.</CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <Table className="border-separate border-spacing-y-1">
             <TableHeader>
               <TableRow>
