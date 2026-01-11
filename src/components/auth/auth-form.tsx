@@ -21,7 +21,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useAuth, useToast } from '@/firebase';
+import { useAuth } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, linkWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { useUser } from '@/firebase/provider';
 import { useState } from 'react';
