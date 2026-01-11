@@ -74,6 +74,7 @@ const profileFormSchema = z.object({
   favouriteTeam: z.string({
     required_error: 'Please select a team.',
   }),
+  championshipWins: z.number().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -119,7 +120,8 @@ export default function ProfilePage() {
         email: user.email || '',
         dob: user.joinDate ? new Date(user.joinDate) : new Date('1990-01-01'),
         country: user.country || 'United Kingdom',
-        favouriteTeam: user.favouriteTeam || 'team_1'
+        favouriteTeam: user.favouriteTeam || 'team_1',
+        championshipWins: user.championshipWins || 0,
       });
     }
   }, [user, form]);
@@ -131,15 +133,15 @@ export default function ProfilePage() {
     }
 
     const updatedData = {
-        ...user, // Preserve existing data
         name: data.name,
         email: data.email,
         joinDate: data.dob.toISOString(),
         country: data.country,
         favouriteTeam: data.favouriteTeam,
+        championshipWins: data.championshipWins,
     };
 
-    setDocumentNonBlocking(userDocRef, updatedData);
+    setDocumentNonBlocking(userDocRef, updatedData, { merge: true });
     toast({
       title: 'Profile Updated!',
       description: 'Your profile information has been saved.',
@@ -206,6 +208,22 @@ export default function ProfilePage() {
       <div className="flex h-full w-full items-center justify-center">
         <Loader2 className="mr-2 h-8 w-8 animate-spin" />
         <span>Loading profile...</span>
+      </div>
+    );
+  }
+
+  if (!isAuthUserLoading && !authUser) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Not Signed In</CardTitle>
+            <CardDescription>
+              You need to be signed in to view your profile. Please check the
+              database connection or try signing in again.
+            </CardDescription>
+          </CardHeader>
+        </Card>
       </div>
     );
   }
@@ -434,6 +452,19 @@ export default function ProfilePage() {
                             ))}
                           </SelectContent>
                         </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                    control={form.control}
+                    name="championshipWins"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Past Championships</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} onChange={event => field.onChange(+event.target.value)} />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
