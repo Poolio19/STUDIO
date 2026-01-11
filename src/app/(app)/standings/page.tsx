@@ -78,35 +78,34 @@ export default function StandingsPage() {
             if (!weeklyTeamStandings || weeklyTeamStandings.length === 0 || !teamsData || teamsData.length === 0) {
                 return [];
             }
-            
-            const standingsByWeek = new Map<number, WeeklyTeamStanding[]>();
-            weeklyTeamStandings.forEach(standing => {
+
+            const teamMap = new Map(teamsData.map(t => [t.id, t.name]));
+            const standingsByWeek = weeklyTeamStandings.reduce((acc, standing) => {
                 if (standing.week > 0) {
-                    const weekStandings = standingsByWeek.get(standing.week) || [];
-                    weekStandings.push(standing);
-                    standingsByWeek.set(standing.week, weekStandings);
+                    if (!acc[standing.week]) {
+                        acc[standing.week] = [];
+                    }
+                    acc[standing.week].push(standing);
                 }
-            });
+                return acc;
+            }, {} as Record<number, WeeklyTeamStanding[]>);
 
-            const sortedWeeks = [...standingsByWeek.keys()].sort((a, b) => a - b);
-            
-            const finalChartData = sortedWeeks.map(week => {
+            const finalChartData = Object.keys(standingsByWeek).map(weekStr => {
+                const week = parseInt(weekStr, 10);
                 const weekData: { [key: string]: any } = { week };
-                const weekStandings = standingsByWeek.get(week) ?? [];
-                const weekRankMap = new Map(weekStandings.map(s => [s.teamId, s.rank]));
-
-                teamsData.forEach(team => {
-                    const rank = weekRankMap.get(team.id);
-                    if (rank !== undefined) {
-                        weekData[team.name] = rank; // For tooltip
-                        weekData[`${team.name}-outer`] = rank; // For outer line
-                        weekData[`${team.name}-inner`] = rank; // For inner line
+                
+                standingsByWeek[week].forEach(standing => {
+                    const teamName = teamMap.get(standing.teamId);
+                    if (teamName) {
+                        weekData[teamName] = standing.rank; // For tooltip
+                        weekData[`${teamName}-outer`] = standing.rank; // For outer line
+                        weekData[`${teamName}-inner`] = standing.rank; // For inner line
                     }
                 });
                 return weekData;
             });
-
-            return finalChartData;
+            
+            return finalChartData.sort((a, b) => a.week - b.week);
         })();
 
 
