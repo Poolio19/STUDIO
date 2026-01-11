@@ -5,7 +5,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // A specific, non-existent document path that is allowed to be read by anyone.
     // This is a safe way to check if the client can reach the database.
-    match /____connectivity-test____/{docId} {
+    match /connectivity-test/{docId} {
       allow read: if true;
     }
 
