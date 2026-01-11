@@ -4,7 +4,6 @@
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { SidebarNav } from './sidebar-nav';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase';
 import { usePathname, useRouter } from 'next/navigation';
@@ -25,7 +24,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [isUserLoading, user, pathname, router]);
 
-  // While checking auth, show a loading screen.
+  // While checking auth, show a global loading screen.
   if (isUserLoading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
@@ -34,12 +33,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If on the login page, don't render the main app layout.
+  // If on the login page (and not loading), render only the login page content.
   if (pathname === '/login') {
     return <>{children}</>;
   }
   
-  // If we have a user, render the main app layout.
+  // If we have a user and are not on the login page, render the main app layout.
   if (user) {
     return (
       <SidebarProvider>
@@ -57,6 +56,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Fallback for the brief moment before redirect happens.
+  // Fallback for the brief moment before redirect happens. This prevents rendering children that might rely on a user.
   return null;
 }
