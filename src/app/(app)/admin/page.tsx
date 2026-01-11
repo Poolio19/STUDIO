@@ -13,23 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { useFirestore, useMemoFirebase } from '@/firebase';
-import {
-  teams,
-  standings,
-  fullUsers,
-  fullPredictions,
-  matches,
-  previousSeasonStandings,
-  seasonMonths,
-  monthlyMimoM,
-  fullUserHistories,
-  playerTeamScores,
-  weeklyTeamStandings,
-  teamRecentResults,
-  type Match,
-  type Team
-} from '@/lib/data';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+
 import { collection, doc, writeBatch, getDocs, Firestore, getDoc } from 'firebase/firestore';
 import { Icons, IconName } from '@/components/icons';
 import {
@@ -42,95 +27,8 @@ import {
 import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 import { MatchResultSchema } from '@/ai/flows/update-match-results-flow-types';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import type { Match, Team } from '@/lib/types';
 
-
-async function importClientSideData(db: Firestore, setProgress: (message: string) => void): Promise<{ success: boolean; message: string }> {
-  if (!db) {
-    return { success: false, message: 'Firestore is not initialized.' };
-  }
-
-  const collections: { name: string; data: any[]; idField: string | string[] | null; }[] = [
-      { name: 'teams', data: teams, idField: 'id' },
-      { name: 'standings', data: standings, idField: 'teamId' },
-      { name: 'users', data: fullUsers, idField: 'id' },
-      { name: 'predictions', data: fullPredictions, idField: 'userId' },
-      { name: 'matches', data: matches, idField: 'id' },
-      { name: 'previousSeasonStandings', data: previousSeasonStandings, idField: 'teamId' },
-      { name: 'seasonMonths', data: seasonMonths, idField: 'id' },
-      { name: 'monthlyMimoM', data: monthlyMimoM, idField: 'id' },
-      { name: 'userHistories', data: fullUserHistories, idField: 'userId' },
-      { name: 'playerTeamScores', data: playerTeamScores, idField: ['userId', 'teamId'] },
-      { name: 'weeklyTeamStandings', data: weeklyTeamStandings, idField: ['week', 'teamId'] },
-      { name: 'teamRecentResults', data: teamRecentResults, idField: 'teamId' },
-  ];
-   
-  try {
-    setProgress("Purging existing data...");
-    for (const { name } of collections) {
-      const collectionRef = collection(db, name);
-      const snapshot = await getDocs(collectionRef);
-      if (snapshot.empty) {
-        setProgress(`Collection ${name} is already empty.`);
-        continue;
-      }
-      
-      const BATCH_SIZE = 499;
-      for (let i = 0; i < snapshot.docs.length; i += BATCH_SIZE) {
-        const batch = writeBatch(db);
-        const chunk = snapshot.docs.slice(i, i + BATCH_SIZE);
-        chunk.forEach(document => {
-            batch.delete(document.ref);
-        });
-        await batch.commit();
-        setProgress(`Purged ${chunk.length} documents from ${name}...`);
-      }
-      setProgress(`Finished purging collection: ${name}.`);
-    }
-    
-    setProgress("Importing new data...");
-    for (const { name, data, idField } of collections) {
-        if (!data || data.length === 0) {
-            setProgress(`Skipping empty collection: ${name}.`);
-            continue;
-        }
-      
-        const BATCH_SIZE = 499;
-        for (let i = 0; i < data.length; i += BATCH_SIZE) {
-            const batch = writeBatch(db);
-            const chunk = data.slice(i, i + BATCH_SIZE);
-
-            chunk.forEach(item => {
-                let docId: string;
-                if(idField === null) {
-                    docId = doc(collection(db, name)).id;
-                } else if (Array.isArray(idField)) {
-                    docId = idField.map(field => item[field]).join('_');
-                } else {
-                    docId = item[idField];
-                }
-
-                if (!docId) {
-                    console.warn(`Missing ID for item in collection ${name}`, item);
-                    return;
-                }
-
-                const docRef = doc(db, name, String(docId));
-                batch.set(docRef, item);
-            });
-
-            await batch.commit();
-            setProgress(`Imported ${chunk.length} documents into ${name}...`);
-        }
-        setProgress(`Finished importing collection: ${name}.`);
-    }
-
-    return { success: true, message: `All application data has been purged and re-imported successfully.` };
-
-  } catch (error: any) {
-    console.error('Client-side data operation failed:', error);
-    return { success: false, message: `Operation failed: ${error.message}` };
-  }
-}
 
 type EditableMatch = Match & {
     homeTeam: Team;
@@ -140,9 +38,7 @@ type EditableMatch = Match & {
 export default function AdminPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
-  const [isImporting, setIsImporting] = React.useState(false);
-  const [importProgress, setImportProgress] = React.useState<string | null>(null);
-
+  
   const [dbStatus, setDbStatus] = React.useState<{ connected: boolean, message: string }>({ connected: false, message: 'Checking connection...' });
 
   const [isUpdatingMatches, setIsUpdatingMatches] = React.useState(false);
@@ -150,8 +46,16 @@ export default function AdminPage() {
   const [selectedWeek, setSelectedWeek] = React.useState<number | null>(null);
   const [weekFixtures, setWeekFixtures] = React.useState<EditableMatch[]>([]);
   const [scores, setScores] = React.useState<{[matchId: string]: {homeScore: string, awayScore: string}}>({});
+  
+  const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
+  const matchesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'matches') : null, [firestore]);
+  const { data: teamsData, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
+  const { data: matchesData, isLoading: matchesLoading } = useCollection<Match>(matchesQuery);
 
-  const teamMap = React.useMemo(() => new Map(teams.map(t => [t.id, t])), []);
+  const teamMap = React.useMemo(() => {
+    if (!teamsData) return new Map();
+    return new Map(teamsData.map(t => [t.id, t]));
+  }, [teamsData]);
 
   const connectivityCheckDocRef = useMemoFirebase(
     () => (firestore ? doc(firestore, '____connectivity-test____', '____test____') : null),
@@ -181,32 +85,11 @@ export default function AdminPage() {
     checkConnection();
   }, [connectivityCheckDocRef]);
 
-
-  const handlePurgeAndImport = async () => {
-    if (!firestore) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Database not available.' });
-      return;
-    }
-    setIsImporting(true);
-    setImportProgress("Initializing data reset...");
-    
-    const result = await importClientSideData(firestore, setImportProgress);
-    
-    toast({
-      variant: result.success ? 'default' : 'destructive',
-      title: result.success ? 'Import Complete!' : 'Import Failed',
-      description: result.message,
-    });
-    
-    setImportProgress(result.message);
-    setIsImporting(false);
-  }
-
-
   const handleWeekChange = (weekStr: string) => {
+    if (!matchesData) return;
     const week = parseInt(weekStr);
     setSelectedWeek(week);
-    const fixturesForWeek = matches.filter(m => m.week === week).map(match => {
+    const fixturesForWeek = matchesData.filter(m => m.week === week).map(match => {
         return {
             ...match,
             homeTeam: teamMap.get(match.homeTeamId)!,
@@ -295,6 +178,12 @@ export default function AdminPage() {
     }
   };
 
+  const isLoading = teamsLoading || matchesLoading;
+  const allWeeks = React.useMemo(() => {
+    if (!matchesData) return [];
+    return [...new Set(matchesData.map(m => m.week))].sort((a,b) => a-b);
+  }, [matchesData]);
+
   return (
     <div className="space-y-8">
       <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
@@ -323,67 +212,26 @@ export default function AdminPage() {
       
       <Card>
           <CardHeader>
-              <CardTitle>Database Reset</CardTitle>
-              <CardDescription>
-                  This will permanently delete all data in all collections and re-populate it with the initial dataset. This action cannot be undone.
-              </CardDescription>
-          </CardHeader>
-          <CardContent>
-              <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                       <Button variant="destructive" disabled={!dbStatus.connected || isImporting}>
-                          {isImporting ? (
-                              <>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  Resetting Database...
-                              </>
-                          ) : "Purge and Re-Import All Data"}
-                      </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                      <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                          This will permanently delete all collections and documents in your database and replace them with the original seed data. This action cannot be undone.
-                      </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handlePurgeAndImport}>Yes, reset the database</AlertDialogAction>
-                      </AlertDialogFooter>
-                  </AlertDialogContent>
-              </AlertDialog>
-
-              {isImporting && importProgress && (
-                   <div className="flex items-center gap-4 rounded-lg border p-4 mt-4">
-                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                      <p className="font-medium">{importProgress}</p>
-                  </div>
-              )}
-          </CardContent>
-      </Card>
-
-
-      <Card>
-          <CardHeader>
               <CardTitle>Update Match Results</CardTitle>
               <CardDescription>
                   Select a week to view its fixtures, enter the scores, and save the results to the database. Use a value of -1 for scores that are not yet final. This is disabled until the database is connected.
               </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-               <Select onValueChange={handleWeekChange} disabled={!dbStatus.connected}>
+               <Select onValueChange={handleWeekChange} disabled={!dbStatus.connected || isLoading}>
                   <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="Select a week" />
                   </SelectTrigger>
                   <SelectContent>
-                      {Array.from({ length: 38 }, (_, i) => i + 1).map(week => (
+                      {allWeeks.map(week => (
                           <SelectItem key={week} value={String(week)}>Week {week}</SelectItem>
                       ))}
                   </SelectContent>
               </Select>
 
-              {selectedWeek !== null && (
+              {isLoading && <div className="flex items-center gap-2"><Loader2 className="animate-spin" />Loading fixture data...</div>}
+
+              {selectedWeek !== null && !isLoading && (
                   <div className="space-y-4 pt-4">
                       <h3 className="font-semibold">Fixtures for Week {selectedWeek}</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

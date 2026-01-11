@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/card';
 import { useMemo } from 'react';
 import { PlayerRankChart } from '@/components/charts/player-rank-chart';
-import type { User, UserHistory } from '@/lib/data';
+import type { User, UserHistory } from '@/lib/types';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 

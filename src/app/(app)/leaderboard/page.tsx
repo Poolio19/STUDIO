@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { User, CurrentStanding, MonthlyMimoM } from '@/lib/data';
+import type { User, CurrentStanding, MonthlyMimoM } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { ArrowUp, ArrowDown, Minus, Loader2 } from 'lucide-react';
@@ -48,31 +48,6 @@ const formatPointsChange = (change: number) => {
     return change;
 }
 
-const getRankColour = (user: User, sortedUsers: User[]) => {
-    const nonProUsers = sortedUsers.filter(u => !u.isPro);
-    const userNonProRank = nonProUsers.findIndex(u => u.id === user.id);
-    const tiedUsers = nonProUsers.filter(u => u.rank === user.rank);
-    const firstTiedUserIndex = nonProUsers.findIndex(u => u.id === tiedUsers[0]?.id);
-
-    if (user.isPro) {
-        return 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-200/80 dark:hover:bg-gray-700/80';
-    }
-
-    if (firstTiedUserIndex === 0) return 'bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-100/80 dark:hover:bg-yellow-900/40';
-    if (firstTiedUserIndex === 1) return 'bg-slate-100 dark:bg-slate-800/30 hover:bg-slate-100/80 dark:hover:bg-slate-800/40';
-    if (firstTiedUserIndex === 2) return 'bg-orange-100 dark:bg-orange-900/30 hover:bg-orange-100/80 dark:hover:bg-orange-900/40';
-    
-    if (userNonProRank < 5) {
-        return 'bg-green-100 dark:bg-green-900/30 hover:bg-green-100/80 dark:hover:bg-green-900/40';
-    }
-
-    const totalWinnings = (totalWinningsMap.get(user.id) || 0);
-    if (totalWinnings > 0) {
-        return 'bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-100/80 dark:hover:bg-blue-900/40';
-    }
-    return '';
-}
-
 const prizeTiers = [50, 41, 33, 26, 20];
 
 const totalWinningsMap = new Map<string, number>();
@@ -92,9 +67,9 @@ export default function LeaderboardPage() {
   
   const currentWeek = useMemo(() => {
     if (currentStandings && currentStandings.length > 0) {
-      return currentStandings[0].gamesPlayed;
+      return Math.max(...currentStandings.map(s => s.gamesPlayed), 0);
     }
-    return 1;
+    return 0;
   }, [currentStandings]);
 
   const sortedUsers = useMemo(() => {
@@ -190,6 +165,30 @@ export default function LeaderboardPage() {
     return calculatedTotalWinnings;
   }, [regularPlayers, proPlayers, usersData, monthlyMimoM]);
 
+    const getRankColour = (user: User) => {
+    const nonProUsers = sortedUsers.filter(u => !u.isPro);
+    const userNonProRank = nonProUsers.findIndex(u => u.id === user.id);
+    const tiedUsers = nonProUsers.filter(u => u.rank === user.rank);
+    const firstTiedUserIndex = nonProUsers.findIndex(u => u.id === tiedUsers[0]?.id);
+
+    if (user.isPro) {
+        return 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-200/80 dark:hover:bg-gray-700/80';
+    }
+
+    if (firstTiedUserIndex === 0) return 'bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-100/80 dark:hover:bg-yellow-900/40';
+    if (firstTiedUserIndex === 1) return 'bg-slate-100 dark:bg-slate-800/30 hover:bg-slate-100/80 dark:hover:bg-slate-800/40';
+    if (firstTiedUserIndex === 2) return 'bg-orange-100 dark:bg-orange-900/30 hover:bg-orange-100/80 dark:hover:bg-orange-900/40';
+    
+    if (userNonProRank < 5) {
+        return 'bg-green-100 dark:bg-green-900/30 hover:bg-green-100/80 dark:hover:bg-green-900/40';
+    }
+
+    const totalWinnings = (totalWinningsMap.get(user.id) || 0);
+    if (totalWinnings > 0) {
+        return 'bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-100/80 dark:hover:bg-blue-900/40';
+    }
+    return '';
+}
 
   return (
     <div className="flex flex-col gap-8">
@@ -246,7 +245,7 @@ export default function LeaderboardPage() {
                   const userWinnings = localTotalWinningsMap.get(user.id) || 0;
                   
                   return (
-                      <TableRow key={user.id} className={cn(getRankColour(user, sortedUsers))}>
+                      <TableRow key={user.id} className={cn(getRankColour(user))}>
                           <TableCell className="font-medium text-center">{user.rank}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-3">

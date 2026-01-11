@@ -13,7 +13,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
-import type { User, Team, PlayerTeamScore, CurrentStanding } from '@/lib/data';
+import type { User, Team, PlayerTeamScore, CurrentStanding } from '@/lib/types';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';

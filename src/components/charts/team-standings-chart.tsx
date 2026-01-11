@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -20,7 +19,7 @@ import {
 import {
   ChartContainer
 } from '@/components/ui/chart';
-import { Team } from '@/lib/data';
+import type { Team } from '@/lib/types';
 import * as React from 'react';
 
 interface TeamStandingsChartProps {

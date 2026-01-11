@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -13,7 +12,7 @@ import {
 import {
   ChartContainer,
 } from '@/components/ui/chart';
-import { User } from '@/lib/data';
+import type { User } from '@/lib/types';
 import * as React from 'react';
 
 interface PlayerPerformanceChartProps {

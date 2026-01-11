@@ -16,7 +16,7 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
-import type { Team, Prediction, CurrentStanding } from '@/lib/data';
+import type { Team, Prediction, CurrentStanding } from '@/lib/types';
 import { Icons, IconName } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
