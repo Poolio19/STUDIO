@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
@@ -61,10 +62,10 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   useEffect(() => {
     // This effect runs once on the client to initialize Firebase
     
-    // IMPORTANT: Directly use the environment variable for the API key.
+    // IMPORTANT: The build system will replace `__FIREBASE_API_KEY__` with the actual key.
     const firebaseConfig = {
       ...originalFirebaseConfig,
-      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+      apiKey: "__FIREBASE_API_KEY__",
     };
 
     const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
