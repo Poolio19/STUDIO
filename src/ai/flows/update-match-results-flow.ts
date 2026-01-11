@@ -27,55 +27,45 @@ const updateMatchResultsFlow = ai.defineFlow(
     outputSchema: UpdateMatchResultsOutputSchema,
   },
   async ({ results }) => {
-    const db = getAdminFirestore(); // Removed 'prempred-master' to use default DB
-    const matchesCollectionRef = db.collection('matches');
-    
-    // Filter out results where scores are not valid numbers. This prevents NaN from being written.
-    const validResults = results.filter(
-      (result) => !isNaN(result.homeScore) && !isNaN(result.awayScore)
-    );
+    try {
+      const db = getAdminFirestore();
+      const matchesCollectionRef = db.collection('matches');
+      
+      const validResults = results.filter(
+        (result) => !isNaN(result.homeScore) && !isNaN(result.awayScore)
+      );
 
-    if (validResults.length === 0) {
-      console.log("No valid match results to update.");
-      return { success: true, updatedCount: 0 };
-    }
+      if (validResults.length === 0) {
+        console.log("No valid match results to update.");
+        return { success: true, updatedCount: 0 };
+      }
 
-    // Firestore batch writes are limited to 500 operations.
-    // We'll process the results in chunks of 400 to be safe.
-    const CHUNK_SIZE = 400;
-    let totalUpdatedCount = 0;
+      const CHUNK_SIZE = 400;
+      let totalUpdatedCount = 0;
 
-    for (let i = 0; i < validResults.length; i += CHUNK_SIZE) {
-      const chunk = validResults.slice(i, i + CHUNK_SIZE);
-      const batch = db.batch();
+      for (let i = 0; i < validResults.length; i += CHUNK_SIZE) {
+        const chunk = validResults.slice(i, i + CHUNK_SIZE);
+        const batch = db.batch();
 
-      chunk.forEach(result => {
-        // The `result.id` is the document ID (e.g., "1-team_12-team_03").
-        const docRef = matchesCollectionRef.doc(result.id);
-        
-        // The data payload should NOT include the `id` itself.
-        const { id, ...matchData } = result;
+        chunk.forEach(result => {
+          const docRef = matchesCollectionRef.doc(result.id);
+          const { id, ...matchData } = result;
+          batch.set(docRef, matchData, { merge: true });
+        });
 
-        // Use `set` with `merge: true` to perform an upsert.
-        // This will create the document if it doesn't exist or update it if it does.
-        batch.set(docRef, matchData, { merge: true });
-      });
-
-      try {
         await batch.commit();
         totalUpdatedCount += chunk.length;
         console.log(`Successfully committed a batch of ${chunk.length} match results.`);
-      } catch (error) {
-        console.error(`Error committing a batch of match results:`, error);
-        // If any batch fails, we throw an error to stop the process.
-        throw new Error(
-          `Failed to update match results batch starting at index ${i}. Reason: ${
-            (error as Error).message
-          }`
-        );
       }
-    }
 
-    return { success: true, updatedCount: totalUpdatedCount };
+      return { success: true, updatedCount: totalUpdatedCount };
+    } catch (error) {
+      console.error(`Error in updateMatchResultsFlow:`, error);
+      // Re-throw the error to propagate it to the client, where it will be displayed in the toast.
+      // The custom error from getAdminFirestore will provide actionable steps.
+      throw new Error(
+        `Flow failed. Reason: ${(error as Error).message}`
+      );
+    }
   }
 );
