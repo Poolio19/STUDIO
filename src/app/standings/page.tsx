@@ -44,7 +44,7 @@ export default function StandingsPage() {
     const { data: weeklyTeamStandings, isLoading: weeklyStandingsLoading } = useCollection<WeeklyTeamStanding>(weeklyTeamStandingsQuery);
     const { data: teamRecentResults, isLoading: recentResultsLoading } = useCollection<TeamRecentResult>(teamRecentResultsQuery);
 
-    const isLoading = isUserLoading || teamsLoading || matchesLoading || standingsLoading || weeklyStandingsLoading || recentResultsLoading;
+    const isLoading = isUserLoading || !firestore || teamsLoading || matchesLoading || standingsLoading || weeklyStandingsLoading || recentResultsLoading;
     
     const { 
         standingsWithTeamData, 
