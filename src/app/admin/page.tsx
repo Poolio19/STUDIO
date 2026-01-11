@@ -259,9 +259,32 @@ function FixturesImporter() {
         toast({ title: 'Importing fixtures...', description: 'Please wait while we add the new matches to the database.' });
         try {
             const fixtures = rawFixtureData.trim().split('\n').map(line => {
-                const [week, date, time, homeTeamName, homeScore, awayScore, awayTeamName] = line.split('\t');
-                const homeTeamId = teamNameToIdMap[homeTeamName.trim()];
-                const awayTeamId = teamNameToIdMap[awayTeamName.trim()];
+                const parts = line.split(/\s+/);
+                if (parts.length < 7) return null;
+
+                const [weekStr, date, time, ...teamNameParts] = parts;
+                
+                const awayTeamNameArr = [];
+                let homeTeamNameArr = [];
+                let scoreBoundaryReached = false;
+                
+                for(const part of teamNameParts) {
+                    if(!isNaN(parseInt(part, 10))) {
+                        scoreBoundaryReached = true;
+                        continue;
+                    }
+                    if(scoreBoundaryReached) {
+                        awayTeamNameArr.push(part);
+                    } else {
+                        homeTeamNameArr.push(part);
+                    }
+                }
+
+                const homeTeamName = homeTeamNameArr.join(' ');
+                const awayTeamName = awayTeamNameArr.join(' ');
+
+                const homeTeamId = teamNameToIdMap[homeTeamName];
+                const awayTeamId = teamNameToIdMap[awayTeamName];
                 
                 if (!homeTeamId || !awayTeamId) {
                     console.warn(`Could not find team ID for match: ${homeTeamName} vs ${awayTeamName}`);
@@ -273,12 +296,12 @@ function FixturesImporter() {
                 const matchDate = new Date(`${year}-${month}-${day}T${time}:00`).toISOString();
 
                 return {
-                    id: `${week}-${homeTeamId}-${awayTeamId}`,
-                    week: parseInt(week, 10),
+                    id: `${weekStr}-${homeTeamId}-${awayTeamId}`,
+                    week: parseInt(weekStr, 10),
                     homeTeamId: homeTeamId,
                     awayTeamId: awayTeamId,
-                    homeScore: parseInt(homeScore, 10),
-                    awayScore: parseInt(awayScore, 10),
+                    homeScore: -1,
+                    awayScore: -1,
                     matchDate: matchDate,
                 };
             }).filter(Boolean);
@@ -296,11 +319,11 @@ function FixturesImporter() {
                 setHasImported(true);
             } else if (result.success && result.updatedCount === 0) {
                 toast({ variant: 'destructive', title: 'Import Complete (0 fixtures)', description: 'The flow ran but did not add any new fixtures. They may already exist.' });
-                 // Don't set hasImported to true, so the user can try again if needed.
             } else {
                 throw new Error('The import flow reported a failure.');
             }
         } catch (error: any) {
+            console.error("Import error:", error);
             toast({ variant: 'destructive', title: 'Import Failed', description: error.message || 'An unknown error occurred.' });
         } finally {
             setIsLoading(false);
@@ -613,3 +636,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
