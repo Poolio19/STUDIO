@@ -62,7 +62,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   useEffect(() => {
     // This effect runs once on the client to initialize Firebase
     
-    // IMPORTANT: The build system will replace `FIREBASE_API_KEY` with the actual key.
+    // The build system will replace `FIREBASE_API_KEY` with the actual key.
     const firebaseConfig = {
       ...originalFirebaseConfig,
       apiKey: "FIREBASE_API_KEY",
@@ -87,7 +87,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
         } else {
           // If no user, attempt to sign in with the default user credentials.
           const defaultUserEmail = 'jim.poole@example.com';
-          const defaultUserPassword = 'password123'; // This is a placeholder
+          const defaultUserPassword = 'password123';
           
           signInWithEmailAndPassword(auth, defaultUserEmail, defaultUserPassword)
             .catch((error) => {
