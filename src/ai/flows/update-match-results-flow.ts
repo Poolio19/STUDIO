@@ -27,7 +27,7 @@ const updateMatchResultsFlow = ai.defineFlow(
     outputSchema: UpdateMatchResultsOutputSchema,
   },
   async ({ results }) => {
-    const db = getAdminFirestore('prempred-master');
+    const db = getAdminFirestore(); // Removed 'prempred-master' to use default DB
     const matchesCollectionRef = db.collection('matches');
     
     // Filter out results where scores are not valid numbers. This prevents NaN from being written.
