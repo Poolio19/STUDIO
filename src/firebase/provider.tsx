@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
@@ -70,8 +69,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
         if (firebaseUser) {
           setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
         } else {
-          // If no user is logged in after the initial check, sign in anonymously.
-          // This prevents a race condition on the initial load.
           signInAnonymously(auth).catch((error) => {
              console.error("FirebaseProvider: Anonymous sign-in failed:", error);
              setUserAuthState({ user: null, isUserLoading: false, userError: error });
@@ -134,11 +131,11 @@ export const useUser = (): UserHookResult => {
 
 type MemoFirebase <T> = T & {__memo?: boolean};
 
-export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | (MemoFirebase<T>) {
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T {
   const memoized = useMemo(factory, deps);
   
   if(typeof memoized !== 'object' || memoized === null) return memoized;
+
   if (!('__memo' in memoized)) {
     try {
         Object.defineProperty(memoized, '__memo', {
@@ -148,7 +145,6 @@ export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | 
             configurable: true, 
         });
     } catch (e) {
-      // This might fail on frozen objects, but it's a dev-time check, so we can be lenient.
       (memoized as MemoFirebase<T>).__memo = true;
     }
   }

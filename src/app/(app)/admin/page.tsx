@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -167,12 +166,9 @@ export default function AdminPage() {
     const checkConnection = async () => {
       try {
         await getDoc(connectivityCheckDocRef);
-        // This case will likely not be hit with restrictive rules, but is a valid success state.
         setDbStatus({ connected: true, message: 'Database is connected.' });
       } catch (error: any) {
          if (error.code === 'permission-denied') {
-            // A "permission-denied" error on our specific test path means the rules are in place
-            // and we have successfully communicated with the Firestore backend.
             setDbStatus({ connected: true, message: 'Database is connected (with secure rules).' });
         } else if (error.code === 'unavailable' || error.message.includes('offline')) {
             setDbStatus({ connected: false, message: 'Database connection failed: Client is offline.' });
