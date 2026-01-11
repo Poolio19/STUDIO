@@ -21,11 +21,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { doc } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import type { User } from '@/lib/types';
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -34,6 +37,7 @@ const formSchema = z.object({
 
 export function AuthForm() {
   const auth = useAuth();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -45,6 +49,35 @@ export function AuthForm() {
       password: '',
     },
   });
+
+  const createInitialUserProfile = (userId: string, email: string) => {
+    if (!firestore) return;
+    const userDocRef = doc(firestore, 'users', userId);
+    
+    // Create a default user profile object
+    const newUserProfile: Omit<User, 'id'> = {
+      name: email.split('@')[0] || 'New User',
+      email: email,
+      avatar: String(Math.floor(Math.random() * 49) + 1), // Random avatar ID from 1 to 49
+      score: 0,
+      rank: 0,
+      previousRank: 0,
+      previousScore: 0,
+      maxRank: 0,
+      minRank: 0,
+      maxScore: 0,
+      minScore: 0,
+      rankChange: 0,
+      scoreChange: 0,
+      isPro: false,
+      joinDate: new Date().toISOString(),
+      country: '',
+      favouriteTeam: '',
+      championshipWins: 0
+    };
+
+    setDocumentNonBlocking(userDocRef, newUserProfile);
+  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!auth) {
@@ -66,7 +99,8 @@ export function AuthForm() {
       if (signInError.code === 'auth/user-not-found') {
         // If user doesn't exist, create a new account.
         try {
-            await createUserWithEmailAndPassword(auth, values.email, values.password);
+            const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+            createInitialUserProfile(userCredential.user.uid, values.email);
             toast({ title: 'Account created successfully!' });
         } catch (signUpError: any) {
             console.error('Account creation failed:', signUpError);
