@@ -98,15 +98,16 @@ export function TeamStandingsChart({
                   bottom: 50,
                 }}
               >
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid vertical={true} horizontal={true} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
                 <XAxis
                   dataKey="week"
                   type="number"
                   domain={['dataMin', 'dataMax']}
                   tickFormatter={value => `Wk ${value}`}
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
+                  angle={-90}
+                  textAnchor="end"
+                  tickMargin={10}
+                  interval={0}
                 />
                 <YAxis
                   tickLine={false}
