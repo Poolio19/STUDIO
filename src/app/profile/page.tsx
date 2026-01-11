@@ -53,7 +53,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser, useResolvedUserId } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { AuthForm } from '@/components/auth/auth-form';
@@ -86,18 +86,17 @@ export default function ProfilePage() {
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
   const { user: authUser, isUserLoading: isAuthUserLoading } = useUser();
   const firestore = useFirestore();
+  const resolvedUserId = useResolvedUserId();
   
   const userDocRef = useMemoFirebase(() => {
-    if (!firestore || !authUser) return null;
-    const userId = authUser.email === 'jim.poole@prempred.com' ? 'Usr_009' : authUser.uid;
-    return doc(firestore, 'users', userId);
-  }, [firestore, authUser]);
+    if (!firestore || !resolvedUserId) return null;
+    return doc(firestore, 'users', resolvedUserId);
+  }, [firestore, resolvedUserId]);
 
   const userHistoryDocRef = useMemoFirebase(() => {
-    if (!firestore || !authUser) return null; 
-    const userId = authUser.email === 'jim.poole@prempred.com' ? 'Usr_009' : authUser.uid;
-    return doc(firestore, 'userHistories', userId);
-  }, [firestore, authUser]);
+    if (!firestore || !resolvedUserId) return null; 
+    return doc(firestore, 'userHistories', resolvedUserId);
+  }, [firestore, resolvedUserId]);
 
   const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
   

@@ -123,6 +123,22 @@ export const useUser = (): UserHookResult => {
     const { user, isUserLoading, userError } = useFirebaseContext();
     return { user, isUserLoading, userError };
 };
+
+/**
+ * A hook that returns the correct document ID for the current user.
+ * It handles the special case for 'jim.poole@prempred.com'.
+ * @returns The user's document ID (string) or null if not authenticated.
+ */
+export const useResolvedUserId = (): string | null => {
+    const { user } = useUser();
+    if (!user) return null;
+    if (user.email === 'jim.poole@prempred.com') {
+        return 'usr_009';
+    }
+    return user.uid;
+};
+
+
 export const useFirebaseConfigStatus = (): { isConfigured: boolean } => {
     const { isConfigured } = useFirebaseContext();
     return { isConfigured };

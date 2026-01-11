@@ -13,7 +13,7 @@ import { Icons, IconName } from '@/components/icons';
 import { Reorder } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import type { Team, PreviousSeasonStanding, CurrentStanding, Prediction as PredictionType } from '@/lib/types';
-import { useUser, useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { useUser, useCollection, useDoc, useFirestore, useMemoFirebase, useResolvedUserId } from '@/firebase';
 import { collection, doc, query } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent } from '@/components/ui/card';
@@ -76,16 +76,16 @@ export default function PredictPage() {
   const { toast } = useToast();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const resolvedUserId = useResolvedUserId();
 
   const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
   const prevStandingsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'previousSeasonStandings') : null, [firestore]);
   const currentStandingsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'standings')) : null, [firestore]);
   
   const userPredictionDocRef = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    const userId = user.email === 'jim.poole@prempred.com' ? 'Usr_009' : user.uid;
-    return doc(firestore, 'predictions', userId);
-  }, [user, firestore]);
+    if (!firestore || !resolvedUserId) return null;
+    return doc(firestore, 'predictions', resolvedUserId);
+  }, [firestore, resolvedUserId]);
 
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
   const { data: previousSeasonStandings, isLoading: prevStandingsLoading } = useCollection<PreviousSeasonStanding>(prevStandingsQuery);
@@ -177,7 +177,7 @@ export default function PredictPage() {
   const seasonStarted = currentWeek > 0;
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || !firestore) {
+    if (!user || !firestore || !resolvedUserId) {
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -195,15 +195,13 @@ export default function PredictPage() {
       return;
     }
     
-    const userId = user.email === 'jim.poole@prempred.com' ? 'Usr_009' : user.uid;
-
     const predictionData = {
-      userId: userId,
+      userId: resolvedUserId,
       rankings: values.predictions.map(p => p.teamId),
       createdAt: new Date().toISOString(),
     };
 
-    const predictionRef = doc(firestore, 'predictions', userId);
+    const predictionRef = doc(firestore, 'predictions', resolvedUserId);
     setDocumentNonBlocking(predictionRef, predictionData, { merge: true });
     toast({
         title: 'Season Predictions Submitted!',

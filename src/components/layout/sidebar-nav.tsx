@@ -15,7 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Icons } from '@/components/icons';
 import Link from 'next/link';
 import { Award, Database, LogOut } from 'lucide-react';
-import { useUser, useAuth, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { useUser, useAuth, useDoc, useFirestore, useMemoFirebase, useResolvedUserId } from '@/firebase';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Button } from '../ui/button';
 import { doc } from 'firebase/firestore';
@@ -40,12 +40,12 @@ export function SidebarNav() {
   const { user: authUser, isUserLoading } = useUser();
   const auth = useAuth();
   const firestore = useFirestore();
+  const resolvedUserId = useResolvedUserId();
 
   const userDocRef = useMemoFirebase(() => {
-    if (!firestore || !authUser) return null;
-    const userId = authUser.email === 'jim.poole@prempred.com' ? 'Usr_009' : authUser.uid;
-    return doc(firestore, 'users', userId);
-  }, [firestore, authUser]);
+    if (!firestore || !resolvedUserId) return null;
+    return doc(firestore, 'users', resolvedUserId);
+  }, [firestore, resolvedUserId]);
 
   const { data: userProfile } = useDoc<User>(userDocRef);
 

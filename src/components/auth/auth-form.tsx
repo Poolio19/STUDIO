@@ -21,7 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useAuth, useFirestore } from '@/firebase';
+import { useAuth, useFirestore, useResolvedUserId } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { useState } from 'react';
@@ -53,16 +53,15 @@ export function AuthForm() {
   const createInitialUserProfile = async (userId: string, email: string) => {
     if (!firestore) return;
     
-    const docId = email === 'jim.poole@prempred.com' ? 'Usr_009' : userId;
+    // Determine the document ID, handling the special case for Jim Poole.
+    const docId = email === 'jim.poole@prempred.com' ? 'usr_009' : userId;
     const userDocRef = doc(firestore, 'users', docId);
 
-    // --- Check if document exists before creating ---
     const docSnap = await getDoc(userDocRef);
     if (docSnap.exists()) {
         console.log(`User profile for ${docId} already exists. Skipping creation.`);
-        return; // Do not overwrite existing user profile
+        return;
     }
-    // --- End check ---
     
     const newUserProfile: Omit<User, 'id'> = {
       name: email.split('@')[0] || 'New User',
