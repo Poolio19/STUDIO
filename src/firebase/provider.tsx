@@ -4,7 +4,7 @@
 import React, { createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp, initializeApp, getApps, getApp } from 'firebase/app';
 import { Firestore, getFirestore, enableNetwork } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged, getAuth } from 'firebase/auth';
+import { Auth, User, onAuthStateChanged, getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { firebaseConfig as originalFirebaseConfig } from './config';
 
@@ -78,6 +78,29 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     );
     return () => unsubscribe();
   }, []);
+
+  // Development-only automatic login for the default user
+  useEffect(() => {
+    if (services?.auth && !userAuthState.user && !userAuthState.isUserLoading) {
+      const defaultEmail = 'jim.poole@prempred.com';
+      const defaultPassword = 'password';
+
+      signInWithEmailAndPassword(services.auth, defaultEmail, defaultPassword)
+        .catch(err => {
+          if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+            // If the user doesn't exist or password is wrong, try to create them.
+            // This is useful for first-time setup.
+            createUserWithEmailAndPassword(services.auth, defaultEmail, defaultPassword)
+              .catch(createErr => {
+                console.error("Failed to create default user for development:", createErr);
+              });
+          } else {
+            console.error("Default user auto-login failed:", err);
+          }
+        });
+    }
+  }, [services, userAuthState]);
+
 
   const contextValue = useMemo((): FirebaseContextState => ({
     firebaseApp: services?.firebaseApp || null,
