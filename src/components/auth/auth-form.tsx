@@ -116,7 +116,16 @@ export function AuthForm() {
                     description: signInError.message,
                 });
             }
-        } else {
+        } else if (error.code === 'auth/configuration-not-found') {
+             const errorMessage = 'Email/Password sign-in is not enabled. Please enable it in the Firebase console.';
+             setAuthError(errorMessage);
+             toast({
+                variant: 'destructive',
+                title: 'Configuration Error',
+                description: errorMessage,
+            });
+        }
+        else {
             // Another error occurred during sign-up.
             console.error('Account creation failed:', error);
             setAuthError(error.message || 'Failed to create account.');
