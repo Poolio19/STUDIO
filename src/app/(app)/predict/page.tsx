@@ -77,9 +77,9 @@ export default function PredictPage() {
   const firestore = useFirestore();
   const currentUserId = 'usr_009';
 
-  const teamsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'teams') : null, [firestore, isUserLoading]);
-  const prevStandingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'previousSeasonStandings') : null, [firestore, isUserLoading]);
-  const currentStandingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'standings')) : null, [firestore, isUserLoading]);
+  const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
+  const prevStandingsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'previousSeasonStandings') : null, [firestore]);
+  const currentStandingsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'standings')) : null, [firestore]);
   const userPredictionDocRef = useMemoFirebase(() => currentUserId && firestore ? doc(firestore, 'predictions', currentUserId) : null, [currentUserId, firestore]);
 
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);

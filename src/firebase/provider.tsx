@@ -139,7 +139,19 @@ export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | 
   const memoized = useMemo(factory, deps);
   
   if(typeof memoized !== 'object' || memoized === null) return memoized;
-  (memoized as MemoFirebase<T>).__memo = true;
+  if (!('__memo' in memoized)) {
+    try {
+        Object.defineProperty(memoized, '__memo', {
+            value: true,
+            enumerable: false, // Make it non-enumerable
+            writable: false,
+            configurable: true, 
+        });
+    } catch (e) {
+      // This might fail on frozen objects, but it's a dev-time check, so we can be lenient.
+      (memoized as MemoFirebase<T>).__memo = true;
+    }
+  }
   
   return memoized;
 }

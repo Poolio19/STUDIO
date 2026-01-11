@@ -34,9 +34,9 @@ export default function ConsensusPage() {
   const firestore = useFirestore();
   const { isUserLoading } = useUser();
 
-  const teamsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'teams')) : null, [firestore, isUserLoading]);
-  const predictionsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'predictions')) : null, [firestore, isUserLoading]);
-  const standingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'standings')) : null, [firestore, isUserLoading]);
+  const teamsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'teams')) : null, [firestore]);
+  const predictionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'predictions')) : null, [firestore]);
+  const standingsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'standings')) : null, [firestore]);
 
 
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
