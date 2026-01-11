@@ -55,6 +55,7 @@ import {
 } from '@/components/ui/tooltip';
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 
 const profileFormSchema = z.object({
@@ -117,19 +118,40 @@ export default function ProfilePage() {
         name: user.name || '',
         email: user.email || '',
         dob: user.joinDate ? new Date(user.joinDate) : new Date('1990-01-01'),
-        country: 'United Kingdom', // Example value
-        favouriteTeam: 'team_1' // Example value
+        country: user.country || 'United Kingdom',
+        favouriteTeam: user.favouriteTeam || 'team_1'
       });
     }
   }, [user, form]);
 
+  async function onSubmit(data: ProfileFormValues) {
+    if (!userDocRef) {
+      toast({ variant: 'destructive', title: 'Error', description: 'User not authenticated.' });
+      return;
+    }
+
+    const updatedData = {
+        ...user, // Preserve existing data
+        name: data.name,
+        email: data.email,
+        joinDate: data.dob.toISOString(),
+        country: data.country,
+        favouriteTeam: data.favouriteTeam,
+    };
+
+    setDocumentNonBlocking(userDocRef, updatedData);
+    toast({
+      title: 'Profile Updated!',
+      description: 'Your profile information has been saved.',
+    });
+  }
 
   const mimoMWins = React.useMemo(() => {
     if (!user || !monthlyMimoM) return 0;
     return monthlyMimoM.filter(m => m.userId === user.id && m.type === 'winner').length;
   }, [user, monthlyMimoM]);
 
-  const pastChampionships = 0;
+  const pastChampionships = user?.championshipWins || 0;
 
   const defaultAvatarUrl = user ? PlaceHolderImages.find(img => img.id === user.avatar)?.imageUrl || '' : '';
 
@@ -159,26 +181,23 @@ export default function ProfilePage() {
     return { chartData: transformedData, yAxisDomain };
   }, [userHistory]);
 
-  function onSubmit(data: ProfileFormValues) {
-    toast({
-      title: 'Profile Updated!',
-      description: 'Your profile information has been saved.',
-    });
-    console.log(data);
-  }
-
   const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && userDocRef) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setAvatarPreview(reader.result as string);
+        const result = reader.result as string;
+        setAvatarPreview(result);
+        // Here you would typically upload the file to Firebase Storage and get a URL.
+        // For now, we will just save the base64 string as the avatar, which is not ideal for performance.
+        setDocumentNonBlocking(userDocRef, { avatar: result }, { merge: true });
+
+        toast({
+            title: 'Avatar Updated!',
+            description: 'Your new avatar has been set.',
+        });
       };
       reader.readAsDataURL(file);
-      toast({
-        title: 'Avatar Updated!',
-        description: 'Your new avatar has been set.',
-      });
     }
   };
 
@@ -215,7 +234,7 @@ export default function ProfilePage() {
             <CardContent className="pt-6 flex flex-col items-center gap-4">
               <Avatar className="h-24 w-24 border-4 border-primary">
                 <AvatarImage
-                  src={avatarPreview || defaultAvatarUrl}
+                  src={avatarPreview || user.avatar.startsWith('data:') ? user.avatar : defaultAvatarUrl}
                   alt={user.name}
                   data-ai-hint="person portrait"
                 />
@@ -401,7 +420,7 @@ export default function ProfilePage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Favourite Premier League Team</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select your favourite team" />

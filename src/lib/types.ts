@@ -1,3 +1,4 @@
+
 export type User = {
   id: string;
   name: string;
@@ -15,6 +16,9 @@ export type User = {
   isPro?: boolean;
   email?: string;
   joinDate?: string;
+  country?: string;
+  favouriteTeam?: string;
+  championshipWins?: number;
 };
 
 export type Team = {
