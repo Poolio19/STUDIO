@@ -75,15 +75,13 @@ export default function StandingsPage() {
             return { ...standing, ...team, recentResults };
         }).sort((a,b) => a.rank - b.rank);
 
-        // Chart Data Calculation
         const finalChartData = (() => {
             if (!weeklyTeamStandings || weeklyTeamStandings.length === 0 || !teamsData || teamsData.length === 0) {
                 return [];
             }
-            
             const teamNameMap = new Map(teamsData.map(t => [t.id, t.name]));
 
-            const standingsByWeek = weeklyTeamStandings.reduce((acc, standing) => {
+            const standingsByWeek: Record<number, WeeklyTeamStanding[]> = weeklyTeamStandings.reduce((acc, standing) => {
                 if (standing.week > 0) {
                     if (!acc[standing.week]) {
                         acc[standing.week] = [];
@@ -92,11 +90,11 @@ export default function StandingsPage() {
                 }
                 return acc;
             }, {} as Record<number, WeeklyTeamStanding[]>);
-            
-            const chartDataResult = Object.keys(standingsByWeek).map(weekStr => {
-                const week = parseInt(weekStr, 10);
-                const weekData: { [key: string]: any } = { week };
 
+            const sortedWeeks = Object.keys(standingsByWeek).map(Number).sort((a, b) => a - b);
+            
+            const chartDataResult = sortedWeeks.map(week => {
+                const weekData: { [key: string]: any } = { week };
                 standingsByWeek[week].forEach(standing => {
                     const teamName = teamNameMap.get(standing.teamId);
                     if (teamName) {
@@ -108,7 +106,7 @@ export default function StandingsPage() {
                 return weekData;
             });
 
-            return chartDataResult.sort((a, b) => a.week - b.week);
+            return chartDataResult;
         })();
 
         // Legend Data Calculation
