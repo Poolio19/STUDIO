@@ -9,12 +9,6 @@ import {
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ShieldAlert } from 'lucide-react';
-import type { Metadata } from 'next';
-
-// export const metadata: Metadata = {
-//     title: 'Rules and Scoring | PremPred 2025-2026',
-//     description: 'Understand how scores are calculated and the rules of the game.',
-// };
 
 export default function RulesAndScoringPage() {
   return (

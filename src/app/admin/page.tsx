@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 
-import { collection, doc, writeBatch, getDocs, Firestore, getDoc } from 'firebase/firestore';
+import { collection, doc, getDoc } from 'firebase/firestore';
 import { Icons, IconName } from '@/components/icons';
 import {
   Select,
@@ -26,7 +26,6 @@ import {
 } from '@/components/ui/select';
 import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 import { MatchResultSchema } from '@/ai/flows/update-match-results-flow-types';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import type { Match, Team } from '@/lib/types';
 
 

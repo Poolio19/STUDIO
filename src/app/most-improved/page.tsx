@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { User, CurrentStanding, MonthlyMimoM, SeasonMonth } from '@/lib/data';
+import type { User, CurrentStanding, MonthlyMimoM, SeasonMonth } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { useMemo } from 'react';

@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -22,7 +21,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import type { WeeklyTeamStanding, Match, Team, CurrentStanding } from '@/lib/types';
+import type { WeeklyTeamStanding, Match, Team, CurrentStanding, TeamRecentResult } from '@/lib/types';
 import { Icons, IconName } from '@/components/icons';
 import { TeamStandingsChart } from '@/components/charts/team-standings-chart';
 import { useMemo } from 'react';
@@ -31,7 +30,7 @@ import { Separator } from '@/components/ui/separator';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
-import type { TeamRecentResult } from '@/lib/types';
+
 
 type StandingWithTeam = CurrentStanding & Team & { recentResults: ('W' | 'D' | 'L' | '-')[] };
 
@@ -60,10 +59,9 @@ export default function StandingsPage() {
         weeklyResults,
         gamesPlayed,
         legendTeams,
-        chartConfig,
     } = useMemo(() => {
         if (!teamsData || !standingsData || !matchesData || !weeklyTeamStandings || !teamRecentResults) {
-            return { standingsWithTeamData: [], chartData: [], weeklyResults: new Map(), gamesPlayed: 0, legendTeams: [], chartConfig: {} };
+            return { standingsWithTeamData: [], chartData: [], weeklyResults: new Map(), gamesPlayed: 0, legendTeams: [] };
         }
 
         const teamMap = new Map(teamsData.map(t => [t.id, t]));
@@ -109,14 +107,6 @@ export default function StandingsPage() {
         })();
 
         // Legend Data Calculation
-        const finalChartConfig = finalStandingsWithTeamData.reduce((config, team) => {
-            config[team.name] = {
-              label: team.name,
-              colour: team.bgColourSolid || `hsl(var(--chart-color-${team.rank}))`,
-            };
-            return config;
-        }, {} as any);
-
         const numRows = 4;
         const numCols = 5;
         const columnOrderedTeams: (typeof finalStandingsWithTeamData[0] | undefined)[] = new Array(numCols * numRows).fill(undefined);
@@ -150,7 +140,6 @@ export default function StandingsPage() {
             weeklyResults: resultsByWeek,
             gamesPlayed: currentGamesPlayed,
             legendTeams: columnOrderedTeams,
-            chartConfig: finalChartConfig,
         };
     }, [teamsData, matchesData, standingsData, weeklyTeamStandings, teamRecentResults]);
 
@@ -202,13 +191,11 @@ export default function StandingsPage() {
             <div className="grid grid-cols-5 gap-x-4 gap-y-1 text-xs mb-6 px-4">
                 {legendTeams.map((team, index) => {
                 if (!team) return <div key={`empty-${index}`} />;
-                const teamConfig = chartConfig[team.name];
-                if (!teamConfig) return null;
                 return (
                     <div key={team.id} className="flex items-center space-x-2 truncate py-0">
                     <span
                         className="inline-block h-2 w-2 rounded-sm shrink-0"
-                        style={{ backgroundColor: teamConfig.colour }}
+                        style={{ backgroundColor: team.bgColourSolid }}
                     ></span>
                     <span className="truncate" title={`${team.name}`}>{team.name}</span>
                     </div>

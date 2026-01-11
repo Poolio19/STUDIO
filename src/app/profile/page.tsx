@@ -1,11 +1,10 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Upload, Trophy, Award, ShieldCheck, Database } from 'lucide-react';
+import { Calendar as CalendarIcon, Upload, Trophy, Award, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -456,5 +455,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    

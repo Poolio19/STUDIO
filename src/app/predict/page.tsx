@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Icons, IconName } from '@/components/icons';
 import { Reorder } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import type { Team, PreviousSeasonStanding, CurrentStanding, Prediction as PredictionType } from '@/lib/data';
+import type { Team, PreviousSeasonStanding, CurrentStanding, Prediction as PredictionType } from '@/lib/types';
 import { useUser, useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, query } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
