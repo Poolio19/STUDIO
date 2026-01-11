@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -24,7 +25,7 @@ import { TeamStandingsChart } from '@/components/charts/team-standings-chart';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 
@@ -34,12 +35,13 @@ type StandingWithTeam = CurrentStanding & Team & { recentResults: ('W' | 'D' | '
 
 export default function StandingsPage() {
     const firestore = useFirestore();
+    const { isUserLoading: isAuthUserLoading } = useUser();
 
-    const teamsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'teams')) : null, [firestore]);
-    const matchesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'matches')) : null, [firestore]);
-    const standingsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'standings')) : null, [firestore]);
-    const weeklyTeamStandingsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'weeklyTeamStandings')) : null, [firestore]);
-    const teamRecentResultsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'teamRecentResults')) : null, [firestore]);
+    const teamsQuery = useMemoFirebase(() => !isAuthUserLoading && firestore ? query(collection(firestore, 'teams')) : null, [firestore, isAuthUserLoading]);
+    const matchesQuery = useMemoFirebase(() => !isAuthUserLoading && firestore ? query(collection(firestore, 'matches')) : null, [firestore, isAuthUserLoading]);
+    const standingsQuery = useMemoFirebase(() => !isAuthUserLoading && firestore ? query(collection(firestore, 'standings')) : null, [firestore, isAuthUserLoading]);
+    const weeklyTeamStandingsQuery = useMemoFirebase(() => !isAuthUserLoading && firestore ? query(collection(firestore, 'weeklyTeamStandings')) : null, [firestore, isAuthUserLoading]);
+    const teamRecentResultsQuery = useMemoFirebase(() => !isAuthUserLoading && firestore ? query(collection(firestore, 'teamRecentResults')) : null, [firestore, isAuthUserLoading]);
     
     const { data: teamsData, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
     const { data: matchesData, isLoading: matchesLoading } = useCollection<Match>(matchesQuery);
@@ -47,7 +49,7 @@ export default function StandingsPage() {
     const { data: weeklyTeamStandings, isLoading: weeklyStandingsLoading } = useCollection<WeeklyTeamStanding>(weeklyTeamStandingsQuery);
     const { data: teamRecentResults, isLoading: recentResultsLoading } = useCollection<TeamRecentResult>(teamRecentResultsQuery);
 
-    const isLoading = teamsLoading || matchesLoading || standingsLoading || weeklyStandingsLoading || recentResultsLoading;
+    const isLoading = isAuthUserLoading || teamsLoading || matchesLoading || standingsLoading || weeklyStandingsLoading || recentResultsLoading;
     
     const { 
         standingsWithTeamData, 
@@ -313,3 +315,5 @@ export default function StandingsPage() {
     </div>
   );
 }
+
+    
