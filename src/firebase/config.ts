@@ -11,7 +11,8 @@ export const firebaseConfig = {
   authDomain: "prempred-43933.firebaseapp.com",
   projectId: "prempred-43933",
   storageBucket: "prempred-43933.appspot.com",
-  messagingSenderId: "1234567890", // This is a placeholder
-  appId: "1:1234567890:web:placeholderappid", // This is a placeholder
+  messagingSenderId: "832767930278",
+  appId: "1:832767930278:web:3d50f7e1744d1ca577a967",
   databaseURL: "https://prempred-43933.firebaseio.com"
 };
+
