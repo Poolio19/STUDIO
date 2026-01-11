@@ -74,12 +74,11 @@ export default function PredictPage() {
   const { toast } = useToast();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const currentUserId = 'usr_009';
 
   const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
   const prevStandingsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'previousSeasonStandings') : null, [firestore]);
   const currentStandingsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'standings')) : null, [firestore]);
-  const userPredictionDocRef = useMemoFirebase(() => currentUserId && firestore ? doc(firestore, 'predictions', currentUserId) : null, [currentUserId, firestore]);
+  const userPredictionDocRef = useMemoFirebase(() => user && firestore ? doc(firestore, 'predictions', user.uid) : null, [user, firestore]);
 
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
   const { data: previousSeasonStandings, isLoading: prevStandingsLoading } = useCollection<PreviousSeasonStanding>(prevStandingsQuery);

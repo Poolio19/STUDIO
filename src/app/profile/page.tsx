@@ -80,24 +80,22 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
-  const { isUserLoading: isAuthUserLoading } = useUser();
+  const { user: authUser, isUserLoading: isAuthUserLoading } = useUser();
   const firestore = useFirestore();
   
-  const currentUserId = 'usr_009';
-
   const userDocRef = useMemoFirebase(() => {
-    return firestore && currentUserId ? doc(firestore, 'users', currentUserId) : null;
-  }, [firestore, currentUserId]);
+    return firestore && authUser ? doc(firestore, 'users', authUser.uid) : null;
+  }, [firestore, authUser]);
 
   const userHistoryDocRef = useMemoFirebase(() => {
-    return firestore && currentUserId ? doc(firestore, 'userHistories', currentUserId) : null; 
-  }, [firestore, currentUserId]);
+    return firestore && authUser ? doc(firestore, 'userHistories', authUser.uid) : null; 
+  }, [firestore, authUser]);
 
   const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
   
   const mimoMQuery = useMemoFirebase(() => {
-    return firestore && currentUserId ? collection(firestore, 'monthlyMimoM') : null
-  }, [firestore, currentUserId]);
+    return firestore && authUser ? collection(firestore, 'monthlyMimoM') : null
+  }, [firestore, authUser]);
 
 
   const { data: user, isLoading: userLoading } = useDoc<User>(userDocRef);

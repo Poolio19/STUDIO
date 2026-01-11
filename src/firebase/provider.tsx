@@ -3,7 +3,7 @@
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
+import { Auth, User, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseProviderProps {
@@ -69,12 +69,16 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
         if (firebaseUser) {
           setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
         } else {
-          // If no user, attempt anonymous sign-in.
-          signInAnonymously(auth).catch((error) => {
-             console.error("FirebaseProvider: Anonymous sign-in failed:", error);
-             // If anonymous sign-in fails, we are truly without a user.
-             setUserAuthState({ user: null, isUserLoading: false, userError: error });
-          });
+          // If no user, attempt to sign in with the default user credentials.
+          const defaultUserEmail = 'jim.poole@example.com';
+          const defaultUserPassword = 'password123'; // This is a placeholder
+          
+          signInWithEmailAndPassword(auth, defaultUserEmail, defaultUserPassword)
+            .catch((error) => {
+              console.error("FirebaseProvider: Default user sign-in failed:", error);
+              // If default sign-in fails, we are without a user.
+              setUserAuthState({ user: null, isUserLoading: false, userError: error });
+            });
         }
       },
       (error) => {
