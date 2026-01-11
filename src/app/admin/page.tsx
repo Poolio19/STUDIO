@@ -35,6 +35,303 @@ type EditableMatch = Match & {
     awayTeam: Team;
 };
 
+// --- TEMPORARY FIXTURE IMPORTER ---
+const teamNameToIdMap: { [key: string]: string } = {
+    'Arsenal': 'team_01', 'Aston Villa': 'team_02', 'Bournemouth': 'team_03',
+    'Brentford': 'team_04', 'Brighton': 'team_05', 'Burnley': 'team_06',
+    'Chelsea': 'team_07', 'Crystal Palace': 'team_08', 'Everton': 'team_09',
+    'Fulham': 'team_10', 'Leeds': 'team_11', 'Liverpool': 'team_12',
+    'Man City': 'team_13', 'Man Utd': 'team_14', 'Newcastle': 'team_15',
+    'Notts Forest': 'team_16', 'Sunderland': 'team_17', 'Tottenham': 'team_18',
+    'West Ham': 'team_19', 'Wolves': 'team_20',
+};
+
+const rawFixtureData = `
+19	30/12/2025 00:00	West Ham	-1	-1	Brighton
+19	30/12/2025 00:00	Notts Forest	-1	-1	Everton
+19	30/12/2025 00:00	Chelsea	-1	-1	Bournemouth
+19	30/12/2025 00:00	Burnley	-1	-1	Newcastle
+19	30/12/2025 00:00	Man Utd	-1	-1	Wolves
+19	30/12/2025 00:00	Arsenal	-1	-1	Aston Villa
+19	01/01/2026 00:00	Liverpool	-1	-1	Leeds
+19	01/01/2026 00:00	Crystal Palace	-1	-1	Fulham
+19	01/01/2026 00:00	Sunderland	-1	-1	Man City
+19	01/01/2026 00:00	Brentford	-1	-1	Tottenham
+20	03/01/2026 00:00	Aston Villa	-1	-1	Notts Forest
+20	03/01/2026 00:00	Wolves	-1	-1	West Ham
+20	03/01/2026 00:00	Brighton	-1	-1	Burnley
+20	03/01/2026 00:00	Bournemouth	-1	-1	Arsenal
+20	04/01/2026 00:00	Leeds	-1	-1	Man Utd
+20	04/01/2026 00:00	Tottenham	-1	-1	Sunderland
+20	04/01/2026 00:00	Newcastle	-1	-1	Crystal Palace
+20	04/01/2026 00:00	Fulham	-1	-1	Liverpool
+20	04/01/2026 00:00	Everton	-1	-1	Brentford
+20	04/01/2026 00:00	Man City	-1	-1	Chelsea
+21	06/01/2026 00:00	West Ham	-1	-1	Notts Forest
+21	07/01/2026 00:00	Man City	-1	-1	Brighton
+21	07/01/2026 00:00	Fulham	-1	-1	Chelsea
+21	07/01/2026 00:00	Everton	-1	-1	Wolves
+21	07/01/2026 00:00	Crystal Palace	-1	-1	Aston Villa
+21	07/01/2026 00:00	Brentford	-1	-1	Sunderland
+21	07/01/2026 00:00	Bournemouth	-1	-1	Tottenham
+21	07/01/2026 00:00	Newcastle	-1	-1	Leeds
+21	07/01/2026 00:00	Burnley	-1	-1	Man Utd
+21	08/01/2026 00:00	Arsenal	-1	-1	Liverpool
+22	17/01/2026 00:00	Man Utd	-1	-1	Man City
+22	17/01/2026 00:00	Tottenham	-1	-1	West Ham
+22	17/01/2026 00:00	Sunderland	-1	-1	Crystal Palace
+22	17/01/2026 00:00	Liverpool	-1	-1	Burnley
+22	17/01/2026 00:00	Leeds	-1	-1	Fulham
+22	17/01/2026 00:00	Chelsea	-1	-1	Brentford
+22	17/01/2026 00:00	Notts Forest	-1	-1	Arsenal
+22	18/01/2026 00:00	Wolves	-1	-1	Newcastle
+22	18/01/2026 00:00	Aston Villa	-1	-1	Everton
+22	19/01/2026 00:00	Brighton	-1	-1	Bournemouth
+23	24/01/2026 00:00	West Ham	-1	-1	Sunderland
+23	24/01/2026 00:00	Man City	-1	-1	Wolves
+23	24/01/2026 00:00	Fulham	-1	-1	Brighton
+23	24/01/2026 00:00	Burnley	-1	-1	Tottenham
+23	24/01/2026 00:00	Bournemouth	-1	-1	Liverpool
+23	25/01/2026 00:00	Newcastle	-1	-1	Aston Villa
+23	25/01/2026 00:00	Crystal Palace	-1	-1	Chelsea
+23	25/01/2026 00:00	Brentford	-1	-1	Notts Forest
+23	25/01/2026 00:00	Arsenal	-1	-1	Man Utd
+23	26/01/2026 00:00	Everton	-1	-1	Leeds
+24	31/01/2026 00:00	Wolves	-1	-1	Bournemouth
+24	31/01/2026 00:00	Leeds	-1	-1	Arsenal
+24	31/01/2026 00:00	Brighton	-1	-1	Everton
+24	31/01/2026 00:00	Chelsea	-1	-1	West Ham
+24	31/01/2026 00:00	Liverpool	-1	-1	Newcastle
+24	01/02/2026 00:00	Notts Forest	-1	-1	Crystal Palace
+24	01/02/2026 00:00	Man Utd	-1	-1	Fulham
+24	01/02/2026 00:00	Aston Villa	-1	-1	Brentford
+24	01/02/2026 00:00	Tottenham	-1	-1	Man City
+24	02/02/2026 00:00	Sunderland	-1	-1	Burnley
+25	07/02/2026 00:00	Wolves	-1	-1	Chelsea
+25	07/02/2026 00:00	Newcastle	-1	-1	Brentford
+25	07/02/2026 00:00	Man Utd	-1	-1	Tottenham
+25	07/02/2026 00:00	Liverpool	-1	-1	Man City
+25	07/02/2026 00:00	Leeds	-1	-1	Notts Forest
+25	07/02/2026 00:00	Fulham	-1	-1	Everton
+25	07/02/2026 00:00	Burnley	-1	-1	West Ham
+25	07/02/2026 00:00	Brighton	-1	-1	Crystal Palace
+25	07/02/2026 00:00	Arsenal	-1	-1	Sunderland
+25	07/02/2026 00:00	Bournemouth	-1	-1	Aston Villa
+26	11/02/2026 00:00	West Ham	-1	-1	Man Utd
+26	11/02/2026 00:00	Tottenham	-1	-1	Newcastle
+26	11/02/2026 00:00	Sunderland	-1	-1	Liverpool
+26	11/02/2026 00:00	Notts Forest	-1	-1	Wolves
+26	11/02/2026 00:00	Man City	-1	-1	Fulham
+26	11/02/2026 00:00	Everton	-1	-1	Bournemouth
+26	11/02/2026 00:00	Crystal Palace	-1	-1	Burnley
+26	11/02/2026 00:00	Chelsea	-1	-1	Leeds
+26	11/02/2026 00:00	Brentford	-1	-1	Arsenal
+26	11/02/2026 00:00	Aston Villa	-1	-1	Brighton
+27	21/02/2026 00:00	West Ham	-1	-1	Bournemouth
+27	21/02/2026 00:00	Tottenham	-1	-1	Arsenal
+27	21/02/2026 00:00	Sunderland	-1	-1	Fulham
+27	21/02/2026 00:00	Notts Forest	-1	-1	Liverpool
+27	21/02/2026 00:00	Man City	-1	-1	Newcastle
+27	21/02/2026 00:00	Everton	-1	-1	Man Utd
+27	21/02/2026 00:00	Crystal Palace	-1	-1	Wolves
+27	21/02/2026 00:00	Chelsea	-1	-1	Burnley
+27	21/02/2026 00:00	Brentford	-1	-1	Brighton
+27	21/02/2026 00:00	Aston Villa	-1	-1	Leeds
+28	28/02/2026 00:00	Wolves	-1	-1	Aston Villa
+28	28/02/2026 00:00	Newcastle	-1	-1	Everton
+28	28/02/2026 00:00	Man Utd	-1	-1	Crystal Palace
+28	28/02/2026 00:00	Liverpool	-1	-1	West Ham
+28	28/02/2026 00:00	Leeds	-1	-1	Man City
+28	28/02/2026 00:00	Fulham	-1	-1	Tottenham
+28	28/02/2026 00:00	Burnley	-1	-1	Brentford
+28	28/02/2026 00:00	Brighton	-1	-1	Notts Forest
+28	28/02/2026 00:00	Arsenal	-1	-1	Chelsea
+28	28/02/2026 00:00	Bournemouth	-1	-1	Sunderland
+29	04/03/2026 00:00	Wolves	-1	-1	Liverpool
+29	04/03/2026 00:00	Tottenham	-1	-1	Crystal Palace
+29	04/03/2026 00:00	Newcastle	-1	-1	Man Utd
+29	04/03/2026 00:00	Man City	-1	-1	Notts Forest
+29	04/03/2026 00:00	Leeds	-1	-1	Sunderland
+29	04/03/2026 00:00	Fulham	-1	-1	West Ham
+29	04/03/2026 00:00	Everton	-1	-1	Burnley
+29	04/03/2026 00:00	Brighton	-1	-1	Arsenal
+29	04/03/2026 00:00	Aston Villa	-1	-1	Chelsea
+29	04/03/2026 00:00	Bournemouth	-1	-1	Brentford
+30	14/03/2026 00:00	West Ham	-1	-1	Man City
+30	14/03/2026 00:00	Sunderland	-1	-1	Brighton
+30	14/03/2026 00:00	Notts Forest	-1	-1	Fulham
+30	14/03/2026 00:00	Man Utd	-1	-1	Aston Villa
+30	14/03/2026 00:00	Liverpool	-1	-1	Tottenham
+30	14/03/2026 00:00	Crystal Palace	-1	-1	Leeds
+30	14/03/2026 00:00	Chelsea	-1	-1	Newcastle
+30	14/03/2026 00:00	Burnley	-1	-1	Bournemouth
+30	14/03/2026 00:00	Brentford	-1	-1	Wolves
+30	14/03/2026 00:00	Arsenal	-1	-1	Everton
+31	21/03/2026 00:00	Wolves	-1	-1	Arsenal
+31	21/03/2026 00:00	Tottenham	-1	-1	Notts Forest
+31	21/03/2026 00:00	Newcastle	-1	-1	Sunderland
+31	21/03/2026 00:00	Man City	-1	-1	Crystal Palace
+31	21/03/2026 00:00	Leeds	-1	-1	Brentford
+31	21/03/2026 00:00	Fulham	-1	-1	Burnley
+31	21/03/2026 00:00	Everton	-1	-1	Chelsea
+31	21/03/2026 00:00	Brighton	-1	-1	Liverpool
+31	21/03/2026 00:00	Aston Villa	-1	-1	West Ham
+31	21/03/2026 00:00	Bournemouth	-1	-1	Man Utd
+32	11/04/2026 00:00	West Ham	-1	-1	Wolves
+32	11/04/2026 00:00	Sunderland	-1	-1	Tottenham
+32	11/04/2026 00:00	Notts Forest	-1	-1	Aston Villa
+32	11/04/2026 00:00	Man Utd	-1	-1	Leeds
+32	11/04/2026 00:00	Liverpool	-1	-1	Fulham
+32	11/04/2026 00:00	Crystal Palace	-1	-1	Newcastle
+32	11/04/2026 00:00	Chelsea	-1	-1	Man City
+32	11/04/2026 00:00	Burnley	-1	-1	Brighton
+32	11/04/2026 00:00	Brentford	-1	-1	Everton
+32	11/04/2026 00:00	Arsenal	-1	-1	Bournemouth
+33	18/04/2026 00:00	Tottenham	-1	-1	Brighton
+33	18/04/2026 00:00	Notts Forest	-1	-1	Burnley
+33	18/04/2026 00:00	Newcastle	-1	-1	Bournemouth
+33	18/04/2026 00:00	Man City	-1	-1	Arsenal
+33	18/04/2026 00:00	Leeds	-1	-1	Wolves
+33	18/04/2026 00:00	Everton	-1	-1	Liverpool
+33	18/04/2026 00:00	Crystal Palace	-1	-1	West Ham
+33	18/04/2026 00:00	Chelsea	-1	-1	Man Utd
+33	18/04/2026 00:00	Brentford	-1	-1	Fulham
+33	18/04/2026 00:00	Aston Villa	-1	-1	Sunderland
+34	25/04/2026 00:00	Wolves	-1	-1	Tottenham
+34	25/04/2026 00:00	West Ham	-1	-1	Everton
+34	25/04/2026 00:00	Sunderland	-1	-1	Notts Forest
+34	25/04/2026 00:00	Man Utd	-1	-1	Brentford
+34	25/04/2026 00:00	Liverpool	-1	-1	Crystal Palace
+34	25/04/2026 00:00	Fulham	-1	-1	Aston Villa
+34	25/04/2026 00:00	Burnley	-1	-1	Man City
+34	25/04/2026 00:00	Brighton	-1	-1	Chelsea
+34	25/04/2026 00:00	Arsenal	-1	-1	Newcastle
+34	25/04/2026 00:00	Bournemouth	-1	-1	Leeds
+35	02/05/2026 00:00	Wolves	-1	-1	Sunderland
+35	02/05/2026 00:00	Newcastle	-1	-1	Brighton
+35	02/05/2026 00:00	Man Utd	-1	-1	Liverpool
+35	02/05/2026 00:00	Leeds	-1	-1	Burnley
+35	02/05/2026 00:00	Everton	-1	-1	Man City
+35	02/05/2026 00:00	Chelsea	-1	-1	Notts Forest
+35	02/05/2026 00:00	Brentford	-1	-1	West Ham
+35	02/05/2026 00:00	Aston Villa	-1	-1	Tottenham
+35	02/05/2026 00:00	Arsenal	-1	-1	Fulham
+35	02/05/2026 00:00	Bournemouth	-1	-1	Crystal Palace
+36	09/05/2026 00:00	West Ham	-1	-1	Arsenal
+36	09/05/2026 00:00	Tottenham	-1	-1	Leeds
+36	09/05/2026 00:00	Sunderland	-1	-1	Man Utd
+36	09/05/2026 00:00	Notts Forest	-1	-1	Newcastle
+36	09/05/2026 00:00	Man City	-1	-1	Brentford
+36	09/05/2026 00:00	Liverpool	-1	-1	Chelsea
+36	09/05/2026 00:00	Fulham	-1	-1	Bournemouth
+36	09/05/2026 00:00	Crystal Palace	-1	-1	Everton
+36	09/05/2026 00:00	Burnley	-1	-1	Aston Villa
+36	09/05/2026 00:00	Brighton	-1	-1	Wolves
+37	17/05/2026 00:00	Wolves	-1	-1	Fulham
+37	17/05/2026 00:00	Newcastle	-1	-1	West Ham
+37	17/05/2026 00:00	Man Utd	-1	-1	Notts Forest
+37	17/05/2026 00:00	Leeds	-1	-1	Brighton
+37	17/05/2026 00:00	Everton	-1	-1	Sunderland
+37	17/05/2026 00:00	Chelsea	-1	-1	Tottenham
+37	17/05/2026 00:00	Brentford	-1	-1	Crystal Palace
+37	17/05/2026 00:00	Aston Villa	-1	-1	Liverpool
+37	17/05/2026 00:00	Arsenal	-1	-1	Burnley
+37	17/05/2026 00:00	Bournemouth	-1	-1	Man City
+38	24/05/2026 00:00	West Ham	-1	-1	Leeds
+38	24/05/2026 00:00	Tottenham	-1	-1	Everton
+38	24/05/2026 00:00	Sunderland	-1	-1	Chelsea
+38	24/05/2026 00:00	Notts Forest	-1	-1	Bournemouth
+38	24/05/2026 00:00	Man City	-1	-1	Aston Villa
+38	24/05/2026 00:00	Liverpool	-1	-1	Brentford
+38	24/05/2026 00:00	Fulham	-1	-1	Newcastle
+38	24/05/2026 00:00	Crystal Palace	-1	-1	Arsenal
+38	24/05/2026 00:00	Burnley	-1	-1	Wolves
+38	24/05/2026 00:00	Brighton	-1	-1	Man Utd
+`;
+
+function FixturesImporter() {
+    const { toast } = useToast();
+    const [isLoading, setIsLoading] = React.useState(false);
+    const [hasImported, setHasImported] = React.useState(false);
+
+    const handleImport = async () => {
+        setIsLoading(true);
+        toast({ title: 'Importing fixtures...', description: 'Please wait while we add the new matches to the database.' });
+        try {
+            const fixtures = rawFixtureData.trim().split('\n').map(line => {
+                const [week, date, time, homeTeamName, homeScore, awayScore, awayTeamName] = line.split('\t');
+                const homeTeamId = teamNameToIdMap[homeTeamName];
+                const awayTeamId = teamNameToIdMap[awayTeamName];
+                
+                if (!homeTeamId || !awayTeamId) {
+                    console.warn(`Could not find team ID for match: ${homeTeamName} vs ${awayTeamName}`);
+                    return null;
+                }
+
+                const matchDate = new Date(`${date.split('/').reverse().join('-')}T${time}:00`).toISOString();
+
+                return {
+                    id: `${week}-${homeTeamId}-${awayTeamId}`,
+                    week: parseInt(week, 10),
+                    homeTeamId: homeTeamId,
+                    awayTeamId: awayTeamId,
+                    homeScore: parseInt(homeScore, 10),
+                    awayScore: parseInt(awayScore, 10),
+                    matchDate: matchDate,
+                };
+            }).filter(Boolean);
+
+            const parsedResults = MatchResultSchema.array().safeParse(fixtures);
+            if (!parsedResults.success) {
+                throw new Error('Fixture data validation failed.');
+            }
+
+            const result = await updateMatchResults({ results: parsedResults.data });
+
+            if (result.success) {
+                toast({ title: 'Import successful!', description: `${result.updatedCount} fixtures have been added.` });
+                setHasImported(true);
+            } else {
+                throw new Error('The import flow reported a failure.');
+            }
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Import Failed', description: error.message || 'An unknown error occurred.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    if (hasImported) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-green-600">Import Complete</CardTitle>
+                    <CardDescription>
+                        The fixture data has been successfully imported. You can now remove the `FixturesImporter` component and related code from `src/app/admin/page.tsx`.
+                    </CardDescription>
+                </CardHeader>
+            </Card>
+        );
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Import Season Fixtures (Weeks 19-38)</CardTitle>
+                <CardDescription>
+                    Click the button below to import the remaining 200 fixtures for the season into the database. This is a one-time operation.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Button onClick={handleImport} disabled={isLoading}>
+                    {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Importing...</> : 'Import Fixtures'}
+                </Button>
+            </CardContent>
+        </Card>
+    );
+}
+
+
 export default function AdminPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -209,6 +506,8 @@ export default function AdminPage() {
           Manage your application's data sources and imports.
         </p>
       </header>
+
+      <FixturesImporter />
 
       <Card>
           <CardHeader>
