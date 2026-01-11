@@ -10,6 +10,7 @@ import { firebaseConfig as originalFirebaseConfig } from './config';
 
 interface FirebaseProviderProps {
   children: ReactNode;
+  apiKey: string;
 }
 
 interface UserAuthState {
@@ -36,7 +37,8 @@ export interface UserHookResult {
 export const FirebaseContext = createContext<FirebaseContextState | undefined>(undefined);
 
 export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
-  children
+  children,
+  apiKey
 }) => {
   const [services, setServices] = useState<{
     firebaseApp: FirebaseApp;
@@ -51,9 +53,15 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   });
 
   useEffect(() => {
+    if (!apiKey) {
+      console.error("FirebaseProvider: API key is missing. Firebase cannot be initialized.");
+      setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Firebase API Key is not configured.") });
+      return;
+    }
+
     const firebaseConfig = {
       ...originalFirebaseConfig,
-      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+      apiKey: apiKey,
     };
 
     const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
@@ -77,7 +85,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       }
     );
     return () => unsubscribe();
-  }, []);
+  }, [apiKey]);
 
   // Development-only automatic login for the default user
   useEffect(() => {

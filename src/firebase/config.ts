@@ -5,7 +5,7 @@
 // This config object is now a template. The final API key will be inserted
 // by the FirebaseProvider at runtime.
 export const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY, // This will be replaced by the provider
+  apiKey: "", // This will be replaced by the provider
   authDomain: "prempred-43933.firebaseapp.com",
   projectId: "prempred-43933",
   storageBucket: "prempred-43933.appspot.com",
