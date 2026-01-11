@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -22,7 +23,7 @@ import {
 } from '@/components/ui/table';
 import type { User, CurrentStanding, MonthlyMimoM, SeasonMonth } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
+import { ArrowUp, ArrowDown, Minus, Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -216,7 +217,12 @@ export default function MostImprovedPage() {
                 <h1 className="text-3xl font-bold tracking-tight">Most Improved Manager Of The Month</h1>
                 <p className="text-slate-400">Celebrating the meek, rarely-vaunted, mid-season heroes of the PremPred - with cash!</p>
             </header>
-            <div className="flex justify-center items-center h-96">Loading page...</div>
+            <div className="flex justify-center items-center h-96">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="size-5 animate-spin" />
+                    <span>Loading MimoM data...</span>
+                </div>
+            </div>
         </div>
     );
   }
