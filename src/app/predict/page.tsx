@@ -127,8 +127,9 @@ export default function PredictPage() {
 
 
   React.useEffect(() => {
-    if (isLoading || !teams) return;
+    if (!teams) return;
 
+    let initialItems: PredictionItem[] = [];
     const teamMap = new Map(teams.map(team => [team.id, {
         id: team.id,
         teamId: team.id,
@@ -140,16 +141,11 @@ export default function PredictPage() {
         textColour: team.textColour,
     }]));
 
-    let initialItems: PredictionItem[] = [];
-
-    // If a user prediction exists, use it
     if (userPrediction && userPrediction.rankings && userPrediction.rankings.length > 0) {
       initialItems = userPrediction.rankings
         .map(teamId => teamMap.get(teamId))
         .filter((item): item is PredictionItem => !!item);
-    }
-    // Fallback to previous season's standings if no prediction is found
-    else if (previousSeasonStandings) {
+    } else if (previousSeasonStandings) {
       const prevStandingsMap = new Map(previousSeasonStandings.map(s => [s.teamId, s.rank]));
       initialItems = [...teams]
         .sort((a, b) => (prevStandingsMap.get(a.id) ?? 21) - (prevStandingsMap.get(b.id) ?? 21))
@@ -157,17 +153,13 @@ export default function PredictPage() {
         .filter((item): item is PredictionItem => !!item);
     }
 
-    setItems(initialItems);
-    
-  }, [isLoading, teams, userPrediction, previousSeasonStandings]);
-
-
-  React.useEffect(() => {
-    if(items.length > 0) {
-      form.setValue('predictions', items);
+    if (initialItems.length > 0) {
+      setItems(initialItems);
+      form.setValue('predictions', initialItems);
     }
-  }, [items, form]);
-  
+    
+  }, [teams, userPrediction, previousSeasonStandings, form]);
+
   const currentWeek = React.useMemo(() => {
     if (!currentStandings || currentStandings.length === 0) return 0;
     return Math.max(...currentStandings.map(s => s.gamesPlayed), 0);
