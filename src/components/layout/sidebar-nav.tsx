@@ -1,7 +1,7 @@
 
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Sidebar,
   SidebarHeader,
@@ -15,9 +15,11 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Icons } from '@/components/icons';
 import Link from 'next/link';
-import { Award, Database } from 'lucide-react';
-import { useUser } from '@/firebase';
+import { Award, Database, LogOut } from 'lucide-react';
+import { useAuth, useUser } from '@/firebase';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { signOut } from 'firebase/auth';
+import { Button } from '../ui/button';
 
 const navItems = [
   { href: '/standings', icon: 'standings', label: 'Premier League' },
@@ -35,11 +37,23 @@ const navItems = [
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, isUserLoading } = useUser();
+  const auth = useAuth();
+
+  const handleSignOut = async () => {
+    if (auth) {
+      await signOut(auth);
+      router.push('/login');
+    }
+  };
 
   const getAvatarUrl = (avatarId: string | undefined) => {
     if (!avatarId) return '';
-    const image = PlaceHolderImages.find((img) => img.id === avatarId);
+    // Use a simple hashing function to get a consistent avatar from UID
+    const hash = avatarId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const imageId = (hash % 50) + 1; // 50 is the number of placeholder images
+    const image = PlaceHolderImages.find((img) => img.id === String(imageId));
     return image ? image.imageUrl : `https://picsum.photos/seed/${avatarId}/100/100`;
   };
 
@@ -98,13 +112,16 @@ export function SidebarNav() {
         ) : user ? (
             <div className="flex items-center gap-3 p-2">
             <Avatar>
-                <AvatarImage src={user.photoURL || getAvatarUrl(user.uid.slice(-2))} alt={user.displayName || 'User'} />
+                <AvatarImage src={user.photoURL || getAvatarUrl(user.uid)} alt={user.displayName || 'User'} />
                 <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
             </Avatar>
             <div className="flex flex-col overflow-hidden">
                 <span className="font-semibold truncate">{user.displayName}</span>
                 <span className="text-sm text-muted-foreground truncate">{user.email}</span>
             </div>
+             <Button variant="ghost" size="icon" onClick={handleSignOut} className="ml-auto">
+                <LogOut className="size-4" />
+             </Button>
             </div>
         ) : (
             <div className="flex items-center gap-3 p-2">

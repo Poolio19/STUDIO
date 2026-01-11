@@ -4,7 +4,7 @@
 import React, { createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp, initializeApp, getApps, getApp } from 'firebase/app';
 import { Firestore, getFirestore, enableNetwork } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged, signInWithEmailAndPassword, getAuth } from 'firebase/auth';
+import { Auth, User, onAuthStateChanged, getAuth } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { firebaseConfig as originalFirebaseConfig } from './config';
 
@@ -69,18 +69,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     const unsubscribe = onAuthStateChanged(
       auth,
       (firebaseUser) => {
-        if (firebaseUser) {
-          setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
-        } else {
-          const defaultUserEmail = 'jim.poole@prempred.com';
-          const defaultUserPassword = 'password123';
-          
-          signInWithEmailAndPassword(auth, defaultUserEmail, defaultUserPassword)
-            .catch((error) => {
-              console.error("FirebaseProvider: Default user sign-in failed:", error);
-              setUserAuthState({ user: null, isUserLoading: false, userError: error });
-            });
-        }
+        setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
       },
       (error) => {
         console.error("FirebaseProvider: onAuthStateChanged error:", error);
