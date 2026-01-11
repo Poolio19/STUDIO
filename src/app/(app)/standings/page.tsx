@@ -73,7 +73,6 @@ export default function StandingsPage() {
             return { ...standing, ...team, recentResults };
         }).sort((a,b) => a.rank - b.rank);
 
-
         // Chart Data Calculation
         const standingsByWeek = new Map<number, WeeklyTeamStanding[]>();
         weeklyTeamStandings.forEach(standing => {
@@ -88,14 +87,14 @@ export default function StandingsPage() {
         
         const transformedChartData = sortedWeeks.map(week => {
             const weekData: { [key: string]: any } = { week };
-            const weekStandings = standingsByWeek.get(week) || [];
+            const weekStandingsMap = new Map(standingsByWeek.get(week)?.map(s => [s.teamId, s.rank]));
             
             teamsData.forEach(team => {
-                const standingForWeek = weekStandings.find(s => s.teamId === team.id);
-                if (standingForWeek) {
-                    weekData[team.name] = standingForWeek.rank;
-                    weekData[`${team.name}-outer`] = standingForWeek.rank;
-                    weekData[`${team.name}-inner`] = standingForWeek.rank;
+                const rank = weekStandingsMap.get(team.id);
+                if (rank) {
+                    weekData[team.name] = rank;
+                    weekData[`${team.name}-outer`] = rank;
+                    weekData[`${team.name}-inner`] = rank;
                 }
             });
             return weekData;
