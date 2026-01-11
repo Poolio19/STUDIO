@@ -52,7 +52,11 @@ export function AuthForm() {
 
   const createInitialUserProfile = (userId: string, email: string) => {
     if (!firestore) return;
-    const userDocRef = doc(firestore, 'users', userId);
+    
+    // Special case for jim.poole@prempred.com to use 'Usr_009' as the document ID
+    const docId = email === 'jim.poole@prempred.com' ? 'Usr_009' : userId;
+    
+    const userDocRef = doc(firestore, 'users', docId);
     
     // Create a default user profile object
     const newUserProfile: Omit<User, 'id'> = {
@@ -76,6 +80,7 @@ export function AuthForm() {
       championshipWins: 0
     };
 
+    // Use setDoc with the specific docId
     setDocumentNonBlocking(userDocRef, newUserProfile);
   };
 
@@ -100,6 +105,7 @@ export function AuthForm() {
         // If user doesn't exist, create a new account.
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+            // Pass the generated UID and email to the profile creation function
             createInitialUserProfile(userCredential.user.uid, values.email);
             toast({ title: 'Account created successfully!' });
         } catch (signUpError: any) {
