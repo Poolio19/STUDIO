@@ -88,6 +88,15 @@ export default function PredictPage() {
 
   const isLoading = isUserLoading || teamsLoading || prevStandingsLoading || predictionLoading || currentStandingsLoading;
 
+  const [items, setItems] = React.useState<PredictionItem[]>([]);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      predictions: [],
+    },
+  });
+
   const sortedPreviousStandings = React.useMemo(() => {
     if (!teams || !previousSeasonStandings) return [];
 
@@ -116,15 +125,9 @@ export default function PredictPage() {
         .sort((a, b) => a.rank - b.rank);
   }, [teams, currentStandings]);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      predictions: [],
-    },
-  });
-  
-  const orderedItems = React.useMemo(() => {
-    if (isLoading || !teams) return [];
+
+  React.useEffect(() => {
+    if (isLoading || !teams) return;
 
     const teamMap = new Map(teams.map(team => [team.id, {
         id: team.id,
@@ -137,32 +140,27 @@ export default function PredictPage() {
         textColour: team.textColour,
     }]));
 
+    let initialItems: PredictionItem[] = [];
+
     // If a user prediction exists, use it
     if (userPrediction && userPrediction.rankings && userPrediction.rankings.length > 0) {
-      return userPrediction.rankings
+      initialItems = userPrediction.rankings
         .map(teamId => teamMap.get(teamId))
         .filter((item): item is PredictionItem => !!item);
     }
-    
     // Fallback to previous season's standings if no prediction is found
-    if (previousSeasonStandings) {
+    else if (previousSeasonStandings) {
       const prevStandingsMap = new Map(previousSeasonStandings.map(s => [s.teamId, s.rank]));
-      return [...teams]
+      initialItems = [...teams]
         .sort((a, b) => (prevStandingsMap.get(a.id) ?? 21) - (prevStandingsMap.get(b.id) ?? 21))
         .map(team => teamMap.get(team.id))
         .filter((item): item is PredictionItem => !!item);
     }
+
+    setItems(initialItems);
     
-    return []; // Return empty if fallback data isn't ready
-      
-  }, [userPrediction, teams, previousSeasonStandings, isLoading]);
+  }, [isLoading, teams, userPrediction, previousSeasonStandings]);
 
-
-  const [items, setItems] = React.useState<PredictionItem[]>(orderedItems);
-
-  React.useEffect(() => {
-      setItems(orderedItems);
-  }, [orderedItems]);
 
   React.useEffect(() => {
     if(items.length > 0) {
@@ -210,7 +208,7 @@ export default function PredictPage() {
     });
   }
   
-  const getRankMap = (standings: any[]) => new Map(standings.map((s, i) => [s.teamId, i + 1]));
+  const getRankMap = (standings: any[]) => new Map(standings.map((s, i) => [s.teamId || s.id, i + 1]));
 
   const predRankMap = getRankMap(items);
   const currentRankMap = getRankMap(currentStandingsWithTeamData);
