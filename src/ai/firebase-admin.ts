@@ -38,7 +38,7 @@ function initializeAdminApp(databaseId?: string): admin.app.App {
       credential: admin.credential.applicationDefault(),
       projectId: TARGET_PROJECT_ID,
       // Connect to the default database if no databaseId or '(default)' is passed.
-      databaseURL: databaseId && databaseId !== '(default)' ? `https://prempred-43933.firebaseio.com?database=${databaseId}` : `https://prempred-43933.firebaseio.com`
+      databaseURL: `https://${TARGET_PROJECT_ID}.firebaseio.com`
     }, appName);
 
     console.log(`Successfully initialized Firebase Admin SDK for app: ${appName}`);

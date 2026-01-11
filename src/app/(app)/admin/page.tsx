@@ -58,7 +58,7 @@ export default function AdminPage() {
   }, [teamsData]);
 
   const connectivityCheckDocRef = useMemoFirebase(
-    () => (firestore ? doc(firestore, '____connectivity-test____', '____test____') : null),
+    () => (firestore ? doc(firestore, '____connectivity-test____', 'connectivity-doc') : null),
     [firestore]
   );
 
