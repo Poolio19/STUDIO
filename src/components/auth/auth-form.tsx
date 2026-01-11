@@ -97,35 +97,35 @@ export function AuthForm() {
     setAuthError(null);
 
     try {
-      // First, try to sign in.
-      await signInWithEmailAndPassword(auth, values.email, values.password);
-      toast({ title: 'Signed in successfully!' });
-    } catch (signInError: any) {
-      if (signInError.code === 'auth/user-not-found') {
-        // If user doesn't exist, create a new account.
-        try {
-            const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-            // Pass the generated UID and email to the profile creation function
-            createInitialUserProfile(userCredential.user.uid, values.email);
-            toast({ title: 'Account created successfully!' });
-        } catch (signUpError: any) {
-            console.error('Account creation failed:', signUpError);
-            setAuthError(signUpError.message || 'Failed to create account.');
+        // Attempt to create a new user first.
+        const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+        createInitialUserProfile(userCredential.user.uid, values.email);
+        toast({ title: 'Account created successfully!' });
+    } catch (error: any) {
+        if (error.code === 'auth/email-already-in-use') {
+            // If the email is already in use, it means the user exists. Try signing them in.
+            try {
+                await signInWithEmailAndPassword(auth, values.email, values.password);
+                toast({ title: 'Signed in successfully!' });
+            } catch (signInError: any) {
+                console.error('Sign in failed:', signInError);
+                setAuthError(signInError.message || 'An unknown error occurred during sign-in.');
+                toast({
+                    variant: 'destructive',
+                    title: 'Sign in failed',
+                    description: signInError.message,
+                });
+            }
+        } else {
+            // Another error occurred during sign-up.
+            console.error('Account creation failed:', error);
+            setAuthError(error.message || 'Failed to create account.');
             toast({
                 variant: 'destructive',
                 title: 'Sign up failed',
-                description: signUpError.message,
+                description: error.message,
             });
         }
-      } else {
-        console.error('Sign in failed:', signInError);
-        setAuthError(signInError.message || 'An unknown error occurred during sign-in.');
-        toast({
-          variant: 'destructive',
-          title: 'Sign in failed',
-          description: signInError.message,
-        });
-      }
     } finally {
         setIsLoading(false);
     }
