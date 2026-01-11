@@ -49,6 +49,7 @@ export default function AdminPage() {
   
   const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
   const matchesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'matches') : null, [firestore]);
+  
   const { data: teamsData, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
   const { data: matchesData, isLoading: matchesLoading } = useCollection<Match>(matchesQuery);
 
@@ -178,7 +179,8 @@ export default function AdminPage() {
     }
   };
 
-  const isLoading = teamsLoading || matchesLoading || !firestore;
+  const isLoading = teamsLoading || matchesLoading || !firestore || !dbStatus.connected;
+  
   const allWeeks = React.useMemo(() => {
     if (!matchesData) return [];
     return [...new Set(matchesData.map(m => m.week))].sort((a,b) => a-b);
@@ -218,7 +220,7 @@ export default function AdminPage() {
               </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-               <Select onValueChange={handleWeekChange} disabled={!dbStatus.connected || isLoading}>
+               <Select onValueChange={handleWeekChange} disabled={isLoading}>
                   <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="Select a week" />
                   </SelectTrigger>
@@ -272,7 +274,7 @@ export default function AdminPage() {
                               </div>
                           )})}
                       </div>
-                      <Button onClick={handleSaveWeekResults} disabled={isUpdatingMatches || !dbStatus.connected}>
+                      <Button onClick={handleSaveWeekResults} disabled={isUpdatingMatches || isLoading}>
                           {isUpdatingMatches ? (
                               <>
                                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

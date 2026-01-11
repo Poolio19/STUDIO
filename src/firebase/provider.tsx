@@ -72,7 +72,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
         if (firebaseUser) {
           setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
         } else {
-          const defaultUserEmail = 'jim.poole@example.com';
+          const defaultUserEmail = 'jim.poole@prempred.com';
           const defaultUserPassword = 'password123';
           
           signInWithEmailAndPassword(auth, defaultUserEmail, defaultUserPassword)

@@ -16,6 +16,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Icons } from '@/components/icons';
 import Link from 'next/link';
 import { Award, Database } from 'lucide-react';
+import { useUser } from '@/firebase';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const navItems = [
   { href: '/standings', icon: 'standings', label: 'Premier League' },
@@ -33,7 +35,23 @@ const navItems = [
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const { user, isUserLoading } = useUser();
 
+  const getAvatarUrl = (avatarId: string | undefined) => {
+    if (!avatarId) return '';
+    const image = PlaceHolderImages.find((img) => img.id === avatarId);
+    return image ? image.imageUrl : `https://picsum.photos/seed/${avatarId}/100/100`;
+  };
+
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return '';
+    const parts = name.split(' ');
+    if (parts.length > 1) {
+      return parts[0][0] + parts[parts.length - 1][0];
+    }
+    return name.substring(0, 2);
+  };
+  
   return (
     <>
       <SidebarHeader className="border-b">
@@ -67,16 +85,37 @@ export function SidebarNav() {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="border-t p-2">
-        <div className="flex items-center gap-3 p-2">
-          <Avatar>
-            <AvatarImage src="https://picsum.photos/seed/9/100/100" alt="@user" />
-            <AvatarFallback>JP</AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col">
-            <span className="font-semibold">Jim Poole</span>
-            <span className="text-sm text-muted-foreground">jim.poole@example.com</span>
-          </div>
-        </div>
+        {isUserLoading ? (
+            <div className="flex items-center gap-3 p-2">
+                <Avatar>
+                    <AvatarFallback />
+                </Avatar>
+                <div className="flex flex-col">
+                    <span className="h-4 w-24 bg-muted rounded-md animate-pulse"></span>
+                    <span className="h-3 w-32 bg-muted rounded-md animate-pulse mt-1"></span>
+                </div>
+            </div>
+        ) : user ? (
+            <div className="flex items-center gap-3 p-2">
+            <Avatar>
+                <AvatarImage src={user.photoURL || getAvatarUrl(user.uid.slice(-2))} alt={user.displayName || 'User'} />
+                <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col overflow-hidden">
+                <span className="font-semibold truncate">{user.displayName}</span>
+                <span className="text-sm text-muted-foreground truncate">{user.email}</span>
+            </div>
+            </div>
+        ) : (
+            <div className="flex items-center gap-3 p-2">
+                <Avatar>
+                    <AvatarFallback>??</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                    <span className="font-semibold">Not signed in</span>
+                </div>
+            </div>
+        )}
       </SidebarFooter>
     </>
   );
