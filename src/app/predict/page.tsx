@@ -17,7 +17,8 @@ import { useUser, useCollection, useDoc, useFirestore, useMemoFirebase } from '@
 import { collection, doc, query } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowDown, ArrowUp, Loader2, Minus } from 'lucide-react';
+import { ArrowDown, ArrowUp, Loader2, Minus, User as UserIcon } from 'lucide-react';
+import Link from 'next/link';
 
 const predictionSchema = z.object({
   id: z.string(),
@@ -98,16 +99,12 @@ export default function PredictPage() {
   const isLoading = isUserLoading || teamsLoading || prevStandingsLoading || predictionLoading || currentStandingsLoading;
 
   React.useEffect(() => {
-    // This effect will run whenever the source data changes.
-    // It will set the initial state of the draggable list (`items`).
-    
-    // Do nothing until all required data has been loaded.
     if (isLoading || !teams || !previousSeasonStandings) {
       return;
     }
   
     let initialItems: PredictionItem[] = [];
-    const teamMap = new Map(teams.map(team => [team.id, {
+    const teamMap = new Map(teams.map(team => ({
         id: team.id,
         teamId: team.id,
         teamName: team.name || 'Unknown Team',
@@ -116,15 +113,13 @@ export default function PredictPage() {
         bgColourFaint: team.bgColourFaint,
         bgColourSolid: team.bgColourSolid,
         textColour: team.textColour,
-    }]));
+    })));
   
-    // Priority 1: Use the user's saved prediction if it exists and has rankings.
-    if (userPrediction && userPrediction.rankings && userPrediction.rankings.length > 0) {
+    if (user && userPrediction && userPrediction.rankings && userPrediction.rankings.length > 0) {
       initialItems = userPrediction.rankings
         .map(teamId => teamMap.get(teamId))
         .filter((item): item is PredictionItem => !!item);
     } 
-    // Priority 2: Fallback to last season's standings.
     else {
       const prevStandingsMap = new Map(previousSeasonStandings.map(s => [s.teamId, s.rank]));
       initialItems = [...teams]
@@ -133,12 +128,11 @@ export default function PredictPage() {
         .filter((item): item is PredictionItem => !!item);
     }
   
-    // Only update state if the calculated order is different from the current one.
     if (initialItems.length > 0 && JSON.stringify(initialItems.map(i => i.id)) !== JSON.stringify(items.map(i => i.id))) {
       setItems(initialItems);
       form.setValue('predictions', initialItems);
     }
-  }, [isLoading, teams, userPrediction, previousSeasonStandings, form, items]);
+  }, [isLoading, teams, user, userPrediction, previousSeasonStandings, form, items]);
 
 
   const sortedPreviousStandings = React.useMemo(() => {
@@ -244,11 +238,19 @@ export default function PredictPage() {
              {/* Your Prediction */}
             <div className="flex flex-col">
               <div className="font-medium pb-2 text-muted-foreground text-center">
-                {seasonStarted ? 'Your Submitted Prediction (2025-26)' : 'Your Prediction (2025-26)'}
+                Your Prediction (2025-26)
               </div>
               <Card>
                 <CardContent className="p-0">
-                  {seasonStarted ? (
+                  {!user ? (
+                      <div className="h-[1060px] flex flex-col items-center justify-center gap-4 text-muted-foreground bg-slate-50 dark:bg-slate-900/50 rounded-md">
+                          <UserIcon className="size-16" />
+                          <p className="font-medium">You are not signed in.</p>
+                          <Button asChild variant="outline">
+                              <Link href="/profile">Sign In to Predict</Link>
+                          </Button>
+                      </div>
+                  ) : seasonStarted ? (
                     <Table>
                       <TableBody>
                         {items.map((item, index) => <TeamRow key={item.teamId} team={item} rank={index + 1} />)}
@@ -361,7 +363,7 @@ export default function PredictPage() {
             </div>
 
           </div>
-          {!seasonStarted && (
+          {user && !seasonStarted && (
             <Button type="submit">Submit Final Prediction</Button>
           )}
         </form>
