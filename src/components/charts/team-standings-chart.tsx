@@ -45,6 +45,20 @@ export function TeamStandingsChart({
     }, {} as any);
   }, [sortedTeams]);
 
+    const legendTeams = React.useMemo(() => {
+        const numRows = 4;
+        const numCols = 5;
+        const columnOrderedTeams: (typeof sortedTeams[0] | undefined)[] = new Array(numCols * numRows).fill(undefined);
+    
+        sortedTeams.forEach((team, i) => {
+            const col = Math.floor(i / numRows);
+            const row = i % numRows;
+            const newIndex = row * numCols + col;
+            columnOrderedTeams[newIndex] = team;
+        });
+        return columnOrderedTeams;
+    }, [sortedTeams])
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const filteredPayload = payload.filter((p: any) => !p.dataKey.endsWith('-inner') && !p.dataKey.endsWith('-outer'));
@@ -88,6 +102,20 @@ export function TeamStandingsChart({
         <CardDescription>Team league position changes over the season.</CardDescription>
       </CardHeader>
       <CardContent>
+        <div className="grid grid-cols-5 gap-x-4 gap-y-1 text-xs mb-6 px-4">
+            {legendTeams.map((team, index) => {
+            if (!team) return <div key={`empty-${index}`} />;
+            return (
+                <div key={team.id} className="flex items-center space-x-2 truncate py-0">
+                <span
+                    className="inline-block h-2 w-2 rounded-sm shrink-0"
+                    style={{ backgroundColor: team.bgColourSolid }}
+                ></span>
+                <span className="truncate" title={`${team.name}`}>{team.name}</span>
+                </div>
+            );
+            })}
+        </div>
         <div className="relative">
           <ChartContainer config={chartConfig} className="h-[700px] w-full">
             <ResponsiveContainer>
@@ -110,6 +138,8 @@ export function TeamStandingsChart({
                   textAnchor="end"
                   tickMargin={10}
                   interval={0}
+                  allowDuplicatedCategory={false}
+                  ticks={chartData.map(d => d.week)}
                 />
                 <YAxis
                   tickLine={false}

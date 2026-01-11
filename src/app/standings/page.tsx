@@ -181,31 +181,8 @@ export default function StandingsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Premier League</h1>
           <p className="text-slate-400">Official league standings, results, and form guide for the 2025-26 season.</p>
       </header>
-
-      <Card>
-        <CardHeader className="items-center">
-            <CardTitle className="bg-black text-yellow-400 p-2 rounded-md">Team Movement 2025-2026</CardTitle>
-            <CardDescription>Team league position changes over the season.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <div className="grid grid-cols-5 gap-x-4 gap-y-1 text-xs mb-6 px-4">
-                {legendTeams.map((team, index) => {
-                if (!team) return <div key={`empty-${index}`} />;
-                return (
-                    <div key={team.id} className="flex items-center space-x-2 truncate py-0">
-                    <span
-                        className="inline-block h-2 w-2 rounded-sm shrink-0"
-                        style={{ backgroundColor: team.bgColourSolid }}
-                    ></span>
-                    <span className="truncate" title={`${team.name}`}>{team.name}</span>
-                    </div>
-                );
-                })}
-            </div>
-            <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData as (Team & { rank: number })[]} />
-        </CardContent>
-      </Card>
-
+        
+      <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData as (Team & { rank: number })[]} />
 
       <Card>
         <CardHeader className="items-center">
