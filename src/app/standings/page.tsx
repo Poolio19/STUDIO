@@ -4,9 +4,9 @@
 import {
     Card,
     CardContent,
-    CardDescription,
     CardHeader,
     CardTitle,
+    CardDescription,
 } from '@/components/ui/card';
 import {
   Accordion,
@@ -51,7 +51,7 @@ export default function StandingsPage() {
         weeklyResults,
         gamesPlayed,
     } = useMemo(() => {
-        if (!teamsData || !standingsData || !matchesData || !weeklyTeamStandings || !teamRecentResults) {
+        if (isLoading || !teamsData || !standingsData || !matchesData || !weeklyTeamStandings || !teamRecentResults) {
             return { standingsWithTeamData: [], chartData: [], weeklyResults: new Map(), gamesPlayed: 0 };
         }
 
@@ -64,13 +64,11 @@ export default function StandingsPage() {
             return { ...standing, ...team, recentResults };
         }).sort((a,b) => a.rank - b.rank);
 
-        // Chart Data Transformation
         const finalChartData = (() => {
-            if (!teamsData || teamsData.length === 0) {
+            if (teamsData.length === 0) {
                 return [];
             }
-            if (!weeklyTeamStandings || weeklyTeamStandings.length === 0) {
-                // Handle Week 0: Create a single data point for the initial standings
+            if (weeklyTeamStandings.length === 0) {
                 const week0Data: { [key: string]: any } = { week: 0 };
                 standingsData.forEach(standing => {
                     const teamName = teamMap.get(standing.teamId)?.name;
@@ -108,7 +106,6 @@ export default function StandingsPage() {
             });
         })();
 
-        // Weekly Results for Accordion
         const resultsByWeek = new Map<number, (Match & {homeTeam: Team, awayTeam: Team})[]>();
         const playedMatches = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
         playedMatches.sort((a,b) => a.week - b.week).forEach(match => {
@@ -130,7 +127,7 @@ export default function StandingsPage() {
             weeklyResults: resultsByWeek,
             gamesPlayed: currentGamesPlayed,
         };
-    }, [teamsData, matchesData, standingsData, weeklyTeamStandings, teamRecentResults]);
+    }, [isLoading, teamsData, matchesData, standingsData, weeklyTeamStandings, teamRecentResults]);
 
 
     const getResultColor = (result: 'W' | 'D' | 'L' | '-') => {
