@@ -46,7 +46,7 @@ export function TeamStandingsChart({
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       // Filter out the "inner" lines from the tooltip payload
-      const filteredPayload = payload.filter((p: any) => !p.dataKey.endsWith('-inner'));
+      const filteredPayload = payload.filter((p: any) => !p.dataKey.endsWith('-inner') && !p.dataKey.endsWith('-outer'));
       
       const sortedPayload = [...filteredPayload].sort(
         (a, b) => a.value - b.value
@@ -59,7 +59,7 @@ export function TeamStandingsChart({
           <p className="mb-2 font-medium">{week}</p>
           <div className="grid grid-cols-1 gap-1.5">
             {sortedPayload.map((pld: any, index: number) => {
-              const teamName = pld.dataKey.replace('-outer', '');
+              const teamName = pld.dataKey;
               const team = sortedTeams.find(t => t.name === teamName);
 
               return (
@@ -149,3 +149,5 @@ export function TeamStandingsChart({
     </Card>
   );
 }
+
+    

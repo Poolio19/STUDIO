@@ -78,9 +78,9 @@ export default function StandingsPage() {
         const weeks = [...new Set(weeklyTeamStandings.map(d => d.week))].sort((a, b) => a - b).filter(w => w > 0);
         const transformedChartData = weeks.map(week => {
             const weekData: { [key: string]: any } = { week };
-            weeklyTeamStandings.filter(d => d.week === week).forEach(standing => {
-                const team = teamMap.get(standing.teamId);
-                if (team) {
+            teamsData.forEach(team => {
+                const standing = weeklyTeamStandings.find(d => d.week === week && d.teamId === team.id);
+                if (standing) {
                     weekData[team.name] = standing.rank;
                     // For two-tone lines
                     weekData[`${team.name}-outer`] = standing.rank;
@@ -295,3 +295,5 @@ export default function StandingsPage() {
     </div>
   );
 }
+
+    
