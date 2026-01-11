@@ -101,7 +101,7 @@ export function TeamStandingsChart({
                   bottom: 50,
                 }}
               >
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={true} />
                 <XAxis
                   dataKey="week"
                   type="number"
