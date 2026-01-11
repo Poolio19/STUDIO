@@ -79,7 +79,8 @@ export default function StandingsPage() {
                 return [];
             }
 
-            const teamMap = new Map(teamsData.map(t => [t.id, t.name]));
+            const teamNameMap = new Map(teamsData.map(t => [t.id, t.name]));
+
             const standingsByWeek = weeklyTeamStandings.reduce((acc, standing) => {
                 if (standing.week > 0) {
                     if (!acc[standing.week]) {
@@ -95,7 +96,7 @@ export default function StandingsPage() {
                 const weekData: { [key: string]: any } = { week };
                 
                 standingsByWeek[week].forEach(standing => {
-                    const teamName = teamMap.get(standing.teamId);
+                    const teamName = teamNameMap.get(standing.teamId);
                     if (teamName) {
                         weekData[teamName] = standing.rank; // For tooltip
                         weekData[`${teamName}-outer`] = standing.rank; // For outer line
