@@ -149,5 +149,3 @@ export function TeamStandingsChart({
     </Card>
   );
 }
-
-    
