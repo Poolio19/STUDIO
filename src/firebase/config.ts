@@ -2,11 +2,11 @@
 // This is a public configuration and is safe to be exposed to the client.
 
 export const firebaseConfig = {
-  apiKey: "AIzaSyCV7ajc4pZ3s5_1a2b3c4d5e6f7g8h9i",
-  authDomain: "predictatron-app-4.firebaseapp.com",
-  projectId: "predictatron-app-4",
-  storageBucket: "predictatron-app-4.appspot.com",
-  messagingSenderId: "1029384756",
-  appId: "1:1029384756:web:a1b2c3d4e5f6a1b2c3d4e5",
-  databaseURL: "https://predictatron-app-4.firebaseio.com"
+  apiKey: "AIzaSyCV7ajc4pZ3s5_1a2b3c4d5e6f7g8h9i", // This is a placeholder, but projectId is key
+  authDomain: "prempred-live.firebaseapp.com",
+  projectId: "prempred-live",
+  storageBucket: "prempred-live.appspot.com",
+  messagingSenderId: "1234567890", // Placeholder
+  appId: "1:1234567890:web:placeholderappid", // Placeholder
+  databaseURL: "https://prempred-live.firebaseio.com"
 };
