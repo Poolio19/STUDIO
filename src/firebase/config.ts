@@ -5,7 +5,9 @@
 // This config object is now a template. The final API key will be inserted
 // by the FirebaseProvider at runtime.
 export const firebaseConfig = {
-  apiKey: "", // This will be replaced by the provider
+  // IMPORTANT: This is a placeholder key. In a real production app,
+  // this should be loaded securely from environment variables.
+  apiKey: "AIzaSyB-...", 
   authDomain: "prempred-43933.firebaseapp.com",
   projectId: "prempred-43933",
   storageBucket: "prempred-43933.appspot.com",

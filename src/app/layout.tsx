@@ -15,10 +15,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // This value is now read from server-side environment variables
-  // and will be passed down to the client-side provider.
-  const apiKey = process.env.FIREBASE_API_KEY || '';
-
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -30,7 +26,7 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <FirebaseClientProvider apiKey={apiKey}>
+        <FirebaseClientProvider>
           <AppLayout>{children}</AppLayout>
         </FirebaseClientProvider>
         <Toaster />
