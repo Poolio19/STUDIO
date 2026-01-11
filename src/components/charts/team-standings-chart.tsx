@@ -45,7 +45,10 @@ export function TeamStandingsChart({
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      const sortedPayload = [...payload].sort(
+      // Filter out the "inner" lines from the tooltip payload
+      const filteredPayload = payload.filter((p: any) => !p.dataKey.endsWith('-inner'));
+      
+      const sortedPayload = [...filteredPayload].sort(
         (a, b) => a.value - b.value
       );
 
@@ -56,13 +59,14 @@ export function TeamStandingsChart({
           <p className="mb-2 font-medium">{week}</p>
           <div className="grid grid-cols-1 gap-1.5">
             {sortedPayload.map((pld: any, index: number) => {
-              const teamName = pld.dataKey;
+              const teamName = pld.dataKey.replace('-outer', '');
+              const team = sortedTeams.find(t => t.name === teamName);
 
               return (
                 <div key={index} className="flex items-center gap-2">
                   <div
                     className="size-2.5 rounded-sm"
-                    style={{ backgroundColor: chartConfig[teamName]?.colour }}
+                    style={{ backgroundColor: team?.bgColourSolid }}
                   ></div>
                   <span className="font-medium">{teamName}:</span>
                   <span className="text-muted-foreground">Rank {pld.value}</span>
@@ -114,16 +118,27 @@ export function TeamStandingsChart({
                 />
                 <Tooltip content={<CustomTooltip />} />
                 {sortedTeams.map(team => (
-                  <Line
-                    key={team.id}
-                    dataKey={team.name}
-                    type="monotone"
-                    stroke={team.bgColourSolid || chartConfig[team.name]?.colour}
-                    strokeWidth={3}
-                    dot={false}
-                    name={team.name}
-                    legendType="none"
-                  />
+                  <React.Fragment key={team.id}>
+                    <Line
+                      dataKey={`${team.name}-outer`}
+                      type="monotone"
+                      stroke={team.bgColourFaint || '#ccc'}
+                      strokeWidth={10}
+                      dot={false}
+                      legendType="none"
+                      tooltipType="none"
+                    />
+                     <Line
+                      dataKey={`${team.name}-inner`}
+                      type="monotone"
+                      stroke={team.bgColourSolid || '#000'}
+                      strokeWidth={3}
+                      dot={false}
+                      name={team.name}
+                      legendType="none"
+                      tooltipType="none"
+                    />
+                  </React.Fragment>
                 ))}
               </LineChart>
             </ResponsiveContainer>

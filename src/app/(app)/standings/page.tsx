@@ -80,7 +80,12 @@ export default function StandingsPage() {
             const weekData: { [key: string]: any } = { week };
             weeklyTeamStandings.filter(d => d.week === week).forEach(standing => {
                 const team = teamMap.get(standing.teamId);
-                if (team) { weekData[team.name] = standing.rank; }
+                if (team) { 
+                    weekData[team.name] = standing.rank;
+                    // For two-tone lines
+                    weekData[`${team.name}-outer`] = standing.rank;
+                    weekData[`${team.name}-inner`] = standing.rank;
+                }
             });
             return weekData;
         });
