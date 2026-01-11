@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
-  const { user, isUserLoading } = useUser();
+  const { isUserLoading } = useUser();
   const { isConfigured } = useFirebaseConfigStatus();
 
 

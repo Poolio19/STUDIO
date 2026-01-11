@@ -41,6 +41,8 @@ const isApiKeyPlaceholder = (key?: string) => !key || key.startsWith('AIzaSyB-')
 export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   children
 }) => {
+  const isConfigured = !isApiKeyPlaceholder(firebaseConfig.apiKey);
+
   const [services, setServices] = useState<{
     firebaseApp: FirebaseApp;
     auth: Auth;
@@ -49,15 +51,13 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   
   const [userAuthState, setUserAuthState] = useState<UserAuthState>({
     user: null,
-    isUserLoading: true,
+    isUserLoading: !isConfigured, // Start loading if configured, otherwise we're not loading.
     userError: null,
   });
 
-  const isConfigured = !isApiKeyPlaceholder(firebaseConfig.apiKey);
 
   useEffect(() => {
     if (!isConfigured) {
-      console.error("FirebaseProvider: API key is a placeholder. Please replace it in src/firebase/config.ts");
       setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Firebase API Key is not configured.") });
       return;
     }
@@ -91,23 +91,22 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   }, [isConfigured]);
 
   useEffect(() => {
-    if (process.env.NODE_ENV !== 'development' || !isConfigured) return;
+    // Only run auto-login in development, if services are up, and user isn't already there.
+    if (process.env.NODE_ENV !== 'development' || !services?.auth || userAuthState.user || userAuthState.isUserLoading) return;
     
-    if (services?.auth && !userAuthState.user && !userAuthState.isUserLoading) {
-      const defaultEmail = 'jim.poole@prempred.com';
-      const defaultPassword = 'password';
+    const defaultEmail = 'jim.poole@prempred.com';
+    const defaultPassword = 'password';
 
-      signInWithEmailAndPassword(services.auth, defaultEmail, defaultPassword)
-        .catch(err => {
-          if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-            createUserWithEmailAndPassword(services.auth, defaultEmail, defaultPassword)
-              .catch(createErr => {
-                console.error("Failed to create default user for development:", createErr);
-              });
-          }
-        });
-    }
-  }, [services, userAuthState, isConfigured]);
+    signInWithEmailAndPassword(services.auth, defaultEmail, defaultPassword)
+      .catch(err => {
+        if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+          createUserWithEmailAndPassword(services.auth, defaultEmail, defaultPassword)
+            .catch(createErr => {
+              console.error("Failed to create default user for development:", createErr);
+            });
+        }
+      });
+  }, [services, userAuthState.user, userAuthState.isUserLoading]);
 
 
   const contextValue = useMemo((): FirebaseContextState => ({
@@ -120,7 +119,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
   return (
     <FirebaseContext.Provider value={contextValue}>
-      <FirebaseErrorListener />
+      {isConfigured && <FirebaseErrorListener />}
       {children}
     </FirebaseContext.Provider>
   );
