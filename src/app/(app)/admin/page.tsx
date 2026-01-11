@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useMemoFirebase } from '@/firebase';
 import {
   teams,
   standings,
@@ -155,21 +155,24 @@ export default function AdminPage() {
 
   const teamMap = React.useMemo(() => new Map(teams.map(t => [t.id, t])), []);
 
+  const connectivityCheckDocRef = useMemoFirebase(
+    () => (firestore ? doc(firestore, '____connectivity-test____', '____test____') : null),
+    [firestore]
+  );
+
+
   React.useEffect(() => {
+    if (!connectivityCheckDocRef) return;
+    
     const checkConnection = async () => {
-      if (!firestore) {
-        setTimeout(checkConnection, 200); // Retry if firestore isn't initialized yet
-        return;
-      }
       try {
-        // This is a special path that is allowed by security rules for this exact purpose.
-        const docRef = doc(firestore, '____connectivity-test____', '____test____');
-        await getDoc(docRef);
-        // This case should ideally not be hit with the new rule, but is kept as a fallback.
+        await getDoc(connectivityCheckDocRef);
+        // This case will likely not be hit with restrictive rules, but is a valid success state.
         setDbStatus({ connected: true, message: 'Database is connected.' });
       } catch (error: any) {
          if (error.code === 'permission-denied') {
-            // A "permission-denied" error on our test path means the rules are working and we are connected.
+            // A "permission-denied" error on our specific test path means the rules are in place
+            // and we have successfully communicated with the Firestore backend.
             setDbStatus({ connected: true, message: 'Database is connected (with secure rules).' });
         } else if (error.code === 'unavailable' || error.message.includes('offline')) {
             setDbStatus({ connected: false, message: 'Database connection failed: Client is offline.' });
@@ -179,8 +182,9 @@ export default function AdminPage() {
         }
       }
     };
+    
     checkConnection();
-  }, [firestore]);
+  }, [connectivityCheckDocRef]);
 
 
   const handlePurgeAndImport = async () => {
