@@ -53,7 +53,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   useEffect(() => {
     const firebaseConfig = {
       ...originalFirebaseConfig,
-      apiKey: "FIREBASE_API_KEY",
+      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
     };
 
     const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
@@ -81,6 +81,8 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
   // Development-only automatic login for the default user
   useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return;
+    
     if (services?.auth && !userAuthState.user && !userAuthState.isUserLoading) {
       const defaultEmail = 'jim.poole@prempred.com';
       const defaultPassword = 'password';
@@ -94,7 +96,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
               .catch(createErr => {
                 console.error("Failed to create default user for development:", createErr);
               });
-          } else {
+          } else if (err.code !== 'auth/invalid-api-key') { // Don't log api key errors during init
             console.error("Default user auto-login failed:", err);
           }
         });
