@@ -75,38 +75,37 @@ export default function StandingsPage() {
             return { ...standing, ...team, recentResults };
         }).sort((a,b) => a.rank - b.rank);
 
+        // Chart Data Transformation
         const finalChartData = (() => {
             if (!weeklyTeamStandings || weeklyTeamStandings.length === 0 || !teamsData || teamsData.length === 0) {
                 return [];
             }
             const teamNameMap = new Map(teamsData.map(t => [t.id, t.name]));
 
-            const standingsByWeek: Record<number, WeeklyTeamStanding[]> = weeklyTeamStandings.reduce((acc, standing) => {
+            const standingsByWeek: { [week: number]: { teamId: string, rank: number }[] } = {};
+            for (const standing of weeklyTeamStandings) {
                 if (standing.week > 0) {
-                    if (!acc[standing.week]) {
-                        acc[standing.week] = [];
+                    if (!standingsByWeek[standing.week]) {
+                        standingsByWeek[standing.week] = [];
                     }
-                    acc[standing.week].push(standing);
+                    standingsByWeek[standing.week].push(standing);
                 }
-                return acc;
-            }, {} as Record<number, WeeklyTeamStanding[]>);
-
+            }
+            
             const sortedWeeks = Object.keys(standingsByWeek).map(Number).sort((a, b) => a - b);
             
-            const chartDataResult = sortedWeeks.map(week => {
+            return sortedWeeks.map(week => {
                 const weekData: { [key: string]: any } = { week };
-                standingsByWeek[week].forEach(standing => {
+                for (const standing of standingsByWeek[week]) {
                     const teamName = teamNameMap.get(standing.teamId);
                     if (teamName) {
                         weekData[teamName] = standing.rank;
                         weekData[`${teamName}-outer`] = standing.rank;
                         weekData[`${teamName}-inner`] = standing.rank;
                     }
-                });
+                }
                 return weekData;
             });
-
-            return chartDataResult;
         })();
 
         // Legend Data Calculation
