@@ -3,9 +3,6 @@
 import {
     Card,
     CardContent,
-    CardHeader,
-    CardTitle,
-    CardDescription,
 } from '@/components/ui/card';
 import {
     Table,
@@ -58,10 +55,9 @@ export default function StandingsPage() {
         chartData, 
         weeklyResults,
         gamesPlayed,
-        legendTeams,
     } = useMemo(() => {
         if (!teamsData || !standingsData || !matchesData || !weeklyTeamStandings || !teamRecentResults) {
-            return { standingsWithTeamData: [], chartData: [], weeklyResults: new Map(), gamesPlayed: 0, legendTeams: [] };
+            return { standingsWithTeamData: [], chartData: [], weeklyResults: new Map(), gamesPlayed: 0 };
         }
 
         const teamMap = new Map(teamsData.map(t => [t.id, t]));
@@ -75,19 +71,30 @@ export default function StandingsPage() {
 
         // Chart Data Transformation
         const finalChartData = (() => {
-            if (!weeklyTeamStandings || weeklyTeamStandings.length === 0 || !teamsData || teamsData.length === 0) {
+            if (!teamsData || teamsData.length === 0) {
                 return [];
             }
-            const teamNameMap = new Map(teamsData.map(t => [t.id, t.name]));
+            if (!weeklyTeamStandings || weeklyTeamStandings.length === 0) {
+                // Handle Week 0: Create a single data point for the initial standings
+                const week0Data: { [key: string]: any } = { week: 0 };
+                standingsData.forEach(standing => {
+                    const teamName = teamMap.get(standing.teamId)?.name;
+                    if (teamName) {
+                        week0Data[teamName] = standing.rank;
+                        week0Data[`${teamName}-outer`] = standing.rank;
+                        week0Data[`${teamName}-inner`] = standing.rank;
+                    }
+                });
+                return [week0Data];
+            }
 
+            const teamNameMap = new Map(teamsData.map(t => [t.id, t.name]));
             const standingsByWeek: { [week: number]: { teamId: string, rank: number }[] } = {};
             for (const standing of weeklyTeamStandings) {
-                if (standing.week > 0) {
-                    if (!standingsByWeek[standing.week]) {
-                        standingsByWeek[standing.week] = [];
-                    }
-                    standingsByWeek[standing.week].push(standing);
+                if (!standingsByWeek[standing.week]) {
+                    standingsByWeek[standing.week] = [];
                 }
+                standingsByWeek[standing.week].push(standing);
             }
             
             const sortedWeeks = Object.keys(standingsByWeek).map(Number).sort((a, b) => a - b);
@@ -105,18 +112,6 @@ export default function StandingsPage() {
                 return weekData;
             });
         })();
-
-        // Legend Data Calculation
-        const numRows = 4;
-        const numCols = 5;
-        const columnOrderedTeams: (typeof finalStandingsWithTeamData[0] | undefined)[] = new Array(numCols * numRows).fill(undefined);
-    
-        finalStandingsWithTeamData.forEach((team, i) => {
-            const col = Math.floor(i / numRows);
-            const row = i % numRows;
-            const newIndex = row * numCols + col;
-            columnOrderedTeams[newIndex] = team;
-        });
 
         // Weekly Results for Accordion
         const resultsByWeek = new Map<number, (Match & {homeTeam: Team, awayTeam: Team})[]>();
@@ -139,7 +134,6 @@ export default function StandingsPage() {
             chartData: finalChartData, 
             weeklyResults: resultsByWeek,
             gamesPlayed: currentGamesPlayed,
-            legendTeams: columnOrderedTeams,
         };
     }, [teamsData, matchesData, standingsData, weeklyTeamStandings, teamRecentResults]);
 
