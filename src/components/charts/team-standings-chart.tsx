@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -100,7 +101,7 @@ export function TeamStandingsChart({
                   bottom: 50,
                 }}
               >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
                   dataKey="week"
                   type="number"
@@ -110,6 +111,9 @@ export function TeamStandingsChart({
                   axisLine={false}
                   tickMargin={8}
                   orientation="top"
+                  angle={-90}
+                  textAnchor="start"
+                  interval={0}
                 />
                 <YAxis
                   tickLine={false}
