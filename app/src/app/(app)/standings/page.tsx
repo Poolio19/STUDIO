@@ -80,6 +80,7 @@ export default function StandingsPage() {
             if (!weeklyTeamStandings || weeklyTeamStandings.length === 0 || !teamsData || teamsData.length === 0) {
                 return [];
             }
+            
             const teamNameMap = new Map(teamsData.map(t => [t.id, t.name]));
 
             const standingsByWeek = weeklyTeamStandings.reduce((acc, standing) => {
@@ -359,3 +360,5 @@ export default function StandingsPage() {
     </div>
   );
 }
+
+    
