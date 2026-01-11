@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -121,11 +122,9 @@ export default function PredictPage() {
   });
   
   const orderedItems = React.useMemo(() => {
-    if (!teams || teams.length === 0) {
-      return [];
-    }
-  
-    const teamMap = new Map(teams.map(team => [team.id, {
+    if (teamsLoading || predictionLoading) return []; // Wait for essential data
+
+    const teamMap = new Map(teams?.map(team => [team.id, {
         id: team.id,
         teamId: team.id,
         teamName: team.name || 'Unknown Team',
@@ -135,22 +134,26 @@ export default function PredictPage() {
         bgColourSolid: team.bgColourSolid,
         textColour: team.textColour,
     }]));
-  
-    if (userPrediction && userPrediction.rankings && userPrediction.rankings.length === teams.length) {
+
+    // If a user prediction exists, use it
+    if (userPrediction && userPrediction.rankings && userPrediction.rankings.length > 0) {
       return userPrediction.rankings
         .map(teamId => teamMap.get(teamId))
         .filter((item): item is PredictionItem => !!item);
     }
     
-    if (!previousSeasonStandings) return [];
+    // Fallback to previous season's standings if no prediction is found
+    if (!prevStandingsLoading && previousSeasonStandings && teams) {
+      const prevStandingsMap = new Map(previousSeasonStandings.map(s => [s.teamId, s.rank]));
+      return [...teams]
+        .sort((a, b) => (prevStandingsMap.get(a.id) ?? 21) - (prevStandingsMap.get(b.id) ?? 21))
+        .map(team => teamMap.get(team.id))
+        .filter((item): item is PredictionItem => !!item);
+    }
     
-    const prevStandingsMap = new Map(previousSeasonStandings.map(s => [s.teamId, s.rank]));
-    return [...teams]
-      .sort((a, b) => (prevStandingsMap.get(a.id) ?? 21) - (prevStandingsMap.get(b.id) ?? 21))
-      .map(team => teamMap.get(team.id))
-      .filter((item): item is PredictionItem => !!item);
+    return []; // Return empty if fallback data isn't ready
       
-  }, [userPrediction, teams, previousSeasonStandings]);
+  }, [userPrediction, teams, previousSeasonStandings, teamsLoading, predictionLoading, prevStandingsLoading]);
 
 
   const [items, setItems] = React.useState<PredictionItem[]>(orderedItems);
