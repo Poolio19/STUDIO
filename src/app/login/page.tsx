@@ -39,13 +39,13 @@ export default function LoginPage() {
   const { toast } = useToast();
   const auth = useAuth();
   const router = useRouter();
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      email: 'jim.poole@prempred.com',
+      password: 'password',
     },
   });
 
@@ -54,11 +54,11 @@ export default function LoginPage() {
       toast({
         variant: 'destructive',
         title: 'Authentication Error',
-        description: 'Firebase Auth is not available. Please try again later.',
+        description: 'Firebase Auth is not ready. Please try again in a moment.',
       });
       return;
     }
-    setIsLoading(true);
+    setIsSubmitting(true);
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
       toast({
@@ -77,9 +77,12 @@ export default function LoginPage() {
             : error.message,
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   }
+
+  // The form should be disabled if auth is not ready OR if a submission is in progress.
+  const isLoading = !auth || isSubmitting;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
@@ -105,6 +108,7 @@ export default function LoginPage() {
                         type="email"
                         placeholder="your.email@example.com"
                         {...field}
+                        disabled={isLoading}
                       />
                     </FormControl>
                     <FormMessage />
@@ -118,7 +122,7 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="********" {...field} />
+                      <Input type="password" placeholder="********" {...field} disabled={isLoading} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -128,7 +132,7 @@ export default function LoginPage() {
                 {isLoading && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                Sign In
+                {isSubmitting ? 'Signing In...' : !auth ? 'Connecting...' : 'Sign In'}
               </Button>
             </form>
           </Form>
