@@ -229,11 +229,11 @@ export const previousSeasonStandings: PreviousSeasonStanding[] = [
     { teamId: 'team_09', rank: 13, points: 47, goalDifference: -6 },
     { teamId: 'team_20', rank: 14, points: 46, goalDifference: -15 },
     { teamId: 'team_08', rank: 15, points: 40, goalDifference: -11 },
-    { teamId: 'team_04', rank: 16, points: 39, goalDifference: -9 },
-    { teamId: 'team_16', rank: 17, points: 32, goalDifference: -18 },
-    { teamId: 'team_21', rank: 18, points: 27, goalDifference: -33 }, // Luton
-    { teamId: 'team_22', rank: 19, points: 24, goalDifference: -37 }, // Burnley
-    { teamId: 'team_23', rank: 20, points: 16, goalDifference: -69 }  // Sheffield Utd
+    { id: 'team_04', rank: 16, points: 39, goalDifference: -9 },
+    { id: 'team_16', rank: 17, points: 32, goalDifference: -18 },
+    { id: 'team_21', rank: 18, points: 27, goalDifference: -33 }, // Luton
+    { id: 'team_22', rank: 19, points: 24, goalDifference: -37 }, // Burnley
+    { id: 'team_23', rank: 20, points: 16, goalDifference: -69 }  // Sheffield Utd
 ];
 
 const userPredictionsRaw: { [key: string]: string[] } = {
@@ -757,68 +757,8 @@ export const matches: Match[] = [
     { id: '38-team_01-team_16', week: 38, matchDate: '2026-05-24T15:00:00.000Z', homeTeamId: 'team_01', awayTeamId: 'team_16', homeScore: -1, awayScore: -1 }
 ];
 
-const playedMatches = matches.filter(m => m.homeScore !== -1);
-
-// Calculate weekly standings
-export const weeklyTeamStandings: WeeklyTeamStanding[] = (() => {
-  const allWeeklyStandings: WeeklyTeamStanding[] = [];
-  const teamScores: { [teamId: string]: { week: number; rank: number }[] } = {};
-
-  teams.forEach(team => {
-    teamScores[team.id] = [];
-  });
-
-  const maxWeek = Math.max(...matches.map(m => m.week), 0);
-
-  for (let week = 1; week <= maxWeek; week++) {
-    const weeklyMatches = playedMatches.filter(m => m.week <= week);
-    const standings: { [teamId: string]: { points: number, goalDifference: number, goalsFor: number } } = {};
-
-    teams.forEach(team => {
-      standings[team.id] = { points: 0, goalDifference: 0, goalsFor: 0 };
-    });
-
-    weeklyMatches.forEach(match => {
-      if (!standings[match.homeTeamId] || !standings[match.awayTeamId]) return;
-      const home = standings[match.homeTeamId];
-      const away = standings[match.awayTeamId];
-      
-      home.goalsFor += match.homeScore;
-      away.goalsFor += match.awayScore;
-      home.goalDifference += match.homeScore - match.awayScore;
-      away.goalDifference += match.awayScore - match.homeScore;
-
-      if (match.homeScore > match.awayScore) {
-        home.points += 3;
-      } else if (match.awayScore > match.homeScore) {
-        away.points += 3;
-      } else {
-        home.points += 1;
-        away.points += 1;
-      }
-    });
-
-    const sortedTeamIds = Object.keys(standings).sort((a, b) => {
-      const standingA = standings[a];
-      const standingB = standings[b];
-      if (b.points !== a.points) return b.points - a.points;
-      if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
-      if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
-      const teamA = teams.find(t => t.id === a);
-      const teamB = teams.find(t => t.id === b);
-      if (!teamA || !teamB) return 0;
-      return teamA.name.localeCompare(teamB.name);
-    });
-
-    sortedTeamIds.forEach((teamId, index) => {
-        allWeeklyStandings.push({ week, teamId, rank: index + 1 });
-    });
-  }
-
-  return allWeeklyStandings;
-})();
-
 export const standings: CurrentStanding[] = (() => {
+    const playedMatches = matches.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
     if (playedMatches.length === 0) {
         return teams.slice(0, 20).map(team => ({
             teamId: team.id,
@@ -897,6 +837,67 @@ export const standings: CurrentStanding[] = (() => {
         ...team,
         rank: index + 1
     }));
+})();
+
+
+// Calculate weekly standings
+export const weeklyTeamStandings: WeeklyTeamStanding[] = (() => {
+  const allWeeklyStandings: WeeklyTeamStanding[] = [];
+  const teamScores: { [teamId: string]: { week: number; rank: number }[] } = {};
+
+  teams.forEach(team => {
+    teamScores[team.id] = [];
+  });
+  
+  const playedMatches = matches.filter(m => m.homeScore !== -1);
+  const maxWeek = Math.max(...playedMatches.map(m => m.week), 0);
+
+  for (let week = 1; week <= maxWeek; week++) {
+    const weeklyMatches = playedMatches.filter(m => m.week <= week);
+    const standings: { [teamId: string]: { points: number, goalDifference: number, goalsFor: number } } = {};
+
+    teams.forEach(team => {
+      standings[team.id] = { points: 0, goalDifference: 0, goalsFor: 0 };
+    });
+
+    weeklyMatches.forEach(match => {
+      if (!standings[match.homeTeamId] || !standings[match.awayTeamId]) return;
+      const home = standings[match.homeTeamId];
+      const away = standings[match.awayTeamId];
+      
+      home.goalsFor += match.homeScore;
+      away.goalsFor += match.awayScore;
+      home.goalDifference += match.homeScore - match.awayScore;
+      away.goalDifference += match.awayScore - match.homeScore;
+
+      if (match.homeScore > match.awayScore) {
+        home.points += 3;
+      } else if (match.awayScore > match.homeScore) {
+        away.points += 3;
+      } else {
+        home.points += 1;
+        away.points += 1;
+      }
+    });
+
+    const sortedTeamIds = Object.keys(standings).sort((a, b) => {
+      const standingA = standings[a];
+      const standingB = standings[b];
+      if (b.points !== a.points) return b.points - a.points;
+      if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+      if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
+      const teamA = teams.find(t => t.id === a);
+      const teamB = teams.find(t => t.id === b);
+      if (!teamA || !teamB) return 0;
+      return teamA.name.localeCompare(teamB.name);
+    });
+
+    sortedTeamIds.forEach((teamId, index) => {
+        allWeeklyStandings.push({ week, teamId, rank: index + 1 });
+    });
+  }
+
+  return allWeeklyStandings;
 })();
 
 const finalRankings: { [teamId: string]: number } = {};
@@ -1011,6 +1012,7 @@ export const fullUserHistories: UserHistory[] = Object.entries(weeklyScoresByUse
 
 export const teamRecentResults: TeamRecentResult[] = teams.map(team => {
     const results: ('W' | 'D' | 'L' | '-')[] = [];
+    const playedMatches = matches.filter(m => m.homeScore !== -1);
     const teamMatches = playedMatches
         .filter(m => m.homeTeamId === team.id || m.awayTeamId === team.id)
         .sort((a, b) => new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime())
@@ -1066,6 +1068,7 @@ export const monthlyMimoM: MonthlyMimoM[] = [
     
 
     
+
 
 
 
