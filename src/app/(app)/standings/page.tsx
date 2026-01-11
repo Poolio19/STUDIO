@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -21,73 +22,179 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import type { TeamRecentResult, WeeklyTeamStanding, Match, Team, CurrentStanding } from '@/lib/data';
+import type { TeamRecentResult, WeeklyTeamStanding, Match, Team } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
 import { TeamStandingsChart } from '@/components/charts/team-standings-chart';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { collection, query, orderBy } from 'firebase/firestore';
+import { Loader2 } from 'lucide-react';
+
+type StandingWithTeam = {
+  teamId: string;
+  rank: number;
+  points: number;
+  goalDifference: number;
+  gamesPlayed: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  goalsFor: number;
+  goalsAgainst: number;
+} & Team & { recentResults: ('W' | 'D' | 'L' | '-')[] };
+
 
 export default function StandingsPage() {
     const firestore = useFirestore();
     const { isUserLoading } = useUser();
 
     const teamsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'teams')) : null, [firestore, isUserLoading]);
-    const standingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'standings')) : null, [firestore, isUserLoading]);
-    const weeklyStandingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'weeklyTeamStandings')) : null, [firestore, isUserLoading]);
-    const recentResultsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'teamRecentResults')) : null, [firestore, isUserLoading]);
     const matchesQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'matches')) : null, [firestore, isUserLoading]);
     
-    const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
-    const { data: currentStandingsData, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsQuery);
-    const { data: weeklyTeamStandings, isLoading: weeklyStandingsLoading } = useCollection<WeeklyTeamStanding>(weeklyStandingsQuery);
-    const { data: teamRecentResults, isLoading: recentResultsLoading } = useCollection<TeamRecentResult>(recentResultsQuery);
-    const { data: matches, isLoading: matchesLoading } = useCollection<Match>(matchesQuery);
+    const { data: teamsData, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
+    const { data: matchesData, isLoading: matchesLoading } = useCollection<Match>(matchesQuery);
 
-    const isLoading = isUserLoading || teamsLoading || standingsLoading || weeklyStandingsLoading || recentResultsLoading || matchesLoading;
+    const isLoading = isUserLoading || teamsLoading || matchesLoading;
     
-    const currentStandings = useMemo(() => {
-        if (!currentStandingsData) return [];
-        return [...currentStandingsData].sort((a, b) => a.rank - b.rank);
-    }, [currentStandingsData]);
-
-
-    const { standingsWithTeamData, chartData, weeklyResults } = useMemo(() => {
-        if (!teams || !currentStandings || !weeklyTeamStandings || !teamRecentResults || !matches) {
-            return { standingsWithTeamData: [], chartData: [], weeklyResults: new Map() };
+    const { 
+        standingsWithTeamData, 
+        chartData, 
+        weeklyResults,
+        gamesPlayed,
+    } = useMemo(() => {
+        if (!teamsData || !matchesData) {
+            return { standingsWithTeamData: [], chartData: [], weeklyResults: new Map(), gamesPlayed: 0 };
         }
 
-        const teamMap = new Map(teams.map(t => [t.id, t]));
+        const teamMap = new Map(teamsData.map(t => [t.id, t]));
+        const playedMatches = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
 
-        const recentResultsMap = new Map(teamRecentResults.map(r => [r.teamId, r.results]));
-        
-        const finalStandings = [...currentStandings]
-            .sort((a,b) => a.rank - b.rank)
-            .map(standing => {
-                const team = teamMap.get(standing.teamId);
-                const recentResults = recentResultsMap.get(standing.teamId) || Array(6).fill('-');
-                return team ? { ...standing, ...team, recentResults } : null;
-            }).filter((item): item is NonNullable<typeof item> => item !== null);
+        const teamStats: { [key: string]: Omit<StandingWithTeam, 'teamId' | 'rank' | 'name' | 'logo' | 'iconColour' | 'bgColourFaint' | 'bgColourSolid' | 'textColour' | 'recentResults'> & { teamId: string } } = {};
 
-        const weeks = [...new Set(weeklyTeamStandings.map(d => d.week))].sort((a, b) => a - b).filter(w => w > 0);
-        const transformedChartData = weeks.map(week => {
-            const weekData: { [key: string]: any } = { week };
-            weeklyTeamStandings
-                .filter(d => d.week === week)
-                .forEach(standing => {
-                    const team = teamMap.get(standing.teamId);
-                    if (team) {
-                        weekData[team.name] = standing.rank;
-                    }
-                });
-            return weekData;
+        teamsData.slice(0, 20).forEach(team => {
+            teamStats[team.id] = {
+                teamId: team.id,
+                points: 0, gamesPlayed: 0, wins: 0, draws: 0, losses: 0,
+                goalsFor: 0, goalsAgainst: 0, goalDifference: 0,
+            };
+        });
+
+        playedMatches.forEach(match => {
+            const homeStats = teamStats[match.homeTeamId];
+            const awayStats = teamStats[match.awayTeamId];
+
+            if (!homeStats || !awayStats) return;
+
+            homeStats.gamesPlayed++;
+            awayStats.gamesPlayed++;
+            homeStats.goalsFor += match.homeScore;
+            awayStats.goalsFor += match.awayScore;
+            homeStats.goalsAgainst += match.awayScore;
+            awayStats.goalsAgainst += match.homeScore;
+
+            if (match.homeScore > match.awayScore) {
+                homeStats.wins++;
+                homeStats.points += 3;
+                awayStats.losses++;
+            } else if (match.awayScore > match.homeScore) {
+                awayStats.wins++;
+                awayStats.points += 3;
+                homeStats.losses++;
+            } else {
+                homeStats.draws++;
+                awayStats.draws++;
+                homeStats.points++;
+                awayStats.points++;
+            }
         });
         
+        const calculatedStandings = Object.values(teamStats).map(stats => ({
+            ...stats,
+            goalDifference: stats.goalsFor - stats.goalsAgainst,
+        })).sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+            if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
+            const teamA = teamMap.get(a.teamId);
+            const teamB = teamMap.get(b.teamId);
+            return teamA!.name.localeCompare(teamB!.name);
+        });
+
+        const recentResultsMap = new Map<string, ('W' | 'D' | 'L' | '-')[]>();
+        teamsData.forEach(team => {
+            const teamMatches = playedMatches
+                .filter(m => m.homeTeamId === team.id || m.awayTeamId === team.id)
+                .sort((a, b) => new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime());
+
+            const results: ('W' | 'D' | 'L' | '-')[] = Array(6).fill('-');
+            for (let i = 0; i < Math.min(teamMatches.length, 6); i++) {
+                const match = teamMatches[i];
+                let result: 'W' | 'D' | 'L';
+                if (match.homeTeamId === team.id) {
+                    result = match.homeScore > match.awayScore ? 'W' : match.homeScore < match.awayScore ? 'L' : 'D';
+                } else {
+                    result = match.awayScore > match.homeScore ? 'W' : match.awayScore < match.homeScore ? 'L' : 'D';
+                }
+                results[5 - i] = result;
+            }
+            recentResultsMap.set(team.id, results);
+        });
+
+
+        const finalStandingsWithTeamData = calculatedStandings.map((standing, index) => {
+            const team = teamMap.get(standing.teamId)!;
+            const recentResults = recentResultsMap.get(standing.teamId) || Array(6).fill('-');
+            return { ...standing, rank: index + 1, ...team, recentResults };
+        });
+
+        // Chart Data Calculation
+        const maxWeek = Math.max(...playedMatches.map(m => m.week), 0);
+        const allWeeklyStandings: WeeklyTeamStanding[] = [];
+        for (let week = 1; week <= maxWeek; week++) {
+            const weeklyMatches = playedMatches.filter(m => m.week <= week);
+            const standingsForWeek: { [teamId: string]: { points: number, goalDifference: number, goalsFor: number } } = {};
+            teamsData.forEach(team => { standingsForWeek[team.id] = { points: 0, goalDifference: 0, goalsFor: 0 }; });
+
+            weeklyMatches.forEach(match => {
+                if (!standingsForWeek[match.homeTeamId] || !standingsForWeek[match.awayTeamId]) return;
+                const home = standingsForWeek[match.homeTeamId];
+                const away = standingsForWeek[match.awayTeamId];
+                home.goalsFor += match.homeScore;
+                away.goalsFor += match.awayScore;
+                home.goalDifference += match.homeScore - match.awayScore;
+                away.goalDifference += match.awayScore - match.homeScore;
+
+                if (match.homeScore > match.awayScore) home.points += 3;
+                else if (match.awayScore > match.homeScore) away.points += 3;
+                else { home.points += 1; away.points += 1; }
+            });
+
+            const sortedTeamIds = Object.keys(standingsForWeek).sort((a, b) => {
+                const sA = standingsForWeek[a]; const sB = standingsForWeek[b];
+                if (sB.points !== sA.points) return sB.points - sA.points;
+                if (sB.goalDifference !== sA.goalDifference) return sB.goalDifference - sA.goalDifference;
+                if (sB.goalsFor !== sA.goalsFor) return sB.goalsFor - sA.goalsFor;
+                return teamMap.get(a)!.name.localeCompare(teamMap.get(b)!.name);
+            });
+
+            sortedTeamIds.forEach((teamId, index) => { allWeeklyStandings.push({ week, teamId, rank: index + 1 }); });
+        }
+        
+        const weeks = [...new Set(allWeeklyStandings.map(d => d.week))].sort((a, b) => a - b).filter(w => w > 0);
+        const transformedChartData = weeks.map(week => {
+            const weekData: { [key: string]: any } = { week };
+            allWeeklyStandings.filter(d => d.week === week).forEach(standing => {
+                const team = teamMap.get(standing.teamId);
+                if (team) { weekData[team.name] = standing.rank; }
+            });
+            return weekData;
+        });
+
+        // Weekly Results for Accordion
         const resultsByWeek = new Map<number, (Match & {homeTeam: Team, awayTeam: Team})[]>();
-        const sortedMatches = [...matches].filter(m => m.homeScore !== -1 && m.awayScore !== -1).sort((a,b) => a.week - b.week);
-        sortedMatches.forEach(match => {
+        playedMatches.sort((a,b) => a.week - b.week).forEach(match => {
             if (match.week === 0) return;
             const weekMatches = resultsByWeek.get(match.week) || [];
             const homeTeam = teamMap.get(match.homeTeamId);
@@ -98,9 +205,16 @@ export default function StandingsPage() {
             resultsByWeek.set(match.week, weekMatches);
         });
 
+        const currentGamesPlayed = finalStandingsWithTeamData.length > 0 ? Math.max(...finalStandingsWithTeamData.map(s => s.gamesPlayed), 0) : 0;
 
-        return { standingsWithTeamData: finalStandings, chartData: transformedChartData, weeklyResults: resultsByWeek };
-    }, [teams, currentStandings, weeklyTeamStandings, teamRecentResults, matches]);
+        return { 
+            standingsWithTeamData: finalStandingsWithTeamData, 
+            chartData: transformedChartData, 
+            weeklyResults: resultsByWeek,
+            gamesPlayed: currentGamesPlayed
+        };
+    }, [teamsData, matchesData]);
+
 
     const getResultColor = (result: 'W' | 'D' | 'L' | '-') => {
         switch (result) {
@@ -111,18 +225,27 @@ export default function StandingsPage() {
         }
     };
 
-    const gamesPlayed = useMemo(() => {
-        if (currentStandings && currentStandings.length > 0) {
-            return Math.max(...currentStandings.map(s => s.gamesPlayed), 0);
-        }
-        return 0;
-    }, [currentStandings]);
-
     const weekHeaders = Array.from({ length: 6 }, (_, i) => {
         const week = gamesPlayed - 5 + i;
         return week > 0 ? `WK${week}` : '';
     }).filter(Boolean);
 
+  if (isLoading) {
+    return (
+        <div className="space-y-8">
+            <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
+                <h1 className="text-3xl font-bold tracking-tight">Premier League</h1>
+                <p className="text-slate-400">Official league standings, results, and form guide for the 2025-26 season.</p>
+            </header>
+            <div className="flex justify-center items-center h-96">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="size-5 animate-spin" />
+                    <span>Loading league data...</span>
+                </div>
+            </div>
+        </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -131,18 +254,7 @@ export default function StandingsPage() {
           <p className="text-slate-400">Official league standings, results, and form guide for the 2025-26 season.</p>
       </header>
 
-      {isLoading ? (
-        <Card>
-            <CardHeader className="items-center">
-                <CardTitle className="bg-black text-yellow-400 p-2 rounded-md">Team Movement 2025-2026</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[700px] flex items-center justify-center">
-                <div>Loading chart data...</div>
-            </CardContent>
-        </Card>
-      ) : (
-        <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData as (Team & { rank: number })[]} />
-      )}
+      <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData as (Team & { rank: number })[]} />
 
       <Card>
         <CardHeader className="items-center">
@@ -173,69 +285,65 @@ export default function StandingsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
-                <TableRow><TableCell colSpan={17} className="text-center h-96">Loading standings...</TableCell></TableRow>
-              ) : (
-                standingsWithTeamData.map(team => {
-                    if (!team) return null;
-                    const TeamIcon = Icons[team.logo as IconName] || Icons.match;
-                    const isLiverpool = team.id === 'team_12';
-                    const resultsToDisplay = team.recentResults.slice(-weekHeaders.length);
+              {standingsWithTeamData.map(team => {
+                  if (!team) return null;
+                  const TeamIcon = Icons[team.logo as IconName] || Icons.match;
+                  const isLiverpool = team.id === 'team_12';
+                  const resultsToDisplay = team.recentResults.slice(-weekHeaders.length);
 
-                    return (
-                    <TableRow
-                        key={team.id}
-                        style={{
-                        backgroundColor: team.bgColourFaint,
-                        color: team.textColour,
-                        }}
-                        className="border-b-4 border-transparent"
-                    >
-                        <TableCell className="font-medium rounded-l-md">{team.rank}</TableCell>
-                        <TableCell
-                        className="p-0"
-                        >
-                        <div className="flex items-center justify-center h-full">
-                            <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}>
-                            <TeamIcon
-                                className={cn(
-                                "size-5",
-                                isLiverpool && "scale-x-[-1]"
-                                )}
-                                style={{ color: team.iconColour }}
-                            />
-                            </div>
-                        </div>
-                        </TableCell>
-                        <TableCell>
-                        <span className="font-medium">{team.name}</span>
-                        </TableCell>
-                        <TableCell className="text-center">{team.gamesPlayed}</TableCell>
-                        <TableCell className="text-center">{team.wins}</TableCell>
-                        <TableCell className="text-center">{team.draws}</TableCell>
-                        <TableCell className="text-center">{team.losses}</TableCell>
-                        <TableCell className="text-center">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
-                        <TableCell className="text-center">{team.goalsFor}</TableCell>
-                        <TableCell className="text-center">{team.goalsAgainst}</TableCell>
-                        <TableCell className="text-center font-bold">{team.points}</TableCell>
-                        {Array(6-resultsToDisplay.length).fill('-').map((_, index) => (
-                        <TableCell key={index} className={cn("text-center font-bold p-0 w-12")}>
-                            <div className={cn("flex items-center justify-center h-10 w-full", getResultColor('-'))}>
-                            -
-                            </div>
-                        </TableCell>
-                        ))}
-                        {resultsToDisplay.map((result, index) => (
-                        <TableCell key={index} className={cn("text-center font-bold p-0 w-12", index === resultsToDisplay.length - 1 && 'rounded-r-md')}>
-                            <div className={cn("flex items-center justify-center h-10 w-full", getResultColor(result), index === resultsToDisplay.length - 1 && 'rounded-r-md')}>
-                            {result}
-                            </div>
-                        </TableCell>
-                        ))}
-                    </TableRow>
-                    );
-                })
-              )}
+                  return (
+                  <TableRow
+                      key={team.id}
+                      style={{
+                      backgroundColor: team.bgColourFaint,
+                      color: team.textColour,
+                      }}
+                      className="border-b-4 border-transparent"
+                  >
+                      <TableCell className="font-medium rounded-l-md">{team.rank}</TableCell>
+                      <TableCell
+                      className="p-0"
+                      >
+                      <div className="flex items-center justify-center h-full">
+                          <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}>
+                          <TeamIcon
+                              className={cn(
+                              "size-5",
+                              isLiverpool && "scale-x-[-1]"
+                              )}
+                              style={{ color: team.iconColour }}
+                          />
+                          </div>
+                      </div>
+                      </TableCell>
+                      <TableCell>
+                      <span className="font-medium">{team.name}</span>
+                      </TableCell>
+                      <TableCell className="text-center">{team.gamesPlayed}</TableCell>
+                      <TableCell className="text-center">{team.wins}</TableCell>
+                      <TableCell className="text-center">{team.draws}</TableCell>
+                      <TableCell className="text-center">{team.losses}</TableCell>
+                      <TableCell className="text-center">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
+                      <TableCell className="text-center">{team.goalsFor}</TableCell>
+                      <TableCell className="text-center">{team.goalsAgainst}</TableCell>
+                      <TableCell className="text-center font-bold">{team.points}</TableCell>
+                      {Array(6-resultsToDisplay.length).fill('-').map((_, index) => (
+                      <TableCell key={index} className={cn("text-center font-bold p-0 w-12")}>
+                          <div className={cn("flex items-center justify-center h-10 w-full", getResultColor('-'))}>
+                          -
+                          </div>
+                      </TableCell>
+                      ))}
+                      {resultsToDisplay.map((result, index) => (
+                      <TableCell key={index} className={cn("text-center font-bold p-0 w-12", index === resultsToDisplay.length - 1 && 'rounded-r-md')}>
+                          <div className={cn("flex items-center justify-center h-10 w-full", getResultColor(result), index === resultsToDisplay.length - 1 && 'rounded-r-md')}>
+                          {result}
+                          </div>
+                      </TableCell>
+                      ))}
+                  </TableRow>
+                  );
+              })}
             </TableBody>
           </Table>
         </CardContent>
@@ -249,46 +357,44 @@ export default function StandingsPage() {
              <CardDescription>A complete history of the season's results.</CardDescription>
         </CardHeader>
         <CardContent>
-            {isLoading ? (
-                <div className="text-center h-48 flex items-center justify-center">Loading results...</div>
-            ) : (
-                <Accordion type="single" collapsible defaultValue={`week-${gamesPlayed}`}>
-                    {[...weeklyResults.keys()].sort((a,b) => b-a).map(weekNumber => (
-                        <AccordionItem value={`week-${weekNumber}`} key={weekNumber}>
-                            <AccordionTrigger className="text-lg font-bold">Week {weekNumber}</AccordionTrigger>
-                            <AccordionContent>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                                    {weeklyResults.get(weekNumber)?.map((match, index) => {
-                                        const HomeIcon = Icons[match.homeTeam.logo as IconName] || Icons.match;
-                                        const AwayIcon = Icons[match.awayTeam.logo as IconName] || Icons.match;
-                                        return (
-                                            <div key={index} className="flex items-center justify-center p-3 rounded-lg border">
-                                                <div className="flex items-center gap-3 justify-end w-2/5">
-                                                    <span className="font-medium text-right">{match.homeTeam.name}</span>
-                                                     <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.homeTeam.bgColourSolid }}>
-                                                        <HomeIcon className="size-5" style={{ color: match.homeTeam.iconColour }} />
-                                                    </div>
-                                                </div>
-                                                <div className="font-bold text-lg px-4 text-center">
-                                                    {match.homeScore} - {match.awayScore}
-                                                </div>
-                                                <div className="flex items-center gap-3 w-2/5">
-                                                     <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.awayTeam.bgColourSolid }}>
-                                                        <AwayIcon className="size-5" style={{ color: match.awayTeam.iconColour }} />
-                                                    </div>
-                                                    <span className="font-medium">{match.awayTeam.name}</span>
+            <Accordion type="single" collapsible defaultValue={`week-${gamesPlayed}`}>
+                {[...weeklyResults.keys()].sort((a,b) => b-a).map(weekNumber => (
+                    <AccordionItem value={`week-${weekNumber}`} key={weekNumber}>
+                        <AccordionTrigger className="text-lg font-bold">Week {weekNumber}</AccordionTrigger>
+                        <AccordionContent>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                                {weeklyResults.get(weekNumber)?.map((match, index) => {
+                                    const HomeIcon = Icons[match.homeTeam.logo as IconName] || Icons.match;
+                                    const AwayIcon = Icons[match.awayTeam.logo as IconName] || Icons.match;
+                                    return (
+                                        <div key={index} className="flex items-center justify-center p-3 rounded-lg border">
+                                            <div className="flex items-center gap-3 justify-end w-2/5">
+                                                <span className="font-medium text-right">{match.homeTeam.name}</span>
+                                                 <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.homeTeam.bgColourSolid }}>
+                                                    <HomeIcon className="size-5" style={{ color: match.homeTeam.iconColour }} />
                                                 </div>
                                             </div>
-                                        )
-                                    })}
-                                </div>
-                            </AccordionContent>
-                        </AccordionItem>
-                    ))}
-                </Accordion>
-            )}
+                                            <div className="font-bold text-lg px-4 text-center">
+                                                {match.homeScore} - {match.awayScore}
+                                            </div>
+                                            <div className="flex items-center gap-3 w-2/5">
+                                                 <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.awayTeam.bgColourSolid }}>
+                                                    <AwayIcon className="size-5" style={{ color: match.awayTeam.iconColour }} />
+                                                </div>
+                                                <span className="font-medium">{match.awayTeam.name}</span>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                ))}
+            </Accordion>
         </CardContent>
       </Card>
     </div>
   );
 }
+
+    
