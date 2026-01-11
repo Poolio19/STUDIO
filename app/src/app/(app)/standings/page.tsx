@@ -83,28 +83,28 @@ export default function StandingsPage() {
             
             const teamNameMap = new Map(teamsData.map(t => [t.id, t.name]));
 
-            const standingsByWeek = weeklyTeamStandings.reduce((acc, standing) => {
+            const standingsByWeek: { [week: number]: { teamId: string, rank: number }[] } = {};
+            for (const standing of weeklyTeamStandings) {
                 if (standing.week > 0) {
-                    if (!acc[standing.week]) {
-                        acc[standing.week] = [];
+                    if (!standingsByWeek[standing.week]) {
+                        standingsByWeek[standing.week] = [];
                     }
-                    acc[standing.week].push(standing);
+                    standingsByWeek[standing.week].push(standing);
                 }
-                return acc;
-            }, {} as { [week: number]: WeeklyTeamStanding[] });
+            }
             
             const sortedWeeks = Object.keys(standingsByWeek).map(Number).sort((a, b) => a - b);
             
             return sortedWeeks.map(week => {
                 const weekData: { [key: string]: any } = { week };
-                standingsByWeek[week].forEach(standing => {
+                for (const standing of standingsByWeek[week]) {
                     const teamName = teamNameMap.get(standing.teamId);
-                    if(teamName) {
+                    if (teamName) {
                         weekData[teamName] = standing.rank;
                         weekData[`${teamName}-outer`] = standing.rank;
                         weekData[`${teamName}-inner`] = standing.rank;
                     }
-                });
+                }
                 return weekData;
             });
         })();
