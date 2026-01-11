@@ -1,31 +1,7 @@
 'use client';
 
-import { firebaseConfig } from '@/firebase/config';
-import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
-import { getAuth, type Auth } from 'firebase/auth';
-import { getFirestore, type Firestore, enableNetwork } from 'firebase/firestore';
-
-// This function now robustly initializes Firebase, ensuring it only happens once.
-export function initializeFirebase(): {
-  firebaseApp: FirebaseApp;
-  auth: Auth;
-  firestore: Firestore;
-} {
-  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-  const firestore = getFirestore(app);
-  
-  // Explicitly enable the network for Firestore. This is crucial for environments
-  // where the SDK might default to an offline state.
-  enableNetwork(firestore).catch((err) => {
-    console.error("Firebase: Failed to enable network.", err);
-  });
-
-  return {
-    firebaseApp: app,
-    auth: getAuth(app),
-    firestore: firestore,
-  };
-}
+// Barrel file for exporting Firebase-related utilities and hooks.
+// This simplifies imports in other parts of the application.
 
 export * from './provider';
 export * from './client-provider';

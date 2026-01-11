@@ -1,16 +1,14 @@
 'use client';
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
-import { FirebaseApp } from 'firebase/app';
-import { Firestore } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
+import { FirebaseApp, initializeApp, getApps, getApp } from 'firebase/app';
+import { Firestore, getFirestore, enableNetwork } from 'firebase/firestore';
+import { Auth, User, onAuthStateChanged, signInWithEmailAndPassword, getAuth } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
+import { firebaseConfig } from './config';
 
 interface FirebaseProviderProps {
   children: ReactNode;
-  firebaseApp: FirebaseApp;
-  firestore: Firestore;
-  auth: Auth;
 }
 
 interface UserAuthState {
@@ -46,11 +44,14 @@ export interface UserHookResult {
 export const FirebaseContext = createContext<FirebaseContextState | undefined>(undefined);
 
 export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
-  children,
-  firebaseApp,
-  firestore,
-  auth,
+  children
 }) => {
+  const [services, setServices] = useState<{
+    firebaseApp: FirebaseApp;
+    auth: Auth;
+    firestore: Firestore;
+  } | null>(null);
+  
   const [userAuthState, setUserAuthState] = useState<UserAuthState>({
     user: null,
     isUserLoading: true,
@@ -58,11 +59,18 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   });
 
   useEffect(() => {
-    if (!auth) {
-      setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service not provided.") });
-      return;
-    }
-  
+    // This effect runs once on the client to initialize Firebase
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+    const firestore = getFirestore(app);
+    const auth = getAuth(app);
+    
+    enableNetwork(firestore).catch((err) => {
+      console.error("Firebase: Failed to enable network.", err);
+    });
+
+    setServices({ firebaseApp: app, auth, firestore });
+
+    // This effect handles authentication state
     const unsubscribe = onAuthStateChanged(
       auth,
       (firebaseUser) => {
@@ -87,14 +95,14 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       }
     );
     return () => unsubscribe();
-  }, [auth]);
+  }, []);
 
   const contextValue = useMemo((): FirebaseContextState => ({
-    firebaseApp,
-    firestore,
-    auth,
+    firebaseApp: services?.firebaseApp || null,
+    firestore: services?.firestore || null,
+    auth: services?.auth || null,
     ...userAuthState,
-  }), [firebaseApp, firestore, auth, userAuthState]);
+  }), [services, userAuthState]);
 
   return (
     <FirebaseContext.Provider value={contextValue}>
