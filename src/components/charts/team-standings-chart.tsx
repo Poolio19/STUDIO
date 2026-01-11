@@ -97,7 +97,7 @@ export function TeamStandingsChart({
                   bottom: 50,
                 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={true} />
+                <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
                   dataKey="week"
                   type="number"
@@ -106,10 +106,6 @@ export function TeamStandingsChart({
                   tickLine={false}
                   axisLine={false}
                   tickMargin={8}
-                  orientation="top"
-                  angle={-90}
-                  textAnchor="start"
-                  interval={0}
                 />
                 <YAxis
                   tickLine={false}
