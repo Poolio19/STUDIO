@@ -38,7 +38,6 @@ export function TeamStandingsChart({
       config[team.name] = {
         label: team.name,
         colour: team.bgColourSolid || `hsl(var(--chart-color-${team.rank}))`,
-        secondaryColour: team.iconColour || team.textColour || '#FFFFFF',
       };
       return config;
     }, {} as any);
@@ -46,15 +45,7 @@ export function TeamStandingsChart({
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      // The payload will contain both lines for each team, so we need to filter them.
-      const uniquePayload = payload.reduce((acc, p) => {
-        if (!acc.some((item: any) => item.name === p.name)) {
-          acc.push(p);
-        }
-        return acc;
-      }, []);
-
-      const sortedPayload = [...uniquePayload].sort(
+      const sortedPayload = [...payload].sort(
         (a, b) => a.value - b.value
       );
 
@@ -96,7 +87,7 @@ export function TeamStandingsChart({
                 data={chartData}
                 margin={{
                   top: 20,
-                  right: 130,
+                  right: 20,
                   left: -20,
                   bottom: 50,
                 }}
@@ -124,28 +115,13 @@ export function TeamStandingsChart({
                   tickCount={20}
                 />
                 <Tooltip content={<CustomTooltip />} />
-                {/* Render the solid background lines first */}
                 {sortedTeams.map(team => (
                   <Line
-                    key={`${team.id}-solid`}
+                    key={team.id}
                     dataKey={team.name}
                     type="monotone"
                     stroke={chartConfig[team.name]?.colour}
-                    strokeWidth={4}
-                    dot={false}
-                    name={team.name}
-                    legendType="none"
-                  />
-                ))}
-                {/* Render the dashed foreground lines on top */}
-                {sortedTeams.map(team => (
-                  <Line
-                    key={`${team.id}-dashed`}
-                    dataKey={team.name}
-                    type="monotone"
-                    stroke={chartConfig[team.name]?.secondaryColour}
-                    strokeWidth={4}
-                    strokeDasharray="9 12"
+                    strokeWidth={3}
                     dot={false}
                     name={team.name}
                   />
@@ -153,38 +129,9 @@ export function TeamStandingsChart({
               </LineChart>
             </ResponsiveContainer>
           </ChartContainer>
-          {/* Custom Legend */}
-          <ul
-            className="absolute flex flex-col justify-between text-xs"
-            style={{
-              right: 0,
-              top: '37.5px',
-              bottom: '42.5px',
-              width: '120px',
-              paddingLeft: '1rem',
-            }}
-          >
-            {sortedTeams.map(team => (
-              <li key={team.id} className="flex items-center space-x-2">
-                <div className="relative w-4 shrink-0 flex items-center justify-center" style={{ height: '4px' }}>
-                  <div 
-                    className="absolute w-full h-full" 
-                    style={{ backgroundColor: chartConfig[team.name]?.colour }}
-                  ></div>
-                  <div 
-                    className="absolute w-2"
-                    style={{ 
-                      backgroundColor: chartConfig[team.name]?.secondaryColour,
-                      height: '2px'
-                    }}
-                  ></div>
-                </div>
-                <span>{team.name}</span>
-              </li>
-            ))}
-          </ul>
         </div>
       </CardContent>
     </Card>
   );
 }
+
