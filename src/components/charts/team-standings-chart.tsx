@@ -56,10 +56,7 @@ export function TeamStandingsChart({
           <p className="mb-2 font-medium">{week}</p>
           <div className="grid grid-cols-1 gap-1.5">
             {sortedPayload.map((pld: any, index: number) => {
-              // We only want to show one entry per team in the tooltip
-              if (pld.dataKey.endsWith('-inner')) return null;
-              
-              const teamName = pld.dataKey.replace('-outer', '');
+              const teamName = pld.dataKey;
 
               return (
                 <div key={index} className="flex items-center gap-2">
@@ -117,26 +114,16 @@ export function TeamStandingsChart({
                 />
                 <Tooltip content={<CustomTooltip />} />
                 {sortedTeams.map(team => (
-                  <React.Fragment key={team.id}>
-                    <Line
-                      dataKey={team.name}
-                      type="monotone"
-                      stroke={team.bgColourSolid || chartConfig[team.name]?.colour}
-                      strokeWidth={5}
-                      dot={false}
-                      name={team.name}
-                      legendType="none"
-                    />
-                     <Line
-                      dataKey={team.name}
-                      type="monotone"
-                      stroke={team.iconColour || '#FFFFFF'}
-                      strokeWidth={2}
-                      dot={false}
-                      name={team.name}
-                      legendType="none"
-                    />
-                  </React.Fragment>
+                  <Line
+                    key={team.id}
+                    dataKey={team.name}
+                    type="monotone"
+                    stroke={team.bgColourSolid || chartConfig[team.name]?.colour}
+                    strokeWidth={3}
+                    dot={false}
+                    name={team.name}
+                    legendType="none"
+                  />
                 ))}
               </LineChart>
             </ResponsiveContainer>
@@ -146,4 +133,3 @@ export function TeamStandingsChart({
     </Card>
   );
 }
-

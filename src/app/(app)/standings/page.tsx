@@ -22,7 +22,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import type { WeeklyTeamStanding, Match, Team } from '@/lib/types';
+import type { WeeklyTeamStanding, Match, Team, CurrentStanding } from '@/lib/types';
 import { Icons, IconName } from '@/components/icons';
 import { TeamStandingsChart } from '@/components/charts/team-standings-chart';
 import { useMemo } from 'react';
@@ -31,19 +31,9 @@ import { Separator } from '@/components/ui/separator';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
+import type { TeamRecentResult } from '@/lib/types';
 
-type StandingWithTeam = {
-  teamId: string;
-  rank: number;
-  points: number;
-  goalDifference: number;
-  gamesPlayed: number;
-  wins: number;
-  draws: number;
-  losses: number;
-  goalsFor: number;
-  goalsAgainst: number;
-} & Team & { recentResults: ('W' | 'D' | 'L' | '-')[] };
+type StandingWithTeam = CurrentStanding & Team & { recentResults: ('W' | 'D' | 'L' | '-')[] };
 
 
 export default function StandingsPage() {
@@ -52,11 +42,17 @@ export default function StandingsPage() {
 
     const teamsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'teams')) : null, [firestore, isUserLoading]);
     const matchesQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'matches')) : null, [firestore, isUserLoading]);
+    const standingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'standings')) : null, [firestore, isUserLoading]);
+    const weeklyTeamStandingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'weeklyTeamStandings')) : null, [firestore, isUserLoading]);
+    const teamRecentResultsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'teamRecentResults')) : null, [firestore, isUserLoading]);
     
     const { data: teamsData, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
     const { data: matchesData, isLoading: matchesLoading } = useCollection<Match>(matchesQuery);
+    const { data: standingsData, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsQuery);
+    const { data: weeklyTeamStandings, isLoading: weeklyStandingsLoading } = useCollection<WeeklyTeamStanding>(weeklyTeamStandingsQuery);
+    const { data: teamRecentResults, isLoading: recentResultsLoading } = useCollection<TeamRecentResult>(teamRecentResultsQuery);
 
-    const isLoading = isUserLoading || teamsLoading || matchesLoading;
+    const isLoading = isUserLoading || teamsLoading || matchesLoading || standingsLoading || weeklyStandingsLoading || recentResultsLoading;
     
     const { 
         standingsWithTeamData, 
@@ -64,131 +60,25 @@ export default function StandingsPage() {
         weeklyResults,
         gamesPlayed,
     } = useMemo(() => {
-        if (!teamsData || !matchesData) {
+        if (!teamsData || !standingsData || !matchesData || !weeklyTeamStandings || !teamRecentResults) {
             return { standingsWithTeamData: [], chartData: [], weeklyResults: new Map(), gamesPlayed: 0 };
         }
 
         const teamMap = new Map(teamsData.map(t => [t.id, t]));
-        const playedMatches = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
+        const recentResultsMap = new Map(teamRecentResults.map(r => [r.teamId, r.results]));
 
-        const teamStats: { [key: string]: Omit<StandingWithTeam, 'teamId' | 'rank' | 'name' | 'logo' | 'iconColour' | 'bgColourFaint' | 'bgColourSolid' | 'textColour' | 'recentResults'> & { teamId: string } } = {};
-
-        // Initialize stats for the 20 teams in the current season
-        const currentSeasonTeams = teamsData.filter(t => !['team_21', 'team_22', 'team_23'].includes(t.id)).slice(0, 20);
-
-        currentSeasonTeams.forEach(team => {
-            teamStats[team.id] = {
-                teamId: team.id,
-                points: 0, gamesPlayed: 0, wins: 0, draws: 0, losses: 0,
-                goalsFor: 0, goalsAgainst: 0, goalDifference: 0,
-            };
-        });
-
-        playedMatches.forEach(match => {
-            const homeStats = teamStats[match.homeTeamId];
-            const awayStats = teamStats[match.awayTeamId];
-
-            if (!homeStats || !awayStats) return; // Only process matches for current season teams
-
-            homeStats.gamesPlayed++;
-            awayStats.gamesPlayed++;
-            homeStats.goalsFor += match.homeScore;
-            awayStats.goalsFor += match.awayScore;
-            homeStats.goalsAgainst += match.awayScore;
-            awayStats.goalsAgainst += match.homeScore;
-
-            if (match.homeScore > match.awayScore) {
-                homeStats.wins++;
-                homeStats.points += 3;
-                awayStats.losses++;
-            } else if (match.awayScore > match.homeScore) {
-                awayStats.wins++;
-                awayStats.points += 3;
-                homeStats.losses++;
-            } else {
-                homeStats.draws++;
-                awayStats.draws++;
-                homeStats.points++;
-                awayStats.points++;
-            }
-        });
-        
-        const calculatedStandings = Object.values(teamStats).map(stats => ({
-            ...stats,
-            goalDifference: stats.goalsFor - stats.goalsAgainst,
-        })).sort((a, b) => {
-            if (b.points !== a.points) return b.points - a.points;
-            if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
-            if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
-            const teamA = teamMap.get(a.teamId);
-            const teamB = teamMap.get(b.teamId);
-            return teamA!.name.localeCompare(teamB!.name);
-        });
-
-        const recentResultsMap = new Map<string, ('W' | 'D' | 'L' | '-')[]>();
-        currentSeasonTeams.forEach(team => {
-            const teamMatches = playedMatches
-                .filter(m => m.homeTeamId === team.id || m.awayTeamId === team.id)
-                .sort((a, b) => new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime());
-
-            const results: ('W' | 'D' | 'L' | '-')[] = Array(6).fill('-');
-            for (let i = 0; i < Math.min(teamMatches.length, 6); i++) {
-                const match = teamMatches[i];
-                let result: 'W' | 'D' | 'L';
-                if (match.homeTeamId === team.id) {
-                    result = match.homeScore > match.awayScore ? 'W' : match.homeScore < match.awayScore ? 'L' : 'D';
-                } else {
-                    result = match.awayScore > match.homeScore ? 'W' : match.awayScore < match.homeScore ? 'L' : 'D';
-                }
-                results[5 - i] = result;
-            }
-            recentResultsMap.set(team.id, results);
-        });
-
-
-        const finalStandingsWithTeamData = calculatedStandings.map((standing, index) => {
+        const finalStandingsWithTeamData = standingsData.map(standing => {
             const team = teamMap.get(standing.teamId)!;
             const recentResults = recentResultsMap.get(standing.teamId) || Array(6).fill('-');
-            return { ...standing, rank: index + 1, ...team, recentResults };
-        });
+            return { ...standing, ...team, recentResults };
+        }).sort((a,b) => a.rank - b.rank);
+
 
         // Chart Data Calculation
-        const maxWeek = Math.max(...playedMatches.map(m => m.week), 0);
-        const allWeeklyStandings: WeeklyTeamStanding[] = [];
-        for (let week = 1; week <= maxWeek; week++) {
-            const weeklyMatches = playedMatches.filter(m => m.week <= week);
-            const standingsForWeek: { [teamId: string]: { points: number, goalDifference: number, goalsFor: number } } = {};
-            currentSeasonTeams.forEach(team => { standingsForWeek[team.id] = { points: 0, goalDifference: 0, goalsFor: 0 }; });
-
-            weeklyMatches.forEach(match => {
-                if (!standingsForWeek[match.homeTeamId] || !standingsForWeek[match.awayTeamId]) return;
-                const home = standingsForWeek[match.homeTeamId];
-                const away = standingsForWeek[match.awayTeamId];
-                home.goalsFor += match.homeScore;
-                away.goalsFor += match.awayScore;
-                home.goalDifference += match.homeScore - match.awayScore;
-                away.goalDifference += match.awayScore - match.homeScore;
-
-                if (match.homeScore > match.awayScore) home.points += 3;
-                else if (match.awayScore > match.homeScore) away.points += 3;
-                else { home.points += 1; away.points += 1; }
-            });
-
-            const sortedTeamIds = Object.keys(standingsForWeek).sort((a, b) => {
-                const sA = standingsForWeek[a]; const sB = standingsForWeek[b];
-                if (sB.points !== sA.points) return sB.points - sA.points;
-                if (sB.goalDifference !== sA.goalDifference) return sB.goalDifference - sA.goalDifference;
-                if (sB.goalsFor !== sA.goalsFor) return sB.goalsFor - sA.goalsFor;
-                return teamMap.get(a)!.name.localeCompare(teamMap.get(b)!.name);
-            });
-
-            sortedTeamIds.forEach((teamId, index) => { allWeeklyStandings.push({ week, teamId, rank: index + 1 }); });
-        }
-        
-        const weeks = [...new Set(allWeeklyStandings.map(d => d.week))].sort((a, b) => a - b).filter(w => w > 0);
+        const weeks = [...new Set(weeklyTeamStandings.map(d => d.week))].sort((a, b) => a - b).filter(w => w > 0);
         const transformedChartData = weeks.map(week => {
             const weekData: { [key: string]: any } = { week };
-            allWeeklyStandings.filter(d => d.week === week).forEach(standing => {
+            weeklyTeamStandings.filter(d => d.week === week).forEach(standing => {
                 const team = teamMap.get(standing.teamId);
                 if (team) { weekData[team.name] = standing.rank; }
             });
@@ -197,6 +87,7 @@ export default function StandingsPage() {
 
         // Weekly Results for Accordion
         const resultsByWeek = new Map<number, (Match & {homeTeam: Team, awayTeam: Team})[]>();
+        const playedMatches = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
         playedMatches.sort((a,b) => a.week - b.week).forEach(match => {
             if (match.week === 0) return;
             const weekMatches = resultsByWeek.get(match.week) || [];
@@ -216,7 +107,7 @@ export default function StandingsPage() {
             weeklyResults: resultsByWeek,
             gamesPlayed: currentGamesPlayed
         };
-    }, [teamsData, matchesData]);
+    }, [teamsData, matchesData, standingsData, weeklyTeamStandings, teamRecentResults]);
 
 
     const getResultColor = (result: 'W' | 'D' | 'L' | '-') => {
@@ -399,4 +290,3 @@ export default function StandingsPage() {
     </div>
   );
 }
-
