@@ -20,9 +20,9 @@ import {
 import type { User, CurrentStanding, MonthlyMimoM } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
-import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
+import { ArrowUp, ArrowDown, Minus, Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 
 
@@ -79,17 +79,16 @@ const totalWinningsMap = new Map<string, number>();
 
 export default function LeaderboardPage() {
   const firestore = useFirestore();
-  const { isUserLoading } = useUser();
 
-  const usersQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'users'), orderBy('rank', 'asc')) : null, [firestore, isUserLoading]);
-  const standingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'standings') : null, [firestore, isUserLoading]);
-  const mimoMQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore, isUserLoading]);
+  const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('rank', 'asc')) : null, [firestore]);
+  const standingsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'standings') : null, [firestore]);
+  const mimoMQuery = useMemoFirebase(() => firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore]);
 
   const { data: usersData, isLoading: usersLoading } = useCollection<User>(usersQuery);
   const { data: currentStandings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsQuery);
   const { data: monthlyMimoM, isLoading: mimoMLoading } = useCollection<MonthlyMimoM>(mimoMQuery);
 
-  const isLoading = isUserLoading || usersLoading || standingsLoading || mimoMLoading;
+  const isLoading = usersLoading || standingsLoading || mimoMLoading;
   
   const currentWeek = useMemo(() => {
     if (currentStandings && currentStandings.length > 0) {
@@ -233,10 +232,15 @@ export default function LeaderboardPage() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={12} className="text-center h-48">Loading leaderboard...</TableCell>
+                  <TableCell colSpan={12} className="text-center h-48">
+                    <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                      <Loader2 className="size-5 animate-spin" />
+                      <span>Loading leaderboard...</span>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ) : (
-                sortedUsers.map((user, index) => {
+                sortedUsers.map((user) => {
                   const RankIcon = getRankChangeIcon(user.rankChange);
                   const ScoreIcon = getRankChangeIcon(user.scoreChange);
                   const userWinnings = localTotalWinningsMap.get(user.id) || 0;

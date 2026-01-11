@@ -69,8 +69,10 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
         if (firebaseUser) {
           setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
         } else {
+          // If no user, attempt anonymous sign-in.
           signInAnonymously(auth).catch((error) => {
              console.error("FirebaseProvider: Anonymous sign-in failed:", error);
+             // If anonymous sign-in fails, we are truly without a user.
              setUserAuthState({ user: null, isUserLoading: false, userError: error });
           });
         }

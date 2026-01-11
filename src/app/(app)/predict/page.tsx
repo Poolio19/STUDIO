@@ -16,7 +16,7 @@ import { useUser, useCollection, useDoc, useFirestore, useMemoFirebase } from '@
 import { collection, doc, query } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowDown, ArrowUp, Minus } from 'lucide-react';
+import { ArrowDown, ArrowUp, Loader2, Minus } from 'lucide-react';
 
 const predictionSchema = z.object({
   id: z.string(),
@@ -215,7 +215,14 @@ export default function PredictPage() {
   const prevRankMap = getRankMap(sortedPreviousStandings);
 
   if (isLoading && items.length === 0) {
-    return <div className="flex justify-center items-center h-full">Loading your predictions...</div>;
+    return (
+      <div className="flex justify-center items-center h-full">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="size-5 animate-spin" />
+          <span>Loading your predictions...</span>
+        </div>
+      </div>
+    );
   }
 
   return (

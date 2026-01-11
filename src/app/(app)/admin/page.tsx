@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { useFirebase, useMemoFirebase } from '@/firebase';
+import { useFirestore, useMemoFirebase } from '@/firebase';
 import {
   teams,
   standings,
@@ -41,7 +41,6 @@ import {
 } from '@/components/ui/select';
 import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 import { MatchResultSchema } from '@/ai/flows/update-match-results-flow-types';
-import { cn } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 
@@ -140,7 +139,7 @@ type EditableMatch = Match & {
 
 export default function AdminPage() {
   const { toast } = useToast();
-  const { firestore } = useFirebase();
+  const firestore = useFirestore();
   const [isImporting, setIsImporting] = React.useState(false);
   const [importProgress, setImportProgress] = React.useState<string | null>(null);
 
@@ -297,148 +296,146 @@ export default function AdminPage() {
   };
 
   return (
-    <>
-      <div className="space-y-8">
-        <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Data Administration
-          </h1>
-          <p className="text-slate-400">
-            Manage your application's data sources and imports.
-          </p>
-        </header>
+    <div className="space-y-8">
+      <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
+        <h1 className="text-3xl font-bold tracking-tight">
+          Data Administration
+        </h1>
+        <p className="text-slate-400">
+          Manage your application's data sources and imports.
+        </p>
+      </header>
 
-        <Card>
-            <CardHeader>
-                <CardTitle>Database Status</CardTitle>
-                <CardDescription>
-                    Check the connection to the Firestore database.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="flex items-center gap-4 rounded-lg border p-4">
-                {dbStatus.connected ? <Icons.shieldCheck className="h-6 w-6 text-green-500" /> : <Icons.bug className="h-6 w-6 text-red-500" />}
-                <p className="font-medium">{dbStatus.message}</p>
-                </div>
-            </CardContent>
-        </Card>
-        
-        <Card>
-            <CardHeader>
-                <CardTitle>Database Reset</CardTitle>
-                <CardDescription>
-                    This will permanently delete all data in all collections and re-populate it with the initial dataset. This action cannot be undone.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                         <Button variant="destructive" disabled={!dbStatus.connected || isImporting}>
-                            {isImporting ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Resetting Database...
-                                </>
-                            ) : "Purge and Re-Import All Data"}
-                        </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This will permanently delete all collections and documents in your database and replace them with the original seed data. This action cannot be undone.
-                        </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handlePurgeAndImport}>Yes, reset the database</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
+      <Card>
+          <CardHeader>
+              <CardTitle>Database Status</CardTitle>
+              <CardDescription>
+                  Check the connection to the Firestore database.
+              </CardDescription>
+          </CardHeader>
+          <CardContent>
+              <div className="flex items-center gap-4 rounded-lg border p-4">
+              {dbStatus.connected ? <Icons.shieldCheck className="h-6 w-6 text-green-500" /> : <Icons.bug className="h-6 w-6 text-red-500" />}
+              <p className="font-medium">{dbStatus.message}</p>
+              </div>
+          </CardContent>
+      </Card>
+      
+      <Card>
+          <CardHeader>
+              <CardTitle>Database Reset</CardTitle>
+              <CardDescription>
+                  This will permanently delete all data in all collections and re-populate it with the initial dataset. This action cannot be undone.
+              </CardDescription>
+          </CardHeader>
+          <CardContent>
+              <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                       <Button variant="destructive" disabled={!dbStatus.connected || isImporting}>
+                          {isImporting ? (
+                              <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Resetting Database...
+                              </>
+                          ) : "Purge and Re-Import All Data"}
+                      </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                      <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                          This will permanently delete all collections and documents in your database and replace them with the original seed data. This action cannot be undone.
+                      </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handlePurgeAndImport}>Yes, reset the database</AlertDialogAction>
+                      </AlertDialogFooter>
+                  </AlertDialogContent>
+              </AlertDialog>
 
-                {importProgress && (
-                     <div className="flex items-center gap-4 rounded-lg border p-4 mt-4">
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                        <p className="font-medium">{importProgress}</p>
-                    </div>
-                )}
-            </CardContent>
-        </Card>
+              {isImporting && importProgress && (
+                   <div className="flex items-center gap-4 rounded-lg border p-4 mt-4">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      <p className="font-medium">{importProgress}</p>
+                  </div>
+              )}
+          </CardContent>
+      </Card>
 
 
-        <Card>
-            <CardHeader>
-                <CardTitle>Update Match Results</CardTitle>
-                <CardDescription>
-                    Select a week to view its fixtures, enter the scores, and save the results to the database. Use a value of -1 for scores that are not yet final. This is disabled until the database is connected.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                 <Select onValueChange={handleWeekChange} disabled={!dbStatus.connected}>
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select a week" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {Array.from({ length: 38 }, (_, i) => i + 1).map(week => (
-                            <SelectItem key={week} value={String(week)}>Week {week}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+      <Card>
+          <CardHeader>
+              <CardTitle>Update Match Results</CardTitle>
+              <CardDescription>
+                  Select a week to view its fixtures, enter the scores, and save the results to the database. Use a value of -1 for scores that are not yet final. This is disabled until the database is connected.
+              </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+               <Select onValueChange={handleWeekChange} disabled={!dbStatus.connected}>
+                  <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Select a week" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      {Array.from({ length: 38 }, (_, i) => i + 1).map(week => (
+                          <SelectItem key={week} value={String(week)}>Week {week}</SelectItem>
+                      ))}
+                  </SelectContent>
+              </Select>
 
-                {selectedWeek !== null && (
-                    <div className="space-y-4 pt-4">
-                        <h3 className="font-semibold">Fixtures for Week {selectedWeek}</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                           {weekFixtures.map(match => {
-                                const HomeIcon = Icons[match.homeTeam.logo as IconName] || Icons.match;
-                                const AwayIcon = Icons[match.awayTeam.logo as IconName] || Icons.match;
-                                return (
-                                <div key={match.id} className="flex items-center gap-2 p-2 border rounded-lg">
-                                     <div className="flex items-center gap-2 justify-end w-2/5">
-                                        <Label htmlFor={`${match.id}-home`} className="text-right">{match.homeTeam.name}</Label>
-                                        <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.homeTeam.bgColourSolid }}>
-                                            <HomeIcon className="size-5" style={{ color: match.homeTeam.iconColour }} />
-                                        </div>
-                                    </div>
-                                    <Input
-                                        id={`${match.id}-home`}
-                                        type="number"
-                                        value={scores[match.id]?.homeScore ?? ''}
-                                        onChange={(e) => handleScoreChange(match.id, 'home', e.target.value)}
-                                        className="w-16 text-center"
-                                        disabled={!dbStatus.connected}
-                                    />
-                                    <span>-</span>
-                                     <Input
-                                        id={`${match.id}-away`}
-                                        type="number"
-                                        value={scores[match.id]?.awayScore ?? ''}
-                                        onChange={(e) => handleScoreChange(match.id, 'away', e.target.value)}
-                                        className="w-16 text-center"
-                                        disabled={!dbStatus.connected}
-                                    />
-                                    <div className="flex items-center gap-2 w-2/5">
-                                        <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.awayTeam.bgColourSolid }}>
-                                            <AwayIcon className="size-5" style={{ color: match.awayTeam.iconColour }} />
-                                        </div>
-                                        <Label htmlFor={`${match.id}-away`}>{match.awayTeam.name}</Label>
-                                    </div>
-                                </div>
-                            )})}
-                        </div>
-                        <Button onClick={handleSaveWeekResults} disabled={isUpdatingMatches || !dbStatus.connected}>
-                            {isUpdatingMatches ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Saving...
-                                </>
-                            ) : `Save Week ${selectedWeek} Results`}
-                        </Button>
-                    </div>
-                )}
-            </CardContent>
-        </Card>
-      </div>
-    </>
+              {selectedWeek !== null && (
+                  <div className="space-y-4 pt-4">
+                      <h3 className="font-semibold">Fixtures for Week {selectedWeek}</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         {weekFixtures.map(match => {
+                              const HomeIcon = Icons[match.homeTeam.logo as IconName] || Icons.match;
+                              const AwayIcon = Icons[match.awayTeam.logo as IconName] || Icons.match;
+                              return (
+                              <div key={match.id} className="flex items-center gap-2 p-2 border rounded-lg">
+                                   <div className="flex items-center gap-2 justify-end w-2/5">
+                                      <Label htmlFor={`${match.id}-home`} className="text-right">{match.homeTeam.name}</Label>
+                                      <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.homeTeam.bgColourSolid }}>
+                                          <HomeIcon className="size-5" style={{ color: match.homeTeam.iconColour }} />
+                                      </div>
+                                  </div>
+                                  <Input
+                                      id={`${match.id}-home`}
+                                      type="number"
+                                      value={scores[match.id]?.homeScore ?? ''}
+                                      onChange={(e) => handleScoreChange(match.id, 'home', e.target.value)}
+                                      className="w-16 text-center"
+                                      disabled={!dbStatus.connected}
+                                  />
+                                  <span>-</span>
+                                   <Input
+                                      id={`${match.id}-away`}
+                                      type="number"
+                                      value={scores[match.id]?.awayScore ?? ''}
+                                      onChange={(e) => handleScoreChange(match.id, 'away', e.target.value)}
+                                      className="w-16 text-center"
+                                      disabled={!dbStatus.connected}
+                                  />
+                                  <div className="flex items-center gap-2 w-2/5">
+                                      <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.awayTeam.bgColourSolid }}>
+                                          <AwayIcon className="size-5" style={{ color: match.awayTeam.iconColour }} />
+                                      </div>
+                                      <Label htmlFor={`${match.id}-away`}>{match.awayTeam.name}</Label>
+                                  </div>
+                              </div>
+                          )})}
+                      </div>
+                      <Button onClick={handleSaveWeekResults} disabled={isUpdatingMatches || !dbStatus.connected}>
+                          {isUpdatingMatches ? (
+                              <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Saving...
+                              </>
+                          ) : `Save Week ${selectedWeek} Results`}
+                      </Button>
+                  </div>
+              )}
+          </CardContent>
+      </Card>
+    </div>
   );
 }

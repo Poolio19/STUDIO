@@ -16,12 +16,13 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
-import type { Team, Prediction } from '@/lib/data';
+import type { Team, Prediction, CurrentStanding } from '@/lib/data';
 import { Icons, IconName } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
+import { Loader2 } from 'lucide-react';
 
 type ConsensusData = {
   [teamId: string]: number[];
@@ -31,18 +32,16 @@ const lightTextColours = ['#FFFFFF', '#FBE122', '#99D6EA', '#FDBE11'];
 
 export default function ConsensusPage() {
   const firestore = useFirestore();
-  const { isUserLoading } = useUser();
 
   const teamsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'teams')) : null, [firestore]);
   const predictionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'predictions')) : null, [firestore]);
   const standingsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'standings')) : null, [firestore]);
 
-
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
   const { data: userPredictions, isLoading: predictionsLoading } = useCollection<Prediction>(predictionsQuery);
-  const { data: currentStandings, isLoading: standingsLoading } = useCollection<any>(standingsQuery);
+  const { data: currentStandings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsQuery);
 
-  const isLoading = isUserLoading || teamsLoading || predictionsLoading || standingsLoading;
+  const isLoading = teamsLoading || predictionsLoading || standingsLoading;
 
   const standingsWithTeamData = useMemo(() => {
     if (!teams || !currentStandings) return [];
@@ -105,7 +104,7 @@ export default function ConsensusPage() {
             </CardHeader>
             <CardContent className="h-96 flex items-center justify-center">
               <div className="flex items-center gap-2 text-muted-foreground">
-                <Icons.logo className="size-5 animate-spin" />
+                <Loader2 className="size-5 animate-spin" />
                 <span>Loading consensus data...</span>
               </div>
             </CardContent>

@@ -14,8 +14,9 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
 import type { User, Team, PlayerTeamScore, CurrentStanding } from '@/lib/data';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
+import { Loader2 } from 'lucide-react';
 
 const getAvatarUrl = (avatarId: string) => {
   return PlaceHolderImages.find((img) => img.id === avatarId)?.imageUrl || '';
@@ -23,19 +24,18 @@ const getAvatarUrl = (avatarId: string) => {
 
 export default function StatsPage() {
   const firestore = useFirestore();
-  const { isUserLoading } = useUser();
 
-  const usersQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'users'), orderBy('rank', 'asc')) : null, [firestore, isUserLoading]);
-  const teamsQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'teams') : null, [firestore, isUserLoading]);
-  const scoresQuery = useMemoFirebase(() => !isUserLoading && firestore ? collection(firestore, 'playerTeamScores') : null, [firestore, isUserLoading]);
-  const standingsQuery = useMemoFirebase(() => !isUserLoading && firestore ? query(collection(firestore, 'standings'), orderBy('rank', 'asc')) : null, [firestore, isUserLoading]);
+  const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('rank', 'asc')) : null, [firestore]);
+  const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
+  const scoresQuery = useMemoFirebase(() => firestore ? collection(firestore, 'playerTeamScores') : null, [firestore]);
+  const standingsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'standings'), orderBy('rank', 'asc')) : null, [firestore]);
   
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
   const { data: playerTeamScores, isLoading: scoresLoading } = useCollection<PlayerTeamScore>(scoresQuery);
   const { data: standings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsQuery);
 
-  const isLoading = isUserLoading || usersLoading || teamsLoading || scoresLoading || standingsLoading;
+  const isLoading = usersLoading || teamsLoading || scoresLoading || standingsLoading;
   
   const sortedUsers = useMemo(() => {
     if (!users) return [];
@@ -79,7 +79,12 @@ export default function StatsPage() {
         <CardContent>
             <div className="overflow-x-auto">
                 {isLoading ? (
-                    <div className="flex justify-center items-center h-96">Loading stats...</div>
+                    <div className="flex justify-center items-center h-96">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="size-5 animate-spin" />
+                        <span>Loading stats matrix...</span>
+                      </div>
+                    </div>
                 ) : (
                     <Table className="min-w-full border-collapse">
                         <TableHeader>
