@@ -56,13 +56,18 @@ export function TeamStandingsChart({
           <p className="mb-2 font-medium">{week}</p>
           <div className="grid grid-cols-1 gap-1.5">
             {sortedPayload.map((pld: any, index: number) => {
+              // We only want to show one entry per team in the tooltip
+              if (pld.dataKey.endsWith('-inner')) return null;
+              
+              const teamName = pld.dataKey.replace('-outer', '');
+
               return (
                 <div key={index} className="flex items-center gap-2">
                   <div
                     className="size-2.5 rounded-sm"
-                    style={{ backgroundColor: chartConfig[pld.name]?.colour }}
+                    style={{ backgroundColor: chartConfig[teamName]?.colour }}
                   ></div>
-                  <span className="font-medium">{pld.name}:</span>
+                  <span className="font-medium">{teamName}:</span>
                   <span className="text-muted-foreground">Rank {pld.value}</span>
                 </div>
               );
@@ -116,15 +121,26 @@ export function TeamStandingsChart({
                 />
                 <Tooltip content={<CustomTooltip />} />
                 {sortedTeams.map(team => (
-                  <Line
-                    key={team.id}
-                    dataKey={team.name}
-                    type="monotone"
-                    stroke={chartConfig[team.name]?.colour}
-                    strokeWidth={3}
-                    dot={false}
-                    name={team.name}
-                  />
+                  <React.Fragment key={team.id}>
+                    <Line
+                      dataKey={team.name}
+                      type="monotone"
+                      stroke={team.bgColourSolid || chartConfig[team.name]?.colour}
+                      strokeWidth={5}
+                      dot={false}
+                      name={team.name}
+                      legendType="none"
+                    />
+                     <Line
+                      dataKey={team.name}
+                      type="monotone"
+                      stroke={team.iconColour || '#FFFFFF'}
+                      strokeWidth={2}
+                      dot={false}
+                      name={team.name}
+                      legendType="none"
+                    />
+                  </React.Fragment>
                 ))}
               </LineChart>
             </ResponsiveContainer>
@@ -134,4 +150,3 @@ export function TeamStandingsChart({
     </Card>
   );
 }
-
