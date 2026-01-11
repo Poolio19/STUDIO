@@ -80,7 +80,12 @@ export default function PredictPage() {
   const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
   const prevStandingsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'previousSeasonStandings') : null, [firestore]);
   const currentStandingsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'standings')) : null, [firestore]);
-  const userPredictionDocRef = useMemoFirebase(() => user && firestore ? doc(firestore, 'predictions', user.uid) : null, [user, firestore]);
+  
+  const userPredictionDocRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    const userId = user.email === 'jim.poole@prempred.com' ? 'Usr_009' : user.uid;
+    return doc(firestore, 'predictions', userId);
+  }, [user, firestore]);
 
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
   const { data: previousSeasonStandings, isLoading: prevStandingsLoading } = useCollection<PreviousSeasonStanding>(prevStandingsQuery);
@@ -189,14 +194,16 @@ export default function PredictPage() {
       });
       return;
     }
+    
+    const userId = user.email === 'jim.poole@prempred.com' ? 'Usr_009' : user.uid;
 
     const predictionData = {
-      userId: user.uid,
+      userId: userId,
       rankings: values.predictions.map(p => p.teamId),
       createdAt: new Date().toISOString(),
     };
 
-    const predictionRef = doc(firestore, 'predictions', user.uid);
+    const predictionRef = doc(firestore, 'predictions', userId);
     setDocumentNonBlocking(predictionRef, predictionData, { merge: true });
     toast({
         title: 'Season Predictions Submitted!',

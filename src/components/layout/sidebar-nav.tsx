@@ -15,9 +15,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Icons } from '@/components/icons';
 import Link from 'next/link';
 import { Award, Database, LogOut } from 'lucide-react';
-import { useUser, useAuth } from '@/firebase';
+import { useUser, useAuth, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Button } from '../ui/button';
+import { doc } from 'firebase/firestore';
+import type { User } from '@/lib/types';
 
 const navItems = [
   { href: '/standings', icon: 'standings', label: 'Premier League' },
@@ -35,8 +37,17 @@ const navItems = [
 
 export function SidebarNav() {
   const pathname = usePathname();
-  const { user, isUserLoading } = useUser();
+  const { user: authUser, isUserLoading } = useUser();
   const auth = useAuth();
+  const firestore = useFirestore();
+
+  const userDocRef = useMemoFirebase(() => {
+    if (!firestore || !authUser) return null;
+    const userId = authUser.email === 'jim.poole@prempred.com' ? 'Usr_009' : authUser.uid;
+    return doc(firestore, 'users', userId);
+  }, [firestore, authUser]);
+
+  const { data: userProfile } = useDoc<User>(userDocRef);
 
   const handleSignOut = () => {
     if (auth) {
@@ -103,15 +114,15 @@ export function SidebarNav() {
                     <span className="h-3 w-32 bg-muted rounded-md animate-pulse mt-1"></span>
                 </div>
             </div>
-        ) : user ? (
+        ) : authUser ? (
             <div className="flex items-center gap-3 p-2">
                 <Avatar>
-                    <AvatarImage src={getAvatarUrl(user.uid, user.photoURL)} alt={user.displayName || 'User'} />
-                    <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                    <AvatarImage src={getAvatarUrl(userProfile?.avatar, authUser.photoURL)} alt={userProfile?.name || 'User'} />
+                    <AvatarFallback>{getInitials(userProfile?.name)}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col overflow-hidden">
-                    <span className="font-semibold truncate">{user.displayName || 'User'}</span>
-                    <span className="text-sm text-muted-foreground truncate">{user.email}</span>
+                    <span className="font-semibold truncate">{userProfile?.name || 'User'}</span>
+                    <span className="text-sm text-muted-foreground truncate">{authUser.email}</span>
                 </div>
                 <Button variant="ghost" size="icon" onClick={handleSignOut} className="ml-auto">
                     <LogOut className="size-4" />

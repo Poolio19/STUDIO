@@ -88,11 +88,15 @@ export default function ProfilePage() {
   const firestore = useFirestore();
   
   const userDocRef = useMemoFirebase(() => {
-    return firestore && authUser ? doc(firestore, 'users', authUser.uid) : null;
+    if (!firestore || !authUser) return null;
+    const userId = authUser.email === 'jim.poole@prempred.com' ? 'Usr_009' : authUser.uid;
+    return doc(firestore, 'users', userId);
   }, [firestore, authUser]);
 
   const userHistoryDocRef = useMemoFirebase(() => {
-    return firestore && authUser ? doc(firestore, 'userHistories', authUser.uid) : null; 
+    if (!firestore || !authUser) return null; 
+    const userId = authUser.email === 'jim.poole@prempred.com' ? 'Usr_009' : authUser.uid;
+    return doc(firestore, 'userHistories', userId);
   }, [firestore, authUser]);
 
   const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
