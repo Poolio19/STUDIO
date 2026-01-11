@@ -76,15 +76,15 @@ export default function StandingsPage() {
 
         // Chart Data Calculation
         const weeks = [...new Set(weeklyTeamStandings.map(d => d.week))].sort((a, b) => a - b).filter(w => w > 0);
+        
         const transformedChartData = weeks.map(week => {
             const weekData: { [key: string]: any } = { week };
             teamsData.forEach(team => {
-                const standing = weeklyTeamStandings.find(d => d.week === week && d.teamId === team.id);
-                if (standing) {
-                    weekData[team.name] = standing.rank;
-                    // For two-tone lines
-                    weekData[`${team.name}-outer`] = standing.rank;
-                    weekData[`${team.name}-inner`] = standing.rank;
+                const standingForWeek = weeklyTeamStandings.find(d => d.week === week && d.teamId === team.id);
+                if (standingForWeek) {
+                    weekData[team.name] = standingForWeek.rank;
+                    weekData[`${team.name}-outer`] = standingForWeek.rank;
+                    weekData[`${team.name}-inner`] = standingForWeek.rank;
                 }
             });
             return weekData;
@@ -295,3 +295,5 @@ export default function StandingsPage() {
     </div>
   );
 }
+
+    
