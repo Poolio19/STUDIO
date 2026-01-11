@@ -20,7 +20,7 @@ import { TeamStandingsChart } from '@/components/charts/team-standings-chart';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
-import { useCollection, useFirebase, useMemoFirebase, useUser } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 
@@ -29,7 +29,7 @@ type StandingWithTeam = CurrentStanding & Team & { recentResults: ('W' | 'D' | '
 
 
 export default function StandingsPage() {
-    const { firestore } = useFirebase();
+    const firestore = useFirestore();
     const { isUserLoading } = useUser();
 
     const teamsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'teams')) : null, [firestore]);
