@@ -162,11 +162,14 @@ export default function AdminPage() {
         return;
       }
       try {
+        // This is a special path that is allowed by security rules for this exact purpose.
         const docRef = doc(firestore, '____connectivity-test____', '____test____');
         await getDoc(docRef);
+        // This case should ideally not be hit with the new rule, but is kept as a fallback.
         setDbStatus({ connected: true, message: 'Database is connected.' });
       } catch (error: any) {
          if (error.code === 'permission-denied') {
+            // A "permission-denied" error on our test path means the rules are working and we are connected.
             setDbStatus({ connected: true, message: 'Database is connected (with secure rules).' });
         } else if (error.code === 'unavailable' || error.message.includes('offline')) {
             setDbStatus({ connected: false, message: 'Database connection failed: Client is offline.' });
