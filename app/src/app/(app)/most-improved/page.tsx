@@ -205,9 +205,9 @@ export default function MostImprovedPage() {
   };
 
   const currentMonthAbbreviation = useMemo(() => {
-    if (!seasonMonths) return currentMonthName.slice(0, 4).toUpperCase();
-    return seasonMonths.find(sm => sm.month === currentMonthName && sm.year === currentYear)?.abbreviation || currentMonthName.slice(0, 4).toUpperCase();
-  }, [currentMonthName, currentYear, seasonMonths]);
+    if (!seasonMonthsData) return currentMonthName.slice(0, 4).toUpperCase();
+    return seasonMonthsData.find(sm => sm.month === currentMonthName && sm.year === currentYear)?.abbreviation || currentMonthName.slice(0, 4).toUpperCase();
+  }, [currentMonthName, currentYear, seasonMonthsData]);
 
   if (isLoading) {
     return (

@@ -22,7 +22,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import type { WeeklyTeamStanding, Match, Team, CurrentStanding } from '@/lib/types';
+import type { WeeklyTeamStanding, Match, Team, CurrentStanding, TeamRecentResult } from '@/lib/types';
 import { Icons, IconName } from '@/components/icons';
 import { TeamStandingsChart } from '@/components/charts/team-standings-chart';
 import { useMemo } from 'react';
@@ -31,7 +31,7 @@ import { Separator } from '@/components/ui/separator';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
-import type { TeamRecentResult } from '@/lib/types';
+
 
 type StandingWithTeam = CurrentStanding & Team & { recentResults: ('W' | 'D' | 'L' | '-')[] };
 
@@ -83,28 +83,28 @@ export default function StandingsPage() {
             
             const teamNameMap = new Map(teamsData.map(t => [t.id, t.name]));
 
-            const standingsByWeek: { [week: number]: { teamId: string, rank: number }[] } = {};
-            for (const standing of weeklyTeamStandings) {
+            const standingsByWeek = weeklyTeamStandings.reduce((acc, standing) => {
                 if (standing.week > 0) {
-                    if (!standingsByWeek[standing.week]) {
-                        standingsByWeek[standing.week] = [];
+                    if (!acc[standing.week]) {
+                        acc[standing.week] = [];
                     }
-                    standingsByWeek[standing.week].push(standing);
+                    acc[standing.week].push(standing);
                 }
-            }
+                return acc;
+            }, {} as { [week: number]: WeeklyTeamStanding[] });
             
             const sortedWeeks = Object.keys(standingsByWeek).map(Number).sort((a, b) => a - b);
             
             return sortedWeeks.map(week => {
                 const weekData: { [key: string]: any } = { week };
-                for (const standing of standingsByWeek[week]) {
+                standingsByWeek[week].forEach(standing => {
                     const teamName = teamNameMap.get(standing.teamId);
-                    if (teamName) {
+                    if(teamName) {
                         weekData[teamName] = standing.rank;
                         weekData[`${teamName}-outer`] = standing.rank;
                         weekData[`${teamName}-inner`] = standing.rank;
                     }
-                }
+                });
                 return weekData;
             });
         })();
