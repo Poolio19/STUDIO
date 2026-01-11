@@ -97,15 +97,12 @@ export default function StandingsPage() {
             
             return sortedWeeks.map(week => {
                 const weekData: { [key: string]: any } = { week };
-                const ranksForWeek = new Map(standingsByWeek[week].map(s => [s.teamId, s.rank]));
-
-                teamsData.forEach(team => {
-                    const teamName = team.name;
-                    const rank = ranksForWeek.get(team.id);
-                    if (rank !== undefined) {
-                        weekData[teamName] = rank;
-                        weekData[`${teamName}-outer`] = rank;
-                        weekData[`${teamName}-inner`] = rank;
+                standingsByWeek[week].forEach(standing => {
+                    const teamName = teamNameMap.get(standing.teamId);
+                    if(teamName) {
+                        weekData[teamName] = standing.rank;
+                        weekData[`${teamName}-outer`] = standing.rank;
+                        weekData[`${teamName}-inner`] = standing.rank;
                     }
                 });
                 return weekData;
@@ -197,30 +194,30 @@ export default function StandingsPage() {
           <p className="text-slate-400">Official league standings, results, and form guide for the 2025-26 season.</p>
       </header>
         <Card>
-        <CardHeader className="items-center">
-            <CardTitle className="bg-black text-yellow-400 p-2 rounded-md">Team Movement 2025-2026</CardTitle>
-            <CardDescription>Team league position changes over the season.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <div className="grid grid-cols-5 gap-x-4 gap-y-1 text-xs mb-6 px-4">
-                {legendTeams.map((team, index) => {
-                if (!team) return <div key={`empty-${index}`} />;
-                const teamConfig = chartConfig[team.name];
-                if (!teamConfig) return null;
-                return (
-                    <div key={team.id} className="flex items-center space-x-2 truncate py-0">
-                    <span
-                        className="inline-block h-2 w-2 rounded-sm shrink-0"
-                        style={{ backgroundColor: teamConfig.colour }}
-                    ></span>
-                    <span className="truncate" title={`${team.name}`}>{team.name}</span>
-                    </div>
-                );
-                })}
-            </div>
-            <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData as (Team & { rank: number })[]} />
-        </CardContent>
-      </Card>
+            <CardHeader className="items-center">
+                <CardTitle className="bg-black text-yellow-400 p-2 rounded-md">Team Movement 2025-2026</CardTitle>
+                <CardDescription>Team league position changes over the season.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="grid grid-cols-5 gap-x-4 gap-y-1 text-xs mb-6 px-4">
+                    {legendTeams.map((team, index) => {
+                    if (!team) return <div key={`empty-${index}`} />;
+                    const teamConfig = chartConfig[team.name];
+                    if (!teamConfig) return null;
+                    return (
+                        <div key={team.id} className="flex items-center space-x-2 truncate py-0">
+                        <span
+                            className="inline-block h-2 w-2 rounded-sm shrink-0"
+                            style={{ backgroundColor: teamConfig.colour }}
+                        ></span>
+                        <span className="truncate" title={`${team.name}`}>{team.name}</span>
+                        </div>
+                    );
+                    })}
+                </div>
+                <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData as (Team & { rank: number })[]} />
+            </CardContent>
+        </Card>
 
 
       <Card>
@@ -363,5 +360,3 @@ export default function StandingsPage() {
     </div>
   );
 }
-
-    
