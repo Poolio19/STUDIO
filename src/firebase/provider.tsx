@@ -25,6 +25,7 @@ export interface FirebaseContextState {
   user: User | null;
   isUserLoading: boolean;
   userError: Error | null;
+  isConfigured: boolean;
 }
 
 export interface UserHookResult {
@@ -34,6 +35,8 @@ export interface UserHookResult {
 }
 
 export const FirebaseContext = createContext<FirebaseContextState | undefined>(undefined);
+
+const isApiKeyPlaceholder = (key?: string) => !key || key.startsWith('AIzaSyB-');
 
 export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   children
@@ -50,10 +53,13 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     userError: null,
   });
 
+  const isConfigured = !isApiKeyPlaceholder(firebaseConfig.apiKey);
+
   useEffect(() => {
-    if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "AIzaSyB-...") {
+    if (!isConfigured) {
       console.error("FirebaseProvider: API key is a placeholder. Please replace it in src/firebase/config.ts");
-      // We will still try to initialize, but it will likely fail.
+      setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Firebase API Key is not configured.") });
+      return;
     }
 
     try {
@@ -82,11 +88,10 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
         console.error("Firebase initialization failed:", error);
         setUserAuthState({ user: null, isUserLoading: false, userError: error });
     }
-  }, []);
+  }, [isConfigured]);
 
-  // Development-only automatic login for the default user
   useEffect(() => {
-    if (process.env.NODE_ENV !== 'development') return;
+    if (process.env.NODE_ENV !== 'development' || !isConfigured) return;
     
     if (services?.auth && !userAuthState.user && !userAuthState.isUserLoading) {
       const defaultEmail = 'jim.poole@prempred.com';
@@ -99,12 +104,10 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
               .catch(createErr => {
                 console.error("Failed to create default user for development:", createErr);
               });
-          } else if (err.code !== 'auth/invalid-api-key') { 
-            console.error("Default user auto-login failed:", err);
           }
         });
     }
-  }, [services, userAuthState]);
+  }, [services, userAuthState, isConfigured]);
 
 
   const contextValue = useMemo((): FirebaseContextState => ({
@@ -112,7 +115,8 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     firestore: services?.firestore || null,
     auth: services?.auth || null,
     ...userAuthState,
-  }), [services, userAuthState]);
+    isConfigured,
+  }), [services, userAuthState, isConfigured]);
 
   return (
     <FirebaseContext.Provider value={contextValue}>
@@ -137,6 +141,10 @@ export const useUser = (): UserHookResult => {
     const { user, isUserLoading, userError } = useFirebaseContext();
     return { user, isUserLoading, userError };
 };
+export const useFirebaseConfigStatus = (): { isConfigured: boolean } => {
+    const { isConfigured } = useFirebaseContext();
+    return { isConfigured };
+}
 
 export function useMemoFirebase<T>(factory: () => T, deps: React.DependencyList): T {
   const memoized = useMemo(factory, deps);
@@ -153,7 +161,6 @@ export function useMemoFirebase<T>(factory: () => T, deps: React.DependencyList)
           configurable: true, 
       });
   } catch (e) {
-    // If defineProperty fails (e.g., on a frozen object), fall back to a less ideal but functional approach.
     (memoized as T & {__memo?: boolean}).__memo = true;
   }
   

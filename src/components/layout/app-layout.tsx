@@ -5,15 +5,47 @@ import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from '@/compon
 import { SidebarNav } from './sidebar-nav';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import { useUser } from '@/firebase';
-import { Loader2 } from 'lucide-react';
+import { useUser, useFirebaseConfigStatus } from '@/firebase';
+import { Loader2, AlertTriangle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   const { user, isUserLoading } = useUser();
+  const { isConfigured } = useFirebaseConfigStatus();
 
-  // While checking auth or if there is no user, show a global loading screen.
-  if (isUserLoading || !user) {
+
+  if (!isConfigured) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-background p-4">
+        <Card className="max-w-lg text-center">
+            <CardHeader>
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+                    <AlertTriangle className="h-6 w-6 text-destructive" />
+                </div>
+                <CardTitle className="mt-4">Firebase Not Configured</CardTitle>
+                <CardDescription>
+                    The application cannot connect to Firebase because a valid API key has not been provided.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <p className="mb-4">
+                    To fix this, please open the following file in your editor:
+                </p>
+                <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold text-foreground">
+                    src/firebase/config.ts
+                </code>
+                <p className="mt-4">
+                    Replace the placeholder <code className="font-mono text-xs">AIzaSyB-...</code> with your actual Firebase web app API key.
+                </p>
+            </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // While checking auth, show a global loading screen.
+  if (isUserLoading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -22,7 +54,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
   
-  // If we have a user, render the main app layout.
   return (
     <SidebarProvider>
       <Sidebar>
