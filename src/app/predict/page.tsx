@@ -86,6 +86,8 @@ export default function PredictPage() {
   const { data: currentStandings, isLoading: currentStandingsLoading } = useCollection<CurrentStanding>(currentStandingsQuery);
   const { data: userPrediction, isLoading: predictionLoading } = useDoc<PredictionType>(userPredictionDocRef);
 
+  const isLoading = isUserLoading || teamsLoading || prevStandingsLoading || predictionLoading || currentStandingsLoading;
+
   const sortedPreviousStandings = React.useMemo(() => {
     if (!teams || !previousSeasonStandings) return [];
 
@@ -122,9 +124,9 @@ export default function PredictPage() {
   });
   
   const orderedItems = React.useMemo(() => {
-    if (teamsLoading || predictionLoading) return []; // Wait for essential data
+    if (isLoading || !teams) return [];
 
-    const teamMap = new Map(teams?.map(team => [team.id, {
+    const teamMap = new Map(teams.map(team => [team.id, {
         id: team.id,
         teamId: team.id,
         teamName: team.name || 'Unknown Team',
@@ -143,7 +145,7 @@ export default function PredictPage() {
     }
     
     // Fallback to previous season's standings if no prediction is found
-    if (!prevStandingsLoading && previousSeasonStandings && teams) {
+    if (previousSeasonStandings) {
       const prevStandingsMap = new Map(previousSeasonStandings.map(s => [s.teamId, s.rank]));
       return [...teams]
         .sort((a, b) => (prevStandingsMap.get(a.id) ?? 21) - (prevStandingsMap.get(b.id) ?? 21))
@@ -153,7 +155,7 @@ export default function PredictPage() {
     
     return []; // Return empty if fallback data isn't ready
       
-  }, [userPrediction, teams, previousSeasonStandings, teamsLoading, predictionLoading, prevStandingsLoading]);
+  }, [userPrediction, teams, previousSeasonStandings, isLoading]);
 
 
   const [items, setItems] = React.useState<PredictionItem[]>(orderedItems);
@@ -208,8 +210,6 @@ export default function PredictPage() {
     });
   }
   
-  const isLoading = isUserLoading || teamsLoading || prevStandingsLoading || predictionLoading || currentStandingsLoading;
-
   const getRankMap = (standings: any[]) => new Map(standings.map((s, i) => [s.teamId, i + 1]));
 
   const predRankMap = getRankMap(items);
