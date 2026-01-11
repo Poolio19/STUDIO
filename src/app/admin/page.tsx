@@ -87,16 +87,23 @@ export default function AdminPage() {
   }, [connectivityCheckDocRef]);
 
   const handleWeekChange = (weekStr: string) => {
-    if (!matchesData) return;
     const week = parseInt(weekStr);
     setSelectedWeek(week);
-    const fixturesForWeek = matchesData.filter(m => m.week === week).map(match => {
-        return {
-            ...match,
-            homeTeam: teamMap.get(match.homeTeamId)!,
-            awayTeam: teamMap.get(match.awayTeamId)!,
-        };
-    });
+
+    const fixturesForWeek = (matchesData || [])
+        .filter(m => m.week === week)
+        .map(match => {
+            const homeTeam = teamMap.get(match.homeTeamId);
+            const awayTeam = teamMap.get(match.awayTeamId);
+            if (!homeTeam || !awayTeam) return null;
+            return {
+                ...match,
+                homeTeam: homeTeam,
+                awayTeam: awayTeam,
+            };
+        })
+        .filter((match): match is EditableMatch => match !== null);
+
     setWeekFixtures(fixturesForWeek);
 
     const initialScores = fixturesForWeek.reduce((acc, match) => {
@@ -153,7 +160,13 @@ export default function AdminPage() {
         const validResults = parsedResults.data.filter(r => !isNaN(r.homeScore) && !isNaN(r.awayScore));
 
         if (validResults.length === 0) {
-            throw new Error('No valid scores entered for this week.');
+            toast({
+                variant: 'destructive',
+                title: 'No Valid Scores',
+                description: 'No valid scores were entered for this week. Please enter scores before saving.',
+            });
+            setIsUpdatingMatches(false);
+            return;
         }
 
         const flowResult = await updateMatchResults({ results: validResults });
@@ -182,9 +195,9 @@ export default function AdminPage() {
   const isLoading = teamsLoading || matchesLoading || !firestore || !dbStatus.connected;
   
   const allWeeks = React.useMemo(() => {
-    if (!matchesData) return [];
-    return [...new Set(matchesData.map(m => m.week))].sort((a,b) => a-b);
-  }, [matchesData]);
+    // Show all 38 weeks regardless of whether fixtures exist yet.
+    return Array.from({ length: 38 }, (_, i) => i + 1);
+  }, []);
 
   return (
     <div className="space-y-8">
@@ -231,57 +244,63 @@ export default function AdminPage() {
                   </SelectContent>
               </Select>
 
-              {isLoading && <div className="flex items-center gap-2"><Loader2 className="animate-spin" />Loading fixture data...</div>}
+              {selectedWeek !== null && isLoading && <div className="flex items-center gap-2"><Loader2 className="animate-spin" />Loading fixture data...</div>}
 
               {selectedWeek !== null && !isLoading && (
                   <div className="space-y-4 pt-4">
                       <h3 className="font-semibold">Fixtures for Week {selectedWeek}</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                         {weekFixtures.map(match => {
-                              const HomeIcon = Icons[match.homeTeam.logo as IconName] || Icons.match;
-                              const AwayIcon = Icons[match.awayTeam.logo as IconName] || Icons.match;
-                              return (
-                              <div key={match.id} className="flex items-center gap-2 p-2 border rounded-lg">
-                                   <div className="flex items-center gap-2 justify-end w-2/5">
-                                      <Label htmlFor={`${match.id}-home`} className="text-right">{match.homeTeam.name}</Label>
-                                      <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.homeTeam.bgColourSolid }}>
-                                          <HomeIcon className="size-5" style={{ color: match.homeTeam.iconColour }} />
-                                      </div>
-                                  </div>
-                                  <Input
-                                      id={`${match.id}-home`}
-                                      type="number"
-                                      value={scores[match.id]?.homeScore ?? ''}
-                                      onChange={(e) => handleScoreChange(match.id, 'home', e.target.value)}
-                                      className="w-16 text-center"
-                                      disabled={!dbStatus.connected}
-                                  />
-                                  <span>-</span>
-                                   <Input
-                                      id={`${match.id}-away`}
-                                      type="number"
-                                      value={scores[match.id]?.awayScore ?? ''}
-                                      onChange={(e) => handleScoreChange(match.id, 'away', e.target.value)}
-                                      className="w-16 text-center"
-                                      disabled={!dbStatus.connected}
-                                  />
-                                  <div className="flex items-center gap-2 w-2/5">
-                                      <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.awayTeam.bgColourSolid }}>
-                                          <AwayIcon className="size-5" style={{ color: match.awayTeam.iconColour }} />
-                                      </div>
-                                      <Label htmlFor={`${match.id}-away`}>{match.awayTeam.name}</Label>
-                                  </div>
-                              </div>
-                          )})}
-                      </div>
-                      <Button onClick={handleSaveWeekResults} disabled={isUpdatingMatches || isLoading}>
-                          {isUpdatingMatches ? (
-                              <>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  Saving...
-                              </>
-                          ) : `Save Week ${selectedWeek} Results`}
-                      </Button>
+                      {weekFixtures.length > 0 ? (
+                        <>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {weekFixtures.map(match => {
+                                    const HomeIcon = Icons[match.homeTeam.logo as IconName] || Icons.match;
+                                    const AwayIcon = Icons[match.awayTeam.logo as IconName] || Icons.match;
+                                    return (
+                                    <div key={match.id} className="flex items-center gap-2 p-2 border rounded-lg">
+                                        <div className="flex items-center gap-2 justify-end w-2/5">
+                                            <Label htmlFor={`${match.id}-home`} className="text-right">{match.homeTeam.name}</Label>
+                                            <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.homeTeam.bgColourSolid }}>
+                                                <HomeIcon className="size-5" style={{ color: match.homeTeam.iconColour }} />
+                                            </div>
+                                        </div>
+                                        <Input
+                                            id={`${match.id}-home`}
+                                            type="number"
+                                            value={scores[match.id]?.homeScore ?? ''}
+                                            onChange={(e) => handleScoreChange(match.id, 'home', e.target.value)}
+                                            className="w-16 text-center"
+                                            disabled={!dbStatus.connected}
+                                        />
+                                        <span>-</span>
+                                        <Input
+                                            id={`${match.id}-away`}
+                                            type="number"
+                                            value={scores[match.id]?.awayScore ?? ''}
+                                            onChange={(e) => handleScoreChange(match.id, 'away', e.target.value)}
+                                            className="w-16 text-center"
+                                            disabled={!dbStatus.connected}
+                                        />
+                                        <div className="flex items-center gap-2 w-2/5">
+                                            <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.awayTeam.bgColourSolid }}>
+                                                <AwayIcon className="size-5" style={{ color: match.awayTeam.iconColour }} />
+                                            </div>
+                                            <Label htmlFor={`${match.id}-away`}>{match.awayTeam.name}</Label>
+                                        </div>
+                                    </div>
+                                )})}
+                            </div>
+                            <Button onClick={handleSaveWeekResults} disabled={isUpdatingMatches || isLoading}>
+                                {isUpdatingMatches ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Saving...
+                                    </>
+                                ) : `Save Week ${selectedWeek} Results`}
+                            </Button>
+                        </>
+                      ) : (
+                        <p className="text-muted-foreground">No fixtures found for Week {selectedWeek}.</p>
+                      )}
                   </div>
               )}
           </CardContent>
