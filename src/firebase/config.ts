@@ -4,10 +4,11 @@
 
 export const firebaseConfig = {
   apiKey: "AIzaSyCV7ajc4pZ3s5_1a2b3c4d5e6f7g8h9i", // This is a placeholder, but projectId is key
-  authDomain: "prempred-live.firebaseapp.com",
-  projectId: "prempred-live",
-  storageBucket: "prempred-live.appspot.com",
+  authDomain: "prempred-43933.firebaseapp.com",
+  projectId: "prempred-43933",
+  storageBucket: "prempred-43933.appspot.com",
   messagingSenderId: "1234567890", // Placeholder
   appId: "1:1234567890:web:placeholderappid", // Placeholder
-  databaseURL: "https://prempred-live.firebaseio.com"
+  databaseURL: "https://prempred-43933.firebaseio.com"
 };
+
