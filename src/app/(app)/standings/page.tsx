@@ -59,9 +59,11 @@ export default function StandingsPage() {
         chartData, 
         weeklyResults,
         gamesPlayed,
+        legendTeams,
+        chartConfig,
     } = useMemo(() => {
         if (!teamsData || !standingsData || !matchesData || !weeklyTeamStandings || !teamRecentResults) {
-            return { standingsWithTeamData: [], chartData: [], weeklyResults: new Map(), gamesPlayed: 0 };
+            return { standingsWithTeamData: [], chartData: [], weeklyResults: new Map(), gamesPlayed: 0, legendTeams: [], chartConfig: {} };
         }
 
         const teamMap = new Map(teamsData.map(t => [t.id, t]));
@@ -74,11 +76,11 @@ export default function StandingsPage() {
         }).sort((a,b) => a.rank - b.rank);
 
         // Chart Data Calculation
-        const transformedChartData = (() => {
+        const finalChartData = (() => {
             if (!weeklyTeamStandings || weeklyTeamStandings.length === 0 || !teamsData || teamsData.length === 0) {
                 return [];
             }
-
+            
             const teamNameMap = new Map(teamsData.map(t => [t.id, t.name]));
 
             const standingsByWeek = weeklyTeamStandings.reduce((acc, standing) => {
@@ -90,25 +92,44 @@ export default function StandingsPage() {
                 }
                 return acc;
             }, {} as Record<number, WeeklyTeamStanding[]>);
-
-            const finalChartData = Object.keys(standingsByWeek).map(weekStr => {
+            
+            const chartDataResult = Object.keys(standingsByWeek).map(weekStr => {
                 const week = parseInt(weekStr, 10);
                 const weekData: { [key: string]: any } = { week };
-                
+
                 standingsByWeek[week].forEach(standing => {
                     const teamName = teamNameMap.get(standing.teamId);
                     if (teamName) {
-                        weekData[teamName] = standing.rank; // For tooltip
-                        weekData[`${teamName}-outer`] = standing.rank; // For outer line
-                        weekData[`${teamName}-inner`] = standing.rank; // For inner line
+                        weekData[teamName] = standing.rank;
+                        weekData[`${teamName}-outer`] = standing.rank;
+                        weekData[`${teamName}-inner`] = standing.rank;
                     }
                 });
                 return weekData;
             });
-            
-            return finalChartData.sort((a, b) => a.week - b.week);
+
+            return chartDataResult.sort((a, b) => a.week - b.week);
         })();
 
+        // Legend Data Calculation
+        const finalChartConfig = finalStandingsWithTeamData.reduce((config, team) => {
+            config[team.name] = {
+              label: team.name,
+              colour: team.bgColourSolid || `hsl(var(--chart-color-${team.rank}))`,
+            };
+            return config;
+        }, {} as any);
+
+        const numRows = 4;
+        const numCols = 5;
+        const columnOrderedTeams: (typeof finalStandingsWithTeamData[0] | undefined)[] = new Array(numCols * numRows).fill(undefined);
+    
+        finalStandingsWithTeamData.forEach((team, i) => {
+            const col = Math.floor(i / numRows);
+            const row = i % numRows;
+            const newIndex = row * numCols + col;
+            columnOrderedTeams[newIndex] = team;
+        });
 
         // Weekly Results for Accordion
         const resultsByWeek = new Map<number, (Match & {homeTeam: Team, awayTeam: Team})[]>();
@@ -128,9 +149,11 @@ export default function StandingsPage() {
 
         return { 
             standingsWithTeamData: finalStandingsWithTeamData, 
-            chartData: transformedChartData, 
+            chartData: finalChartData, 
             weeklyResults: resultsByWeek,
-            gamesPlayed: currentGamesPlayed
+            gamesPlayed: currentGamesPlayed,
+            legendTeams: columnOrderedTeams,
+            chartConfig: finalChartConfig,
         };
     }, [teamsData, matchesData, standingsData, weeklyTeamStandings, teamRecentResults]);
 
@@ -173,7 +196,32 @@ export default function StandingsPage() {
           <p className="text-slate-400">Official league standings, results, and form guide for the 2025-26 season.</p>
       </header>
 
-      <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData as (Team & { rank: number })[]} />
+      <Card>
+        <CardHeader className="items-center">
+            <CardTitle className="bg-black text-yellow-400 p-2 rounded-md">Team Movement 2025-2026</CardTitle>
+            <CardDescription>Team league position changes over the season.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <div className="grid grid-cols-5 gap-x-4 gap-y-1 text-xs mb-6 px-4">
+                {legendTeams.map((team, index) => {
+                if (!team) return <div key={`empty-${index}`} />;
+                const teamConfig = chartConfig[team.name];
+                if (!teamConfig) return null;
+                return (
+                    <div key={team.id} className="flex items-center space-x-2 truncate py-0">
+                    <span
+                        className="inline-block h-2 w-2 rounded-sm shrink-0"
+                        style={{ backgroundColor: teamConfig.colour }}
+                    ></span>
+                    <span className="truncate" title={`${team.name}`}>{team.name}</span>
+                    </div>
+                );
+                })}
+            </div>
+            <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData as (Team & { rank: number })[]} />
+        </CardContent>
+      </Card>
+
 
       <Card>
         <CardHeader className="items-center">
@@ -315,5 +363,3 @@ export default function StandingsPage() {
     </div>
   );
 }
-
-    
