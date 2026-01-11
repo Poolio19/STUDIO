@@ -4,7 +4,7 @@
 import React, { createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp, initializeApp, getApps, getApp } from 'firebase/app';
 import { Firestore, getFirestore, enableNetwork } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged, getAuth, signInAnonymously } from 'firebase/auth';
+import { Auth, User, onAuthStateChanged, getAuth } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { firebaseConfig } from './config';
 
@@ -36,7 +36,7 @@ export interface UserHookResult {
 
 export const FirebaseContext = createContext<FirebaseContextState | undefined>(undefined);
 
-const isApiKeyPlaceholder = (key?: string) => !key || key.startsWith('AIzaSyB-');
+const isApiKeyPlaceholder = (key?: string) => !key || key.includes('AIzaSyB-');
 
 export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   children
@@ -76,15 +76,8 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       const unsubscribe = onAuthStateChanged(
         auth,
         (firebaseUser) => {
-          if (firebaseUser) {
+            // The user is either logged in or null. Do not attempt anonymous sign-in.
             setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
-          } else {
-            // If no user, sign in anonymously
-            signInAnonymously(auth).catch(error => {
-              console.error("Anonymous sign-in failed:", error);
-              setUserAuthState({ user: null, isUserLoading: false, userError: error });
-            });
-          }
         },
         (error) => {
           console.error("FirebaseProvider: onAuthStateChanged error:", error);

@@ -23,8 +23,7 @@ import {
 } from '@/components/ui/card';
 import { useAuth } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, linkWithCredential, EmailAuthProvider } from 'firebase/auth';
-import { useUser } from '@/firebase/provider';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
@@ -35,7 +34,6 @@ const formSchema = z.object({
 
 export function AuthForm() {
   const auth = useAuth();
-  const { user: currentUser } = useUser();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -49,7 +47,14 @@ export function AuthForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!auth || !currentUser) return;
+    if (!auth) {
+        toast({
+            variant: 'destructive',
+            title: 'Authentication not ready',
+            description: 'Please wait a moment and try again.'
+        });
+        return;
+    };
     setIsLoading(true);
     setAuthError(null);
 
@@ -59,18 +64,17 @@ export function AuthForm() {
       toast({ title: 'Signed in successfully!' });
     } catch (signInError: any) {
       if (signInError.code === 'auth/user-not-found') {
-        // If user doesn't exist, create a new account and link it to the anonymous one.
+        // If user doesn't exist, create a new account.
         try {
-            const credential = EmailAuthProvider.credential(values.email, values.password);
-            await linkWithCredential(currentUser, credential);
-            toast({ title: 'Account created and linked successfully!' });
-        } catch (linkError: any) {
-            console.error('Account linking failed:', linkError);
-            setAuthError(linkError.message || 'Failed to create or link account.');
+            await createUserWithEmailAndPassword(auth, values.email, values.password);
+            toast({ title: 'Account created successfully!' });
+        } catch (signUpError: any) {
+            console.error('Account creation failed:', signUpError);
+            setAuthError(signUpError.message || 'Failed to create account.');
             toast({
                 variant: 'destructive',
                 title: 'Sign up failed',
-                description: linkError.message,
+                description: signUpError.message,
             });
         }
       } else {

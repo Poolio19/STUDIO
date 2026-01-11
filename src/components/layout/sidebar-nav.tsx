@@ -106,18 +106,16 @@ export function SidebarNav() {
         ) : user ? (
             <div className="flex items-center gap-3 p-2">
                 <Avatar>
-                    <AvatarImage src={user.isAnonymous ? undefined : getAvatarUrl(user.uid, user.photoURL)} alt={user.displayName || 'User'} />
-                    <AvatarFallback>{user.isAnonymous ? '?' : getInitials(user.displayName)}</AvatarFallback>
+                    <AvatarImage src={getAvatarUrl(user.uid, user.photoURL)} alt={user.displayName || 'User'} />
+                    <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col overflow-hidden">
-                    <span className="font-semibold truncate">{user.isAnonymous ? 'Anonymous' : (user.displayName || 'User')}</span>
-                    <span className="text-sm text-muted-foreground truncate">{user.isAnonymous ? 'Not signed in' : user.email}</span>
+                    <span className="font-semibold truncate">{user.displayName || 'User'}</span>
+                    <span className="text-sm text-muted-foreground truncate">{user.email}</span>
                 </div>
-                {!user.isAnonymous && (
-                    <Button variant="ghost" size="icon" onClick={handleSignOut} className="ml-auto">
-                        <LogOut className="size-4" />
-                    </Button>
-                )}
+                <Button variant="ghost" size="icon" onClick={handleSignOut} className="ml-auto">
+                    <LogOut className="size-4" />
+                </Button>
             </div>
         ) : (
             <div className="flex items-center gap-3 p-2">
@@ -125,7 +123,9 @@ export function SidebarNav() {
                     <AvatarFallback>??</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col">
-                    <span className="font-semibold">Not signed in</span>
+                    <Link href="/profile">
+                        <Button variant="link" className="p-0 h-auto">Sign In</Button>
+                    </Link>
                 </div>
             </div>
         )}

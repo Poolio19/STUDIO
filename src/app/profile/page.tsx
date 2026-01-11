@@ -88,17 +88,17 @@ export default function ProfilePage() {
   const firestore = useFirestore();
   
   const userDocRef = useMemoFirebase(() => {
-    return firestore && authUser && !authUser.isAnonymous ? doc(firestore, 'users', authUser.uid) : null;
+    return firestore && authUser ? doc(firestore, 'users', authUser.uid) : null;
   }, [firestore, authUser]);
 
   const userHistoryDocRef = useMemoFirebase(() => {
-    return firestore && authUser && !authUser.isAnonymous ? doc(firestore, 'userHistories', authUser.uid) : null; 
+    return firestore && authUser ? doc(firestore, 'userHistories', authUser.uid) : null; 
   }, [firestore, authUser]);
 
   const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
   
   const mimoMQuery = useMemoFirebase(() => {
-    return firestore && authUser && !authUser.isAnonymous ? collection(firestore, 'monthlyMimoM') : null
+    return firestore && authUser ? collection(firestore, 'monthlyMimoM') : null
   }, [firestore, authUser]);
 
 
@@ -211,7 +211,7 @@ export default function ProfilePage() {
     );
   }
 
-  if (authUser?.isAnonymous) {
+  if (!authUser) {
      return (
         <div className="flex h-full w-full items-center justify-center">
             <AuthForm />
