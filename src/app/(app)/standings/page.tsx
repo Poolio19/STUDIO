@@ -74,31 +74,41 @@ export default function StandingsPage() {
         }).sort((a,b) => a.rank - b.rank);
 
         // Chart Data Calculation
-        const standingsByWeek = new Map<number, WeeklyTeamStanding[]>();
-        weeklyTeamStandings.forEach(standing => {
-            if (standing.week > 0) {
-                const weekStandings = standingsByWeek.get(standing.week) || [];
-                weekStandings.push(standing);
-                standingsByWeek.set(standing.week, weekStandings);
+        const transformedChartData = (() => {
+            if (!weeklyTeamStandings || weeklyTeamStandings.length === 0 || !teamsData || teamsData.length === 0) {
+                return [];
             }
-        });
-
-        const sortedWeeks = [...standingsByWeek.keys()].sort((a, b) => a - b);
-        
-        const transformedChartData = sortedWeeks.map(week => {
-            const weekData: { [key: string]: any } = { week };
-            const weekStandingsMap = new Map(standingsByWeek.get(week)?.map(s => [s.teamId, s.rank]));
             
-            teamsData.forEach(team => {
-                const rank = weekStandingsMap.get(team.id);
-                if (rank) {
-                    weekData[team.name] = rank;
-                    weekData[`${team.name}-outer`] = rank;
-                    weekData[`${team.name}-inner`] = rank;
+            const standingsByWeek = new Map<number, WeeklyTeamStanding[]>();
+            weeklyTeamStandings.forEach(standing => {
+                if (standing.week > 0) {
+                    const weekStandings = standingsByWeek.get(standing.week) || [];
+                    weekStandings.push(standing);
+                    standingsByWeek.set(standing.week, weekStandings);
                 }
             });
-            return weekData;
-        });
+
+            const sortedWeeks = [...standingsByWeek.keys()].sort((a, b) => a - b);
+            
+            const finalChartData = sortedWeeks.map(week => {
+                const weekData: { [key: string]: any } = { week };
+                const weekStandings = standingsByWeek.get(week) ?? [];
+                const weekRankMap = new Map(weekStandings.map(s => [s.teamId, s.rank]));
+
+                teamsData.forEach(team => {
+                    const rank = weekRankMap.get(team.id);
+                    if (rank !== undefined) {
+                        weekData[team.name] = rank; // For tooltip
+                        weekData[`${team.name}-outer`] = rank; // For outer line
+                        weekData[`${team.name}-inner`] = rank; // For inner line
+                    }
+                });
+                return weekData;
+            });
+
+            return finalChartData;
+        })();
+
 
         // Weekly Results for Accordion
         const resultsByWeek = new Map<number, (Match & {homeTeam: Team, awayTeam: Team})[]>();
