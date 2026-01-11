@@ -26,7 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { doc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import type { User } from '@/lib/types';
 
@@ -50,19 +50,24 @@ export function AuthForm() {
     },
   });
 
-  const createInitialUserProfile = (userId: string, email: string) => {
+  const createInitialUserProfile = async (userId: string, email: string) => {
     if (!firestore) return;
     
-    // Special case for jim.poole@prempred.com to use 'Usr_009' as the document ID
     const docId = email === 'jim.poole@prempred.com' ? 'Usr_009' : userId;
-    
     const userDocRef = doc(firestore, 'users', docId);
+
+    // --- Check if document exists before creating ---
+    const docSnap = await getDoc(userDocRef);
+    if (docSnap.exists()) {
+        console.log(`User profile for ${docId} already exists. Skipping creation.`);
+        return; // Do not overwrite existing user profile
+    }
+    // --- End check ---
     
-    // Create a default user profile object
     const newUserProfile: Omit<User, 'id'> = {
       name: email.split('@')[0] || 'New User',
       email: email,
-      avatar: String(Math.floor(Math.random() * 49) + 1), // Random avatar ID from 1 to 49
+      avatar: String(Math.floor(Math.random() * 49) + 1),
       score: 0,
       rank: 0,
       previousRank: 0,
@@ -80,7 +85,6 @@ export function AuthForm() {
       championshipWins: 0
     };
 
-    // Use setDoc with the specific docId
     setDocumentNonBlocking(userDocRef, newUserProfile);
   };
 
@@ -97,13 +101,11 @@ export function AuthForm() {
     setAuthError(null);
 
     try {
-        // Attempt to create a new user first.
         const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-        createInitialUserProfile(userCredential.user.uid, values.email);
+        await createInitialUserProfile(userCredential.user.uid, values.email);
         toast({ title: 'Account created successfully!' });
     } catch (error: any) {
         if (error.code === 'auth/email-already-in-use') {
-            // If the email is already in use, it means the user exists. Try signing them in.
             try {
                 await signInWithEmailAndPassword(auth, values.email, values.password);
                 toast({ title: 'Signed in successfully!' });
@@ -116,17 +118,7 @@ export function AuthForm() {
                     description: signInError.message,
                 });
             }
-        } else if (error.code === 'auth/configuration-not-found') {
-             const errorMessage = 'Email/Password sign-in is not enabled. Please enable it in the Firebase console.';
-             setAuthError(errorMessage);
-             toast({
-                variant: 'destructive',
-                title: 'Configuration Error',
-                description: errorMessage,
-            });
-        }
-        else {
-            // Another error occurred during sign-up.
+        } else {
             console.error('Account creation failed:', error);
             setAuthError(error.message || 'Failed to create account.');
             toast({
