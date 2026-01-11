@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -40,7 +41,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import type { Team, User, UserHistory, MonthlyMimoM } from '@/lib/data';
+import type { Team, User, UserHistory, MonthlyMimoM } from '@/lib/types';
 import { ProfilePerformanceChart } from '@/components/charts/profile-performance-chart';
 import React from 'react';
 import { Label } from '@/components/ui/label';
@@ -455,3 +456,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
