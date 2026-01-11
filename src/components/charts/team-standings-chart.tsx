@@ -34,6 +34,7 @@ export function TeamStandingsChart({
 }: TeamStandingsChartProps) {
 
   const chartConfig = React.useMemo(() => {
+    if (!sortedTeams) return {};
     return sortedTeams.reduce((config, team) => {
       config[team.name] = {
         label: team.name,
@@ -45,7 +46,6 @@ export function TeamStandingsChart({
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      // Filter out the "inner" lines from the tooltip payload
       const filteredPayload = payload.filter((p: any) => !p.dataKey.endsWith('-inner') && !p.dataKey.endsWith('-outer'));
       
       const sortedPayload = [...filteredPayload].sort(
@@ -149,3 +149,5 @@ export function TeamStandingsChart({
     </Card>
   );
 }
+
+    
