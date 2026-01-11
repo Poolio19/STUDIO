@@ -87,13 +87,13 @@ export default function PredictPage() {
 
   const sortedPreviousStandings = React.useMemo(() => {
     if (!teams || !previousSeasonStandings) return [];
-    
+
     const teamMap = new Map(teams.map(t => [t.id, t]));
-    
+
     return previousSeasonStandings
       .map(standing => {
         const team = teamMap.get(standing.teamId);
-        return team ? { ...standing, ...team } : null;
+        return team ? { ...standing, ...team, teamLogo: team.logo } : null;
       })
       .filter((item): item is NonNullable<typeof item> => item !== null)
       .sort((a, b) => a.rank - b.rank);
