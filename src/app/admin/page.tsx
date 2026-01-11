@@ -260,15 +260,17 @@ function FixturesImporter() {
         try {
             const fixtures = rawFixtureData.trim().split('\n').map(line => {
                 const [week, date, time, homeTeamName, homeScore, awayScore, awayTeamName] = line.split('\t');
-                const homeTeamId = teamNameToIdMap[homeTeamName];
-                const awayTeamId = teamNameToIdMap[awayTeamName];
+                const homeTeamId = teamNameToIdMap[homeTeamName.trim()];
+                const awayTeamId = teamNameToIdMap[awayTeamName.trim()];
                 
                 if (!homeTeamId || !awayTeamId) {
                     console.warn(`Could not find team ID for match: ${homeTeamName} vs ${awayTeamName}`);
                     return null;
                 }
 
-                const matchDate = new Date(`${date.split('/').reverse().join('-')}T${time}:00`).toISOString();
+                // Correct date parsing from DD/MM/YYYY to YYYY-MM-DD for ISO string
+                const [day, month, year] = date.split('/');
+                const matchDate = new Date(`${year}-${month}-${day}T${time}:00`).toISOString();
 
                 return {
                     id: `${week}-${homeTeamId}-${awayTeamId}`,
@@ -283,14 +285,18 @@ function FixturesImporter() {
 
             const parsedResults = MatchResultSchema.array().safeParse(fixtures);
             if (!parsedResults.success) {
+                console.error("Fixture data validation failed:", parsedResults.error);
                 throw new Error('Fixture data validation failed.');
             }
 
-            const result = await updateMatchResults({ results: parsedResults.data });
+            const result = await updateMatchResults({ results: parsedResults.data as any[] });
 
-            if (result.success) {
+            if (result.success && result.updatedCount > 0) {
                 toast({ title: 'Import successful!', description: `${result.updatedCount} fixtures have been added.` });
                 setHasImported(true);
+            } else if (result.success && result.updatedCount === 0) {
+                toast({ variant: 'destructive', title: 'Import Complete (0 fixtures)', description: 'The flow ran but did not add any new fixtures. They may already exist.' });
+                 // Don't set hasImported to true, so the user can try again if needed.
             } else {
                 throw new Error('The import flow reported a failure.');
             }
