@@ -32,9 +32,10 @@ const updateAllDataFlow = ai.defineFlow(
     const batch = db.batch();
 
     try {
-        logger.info('Starting master data update...');
+        logger.info('Master Data Update: Started.');
 
         // 1. Fetch all necessary data
+        logger.info('Master Data Update: Fetching all required data from Firestore...');
         const teamsSnap = await db.collection('teams').get();
         const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
         const teamMap = new Map(teams.map(t => [t.id, t]));
@@ -49,9 +50,10 @@ const updateAllDataFlow = ai.defineFlow(
         const predictionsSnap = await db.collection('predictions').get();
         const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
 
-        logger.info(`Fetched ${teams.length} teams, ${playedMatches.length} played matches, ${users.length} users, and ${predictions.length} predictions.`);
+        logger.info(`Master Data Update: Fetched ${teams.length} teams, ${playedMatches.length} played matches, ${users.length} users, and ${predictions.length} predictions.`);
 
         // 2. Calculate new standings from scratch
+        logger.info('Master Data Update: Calculating new league standings from scratch...');
         const teamStats: { [teamId: string]: Omit<CurrentStanding, 'teamId' | 'rank'> } = {};
         teams.forEach(team => {
             teamStats[team.id] = {
@@ -108,15 +110,17 @@ const updateAllDataFlow = ai.defineFlow(
             const { teamName, ...rest } = s;
             return { ...rest, rank: index + 1 };
         });
+        logger.info('Master Data Update: League standings calculation complete.');
 
         // 3. Update standings collection
         finalStandings.forEach(standing => {
             const standingRef = db.collection('standings').doc(standing.teamId);
             batch.set(standingRef, standing);
         });
-        logger.info(`Batched ${finalStandings.length} standings updates.`);
+        logger.info(`Master Data Update: Batched ${finalStandings.length} standings updates.`);
         
         // 4. Calculate new user scores
+        logger.info('Master Data Update: Recalculating user scores with AI flow...');
         const actualFinalStandingsString = finalStandings.map(s => s.teamId).join(',');
         const userRankingsString = predictions.map(p => `${p.userId},${p.rankings.join(',')}`).join('\n');
         
@@ -124,9 +128,10 @@ const updateAllDataFlow = ai.defineFlow(
             actualFinalStandings: actualFinalStandingsString,
             userRankings: userRankingsString
         });
-        logger.info(`Recalculated user scores. Summary: ${summary}`);
+        logger.info(`Master Data Update: AI scoring complete. Summary: ${summary}`);
 
         // 5. Update user-related collections
+        logger.info('Master Data Update: Calculating and batching user profile and history updates...');
         const userUpdates = users.map(user => {
             const newScore = userScores[user.id] || 0;
             return {
@@ -145,18 +150,13 @@ const updateAllDataFlow = ai.defineFlow(
         for (let i = 0; i < userUpdates.length; i++) {
             const user = userUpdates[i];
             const newRank = i + 1;
-            user.rankChange = (user.previousRank || 0) > 0 ? user.previousRank - newRank : 0;
+            user.rankChange = (user.previousRank || 0) > 0 ? (user.previousRank || newRank) - newRank : 0;
             user.rank = newRank;
 
-            const userMaxRank = user.maxRank ?? 0;
-            const userMinRank = user.minRank ?? 99;
-            const userMaxScore = user.maxScore ?? -Infinity;
-            const userMinScore = user.minScore ?? Infinity;
-            
-            if (user.rank > userMaxRank) user.maxRank = user.rank;
-            if (user.rank < userMinRank) user.minRank = user.rank;
-            if (user.score > userMaxScore) user.maxScore = user.score;
-            if (user.score < userMinScore) user.minScore = user.score;
+            user.maxRank = Math.max(user.maxRank || 0, user.rank);
+            user.minRank = Math.min(user.minRank || 99, user.rank);
+            user.maxScore = Math.max(user.maxScore || -Infinity, user.score);
+            user.minScore = Math.min(user.minScore || Infinity, user.score);
             
             const userRef = db.collection('users').doc(user.id);
             const { id, ...userData } = user;
@@ -175,10 +175,11 @@ const updateAllDataFlow = ai.defineFlow(
             }
             batch.set(userHistoryRef, { weeklyScores: historyData.weeklyScores });
         }
-        logger.info(`Batched ${userUpdates.length} user profile and history updates.`);
+        logger.info(`Master Data Update: Batched ${userUpdates.length} user profile and history updates.`);
 
         // 6. Update WeeklyTeamStandings
         if (maxWeeksPlayed > 0) {
+            logger.info(`Master Data Update: Batching weekly team standings for week ${maxWeeksPlayed}.`);
             finalStandings.forEach(standing => {
                 const weeklyStandingId = `${maxWeeksPlayed}-${standing.teamId}`;
                 const weeklyStandingRef = db.collection('weeklyTeamStandings').doc(weeklyStandingId);
@@ -188,10 +189,11 @@ const updateAllDataFlow = ai.defineFlow(
                     rank: standing.rank,
                 });
             });
-            logger.info(`Batched ${finalStandings.length} weekly team standings for week ${maxWeeksPlayed}.`);
+            logger.info(`Master Data Update: Batched ${finalStandings.length} weekly team standings.`);
         }
         
         // 7. Update TeamRecentResults
+        logger.info('Master Data Update: Batching team recent results updates...');
         teams.forEach(team => {
             const teamMatches = playedMatches
                 .filter(m => m.homeTeamId === team.id || m.awayTeamId === team.id)
@@ -214,15 +216,16 @@ const updateAllDataFlow = ai.defineFlow(
             const recentResultRef = db.collection('teamRecentResults').doc(team.id);
             batch.set(recentResultRef, { teamId: team.id, results: results.reverse() });
         });
-        logger.info(`Batched ${teams.length} team recent results updates.`);
+        logger.info(`Master Data Update: Batched ${teams.length} team recent results updates.`);
 
         // Commit all batched writes
+        logger.info('Master Data Update: Committing all batched writes to Firestore...');
         await batch.commit();
-        logger.info('Master data update complete. All data committed to Firestore.');
+        logger.info('Master Data Update: SUCCESS! All data committed to Firestore.');
         
         return { success: true, message: 'All data updated successfully.' };
     } catch (error: any) {
-        logger.error('Error in updateAllDataFlow:', error);
+        logger.error('Master Data Update: FAILED!', error);
         return { success: false, message: `Flow failed: ${error.message}` };
     }
   }
