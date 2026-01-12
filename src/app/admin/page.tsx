@@ -40,8 +40,8 @@ import {
 import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 import { updateAllData } from '@/ai/flows/update-all-data-flow';
 import { reimportFixtures } from '@/ai/flows/reimport-fixtures-flow';
+import { importPastFixtures } from '@/ai/flows/import-past-fixtures-flow';
 import { MatchResultSchema } from '@/ai/flows/update-match-results-flow-types';
-import type { ReimportFixturesInput } from '@/ai/flows/reimport-fixtures-flow-types';
 import type { Match, Team } from '@/lib/types';
 
 
@@ -57,8 +57,8 @@ export default function AdminPage() {
   const [dbStatus, setDbStatus] = React.useState<{ connected: boolean, message: string }>({ connected: false, message: 'Checking connection...' });
 
   const [isUpdating, setIsUpdating] = React.useState(false);
-  const [isReimporting, setIsReimporting] = React.useState(false);
   const [isRecalculating, setIsRecalculating] = React.useState(false);
+  const [isImportingPast, setIsImportingPast] = React.useState(false);
 
 
   const [selectedWeek, setSelectedWeek] = React.useState<number | null>(null);
@@ -210,14 +210,6 @@ export default function AdminPage() {
     }
   };
 
-  const handleReimportFixtures = async () => {
-    toast({
-        variant: 'destructive',
-        title: 'Function Disabled',
-        description: 'Fixture re-import is disabled because the hardcoded data source was incorrect.',
-    });
-  };
-
   const handleRecalculateAllData = async () => {
     setIsRecalculating(true);
     toast({
@@ -243,6 +235,36 @@ export default function AdminPage() {
       });
     } finally {
       setIsRecalculating(false);
+    }
+  };
+
+   const handleImportPastFixtures = async () => {
+    setIsImportingPast(true);
+    toast({
+      title: 'Importing Past Results...',
+      description: 'Importing weeks 1-18 from the backup file. This will delete existing matches.',
+    });
+    try {
+      const result = await importPastFixtures();
+      if (result.success) {
+        toast({
+          title: 'Import Complete!',
+          description: `Successfully imported ${result.importedCount} matches and deleted ${result.deletedCount} old matches.`,
+        });
+        // Optional: Trigger a full recalculation after import
+        await handleRecalculateAllData();
+      } else {
+        throw new Error(result.message || 'The past fixtures import flow failed.');
+      }
+    } catch (error: any) {
+      console.error('Error during past fixtures import:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Import Failed',
+        description: error.message || 'An unexpected error occurred during the import.',
+      });
+    } finally {
+      setIsImportingPast(false);
     }
   };
 
@@ -305,26 +327,50 @@ export default function AdminPage() {
                 </div>
                 {matchesError && <p className="text-sm text-red-500 mt-2">Error loading matches: {matchesError.message}</p>}
                 
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                      <Button disabled={isRecalculating || !dbStatus.connected}>
-                        {isRecalculating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Force Recalculate All Data
-                      </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action will run the master data update flow. It will recalculate all standings, user scores, and histories based on the existing match results in the database. This can be a long-running and resource-intensive operation.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleRecalculateAllData}>Yes, Recalculate</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                 <div className="flex flex-wrap gap-2">
+                    <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button disabled={isRecalculating || !dbStatus.connected}>
+                            {isRecalculating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Force Recalculate All Data
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action will run the master data update flow. It will recalculate all standings, user scores, and histories based on the existing match results in the database. This can be a long-running and resource-intensive operation.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleRecalculateAllData}>Yes, Recalculate</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                    </AlertDialog>
+                    
+                    <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" disabled={isImportingPast || !dbStatus.connected}>
+                            {isImportingPast ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Import Past Results (Wk 1-18)
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Confirm Data Import</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will delete ALL existing matches in the database and import the correct results for weeks 1-18 from the code backup. This action is irreversible. It will automatically trigger a full data recalculation upon completion.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleImportPastFixtures}>Yes, Import Results</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                    </AlertDialog>
+                </div>
+
 
             </CardContent>
         </Card>
@@ -369,26 +415,6 @@ export default function AdminPage() {
                         ))}
                     </SelectContent>
                 </Select>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" disabled={true} title="This function is disabled as its data source was incorrect.">
-                        {isReimporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Re-import Fixtures
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will delete all existing matches for Week {selectedWeek} and re-import them from the source code. Any scores you have entered for this week will be permanently lost.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleReimportFixtures}>Continue</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
                </div>
 
               {selectedWeek !== null && isLoadingData && <div className="flex items-center gap-2"><Loader2 className="animate-spin" />Loading fixture data...</div>}
