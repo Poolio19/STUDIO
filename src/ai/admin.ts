@@ -8,7 +8,7 @@ let firestore: admin.firestore.Firestore | null = null;
  * Initializes the Firebase Admin SDK and returns a Firestore instance.
  * This is a singleton pattern to ensure it's only initialized once.
  */
-export function getFirestoreAdmin(): admin.firestore.Firestore {
+export async function getFirestoreAdmin(): Promise<admin.firestore.Firestore> {
   if (firestore) {
     return firestore;
   }

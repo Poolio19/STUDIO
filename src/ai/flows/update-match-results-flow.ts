@@ -30,7 +30,7 @@ const updateMatchResultsFlow = ai.defineFlow(
   async ({ results }) => {
     const { logger } = getFlow().state();
     try {
-      const db = getFirestoreAdmin();
+      const db = await getFirestoreAdmin();
       
       const validResults = results.filter(
         (result) => !isNaN(result.homeScore) && !isNaN(result.awayScore)
