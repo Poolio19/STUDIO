@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
+import { updateAllData } from '@/ai/flows/update-all-data-flow';
 import { MatchResultSchema } from '@/ai/flows/update-match-results-flow-types';
 import type { Match, Team } from '@/lib/types';
 
@@ -283,7 +284,7 @@ export default function AdminPage() {
   
   const [dbStatus, setDbStatus] = React.useState<{ connected: boolean, message: string }>({ connected: false, message: 'Checking connection...' });
 
-  const [isUpdatingMatches, setIsUpdatingMatches] = React.useState(false);
+  const [isUpdating, setIsUpdating] = React.useState(false);
 
   const [selectedWeek, setSelectedWeek] = React.useState<number | null>(null);
   const [weekFixtures, setWeekFixtures] = React.useState<EditableMatch[]>([]);
@@ -451,10 +452,10 @@ export default function AdminPage() {
         toast({ variant: 'destructive', title: 'Error', description: 'Cannot save results. Week not selected.' });
         return;
     }
-    setIsUpdatingMatches(true);
+    setIsUpdating(true);
     toast({
       title: `Updating Week ${selectedWeek} Results...`,
-      description: 'Saving results via AI flow.',
+      description: 'Saving results and recalculating all league data. This may take a moment.',
     });
     
     try {
@@ -488,42 +489,48 @@ export default function AdminPage() {
                 title: 'No Valid Scores',
                 description: 'No valid scores were entered for this week. Please enter scores before saving.',
             });
-            setIsUpdatingMatches(false);
+            setIsUpdating(false);
             return;
         }
 
-        const flowResult = await updateMatchResults({ results: validResults });
+        // First, update the match results.
+        const matchUpdateResult = await updateMatchResults({ results: validResults });
         
-        if (!flowResult.success) {
-            throw new Error(`The AI flow reported an error during the update.`);
+        if (!matchUpdateResult.success) {
+            throw new Error(`The AI flow for updating matches reported an error.`);
         }
         
-        if (flowResult.updatedCount === 0) {
-           toast({
-                variant: 'destructive',
-                title: 'Update may have failed',
-                description: `The flow reported 0 records updated. Please check the database.`,
-            });
-        } else {
-            toast({
-                title: `Week ${selectedWeek} Updated!`,
-                description: `${flowResult.updatedCount} match records were successfully updated via the AI flow.`,
-            });
+        toast({
+            title: `Week ${selectedWeek} Matches Updated!`,
+            description: `${matchUpdateResult.updatedCount} match records were saved. Now recalculating all league data...`,
+        });
+
+        // After match results are saved, trigger the master update flow.
+        const allDataUpdateResult = await updateAllData();
+
+        if (!allDataUpdateResult.success) {
+             throw new Error(allDataUpdateResult.message || `The master data update flow failed.`);
         }
 
+        toast({
+            title: `Recalculation Complete!`,
+            description: `All league standings and player scores have been successfully updated.`,
+        });
+
+
     } catch (error: any) {
-        console.error(`Error updating match results for week ${selectedWeek}:`, error);
+        console.error(`Error during full data update for week ${selectedWeek}:`, error);
         toast({
             variant: 'destructive',
             title: 'Update Failed',
-            description: error.message || 'An unexpected error occurred.',
+            description: error.message || 'An unexpected error occurred during the update process.',
         });
     } finally {
-        setIsUpdatingMatches(false);
+        setIsUpdating(false);
     }
   };
 
-  const isLoading = teamsLoading || matchesLoading || !firestore || !dbStatus.connected;
+  const isLoadingData = teamsLoading || matchesLoading || !firestore || !dbStatus.connected;
   
   const allWeeks = React.useMemo(() => {
     // Show all 38 weeks regardless of whether fixtures exist yet.
@@ -560,11 +567,11 @@ export default function AdminPage() {
           <CardHeader>
               <CardTitle>Update Match Results</CardTitle>
               <CardDescription>
-                  Select a week to view its fixtures, enter the scores, and save the results to the database. This is disabled until the database is connected.
+                  Select a week to view its fixtures, enter the scores, and save the results. Saving will trigger a full recalculation of all league and player data. This is disabled until the database is connected.
               </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-               <Select onValueChange={handleWeekChange} disabled={isLoading}>
+               <Select onValueChange={handleWeekChange} disabled={isLoadingData}>
                   <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="Select a week" />
                   </SelectTrigger>
@@ -575,9 +582,9 @@ export default function AdminPage() {
                   </SelectContent>
               </Select>
 
-              {selectedWeek !== null && isLoading && <div className="flex items-center gap-2"><Loader2 className="animate-spin" />Loading fixture data...</div>}
+              {selectedWeek !== null && isLoadingData && <div className="flex items-center gap-2"><Loader2 className="animate-spin" />Loading fixture data...</div>}
 
-              {selectedWeek !== null && !isLoading && (
+              {selectedWeek !== null && !isLoadingData && (
                   <div className="space-y-4 pt-4">
                       <h3 className="font-semibold">Fixtures for Week {selectedWeek}</h3>
                       {weekFixtures.length > 0 ? (
@@ -620,13 +627,13 @@ export default function AdminPage() {
                                     </div>
                                 )})}
                             </div>
-                            <Button onClick={handleSaveWeekResults} disabled={isUpdatingMatches || isLoading}>
-                                {isUpdatingMatches ? (
+                            <Button onClick={handleSaveWeekResults} disabled={isUpdating || isLoadingData}>
+                                {isUpdating ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Saving...
+                                        Updating...
                                     </>
-                                ) : `Save Week ${selectedWeek} Results`}
+                                ) : `Save & Recalculate Week ${selectedWeek}`}
                             </Button>
                         </>
                       ) : (

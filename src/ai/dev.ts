@@ -2,3 +2,4 @@ import { config } from 'dotenv';
 config();
 
 import '@/ai/flows/calculate-prediction-scores.ts';
+import '@/ai/flows/update-all-data-flow.ts';
