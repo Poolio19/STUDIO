@@ -322,16 +322,18 @@ export default function AdminPage() {
         currentWeek = parseInt(trimmedLine.split(' ')[1].replace(':', ''));
         const dateString = trimmedLine.substring(trimmedLine.indexOf(':') + 2);
         if (dateString) {
-           // Remove ordinal suffixes (st, nd, rd, th) from the day number
            const cleanedDateString = dateString.replace(/(\d+)(st|nd|rd|th)/, '$1');
            matchDate = new Date(cleanedDateString);
         }
       } else if (trimmedLine && currentWeek === week && matchDate && !isNaN(matchDate.getTime())) {
         const parts = trimmedLine.split(/\s+v\s+/);
         if (parts.length === 2) {
-          const homeTeamName = parts[0].trim();
-          const awayTeamName = parts[1].trim();
-  
+          let homeTeamName = parts[0].trim();
+          let awayTeamName = parts[1].trim();
+
+          if (homeTeamName === "Nott'm Forest") homeTeamName = "Nottingham Forest";
+          if (awayTeamName === "Nott'm Forest") awayTeamName = "Nottingham Forest";
+          
           const homeTeam = teamNameMap.get(homeTeamName.toLowerCase());
           const awayTeam = teamNameMap.get(awayTeamName.toLowerCase());
   
@@ -618,3 +620,4 @@ export default function AdminPage() {
     
 
     
+
