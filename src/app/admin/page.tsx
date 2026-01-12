@@ -301,24 +301,31 @@ export default function AdminPage() {
   }, [teamsData]);
   
   const teamNameMap = React.useMemo(() => {
-    if (!teamsData) return new Map();
+    if (!teamsData) return new Map<string, Team>();
+    
     const map = new Map<string, Team>();
     teamsData.forEach(team => {
         map.set(team.name.toLowerCase(), team);
     });
     
     // Add variations for matching from raw fixture data
-    const nottinghamForest = teamsData.find(t => t.name === 'Nottingham Forest');
-    if (nottinghamForest) {
-        map.set("nott'm forest", nottinghamForest);
-    }
-    
-    const wolves = teamsData.find(t => t.name === 'Wolverhampton Wanderers');
-    if (wolves) {
-        map.set('wolves', wolves);
+    const teamVariations: {[key: string]: string} = {
+        "nott'm forest": "Nottingham Forest",
+        "wolves": "Wolverhampton Wanderers",
+        "man city": "Manchester City",
+        "man utd": "Manchester United"
+    };
+
+    for (const variation in teamVariations) {
+        const fullName = teamVariations[variation];
+        const teamObject = teamsData.find(t => t.name === fullName);
+        if (teamObject) {
+            map.set(variation, teamObject);
+        }
     }
     return map;
   }, [teamsData]);
+
 
   const connectivityCheckDocRef = useMemoFirebase(
     () => (firestore ? doc(firestore, 'connectivity-test', 'connectivity-doc') : null),
