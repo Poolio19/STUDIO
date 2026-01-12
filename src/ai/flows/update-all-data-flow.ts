@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A master flow to update all application data based on match results.
@@ -131,7 +132,7 @@ const updateAllDataFlow = ai.defineFlow(
                 previousScore: user.score,
                 previousRank: user.rank,
                 score: newScore,
-                scoreChange: newScore - user.score
+                scoreChange: newScore - (user.score || 0)
             };
         });
 
@@ -142,17 +143,17 @@ const updateAllDataFlow = ai.defineFlow(
         for (let i = 0; i < userUpdates.length; i++) {
             const user = userUpdates[i];
             const newRank = i + 1;
-            user.rankChange = user.previousRank > 0 ? user.previousRank - newRank : 0;
+            user.rankChange = (user.previousRank || 0) > 0 ? user.previousRank - newRank : 0;
             user.rank = newRank;
 
-            if (user.rank > user.maxRank) user.maxRank = user.rank;
-            if (user.minRank === 0 || user.rank < user.minRank) user.minRank = user.rank;
-            if (user.score > user.maxScore) user.maxScore = user.score;
-            if (user.minScore === 0 || user.score < user.minScore) user.minScore = user.score;
+            if (user.rank > (user.maxRank || 0)) user.maxRank = user.rank;
+            if ((user.minRank === 0 || user.rank < (user.minRank || 99))) user.minRank = user.rank;
+            if (user.score > (user.maxScore || 0)) user.maxScore = user.score;
+            if ((user.minScore === 0 || user.score < (user.minScore || 0))) user.minScore = user.score;
             
             const userRef = db.collection('users').doc(user.id);
             const { id, ...userData } = user;
-            batch.set(userRef, userData);
+            batch.set(userRef, userData, { merge: true });
             
             // Update UserHistory
             const userHistoryRef = db.collection('userHistories').doc(user.id);
@@ -217,3 +218,5 @@ const updateAllDataFlow = ai.defineFlow(
     }
   }
 );
+
+    
