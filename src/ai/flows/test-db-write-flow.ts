@@ -12,6 +12,8 @@ const TestWriteOutputSchema = z.object({
   message: z.string(),
   path: z.string(),
 });
+export type TestDbWriteOutput = z.infer<typeof TestWriteOutputSchema>;
+
 
 export const testDbWriteFlow = ai.defineFlow(
   {
