@@ -143,7 +143,7 @@ const updateAllDataFlow = ai.defineFlow(
             actualFinalStandings: actualFinalStandingsString,
             userRankings: userRankingsString
         });
-        logger.info(`Master Data Update: AI scoring complete.`);
+        logger.info(`Master Data Update: AI scoring complete. Received scores for ${Object.keys(userScores).length} users.`);
 
         // 5. Update user profiles, user histories, and player team scores
         logger.info('Master Data Update: Calculating and batching user-related updates...');
@@ -229,3 +229,5 @@ const updateAllDataFlow = ai.defineFlow(
     }
   }
 );
+
+    

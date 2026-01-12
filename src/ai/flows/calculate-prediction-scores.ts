@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -13,7 +14,7 @@ import {z} from 'genkit';
 
 const CalculatePredictionScoresInputSchema = z.object({
   actualFinalStandings: z.string().describe('The actual final standings of the teams at the end of the season, as a comma-separated list of team IDs.'),
-  userRankings: z.string().describe('The user-predicted rankings for the teams, provided as a string with each user\'s predictions on a new line.'),
+  userRankings: z.string().describe('The user-predicted rankings for the teams, provided as a string with each user\'s predictions on a new line. Each line should be in the format: "userId,teamId1,teamId2,..."'),
 });
 export type CalculatePredictionScoresInput = z.infer<
   typeof CalculatePredictionScoresInputSchema
@@ -59,7 +60,7 @@ const calculatePredictionScoresPrompt = ai.definePrompt({
   Calculate the total scores for each user based on their predicted rankings against the actual final standings.
   Provide a summary of the scoring process. Return the scores as a record of user IDs to their calculated scores and the summary.
   Make sure the outputted scores are only numerical values.
-  Follow the schema description for the scores field precisely to ensure correct data formatting.
+  Follow the schema description for the scores field precisely to ensure correct data formatting. The keys for the scores record MUST be the user IDs provided in the userRankings input.
   `,
 });
 
@@ -76,3 +77,5 @@ const calculatePredictionScoresFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    
