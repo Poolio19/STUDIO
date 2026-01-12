@@ -3,7 +3,7 @@ import admin from 'firebase-admin';
 
 // This is the Google Cloud Project that Firebase Studio has provisioned for your backend.
 // It is used by the Admin SDK to access your project's resources.
-const TARGET_PROJECT_ID = 'studio-2138583336-cec5d';
+const TARGET_PROJECT_ID = 'prempred-43933';
 
 // A variable to hold the singleton instance of the Firebase Admin App.
 let adminApp: admin.app.App | null = null;
@@ -26,6 +26,7 @@ function initializeAdminApp(): admin.app.App {
     const existingApp = admin.apps.find(app => app?.name === '[DEFAULT]');
     if (existingApp) {
         adminApp = existingApp;
+        console.log('Using existing [DEFAULT] Firebase Admin App instance.');
         return adminApp;
     }
 
