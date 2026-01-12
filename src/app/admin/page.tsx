@@ -35,6 +35,248 @@ type EditableMatch = Match & {
     awayTeam: Team;
 };
 
+const rawFutureFixtures = `
+Week 19: 2nd Jan 2026
+Bournemouth	v	Arsenal
+Aston Villa	v	Brighton
+Chelsea	v	Man City
+Everton	v	West Ham
+Leicester	v	Man Utd
+Southampton	v	Fulham
+Tottenham	v	Ipswich
+Wolves	v	Crystal Palace
+Liverpool	v	Nott'm Forest
+Newcastle	v	Brentford
+
+Week 20: 17th Jan 2026
+Arsenal	v	Tottenham
+Brentford	v	Southampton
+Brighton	v	Newcastle
+Crystal Palace	v	Leicester
+Fulham	v	Everton
+Ipswich	v	Chelsea
+Man City	v	Bournemouth
+Man Utd	v	Liverpool
+Nott'm Forest	v	Wolves
+West Ham	v	Aston Villa
+
+Week 21: 24th Jan 2026
+Bournemouth	v	Liverpool
+Aston Villa	v	Fulham
+Chelsea	v	Arsenal
+Everton	v	Brentford
+Leicester	v	Crystal Palace
+Southampton	v	Ipswich
+Tottenham	v	Man City
+Wolves	v	Man Utd
+Newcastle	v	Brighton
+Nott'm Forest	v	West Ham
+
+Week 22: 4th Feb 2026
+Arsenal	v	Southampton
+Brentford	v	Wolves
+Brighton	v	Tottenham
+Crystal Palace	v	Everton
+Fulham	v	Nott'm Forest
+Ipswich	v	Bournemouth
+Man City	v	Aston Villa
+Man Utd	v	Newcastle
+Liverpool	v	Chelsea
+West Ham	v	Leicester
+
+Week 23: 8th Feb 2026
+Bournemouth	v	Man Utd
+Aston Villa	v	Liverpool
+Chelsea	v	West Ham
+Everton	v	Man City
+Leicester	v	Arsenal
+Southampton	v	Brighton
+Tottenham	v	Brentford
+Wolves	v	Ipswich
+Newcastle	v	Crystal Palace
+Nott'm Forest	v	Fulham
+
+Week 24: 15th Feb 2026
+Arsenal	v	Everton
+Brentford	v	Leicester
+Brighton	v	Wolves
+Crystal Palace	v	Aston Villa
+Fulham	v	Chelsea
+Ipswich	v	Newcastle
+Man City	v	Nott'm Forest
+Man Utd	v	Southampton
+Liverpool	v	Tottenham
+West Ham	v	Bournemouth
+
+Week 25: 22nd Feb 2026
+Bournemouth	v	Crystal Palace
+Aston Villa	v	Man Utd
+Chelsea	v	Brighton
+Everton	v	Ipswich
+Leicester	v	Man City
+Southampton	v	West Ham
+Tottenham	v	Fulham
+Wolves	v	Arsenal
+Newcastle	v	Liverpool
+Nott'm Forest	v	Brentford
+
+Week 26: 1st Mar 2026
+Arsenal	v	Nott'm Forest
+Brentford	v	Chelsea
+Brighton	v	Bournemouth
+Crystal Palace	v	Man Utd
+Fulham	v	Newcastle
+Ipswich	v	Leicester
+Man City	v	Southampton
+Liverpool	v	Everton
+Tottenham	v	Aston Villa
+West Ham	v	Wolves
+
+Week 27: 8th Mar 2026
+Bournemouth	v	Fulham
+Aston Villa	v	Crystal Palace
+Everton	v	Man City
+Leicester	v	Brighton
+Man Utd	v	Arsenal
+Southampton	v	Tottenham
+Wolves	v	Brentford
+Newcastle	v	Ipswich
+Nott'm Forest	v	West Ham
+Liverpool	v	Man Utd
+
+Week 28: 15th Mar 2026
+Arsenal	v	Newcastle
+Brentford	v	Aston Villa
+Brighton	v	Liverpool
+Crystal Palace	v	Southampton
+Fulham	v	Man Utd
+Ipswich	v	Nott'm Forest
+Man City	v	Tottenham
+Leicester	v	Everton
+West Ham	v	Chelsea
+Wolves	v	Bournemouth
+
+Week 29: 22nd Mar 2026
+Bournemouth	v	Leicester
+Aston Villa	v	Wolves
+Chelsea	v	Ipswich
+Everton	v	Fulham
+Man Utd	v	Brentford
+Southampton	v	Man City
+Tottenham	v	West Ham
+Newcastle	v	Arsenal
+Nott'm Forest	v	Crystal Palace
+Liverpool	v	Brighton
+
+Week 30: 5th Apr 2026
+Arsenal	v	Liverpool
+Brentford	v	Nott'm Forest
+Brighton	v	Man Utd
+Crystal Palace	v	Tottenham
+Fulham	v	Southampton
+Ipswich	v	Everton
+Man City	v	Newcastle
+Leicester	v	Bournemouth
+West Ham	v	Man City
+Wolves	v	Aston Villa
+
+Week 31: 12th Apr 2026
+Bournemouth	v	Brentford
+Aston Villa	v	Leicester
+Chelsea	v	Wolves
+Everton	v	Brighton
+Man Utd	v	Ipswich
+Southampton	v	Arsenal
+Tottenham	v	Nott'm Forest
+Newcastle	v	Fulham
+Liverpool	v	West Ham
+Man City	v	Crystal Palace
+
+Week 32: 19th Apr 2026
+Arsenal	v	Aston Villa
+Brentford	v	Man City
+Brighton	v	Southampton
+Crystal Palace	v	Chelsea
+Fulham	v	Bournemouth
+Ipswich	v	Tottenham
+Leicester	v	Liverpool
+West Ham	v	Man Utd
+Wolves	v	Everton
+Nott'm Forest	v	Newcastle
+
+Week 33: 26th Apr 2026
+Bournemouth	v	Wolves
+Aston Villa	v	Nott'm Forest
+Chelsea	v	Fulham
+Everton	v	Arsenal
+Man Utd	v	Crystal Palace
+Southampton	v	Leicester
+Tottenham	v	Brighton
+Newcastle	v	West Ham
+Liverpool	v	Ipswich
+Man City	v	Brentford
+
+Week 34: 3rd May 2026
+Arsenal	v	Man Utd
+Brentford	v	Everton
+Brighton	v	Man City
+Crystal Palace	v	Liverpool
+Fulham	v	Aston Villa
+Ipswich	v	Southampton
+Leicester	v	Tottenham
+West Ham	v	Newcastle
+Wolves	v	Nott'm Forest
+Man City	v	Chelsea
+
+Week 35: 10th May 2026
+Bournemouth	v	Aston Villa
+Brentford	v	Ipswich
+Brighton	v	Arsenal
+Man Utd	v	Everton
+Nott'm Forest	v	Chelsea
+Southampton	v	Liverpool
+Tottenham	v	Wolves
+West Ham	v	Fulham
+Newcastle	v	Leicester
+Man City	v	West Ham
+
+Week 36: 17th May 2026
+Arsenal	v	Nott'm Forest
+Chelsea	v	Tottenham
+Crystal Palace	v	Brentford
+Everton	v	Southampton
+Fulham	v	Man City
+Ipswich	v	Brighton
+Leicester	v	Wolves
+Man Utd	v	Newcastle
+Liverpool	v	Bournemouth
+Aston Villa	v	Man Utd
+
+Week 37: 24th May 2026
+Bournemouth	v	Everton
+Aston Villa	v	Tottenham
+Brentford	v	Fulham
+Brighton	v	Leicester
+Crystal Palace	v	Ipswich
+Man City	v	Arsenal
+Nott'm Forest	v	Southampton
+West Ham	v	Liverpool
+Wolves	v	Newcastle
+Man Utd	v	Chelsea
+
+Week 38: 31st May 2026
+Arsenal	v	Wolves
+Chelsea	v	Aston Villa
+Everton	v	Nott'm Forest
+Fulham	v	Man Utd
+Ipswich	v	West Ham
+Leicester	v	Bournemouth
+Southampton	v	Crystal Palace
+Tottenham	v	Brentford
+Newcastle	v	Man City
+Liverpool	v	Brighton
+`;
+
 export default function AdminPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -57,12 +299,59 @@ export default function AdminPage() {
     if (!teamsData) return new Map();
     return new Map(teamsData.map(t => [t.id, t]));
   }, [teamsData]);
+  
+  const teamNameMap = React.useMemo(() => {
+    if (!teamsData) return new Map();
+    // Create a map from lowercase, trimmed name to team object
+    return new Map(teamsData.map(t => [t.name.trim().toLowerCase(), t]));
+  }, [teamsData]);
 
   const connectivityCheckDocRef = useMemoFirebase(
     () => (firestore ? doc(firestore, 'connectivity-test', 'connectivity-doc') : null),
     [firestore]
   );
 
+  const parseRawFixtures = React.useCallback((week: number): EditableMatch[] => {
+    const lines = rawFutureFixtures.trim().split('\n');
+    const fixturesForWeek: EditableMatch[] = [];
+    let currentWeek = 0;
+    let matchDate: Date | null = null;
+  
+    for (const line of lines) {
+      if (line.startsWith('Week')) {
+        currentWeek = parseInt(line.split(' ')[1].replace(':', ''));
+        const dateString = line.split(': ')[1];
+        if (dateString) {
+           matchDate = new Date(dateString);
+        }
+      } else if (line.trim() && currentWeek === week && matchDate) {
+        const parts = line.split(/\s+v\s+/);
+        if (parts.length === 2) {
+          const homeTeamName = parts[0].trim();
+          const awayTeamName = parts[1].trim();
+  
+          const homeTeam = teamNameMap.get(homeTeamName.toLowerCase());
+          const awayTeam = teamNameMap.get(awayTeamName.toLowerCase());
+  
+          if (homeTeam && awayTeam) {
+            const matchId = `${week}-${homeTeam.id}-${awayTeam.id}`;
+            fixturesForWeek.push({
+              id: matchId,
+              week: week,
+              homeTeamId: homeTeam.id,
+              awayTeamId: awayTeam.id,
+              homeScore: -1,
+              awayScore: -1,
+              matchDate: matchDate.toISOString(),
+              homeTeam: homeTeam,
+              awayTeam: awayTeam,
+            });
+          }
+        }
+      }
+    }
+    return fixturesForWeek;
+  }, [teamNameMap]);
 
   React.useEffect(() => {
     if (!connectivityCheckDocRef) return;
@@ -86,11 +375,11 @@ export default function AdminPage() {
     checkConnection();
   }, [connectivityCheckDocRef]);
 
-  const handleWeekChange = (weekStr: string) => {
+  const handleWeekChange = React.useCallback((weekStr: string) => {
     const week = parseInt(weekStr);
     setSelectedWeek(week);
 
-    const fixturesForWeek = (matchesData || [])
+    const existingFixtures = (matchesData || [])
         .filter(m => m.week === week)
         .map(match => {
             const homeTeam = teamMap.get(match.homeTeamId);
@@ -104,6 +393,13 @@ export default function AdminPage() {
         })
         .filter((match): match is EditableMatch => match !== null);
 
+    let fixturesForWeek: EditableMatch[];
+    if (existingFixtures.length > 0) {
+        fixturesForWeek = existingFixtures;
+    } else {
+        fixturesForWeek = parseRawFixtures(week);
+    }
+    
     setWeekFixtures(fixturesForWeek);
 
     const initialScores = fixturesForWeek.reduce((acc, match) => {
@@ -111,7 +407,7 @@ export default function AdminPage() {
         return acc;
     }, {} as {[matchId: string]: {homeScore: string, awayScore: string}});
     setScores(initialScores);
-  };
+  }, [matchesData, teamMap, parseRawFixtures]);
 
   const handleScoreChange = (matchId: string, team: 'home' | 'away', value: string) => {
     setScores(prev => ({
@@ -174,11 +470,19 @@ export default function AdminPage() {
         if (!flowResult.success) {
             throw new Error(`The AI flow reported an error during the update.`);
         }
-
-        toast({
-            title: `Week ${selectedWeek} Updated!`,
-            description: `${flowResult.updatedCount} match records were successfully updated via the AI flow.`,
-        });
+        
+        if (flowResult.updatedCount === 0) {
+           toast({
+                variant: 'destructive',
+                title: 'Update may have failed',
+                description: `The flow reported 0 records updated. Please check the database.`,
+            });
+        } else {
+            toast({
+                title: `Week ${selectedWeek} Updated!`,
+                description: `${flowResult.updatedCount} match records were successfully updated via the AI flow.`,
+            });
+        }
 
     } catch (error: any) {
         console.error(`Error updating match results for week ${selectedWeek}:`, error);
@@ -229,7 +533,7 @@ export default function AdminPage() {
           <CardHeader>
               <CardTitle>Update Match Results</CardTitle>
               <CardDescription>
-                  Select a week to view its fixtures, enter the scores, and save the results to the database. Use a value of -1 for scores that are not yet final. This is disabled until the database is connected.
+                  Select a week to view its fixtures, enter the scores, and save the results to the database. This is disabled until the database is connected.
               </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -308,3 +612,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
