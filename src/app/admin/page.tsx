@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -25,8 +24,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
 import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 import { updateAllData } from '@/ai/flows/update-all-data-flow';
+import { reimportFixtures } from '@/ai/flows/reimport-fixtures-flow';
 import { MatchResultSchema } from '@/ai/flows/update-match-results-flow-types';
 import type { Match, Team } from '@/lib/types';
 
@@ -38,244 +50,244 @@ type EditableMatch = Match & {
 
 const rawFutureFixtures = `
 Week 19: 2nd Jan 2026
-Bournemouth	v	Arsenal
-Aston Villa	v	Brighton
-Chelsea	v	Man City
-Everton	v	West Ham
-Leeds	v	Man Utd
-Burnley	v	Fulham
-Tottenham	v	Sunderland
-Wolves	v	Crystal Palace
-Liverpool	v	Nott'm Forest
-Newcastle	v	Brentford
+Bournemouth v Arsenal
+Aston Villa v Brighton
+Chelsea v Man City
+Everton v West Ham
+Leeds v Man Utd
+Burnley v Fulham
+Tottenham v Sunderland
+Wolves v Crystal Palace
+Liverpool v Nott'm Forest
+Newcastle v Brentford
 
 Week 20: 17th Jan 2026
-Arsenal	v	Tottenham
-Brentford	v	Burnley
-Brighton	v	Newcastle
-Crystal Palace	v	Leeds
-Fulham	v	Everton
-Sunderland	v	Chelsea
-Man City	v	Bournemouth
-Man Utd	v	Liverpool
-Nott'm Forest	v	Wolves
-West Ham	v	Aston Villa
+Arsenal v Tottenham
+Brentford v Burnley
+Brighton v Newcastle
+Crystal Palace v Leeds
+Fulham v Everton
+Sunderland v Chelsea
+Man City v Bournemouth
+Man Utd v Liverpool
+Nott'm Forest v Wolves
+West Ham v Aston Villa
 
 Week 21: 24th Jan 2026
-Bournemouth	v	Liverpool
-Aston Villa	v	Fulham
-Chelsea	v	Arsenal
-Everton	v	Brentford
-Leeds	v	Crystal Palace
-Burnley	v	Sunderland
-Tottenham	v	Man City
-Wolves	v	Man Utd
-Newcastle	v	Brighton
-Nott'm Forest	v	West Ham
+Bournemouth v Liverpool
+Aston Villa v Fulham
+Chelsea v Arsenal
+Everton v Brentford
+Leeds v Crystal Palace
+Burnley v Sunderland
+Tottenham v Man City
+Wolves v Man Utd
+Newcastle v Brighton
+Nott'm Forest v West Ham
 
 Week 22: 4th Feb 2026
-Arsenal	v	Burnley
-Brentford	v	Wolves
-Brighton	v	Tottenham
-Crystal Palace	v	Everton
-Fulham	v	Nott'm Forest
-Sunderland	v	Bournemouth
-Man City	v	Aston Villa
-Man Utd	v	Newcastle
-Liverpool	v	Chelsea
-West Ham	v	Leeds
+Arsenal v Burnley
+Brentford v Wolves
+Brighton v Tottenham
+Crystal Palace v Everton
+Fulham v Nott'm Forest
+Sunderland v Bournemouth
+Man City v Aston Villa
+Man Utd v Newcastle
+Liverpool v Chelsea
+West Ham v Leeds
 
 Week 23: 8th Feb 2026
-Bournemouth	v	Man Utd
-Aston Villa	v	Liverpool
-Chelsea	v	West Ham
-Everton	v	Man City
-Leeds	v	Arsenal
-Burnley	v	Brighton
-Tottenham	v	Brentford
-Wolves	v	Sunderland
-Newcastle	v	Crystal Palace
-Nott'm Forest	v	Fulham
+Bournemouth v Man Utd
+Aston Villa v Liverpool
+Chelsea v West Ham
+Everton v Man City
+Leeds v Arsenal
+Burnley v Brighton
+Tottenham v Brentford
+Wolves v Sunderland
+Newcastle v Crystal Palace
+Nott'm Forest v Fulham
 
 Week 24: 15th Feb 2026
-Arsenal	v	Everton
-Brentford	v	Leeds
-Brighton	v	Wolves
-Crystal Palace	v	Aston Villa
-Fulham	v	Chelsea
-Sunderland	v	Newcastle
-Man City	v	Nott'm Forest
-Man Utd	v	Burnley
-Liverpool	v	Tottenham
-West Ham	v	Bournemouth
+Arsenal v Everton
+Brentford v Leeds
+Brighton v Wolves
+Crystal Palace v Aston Villa
+Fulham v Chelsea
+Sunderland v Newcastle
+Man City v Nott'm Forest
+Man Utd v Burnley
+Liverpool v Tottenham
+West Ham v Bournemouth
 
 Week 25: 22nd Feb 2026
-Bournemouth	v	Crystal Palace
-Aston Villa	v	Man Utd
-Chelsea	v	Brighton
-Everton	v	Sunderland
-Leeds	v	Man City
-Burnley	v	West Ham
-Tottenham	v	Fulham
-Wolves	v	Arsenal
-Newcastle	v	Liverpool
-Nott'm Forest	v	Brentford
+Bournemouth v Crystal Palace
+Aston Villa v Man Utd
+Chelsea v Brighton
+Everton v Sunderland
+Leeds v Man City
+Burnley v West Ham
+Tottenham v Fulham
+Wolves v Arsenal
+Newcastle v Liverpool
+Nott'm Forest v Brentford
 
 Week 26: 1st Mar 2026
-Arsenal	v	Nott'm Forest
-Brentford	v	Chelsea
-Brighton	v	Bournemouth
-Crystal Palace	v	Man Utd
-Fulham	v	Newcastle
-Sunderland	v	Leeds
-Man City	v	Burnley
-Liverpool	v	Everton
-Tottenham	v	Aston Villa
-West Ham	v	Wolves
+Arsenal v Nott'm Forest
+Brentford v Chelsea
+Brighton v Bournemouth
+Crystal Palace v Man Utd
+Fulham v Newcastle
+Sunderland v Leeds
+Man City v Burnley
+Liverpool v Everton
+Tottenham v Aston Villa
+West Ham v Wolves
 
 Week 27: 8th Mar 2026
-Bournemouth	v	Fulham
-Aston Villa	v	Crystal Palace
-Everton	v	Leeds
-Man Utd	v	Arsenal
-Burnley	v	Tottenham
-Wolves	v	Brentford
-Newcastle	v	Sunderland
-Nott'm Forest	v	West Ham
-Liverpool	v	Man City
-Brighton	v	Chelsea
+Bournemouth v Fulham
+Aston Villa v Crystal Palace
+Everton v Leeds
+Man Utd v Arsenal
+Burnley v Tottenham
+Wolves v Brentford
+Newcastle v Sunderland
+Nott'm Forest v West Ham
+Liverpool v Man City
+Chelsea v Brighton
 
 Week 28: 15th Mar 2026
-Arsenal	v	Newcastle
-Brentford	v	Aston Villa
-Brighton	v	Liverpool
-Crystal Palace	v	Burnley
-Fulham	v	Man Utd
-Sunderland	v	Nott'm Forest
-Man City	v	Tottenham
-Everton	v	Leeds
-West Ham	v	Chelsea
-Wolves	v	Bournemouth
+Arsenal v Newcastle
+Brentford v Aston Villa
+Brighton v Liverpool
+Crystal Palace v Burnley
+Fulham v Man Utd
+Sunderland v Nott'm Forest
+Man City v Tottenham
+Everton v Wolves
+West Ham v Chelsea
+Bournemouth v Wolves
 
 Week 29: 22nd Mar 2026
-Bournemouth	v	Leeds
-Aston Villa	v	Wolves
-Chelsea	v	Sunderland
-Everton	v	Fulham
-Man Utd	v	Brentford
-Burnley	v	Man City
-Tottenham	v	West Ham
-Newcastle	v	Arsenal
-Nott'm Forest	v	Crystal Palace
-Liverpool	v	Brighton
+Bournemouth v Leeds
+Aston Villa v Wolves
+Chelsea v Sunderland
+Everton v Fulham
+Man Utd v Brentford
+Burnley v Man City
+Tottenham v West Ham
+Newcastle v Arsenal
+Nott'm Forest v Crystal Palace
+Liverpool v Brighton
 
 Week 30: 5th Apr 2026
-Arsenal	v	Liverpool
-Brentford	v	Nott'm Forest
-Brighton	v	Man Utd
-Crystal Palace	v	Tottenham
-Fulham	v	Burnley
-Sunderland	v	Everton
-Man City	v	Newcastle
-Leeds	v	Bournemouth
-West Ham	v	Leeds
-Wolves	v	Aston Villa
+Arsenal v Liverpool
+Brentford v Nott'm Forest
+Brighton v Man Utd
+Crystal Palace v Tottenham
+Fulham v Burnley
+Sunderland v Everton
+Man City v Newcastle
+West Ham v Leeds
+Wolves v Aston Villa
+Bournemouth v Chelsea
 
 Week 31: 12th Apr 2026
-Bournemouth	v	Brentford
-Aston Villa	v	Leeds
-Chelsea	v	Wolves
-Everton	v	Brighton
-Man Utd	v	Sunderland
-Burnley	v	Arsenal
-Tottenham	v	Nott'm Forest
-Newcastle	v	Fulham
-Liverpool	v	West Ham
-Man City	v	Crystal Palace
+Bournemouth v Brentford
+Aston Villa v Leeds
+Chelsea v Wolves
+Everton v Brighton
+Man Utd v Sunderland
+Burnley v Arsenal
+Tottenham v Nott'm Forest
+Newcastle v Fulham
+Liverpool v West Ham
+Man City v Crystal Palace
 
 Week 32: 19th Apr 2026
-Arsenal	v	Aston Villa
-Brentford	v	Man City
-Brighton	v	Burnley
-Crystal Palace	v	Chelsea
-Fulham	v	Bournemouth
-Sunderland	v	Tottenham
-Leeds	v	Liverpool
-West Ham	v	Man Utd
-Wolves	v	Everton
-Nott'm Forest	v	Newcastle
+Arsenal v Aston Villa
+Brentford v Man City
+Brighton v Burnley
+Crystal Palace v Chelsea
+Fulham v Bournemouth
+Sunderland v Tottenham
+Leeds v Liverpool
+West Ham v Man Utd
+Wolves v Everton
+Nott'm Forest v Newcastle
 
 Week 33: 26th Apr 2026
-Bournemouth	v	Wolves
-Aston Villa	v	Nott'm Forest
-Chelsea	v	Fulham
-Everton	v	Arsenal
-Man Utd	v	Crystal Palace
-Burnley	v	Leeds
-Tottenham	v	Brighton
-Newcastle	v	West Ham
-Liverpool	v	Sunderland
-Man City	v	Brentford
+Bournemouth v Wolves
+Aston Villa v Nott'm Forest
+Chelsea v Fulham
+Everton v Arsenal
+Man Utd v Crystal Palace
+Burnley v Leeds
+Tottenham v Brighton
+Newcastle v West Ham
+Liverpool v Sunderland
+Man City v Brentford
 
 Week 34: 3rd May 2026
-Arsenal	v	Man Utd
-Brentford	v	Everton
-Brighton	v	Man City
-Crystal Palace	v	Liverpool
-Fulham	v	Aston Villa
-Sunderland	v	Burnley
-Leeds	v	Tottenham
-West Ham	v	Newcastle
-Wolves	v	Nott'm Forest
-Chelsea	v	Bournemouth
+Arsenal v Man Utd
+Brentford v Everton
+Brighton v Man City
+Crystal Palace v Liverpool
+Fulham v Aston Villa
+Sunderland v Burnley
+Leeds v Tottenham
+West Ham v Newcastle
+Wolves v Nott'm Forest
+Chelsea v Bournemouth
 
 Week 35: 10th May 2026
-Bournemouth	v	Aston Villa
-Brentford	v	Sunderland
-Brighton	v	Arsenal
-Man Utd	v	Everton
-Nott'm Forest	v	Chelsea
-Burnley	v	Liverpool
-Tottenham	v	Wolves
-West Ham	v	Fulham
-Newcastle	v	Leeds
-Man City	v	West Ham
+Bournemouth v Aston Villa
+Brentford v Sunderland
+Brighton v Arsenal
+Man Utd v Everton
+Nott'm Forest v Chelsea
+Burnley v Liverpool
+Tottenham v Wolves
+Newcastle v Leeds
+Man City v West Ham
+Fulham v West Ham
 
 Week 36: 17th May 2026
-Arsenal	v	Nott'm Forest
-Chelsea	v	Tottenham
-Crystal Palace	v	Brentford
-Everton	v	Burnley
-Fulham	v	Man City
-Sunderland	v	Brighton
-Leeds	v	Wolves
-Man Utd	v	Newcastle
-Liverpool	v	Bournemouth
-Aston Villa	v	West Ham
+Arsenal v Nott'm Forest
+Chelsea v Tottenham
+Crystal Palace v Brentford
+Everton v Burnley
+Fulham v Man City
+Sunderland v Brighton
+Leeds v Wolves
+Man Utd v Newcastle
+Liverpool v Bournemouth
+Aston Villa v West Ham
 
 Week 37: 24th May 2026
-Bournemouth	v	Everton
-Aston Villa	v	Tottenham
-Brentford	v	Fulham
-Brighton	v	Leeds
-Crystal Palace	v	Sunderland
-Man City	v	Arsenal
-Nott'm Forest	v	Burnley
-West Ham	v	Liverpool
-Wolves	v	Newcastle
-Man Utd	v	Chelsea
+Bournemouth v Everton
+Aston Villa v Tottenham
+Brentford v Fulham
+Brighton v Leeds
+Crystal Palace v Sunderland
+Man City v Arsenal
+Nott'm Forest v Burnley
+West Ham v Liverpool
+Wolves v Newcastle
+Man Utd v Chelsea
 
 Week 38: 31st May 2026
-Arsenal	v	Wolves
-Chelsea	v	Aston Villa
-Everton	v	Nott'm Forest
-Fulham	v	Man Utd
-Sunderland	v	West Ham
-Leeds	v	Bournemouth
-Burnley	v	Crystal Palace
-Tottenham	v	Brentford
-Newcastle	v	Man City
-Liverpool	v	Brighton
+Arsenal v Wolves
+Chelsea v Aston Villa
+Everton v Nott'm Forest
+Fulham v Man Utd
+Sunderland v West Ham
+Leeds v Bournemouth
+Burnley v Crystal Palace
+Tottenham v Brentford
+Newcastle v Man City
+Liverpool v Brighton
 `;
 
 export default function AdminPage() {
@@ -285,6 +297,7 @@ export default function AdminPage() {
   const [dbStatus, setDbStatus] = React.useState<{ connected: boolean, message: string }>({ connected: false, message: 'Checking connection...' });
 
   const [isUpdating, setIsUpdating] = React.useState(false);
+  const [isReimporting, setIsReimporting] = React.useState(false);
 
   const [selectedWeek, setSelectedWeek] = React.useState<number | null>(null);
   const [weekFixtures, setWeekFixtures] = React.useState<EditableMatch[]>([]);
@@ -294,7 +307,7 @@ export default function AdminPage() {
   const matchesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'matches') : null, [firestore]);
   
   const { data: teamsData, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
-  const { data: matchesData, isLoading: matchesLoading } = useCollection<Match>(matchesQuery);
+  const { data: matchesData, isLoading: matchesLoading, error: matchesError } = useCollection<Match>(matchesQuery);
 
   const teamMap = React.useMemo(() => {
     if (!teamsData) return new Map();
@@ -306,12 +319,10 @@ export default function AdminPage() {
     
     const map = new Map<string, Team>();
     
-    // First, map all official team names (lowercase) to their Team object.
     teamsData.forEach(team => {
         map.set(team.name.toLowerCase(), team);
     });
 
-    // Then, create a map of all known variations to their official names.
     const teamVariations: {[key: string]: string} = {
         "nott'm forest": "notts forest",
         "wolves": "wolves",
@@ -319,10 +330,9 @@ export default function AdminPage() {
         "man utd": "man utd"
     };
 
-    // Finally, add the variations to the main map, pointing them to the correct Team object.
     for (const variation in teamVariations) {
         const officialName = teamVariations[variation];
-        const teamObject = map.get(officialName.toLowerCase());
+        const teamObject = teamsData.find(t => t.name.toLowerCase() === officialName.toLowerCase());
         if (teamObject) {
             map.set(variation.toLowerCase(), teamObject);
         }
@@ -374,6 +384,8 @@ export default function AdminPage() {
               homeTeam: homeTeam,
               awayTeam: awayTeam,
             });
+          } else {
+             console.warn(`Could not find teams for fixture: ${trimmedLine}. Home: ${homeTeamName}, Away: ${awayTeamName}`);
           }
         }
       }
@@ -431,7 +443,10 @@ export default function AdminPage() {
     setWeekFixtures(fixturesForWeek);
 
     const initialScores = fixturesForWeek.reduce((acc, match) => {
-        acc[match.id] = { homeScore: String(match.homeScore), awayScore: String(match.awayScore) };
+        acc[match.id] = { 
+          homeScore: match.homeScore === -1 ? '' : String(match.homeScore), 
+          awayScore: match.awayScore === -1 ? '' : String(match.awayScore) 
+        };
         return acc;
     }, {} as {[matchId: string]: {homeScore: string, awayScore: string}});
     setScores(initialScores);
@@ -472,7 +487,6 @@ export default function AdminPage() {
             };
         });
 
-        // Validate with Zod before sending to the flow
         const parsedResults = MatchResultSchema.array().safeParse(resultsToUpdate);
 
         if (!parsedResults.success) {
@@ -493,7 +507,6 @@ export default function AdminPage() {
             return;
         }
 
-        // First, update the match results.
         const matchUpdateResult = await updateMatchResults({ results: validResults });
         
         if (!matchUpdateResult.success) {
@@ -505,7 +518,6 @@ export default function AdminPage() {
             description: `${matchUpdateResult.updatedCount} match records were saved. Now recalculating all league data...`,
         });
 
-        // After match results are saved, trigger the master update flow.
         const allDataUpdateResult = await updateAllData();
 
         if (!allDataUpdateResult.success) {
@@ -530,10 +542,51 @@ export default function AdminPage() {
     }
   };
 
+  const handleReimportFixtures = async () => {
+    if (selectedWeek === null) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Cannot re-import. Week not selected.' });
+      return;
+    }
+    setIsReimporting(true);
+    toast({
+      title: `Re-importing Week ${selectedWeek}...`,
+      description: 'Deleting existing fixtures and importing fresh ones. This will reset any scores for this week.',
+    });
+
+    try {
+      const fixtures = parseRawFixtures(selectedWeek);
+      if (fixtures.length === 0) {
+        throw new Error("No fixtures could be parsed for the selected week.");
+      }
+
+      const result = await reimportFixtures({ week: selectedWeek, fixtures });
+
+      if (result.success) {
+        toast({
+          title: 'Re-import Successful!',
+          description: `Deleted ${result.deletedCount} and imported ${result.importedCount} fixtures for Week ${selectedWeek}.`,
+        });
+        // Refresh the view
+        handleWeekChange(String(selectedWeek));
+      } else {
+        throw new Error('The re-import flow failed to complete successfully.');
+      }
+    } catch (error: any) {
+      console.error(`Error during re-import for week ${selectedWeek}:`, error);
+      toast({
+        variant: 'destructive',
+        title: 'Re-import Failed',
+        description: error.message || 'An unexpected error occurred during the re-import process.',
+      });
+    } finally {
+      setIsReimporting(false);
+    }
+  };
+
+
   const isLoadingData = teamsLoading || matchesLoading || !firestore || !dbStatus.connected;
   
   const allWeeks = React.useMemo(() => {
-    // Show all 38 weeks regardless of whether fixtures exist yet.
     return Array.from({ length: 38 }, (_, i) => i + 1);
   }, []);
 
@@ -583,6 +636,7 @@ export default function AdminPage() {
                 {dbStatus.connected ? <Icons.shieldCheck className="h-6 w-6 text-green-500" /> : <Icons.bug className="h-6 w-6 text-red-500" />}
                 <p className="font-medium">{dbStatus.message}</p>
                 </div>
+                {matchesError && <p className="text-sm text-red-500 mt-2">Error loading matches: {matchesError.message}</p>}
             </CardContent>
         </Card>
          <Card>
@@ -615,16 +669,38 @@ export default function AdminPage() {
               </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-               <Select onValueChange={handleWeekChange} disabled={isLoadingData}>
-                  <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select a week" />
-                  </SelectTrigger>
-                  <SelectContent>
-                      {allWeeks.map(week => (
-                          <SelectItem key={week} value={String(week)}>Week {week}</SelectItem>
-                      ))}
-                  </SelectContent>
-              </Select>
+               <div className="flex gap-4 items-center">
+                 <Select onValueChange={handleWeekChange} disabled={isLoadingData}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select a week" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {allWeeks.map(week => (
+                            <SelectItem key={week} value={String(week)}>Week {week}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" disabled={isReimporting || selectedWeek === null}>
+                        {isReimporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        Re-import Fixtures
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will delete all existing matches for Week {selectedWeek} and re-import them from the source code. Any scores you have entered for this week will be permanently lost.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleReimportFixtures}>Continue</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+               </div>
 
               {selectedWeek !== null && isLoadingData && <div className="flex items-center gap-2"><Loader2 className="animate-spin" />Loading fixture data...</div>}
 

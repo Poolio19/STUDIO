@@ -3,3 +3,4 @@ config();
 
 import '@/ai/flows/calculate-prediction-scores.ts';
 import '@/ai/flows/update-all-data-flow.ts';
+import '@/ai/flows/reimport-fixtures-flow.ts';
