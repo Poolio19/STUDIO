@@ -209,7 +209,6 @@ const updateAllDataFlow = ai.defineFlow(
         return { success: true, message: 'All data updated successfully.' };
     } catch (error: any) {
         logger.error('Master Data Update: FAILED!', error);
-        // It's crucial to throw the error here so the calling client knows the flow failed.
         throw new Error(`Flow failed: ${error.message}`);
     }
   }

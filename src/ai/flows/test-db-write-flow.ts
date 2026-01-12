@@ -30,7 +30,6 @@ const testDbWriteFlow = ai.defineFlow(
 
     logger.info(`Attempting to update match '19-team_01-team_02' homeScore to ${newScore}.`);
     
-    // IMPORTANT: No try/catch block. Let the original error propagate.
     await matchRef.set({
       homeScore: newScore,
     }, { merge: true });
