@@ -2,7 +2,7 @@
 /**
  * @fileOverview A flow to update match results in Firestore.
  *
- * - updateMatchResults - A function that updates match scores.
+ * - updateMatchResults - a function that updates match scores.
  */
 
 import { ai } from '@/ai/genkit';

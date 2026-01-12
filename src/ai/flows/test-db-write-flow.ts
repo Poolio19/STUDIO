@@ -19,9 +19,10 @@ export async function testDbWrite(): Promise<z.infer<typeof TestWriteOutputSchem
 const testDbWriteFlow = ai.defineFlow(
   {
     name: 'testDbWriteFlow',
+    inputSchema: z.undefined(),
     outputSchema: TestWriteOutputSchema,
   },
-  async (input, { logger }) => {
+  async (_, { logger }) => {
     logger.info("Attempting to get Firestore admin instance...");
     const db = await getFirestoreAdmin();
     logger.info("Firestore admin instance acquired. Getting document reference...");

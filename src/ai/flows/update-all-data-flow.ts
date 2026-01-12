@@ -38,9 +38,10 @@ export async function updateAllData(): Promise<UpdateAllDataOutput> {
 const updateAllDataFlow = ai.defineFlow(
   {
     name: 'updateAllDataFlow',
+    inputSchema: z.undefined(),
     outputSchema: UpdateAllDataOutputSchema,
   },
-  async (input, { logger }) => {
+  async (_, { logger }) => {
     const db = await getFirestoreAdmin();
 
     try {

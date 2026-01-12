@@ -69,8 +69,10 @@ const calculatePredictionScoresFlow = ai.defineFlow(
     inputSchema: CalculatePredictionScoresInputSchema,
     outputSchema: CalculatePredictionScoresOutputSchema,
   },
-  async input => {
+  async (input, { logger }) => {
+    logger.info('Starting score calculation with AI prompt.');
     const {output} = await calculatePredictionScoresPrompt(input);
+    logger.info('Score calculation complete.');
     return output!;
   }
 );
