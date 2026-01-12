@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { User, CurrentStanding, MonthlyMimoM, SeasonMonth } from '@/lib/types';
+import type { User, CurrentStanding, MonthlyMimoM, SeasonMonth, Match } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ArrowUp, ArrowDown, Minus, Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
@@ -71,24 +71,24 @@ export default function MostImprovedPage() {
   const firestore = useFirestore();
 
   const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
-  const standingsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'standings') : null, [firestore]);
+  const matchesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'matches') : null, [firestore]);
   const mimoMQuery = useMemoFirebase(() => firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore]);
   const seasonMonthsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'seasonMonths') : null, [firestore]);
 
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
-  const { data: currentStandings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsQuery);
+  const { data: matchesData, isLoading: matchesLoading } = useCollection<Match>(matchesQuery);
   const { data: monthlyMimoM, isLoading: mimoMLoading } = useCollection<MonthlyMimoM>(mimoMQuery);
   const { data: seasonMonthsData, isLoading: seasonMonthsLoading } = useCollection<SeasonMonth>(seasonMonthsQuery);
 
-  const isLoading = usersLoading || standingsLoading || mimoMLoading || seasonMonthsLoading;
+  const isLoading = usersLoading || matchesLoading || mimoMLoading || seasonMonthsLoading;
 
   const currentWeek = useMemo(() => {
-    if (currentStandings && currentStandings.length > 0) {
-      // Find the maximum games played across all teams to get the true current week
-      return Math.max(...currentStandings.map(s => s.gamesPlayed), 0);
+    if (matchesData && matchesData.length > 0) {
+      const playedMatches = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
+      return Math.max(...playedMatches.map(m => m.week), 0);
     }
-    return 1;
-  }, [currentStandings]);
+    return 0;
+  }, [matchesData]);
 
   const { month: currentMonthName, year: currentYear } = getMonthForWeek(currentWeek);
 

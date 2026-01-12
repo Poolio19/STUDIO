@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Icons, IconName } from '@/components/icons';
 import { Reorder } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import type { Team, PreviousSeasonStanding, CurrentStanding, Prediction as PredictionType } from '@/lib/types';
+import type { Team, PreviousSeasonStanding, CurrentStanding, Prediction as PredictionType, Match } from '@/lib/types';
 import { useUser, useCollection, useDoc, useFirestore, useMemoFirebase, useResolvedUserId } from '@/firebase';
 import { collection, doc, query } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -81,6 +81,7 @@ export default function PredictPage() {
   const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
   const prevStandingsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'previousSeasonStandings') : null, [firestore]);
   const currentStandingsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'standings')) : null, [firestore]);
+  const matchesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'matches') : null, [firestore]);
   
   const userPredictionDocRef = useMemoFirebase(() => {
     if (!firestore || !resolvedUserId) return null;
@@ -90,6 +91,7 @@ export default function PredictPage() {
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
   const { data: previousSeasonStandings, isLoading: prevStandingsLoading } = useCollection<PreviousSeasonStanding>(prevStandingsQuery);
   const { data: currentStandings, isLoading: currentStandingsLoading } = useCollection<CurrentStanding>(currentStandingsQuery);
+  const { data: matchesData, isLoading: matchesLoading } = useCollection<Match>(matchesQuery);
   const { data: userPrediction, isLoading: predictionLoading } = useDoc<PredictionType>(userPredictionDocRef);
 
   const [items, setItems] = React.useState<PredictionItem[]>([]);
@@ -101,7 +103,7 @@ export default function PredictPage() {
     },
   });
 
-  const isLoading = isUserLoading || teamsLoading || prevStandingsLoading || predictionLoading || currentStandingsLoading;
+  const isLoading = isUserLoading || teamsLoading || prevStandingsLoading || predictionLoading || currentStandingsLoading || matchesLoading;
 
   React.useEffect(() => {
     if (isLoading || !teams || !previousSeasonStandings) {
@@ -170,9 +172,12 @@ export default function PredictPage() {
 
 
   const currentWeek = React.useMemo(() => {
-    if (!currentStandings || currentStandings.length === 0) return 0;
-    return Math.max(...currentStandings.map(s => s.gamesPlayed), 0);
-  }, [currentStandings]);
+    if (matchesData && matchesData.length > 0) {
+        const playedMatches = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
+        return Math.max(...playedMatches.map(m => m.week), 0);
+    }
+    return 0;
+  }, [matchesData]);
   
   const seasonStarted = currentWeek > 0;
 

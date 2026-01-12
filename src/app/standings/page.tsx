@@ -127,7 +127,7 @@ export default function StandingsPage() {
             resultsByWeek.set(match.week, weekMatches);
         });
 
-        const currentGamesPlayed = finalStandingsWithTeamData.length > 0 ? Math.max(...finalStandingsWithTeamData.map(s => s.gamesPlayed), 0) : 0;
+        const currentGamesPlayed = playedMatches.length > 0 ? Math.max(...playedMatches.map(m => m.week), 0) : 0;
 
         return { 
             standingsWithTeamData: finalStandingsWithTeamData, 

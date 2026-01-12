@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { User, CurrentStanding, MonthlyMimoM } from '@/lib/types';
+import type { User, CurrentStanding, MonthlyMimoM, Match } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { ArrowUp, ArrowDown, Minus, Loader2 } from 'lucide-react';
@@ -57,21 +57,22 @@ export default function LeaderboardPage() {
   const firestore = useFirestore();
 
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('rank', 'asc')) : null, [firestore]);
-  const standingsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'standings') : null, [firestore]);
+  const matchesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'matches')) : null, [firestore]);
   const mimoMQuery = useMemoFirebase(() => firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore]);
 
   const { data: usersData, isLoading: usersLoading } = useCollection<User>(usersQuery);
-  const { data: currentStandings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsQuery);
+  const { data: matchesData, isLoading: matchesLoading } = useCollection<Match>(matchesQuery);
   const { data: monthlyMimoM, isLoading: mimoMLoading } = useCollection<MonthlyMimoM>(mimoMQuery);
 
-  const isLoading = usersLoading || standingsLoading || mimoMLoading;
+  const isLoading = usersLoading || matchesLoading || mimoMLoading;
   
   const currentWeek = useMemo(() => {
-    if (currentStandings && currentStandings.length > 0) {
-      return Math.max(...currentStandings.map(s => s.gamesPlayed), 0);
+    if (matchesData && matchesData.length > 0) {
+      const playedMatches = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
+      return Math.max(...playedMatches.map(m => m.week), 0);
     }
     return 0;
-  }, [currentStandings]);
+  }, [matchesData]);
 
   const sortedUsers = useMemo(() => {
     if (!usersData) return [];
