@@ -302,7 +302,6 @@ export default function AdminPage() {
   
   const teamNameMap = React.useMemo(() => {
     if (!teamsData) return new Map();
-    // Create a map from lowercase, trimmed name to team object
     return new Map(teamsData.map(t => [t.name.trim().toLowerCase(), t]));
   }, [teamsData]);
 
@@ -318,14 +317,17 @@ export default function AdminPage() {
     let matchDate: Date | null = null;
   
     for (const line of lines) {
-      if (line.startsWith('Week')) {
-        currentWeek = parseInt(line.split(' ')[1].replace(':', ''));
-        const dateString = line.substring(line.indexOf(':') + 2);
+      const trimmedLine = line.trim();
+      if (trimmedLine.startsWith('Week')) {
+        currentWeek = parseInt(trimmedLine.split(' ')[1].replace(':', ''));
+        const dateString = trimmedLine.substring(trimmedLine.indexOf(':') + 2);
         if (dateString) {
-           matchDate = new Date(dateString);
+           // Remove ordinal suffixes (st, nd, rd, th) from the day number
+           const cleanedDateString = dateString.replace(/(\d+)(st|nd|rd|th)/, '$1');
+           matchDate = new Date(cleanedDateString);
         }
-      } else if (line.trim() && currentWeek === week && matchDate && !isNaN(matchDate.getTime())) {
-        const parts = line.split(/\s+v\s+/);
+      } else if (trimmedLine && currentWeek === week && matchDate && !isNaN(matchDate.getTime())) {
+        const parts = trimmedLine.split(/\s+v\s+/);
         if (parts.length === 2) {
           const homeTeamName = parts[0].trim();
           const awayTeamName = parts[1].trim();
@@ -612,5 +614,7 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
 
     
