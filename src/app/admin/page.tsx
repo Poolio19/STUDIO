@@ -566,7 +566,7 @@ export default function AdminPage() {
 
   const [isUpdating, setIsUpdating] = React.useState(false);
   const [isReimporting, setIsReimporting] = React.useState(false);
-  const [isTestRunning, setIsTestRunning] = React.useState(false);
+  const [isRecalculating, setIsRecalculating] = React.useState(false);
 
 
   const [selectedWeek, setSelectedWeek] = React.useState<number | null>(null);
@@ -847,30 +847,31 @@ export default function AdminPage() {
     }
   };
 
-  const handleTestWrite = async () => {
-    setIsTestRunning(true);
-    toast({ title: 'Running database write test...' });
-    if (!firestore) {
-      toast({ variant: 'destructive', title: 'Test Failed', description: 'Firestore not available.' });
-      setIsTestRunning(false);
-      return;
-    }
+  const handleRecalculateAllData = async () => {
+    setIsRecalculating(true);
+    toast({
+      title: 'Recalculating All Data...',
+      description: 'This will update all standings and scores based on the current match results in the database.',
+    });
     try {
-      const docRef = doc(firestore, 'test_01', 'test_01.01');
-      await setDoc(docRef, { 'test_01.01.01': 'success' });
-      toast({
-        title: 'Test Successful!',
-        description: `Successfully wrote to document 'test_01.01' in collection 'test_01'.`,
-      });
+      const result = await updateAllData();
+      if (result.success) {
+        toast({
+          title: 'Recalculation Complete!',
+          description: 'All league standings and player scores have been successfully updated.',
+        });
+      } else {
+        throw new Error(result.message || 'The master data update flow failed.');
+      }
     } catch (error: any) {
-      console.error('Database write test failed:', error);
+      console.error('Error during master data update:', error);
       toast({
         variant: 'destructive',
-        title: 'Test Failed',
+        title: 'Recalculation Failed',
         description: error.message || 'An unexpected error occurred.',
       });
     } finally {
-      setIsTestRunning(false);
+      setIsRecalculating(false);
     }
   };
 
@@ -923,7 +924,7 @@ export default function AdminPage() {
             <CardHeader>
                 <CardTitle>Database Status</CardTitle>
                 <CardDescription>
-                    Check the connection to the Firestore database.
+                    Check the connection and run master data operations.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -932,10 +933,28 @@ export default function AdminPage() {
                 <p className="font-medium">{dbStatus.message}</p>
                 </div>
                 {matchesError && <p className="text-sm text-red-500 mt-2">Error loading matches: {matchesError.message}</p>}
-                <Button onClick={handleTestWrite} disabled={isTestRunning || !dbStatus.connected}>
-                  {isTestRunning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Run Database Write Test
-                </Button>
+                
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                      <Button disabled={isRecalculating || !dbStatus.connected}>
+                        {isRecalculating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        Force Recalculate All Data
+                      </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action will run the master data update flow. It will recalculate all standings, user scores, and histories based on the existing match results in the database. This can be a long-running and resource-intensive operation.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleRecalculateAllData}>Yes, Recalculate</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+
             </CardContent>
         </Card>
          <Card>
