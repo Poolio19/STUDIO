@@ -21,7 +21,7 @@ const testDbWriteFlow = ai.defineFlow(
     name: 'testDbWriteFlow',
     outputSchema: TestWriteOutputSchema,
   },
-  async (_, { logger }) => {
+  async (input, { logger }) => {
     logger.info("Attempting to get Firestore admin instance...");
     const db = await getFirestoreAdmin();
     logger.info("Firestore admin instance acquired. Getting document reference...");

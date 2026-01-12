@@ -26,7 +26,8 @@ const updateMatchResultsFlow = ai.defineFlow(
     inputSchema: UpdateMatchResultsInputSchema,
     outputSchema: UpdateMatchResultsOutputSchema,
   },
-  async ({ results }, { logger }) => {
+  async (input, { logger }) => {
+    const { results } = input;
     const db = await getFirestoreAdmin();
     
     const validResults = results.filter(

@@ -8,7 +8,22 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { getFirestoreAdmin } from '@/ai/admin';
 import { calculatePredictionScores } from './calculate-prediction-scores';
-import type { Team, Match, User as UserProfile, Prediction, PlayerTeamScore, WeeklyTeamStanding, UserHistory, CurrentStanding } from '@/lib/types';
+import type { Team, Match, User as UserProfile, Prediction, PlayerTeamScore, WeeklyTeamStanding, UserHistory } from '@/lib/types';
+
+// Define CurrentStanding inside this file as it's not a globally shared type
+type CurrentStanding = {
+    teamId: string;
+    rank: number;
+    points: number;
+    goalDifference: number;
+    gamesPlayed: number;
+    wins: number;
+    draws: number;
+    losses: number;
+    goalsFor: number;
+    goalsAgainst: number;
+};
+
 
 const UpdateAllDataOutputSchema = z.object({
   success: z.boolean(),
@@ -25,7 +40,7 @@ const updateAllDataFlow = ai.defineFlow(
     name: 'updateAllDataFlow',
     outputSchema: UpdateAllDataOutputSchema,
   },
-  async (_, { logger }) => {
+  async (input, { logger }) => {
     const db = await getFirestoreAdmin();
 
     try {

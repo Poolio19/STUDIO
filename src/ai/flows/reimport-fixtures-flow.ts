@@ -25,7 +25,8 @@ const reimportFixturesFlow = ai.defineFlow(
     inputSchema: ReimportFixturesInputSchema,
     outputSchema: ReimportFixturesOutputSchema,
   },
-  async ({ week, fixtures }, { logger }) => {
+  async (input, { logger }) => {
+    const { week, fixtures } = input;
     const db = await getFirestoreAdmin();
 
     logger.info(`Starting re-import for Week ${week}.`);
