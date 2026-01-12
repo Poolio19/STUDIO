@@ -40,6 +40,8 @@ const updateMatchResultsFlow = ai.defineFlow(
         return { success: true, updatedCount: 0 };
       }
 
+      // Firestore batch writes are limited to 500 operations.
+      // A batch with one `set` operation per document is safe.
       const CHUNK_SIZE = 400;
       let totalUpdatedCount = 0;
 
@@ -48,7 +50,9 @@ const updateMatchResultsFlow = ai.defineFlow(
         const batch = db.batch();
 
         chunk.forEach(result => {
+          // The result.id from the client is the intended document ID
           const docRef = matchesCollectionRef.doc(result.id);
+          // Exclude the 'id' field from the data being written to Firestore
           const { id, ...matchData } = result;
           batch.set(docRef, matchData, { merge: true });
         });
