@@ -63,7 +63,7 @@ const updateMatchResultsFlow = ai.defineFlow(
       }
 
       return { success: true, updatedCount: totalUpdatedCount };
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error in updateMatchResultsFlow:`, error);
       // Re-throw the error to propagate it to the client, where it will be displayed in the toast.
       // The custom error from getAdminFirestore will provide actionable steps.
