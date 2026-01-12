@@ -22,26 +22,24 @@ const testDbWriteFlow = ai.defineFlow(
     outputSchema: TestWriteOutputSchema,
   },
   async (_, { logger }) => {
+    logger.info("Attempting to get Firestore admin instance...");
     const db = await getFirestoreAdmin();
+    logger.info("Firestore admin instance acquired. Getting document reference...");
     const matchRef = db.collection('matches').doc('19-team_01-team_02');
     const newScore = 5;
 
-    try {
-      logger.info(`Attempting to update match '19-team_01-team_02' homeScore to ${newScore}.`);
-      
-      // Using set with merge is more robust for a test, as it will create/update.
-      await matchRef.set({
-        homeScore: newScore,
-      }, { merge: true });
+    logger.info(`Attempting to update match '19-team_01-team_02' homeScore to ${newScore}.`);
+    
+    // IMPORTANT: No try/catch block. Let the original error propagate.
+    await matchRef.set({
+      homeScore: newScore,
+    }, { merge: true });
 
-      logger.info('Database write successful.');
-      return {
-        success: true,
-        message: "Successfully updated document '19-team_01-team_02'. homeScore is now 5.",
-      };
-    } catch (error: any) {
-      logger.error('Database write test failed:', error);
-      throw new Error(`Test failed: ${error.message}`);
-    }
+    logger.info('Database write successful.');
+    
+    return {
+      success: true,
+      message: "Successfully updated document '19-team_01-team_02'. homeScore is now 5.",
+    };
   }
 );

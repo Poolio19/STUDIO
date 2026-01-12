@@ -28,42 +28,37 @@ const reimportFixturesFlow = ai.defineFlow(
   async ({ week, fixtures }, { logger }) => {
     const db = await getFirestoreAdmin();
 
-    try {
-      logger.info(`Starting re-import for Week ${week}.`);
+    logger.info(`Starting re-import for Week ${week}.`);
 
-      // 1. Find all existing matches for the given week
-      const matchesCollection = db.collection('matches');
-      const querySnapshot = await matchesCollection.where('week', '==', week).get();
-      const existingDocs = querySnapshot.docs;
-      const deletedCount = existingDocs.length;
+    // 1. Find all existing matches for the given week
+    const matchesCollection = db.collection('matches');
+    const querySnapshot = await matchesCollection.where('week', '==', week).get();
+    const existingDocs = querySnapshot.docs;
+    const deletedCount = existingDocs.length;
 
-      const batch = db.batch();
+    const batch = db.batch();
 
-      // 2. Delete all existing matches for that week
-      if (deletedCount > 0) {
-        logger.info(`Found ${deletedCount} existing matches for Week ${week}. Deleting...`);
-        existingDocs.forEach(doc => {
-          batch.delete(doc.ref);
-        });
-      }
-
-      // 3. Add the new, correct fixtures for that week
-      const importedCount = fixtures.length;
-      logger.info(`Importing ${importedCount} new fixtures for Week ${week}.`);
-      fixtures.forEach(fixture => {
-        const { id, ...fixtureData } = fixture;
-        const docRef = matchesCollection.doc(id);
-        batch.set(docRef, fixtureData);
+    // 2. Delete all existing matches for that week
+    if (deletedCount > 0) {
+      logger.info(`Found ${deletedCount} existing matches for Week ${week}. Deleting...`);
+      existingDocs.forEach(doc => {
+        batch.delete(doc.ref);
       });
-
-      // 4. Commit the batch
-      await batch.commit();
-      logger.info(`Successfully committed re-import for Week ${week}. Deleted: ${deletedCount}, Imported: ${importedCount}.`);
-
-      return { success: true, deletedCount, importedCount };
-    } catch (error: any) {
-      logger.error(`Error in reimportFixturesFlow for Week ${week}:`, error);
-      throw new Error(`Flow failed for Week ${week}. Reason: ${error.message}`);
     }
+
+    // 3. Add the new, correct fixtures for that week
+    const importedCount = fixtures.length;
+    logger.info(`Importing ${importedCount} new fixtures for Week ${week}.`);
+    fixtures.forEach(fixture => {
+      const { id, ...fixtureData } = fixture;
+      const docRef = matchesCollection.doc(id);
+      batch.set(docRef, fixtureData);
+    });
+
+    // 4. Commit the batch
+    await batch.commit();
+    logger.info(`Successfully committed re-import for Week ${week}. Deleted: ${deletedCount}, Imported: ${importedCount}.`);
+
+    return { success: true, deletedCount, importedCount };
   }
 );
