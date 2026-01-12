@@ -60,12 +60,12 @@ Burnley v Fulham
 Tottenham v Sunderland
 Wolves v Crystal Palace
 Liverpool v Nott'm Forest
-Newcastle v Brentford
+Ipswich v Brentford
 
 Week 20: 17th Jan 2026
 Arsenal v Tottenham
 Brentford v Burnley
-Brighton v Newcastle
+Brighton v Ipswich
 Crystal Palace v Leeds
 Fulham v Everton
 Sunderland v Chelsea
@@ -83,7 +83,7 @@ Leeds v Crystal Palace
 Burnley v Sunderland
 Tottenham v Man City
 Wolves v Man Utd
-Newcastle v Brighton
+Ipswich v Brighton
 Nott'm Forest v West Ham
 
 Week 22: 4th Feb 2026
@@ -94,7 +94,7 @@ Crystal Palace v Everton
 Fulham v Nott'm Forest
 Sunderland v Bournemouth
 Man City v Aston Villa
-Man Utd v Newcastle
+Man Utd v Ipswich
 Liverpool v Chelsea
 West Ham v Leeds
 
@@ -107,7 +107,7 @@ Leeds v Arsenal
 Burnley v Brighton
 Tottenham v Brentford
 Wolves v Sunderland
-Newcastle v Crystal Palace
+Ipswich v Crystal Palace
 Nott'm Forest v Fulham
 
 Week 24: 15th Feb 2026
@@ -116,7 +116,7 @@ Brentford v Leeds
 Brighton v Wolves
 Crystal Palace v Aston Villa
 Fulham v Chelsea
-Sunderland v Newcastle
+Sunderland v Ipswich
 Man City v Nott'm Forest
 Man Utd v Burnley
 Liverpool v Tottenham
@@ -131,7 +131,7 @@ Leeds v Man City
 Burnley v West Ham
 Tottenham v Fulham
 Wolves v Arsenal
-Newcastle v Liverpool
+Ipswich v Liverpool
 Nott'm Forest v Brentford
 
 Week 26: 1st Mar 2026
@@ -139,7 +139,7 @@ Arsenal v Nott'm Forest
 Brentford v Chelsea
 Brighton v Bournemouth
 Crystal Palace v Man Utd
-Fulham v Newcastle
+Fulham v Ipswich
 Sunderland v Leeds
 Man City v Burnley
 Liverpool v Everton
@@ -149,17 +149,17 @@ West Ham v Wolves
 Week 27: 8th Mar 2026
 Bournemouth v Fulham
 Aston Villa v Crystal Palace
+Chelsea v Brighton
 Everton v Leeds
 Man Utd v Arsenal
 Burnley v Tottenham
 Wolves v Brentford
-Newcastle v Sunderland
+Ipswich v Sunderland
 Nott'm Forest v West Ham
 Liverpool v Man City
-Chelsea v Brighton
 
 Week 28: 15th Mar 2026
-Arsenal v Newcastle
+Arsenal v Ipswich
 Brentford v Aston Villa
 Brighton v Liverpool
 Crystal Palace v Burnley
@@ -174,11 +174,11 @@ Week 29: 22nd Mar 2026
 Bournemouth v Everton
 Aston Villa v Wolves
 Chelsea v Sunderland
-Everton v Fulham
+Fulham v Man City
 Man Utd v Brentford
-Burnley v Man City
-Tottenham v West Ham
-Newcastle v Arsenal
+Burnley v West Ham
+Tottenham v Leeds
+Ipswich v Arsenal
 Nott'm Forest v Crystal Palace
 Liverpool v Brighton
 
@@ -187,12 +187,12 @@ Arsenal v Liverpool
 Brentford v Nott'm Forest
 Brighton v Man Utd
 Crystal Palace v Tottenham
-Fulham v Burnley
+Ipswich v Chelsea
 Sunderland v Everton
 Man City v Newcastle
 West Ham v Leeds
 Wolves v Aston Villa
-Bournemouth v Chelsea
+Bournemouth v Fulham
 
 Week 31: 12th Apr 2026
 Bournemouth v Brentford
@@ -202,7 +202,7 @@ Everton v Brighton
 Man Utd v Sunderland
 Burnley v Arsenal
 Tottenham v Nott'm Forest
-Newcastle v Fulham
+Ipswich v Fulham
 Liverpool v West Ham
 Man City v Crystal Palace
 
@@ -216,7 +216,7 @@ Sunderland v Tottenham
 Leeds v Liverpool
 West Ham v Man Utd
 Wolves v Everton
-Nott'm Forest v Newcastle
+Nott'm Forest v Ipswich
 
 Week 33: 26th Apr 2026
 Bournemouth v Wolves
@@ -226,7 +226,7 @@ Everton v Arsenal
 Man Utd v Crystal Palace
 Burnley v Leeds
 Tottenham v Brighton
-Newcastle v West Ham
+Ipswich v West Ham
 Liverpool v Sunderland
 Man City v Brentford
 
@@ -238,7 +238,7 @@ Crystal Palace v Liverpool
 Fulham v Aston Villa
 Sunderland v Burnley
 Leeds v Tottenham
-West Ham v Newcastle
+West Ham v Ipswich
 Wolves v Nott'm Forest
 Chelsea v Bournemouth
 
@@ -250,7 +250,7 @@ Man Utd v Everton
 Nott'm Forest v Chelsea
 Burnley v Liverpool
 Tottenham v Wolves
-Newcastle v Leeds
+Ipswich v Leeds
 Man City v West Ham
 Fulham v Crystal Palace
 
@@ -262,7 +262,7 @@ Everton v Burnley
 Fulham v Man City
 Sunderland v Brighton
 Leeds v Wolves
-Man Utd v Newcastle
+Man Utd v Ipswich
 Liverpool v Bournemouth
 Aston Villa v West Ham
 
@@ -275,7 +275,7 @@ Crystal Palace v Sunderland
 Man City v Arsenal
 Nott'm Forest v Burnley
 West Ham v Liverpool
-Wolves v Newcastle
+Wolves v Ipswich
 Man Utd v Chelsea
 
 Week 38: 31st May 2026
@@ -287,7 +287,7 @@ Sunderland v West Ham
 Leeds v Bournemouth
 Burnley v Crystal Palace
 Tottenham v Brentford
-Newcastle v Man City
+Ipswich v Man City
 Liverpool v Brighton
 `;
 
