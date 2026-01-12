@@ -320,11 +320,11 @@ export default function AdminPage() {
     for (const line of lines) {
       if (line.startsWith('Week')) {
         currentWeek = parseInt(line.split(' ')[1].replace(':', ''));
-        const dateString = line.split(': ')[1];
+        const dateString = line.substring(line.indexOf(':') + 2);
         if (dateString) {
            matchDate = new Date(dateString);
         }
-      } else if (line.trim() && currentWeek === week && matchDate) {
+      } else if (line.trim() && currentWeek === week && matchDate && !isNaN(matchDate.getTime())) {
         const parts = line.split(/\s+v\s+/);
         if (parts.length === 2) {
           const homeTeamName = parts[0].trim();
