@@ -16,7 +16,9 @@ export async function getFirestoreAdmin(): Promise<admin.firestore.Firestore> {
   // Check if the app is already initialized
   if (admin.apps.length === 0) {
     // If not, initialize it.
-    // The SDK will automatically use Google Application Default Credentials.
+    // When running locally or in many cloud environments, the SDK will
+    // automatically use Google Application Default Credentials.
+    // No config object is needed in those cases.
     admin.initializeApp();
   }
 

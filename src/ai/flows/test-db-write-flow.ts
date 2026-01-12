@@ -29,9 +29,10 @@ const testDbWriteFlow = ai.defineFlow(
     try {
       logger.info(`Attempting to update match '19-team_01-team_02' homeScore to ${newScore}.`);
       
-      await matchRef.update({
+      // Using set with merge is more robust for a test, as it will create/update.
+      await matchRef.set({
         homeScore: newScore,
-      });
+      }, { merge: true });
 
       logger.info('Database write successful.');
       return {
