@@ -39,7 +39,6 @@ import {
 
 import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 import { updateAllData } from '@/ai/flows/update-all-data-flow';
-import { reimportFixtures } from '@/ai/flows/reimport-fixtures-flow';
 import { importPastFixtures } from '@/ai/flows/import-past-fixtures-flow';
 import { MatchResultSchema } from '@/ai/flows/update-match-results-flow-types';
 import type { Match, Team } from '@/lib/types';
@@ -241,8 +240,8 @@ export default function AdminPage() {
    const handleImportPastFixtures = async () => {
     setIsImportingPast(true);
     toast({
-      title: 'Importing Past Results...',
-      description: 'Importing weeks 1-18 from the backup file. This will delete existing matches.',
+      title: 'Importing All Fixtures...',
+      description: 'Importing weeks 1-38 from the backup file. This will delete ALL existing matches.',
     });
     try {
       const result = await importPastFixtures();
@@ -353,19 +352,19 @@ export default function AdminPage() {
                     <AlertDialogTrigger asChild>
                         <Button variant="destructive" disabled={isImportingPast || !dbStatus.connected}>
                             {isImportingPast ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                            Import Past Results (Wk 1-18)
+                            Import All Fixtures (Wk 1-38)
                         </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                         <AlertDialogHeader>
                         <AlertDialogTitle>Confirm Data Import</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This will delete ALL existing matches in the database and import the correct results for weeks 1-18 from the code backup. This action is irreversible. It will automatically trigger a full data recalculation upon completion.
+                            This will delete ALL existing matches in the database and import the correct results and fixtures for weeks 1-38 from the code backup. This action is irreversible. It will automatically trigger a full data recalculation upon completion.
                         </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleImportPastFixtures}>Yes, Import Results</AlertDialogAction>
+                        <AlertDialogAction onClick={handleImportPastFixtures}>Yes, Import Fixtures</AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
                     </AlertDialog>
@@ -481,3 +480,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+  
