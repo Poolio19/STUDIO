@@ -12,11 +12,7 @@ const TestWriteOutputSchema = z.object({
   message: z.string(),
 });
 
-export async function testDbWrite(): Promise<z.infer<typeof TestWriteOutputSchema>> {
-  return testDbWriteFlow();
-}
-
-const testDbWriteFlow = ai.defineFlow(
+export const testDbWriteFlow = ai.defineFlow(
   {
     name: 'testDbWriteFlow',
     inputSchema: z.undefined(),

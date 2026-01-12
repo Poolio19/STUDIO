@@ -40,7 +40,7 @@ import {
 import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 import { updateAllData } from '@/ai/flows/update-all-data-flow';
 import { reimportFixtures } from '@/ai/flows/reimport-fixtures-flow';
-import { testDbWrite } from '@/ai/flows/test-db-write-flow';
+import { testDbWriteFlow } from '@/ai/flows/test-db-write-flow';
 import { MatchResultSchema } from '@/ai/flows/update-match-results-flow-types';
 import type { ReimportFixturesInput } from '@/ai/flows/reimport-fixtures-flow-types';
 import type { Match, Team } from '@/lib/types';
@@ -852,7 +852,7 @@ export default function AdminPage() {
     setIsTestRunning(true);
     toast({ title: 'Running database write test...' });
     try {
-      const result = await testDbWrite();
+      const result = await testDbWriteFlow();
       if (result.success) {
         toast({
           title: 'Test Successful!',
