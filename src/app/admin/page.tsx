@@ -136,14 +136,14 @@ West Ham	v	Wolves
 Week 27: 8th Mar 2026
 Bournemouth	v	Fulham
 Aston Villa	v	Crystal Palace
-Everton	v	Man City
-Leeds	v	Brighton
+Everton	v	Leeds
 Man Utd	v	Arsenal
 Burnley	v	Tottenham
 Wolves	v	Brentford
 Newcastle	v	Sunderland
 Nott'm Forest	v	West Ham
-Liverpool	v	Man Utd
+Liverpool	v	Man City
+Brighton	v	Chelsea
 
 Week 28: 15th Mar 2026
 Arsenal	v	Newcastle
@@ -153,7 +153,7 @@ Crystal Palace	v	Burnley
 Fulham	v	Man Utd
 Sunderland	v	Nott'm Forest
 Man City	v	Tottenham
-Leeds	v	Everton
+Everton	v	Leeds
 West Ham	v	Chelsea
 Wolves	v	Bournemouth
 
@@ -178,7 +178,7 @@ Fulham	v	Burnley
 Sunderland	v	Everton
 Man City	v	Newcastle
 Leeds	v	Bournemouth
-West Ham	v	Man City
+West Ham	v	Leeds
 Wolves	v	Aston Villa
 
 Week 31: 12th Apr 2026
@@ -227,7 +227,7 @@ Sunderland	v	Burnley
 Leeds	v	Tottenham
 West Ham	v	Newcastle
 Wolves	v	Nott'm Forest
-Man City	v	Chelsea
+Chelsea	v	Bournemouth
 
 Week 35: 10th May 2026
 Bournemouth	v	Aston Villa
@@ -251,7 +251,7 @@ Sunderland	v	Brighton
 Leeds	v	Wolves
 Man Utd	v	Newcastle
 Liverpool	v	Bournemouth
-Aston Villa	v	Man Utd
+Aston Villa	v	West Ham
 
 Week 37: 24th May 2026
 Bournemouth	v	Everton
@@ -537,6 +537,28 @@ export default function AdminPage() {
     return Array.from({ length: 38 }, (_, i) => i + 1);
   }, []);
 
+  const teamMatchCounts = React.useMemo(() => {
+    if (!matchesData || !teamsData) return [];
+    
+    const playedMatches = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
+    const counts = new Map<string, number>();
+
+    teamsData.forEach(team => counts.set(team.id, 0));
+
+    playedMatches.forEach(match => {
+        counts.set(match.homeTeamId, (counts.get(match.homeTeamId) || 0) + 1);
+        counts.set(match.awayTeamId, (counts.get(match.awayTeamId) || 0) + 1);
+    });
+    
+    return Array.from(counts.entries())
+      .map(([teamId, count]) => ({
+          teamName: teamMap.get(teamId)?.name || 'Unknown',
+          count: count
+      }))
+      .sort((a,b) => a.teamName.localeCompare(b.teamName));
+
+  }, [matchesData, teamsData, teamMap]);
+
   return (
     <div className="space-y-8">
       <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
@@ -548,20 +570,42 @@ export default function AdminPage() {
         </p>
       </header>
 
-      <Card>
-          <CardHeader>
-              <CardTitle>Database Status</CardTitle>
-              <CardDescription>
-                  Check the connection to the Firestore database.
-              </CardDescription>
-          </CardHeader>
-          <CardContent>
-              <div className="flex items-center gap-4 rounded-lg border p-4">
-              {dbStatus.connected ? <Icons.shieldCheck className="h-6 w-6 text-green-500" /> : <Icons.bug className="h-6 w-6 text-red-500" />}
-              <p className="font-medium">{dbStatus.message}</p>
-              </div>
-          </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <Card>
+            <CardHeader>
+                <CardTitle>Database Status</CardTitle>
+                <CardDescription>
+                    Check the connection to the Firestore database.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="flex items-center gap-4 rounded-lg border p-4">
+                {dbStatus.connected ? <Icons.shieldCheck className="h-6 w-6 text-green-500" /> : <Icons.bug className="h-6 w-6 text-red-500" />}
+                <p className="font-medium">{dbStatus.message}</p>
+                </div>
+            </CardContent>
+        </Card>
+         <Card>
+            <CardHeader>
+                <CardTitle>Team Match Count</CardTitle>
+                <CardDescription>
+                    Diagnostic tool to show played matches per team from the database.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="h-48 overflow-y-auto border rounded-lg p-2">
+                    <div className="grid grid-cols-2 gap-x-4">
+                        {teamMatchCounts.map(({ teamName, count }) => (
+                            <div key={teamName} className="flex justify-between text-sm">
+                                <span className="font-medium">{teamName}</span>
+                                <span>{count}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+      </div>
       
       <Card>
           <CardHeader>
@@ -646,5 +690,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
