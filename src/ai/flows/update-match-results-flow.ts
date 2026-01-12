@@ -12,9 +12,15 @@ import {
   type UpdateMatchResultsInput,
   type UpdateMatchResultsOutput,
 } from './update-match-results-flow-types';
-import { getFirestore } from '@genkit-ai/firebase/firestore';
-import { doc, setDoc } from 'firebase/firestore';
+import { getFirestore, setDoc, doc } from 'firebase/firestore';
 import { getFlow } from 'genkit';
+import { initializeApp, getApps } from 'firebase/app';
+import { firebaseConfig } from '@/firebase/config';
+
+// Initialize Firebase app if not already initialized
+if (!getApps().length) {
+  initializeApp(firebaseConfig);
+}
 
 export async function updateMatchResults(
   input: UpdateMatchResultsInput
