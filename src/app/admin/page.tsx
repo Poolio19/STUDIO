@@ -302,7 +302,10 @@ export default function AdminPage() {
   
   const teamNameMap = React.useMemo(() => {
     if (!teamsData) return new Map();
-    return new Map(teamsData.map(t => [t.name.trim().toLowerCase(), t]));
+    const map = new Map(teamsData.map(t => [t.name.trim().toLowerCase(), t]));
+    // Add variations for matching
+    map.set('wolves', teamsData.find(t => t.name === 'Wolverhampton Wanderers')!);
+    return map;
   }, [teamsData]);
 
   const connectivityCheckDocRef = useMemoFirebase(
@@ -616,8 +619,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
-
-    
-
