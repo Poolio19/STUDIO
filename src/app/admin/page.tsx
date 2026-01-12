@@ -303,8 +303,17 @@ export default function AdminPage() {
   const teamNameMap = React.useMemo(() => {
     if (!teamsData) return new Map();
     const map = new Map(teamsData.map(t => [t.name.trim().toLowerCase(), t]));
-    // Add variations for matching
-    map.set('wolves', teamsData.find(t => t.name === 'Wolverhampton Wanderers')!);
+    
+    // Add variations for matching from raw fixture data
+    const nottinghamForest = teamsData.find(t => t.name === 'Nottingham Forest');
+    if (nottinghamForest) {
+        map.set("nott'm forest", nottinghamForest);
+    }
+    
+    const wolves = teamsData.find(t => t.name === 'Wolverhampton Wanderers');
+    if (wolves) {
+        map.set('wolves', wolves);
+    }
     return map;
   }, [teamsData]);
 
@@ -331,11 +340,8 @@ export default function AdminPage() {
       } else if (trimmedLine && currentWeek === week && matchDate && !isNaN(matchDate.getTime())) {
         const parts = trimmedLine.split(/\s+v\s+/);
         if (parts.length === 2) {
-          let homeTeamName = parts[0].trim();
-          let awayTeamName = parts[1].trim();
-
-          if (homeTeamName === "Nott'm Forest") homeTeamName = "Nottingham Forest";
-          if (awayTeamName === "Nott'm Forest") awayTeamName = "Nottingham Forest";
+          const homeTeamName = parts[0].trim();
+          const awayTeamName = parts[1].trim();
           
           const homeTeam = teamNameMap.get(homeTeamName.toLowerCase());
           const awayTeam = teamNameMap.get(awayTeamName.toLowerCase());
@@ -619,3 +625,6 @@ export default function AdminPage() {
     </div>
   );
 }
+
+
+    
