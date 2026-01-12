@@ -48,7 +48,7 @@ async function clearCollection(db: FirebaseFirestore.Firestore, collectionPath: 
 const updateAllDataFlow = ai.defineFlow(
   {
     name: 'updateAllDataFlow',
-    inputSchema: z.undefined(),
+    inputSchema: z.void(),
     outputSchema: UpdateAllDataOutputSchema,
   },
   async (_, { logger }) => {
