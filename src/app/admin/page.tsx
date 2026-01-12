@@ -302,7 +302,10 @@ export default function AdminPage() {
   
   const teamNameMap = React.useMemo(() => {
     if (!teamsData) return new Map();
-    const map = new Map(teamsData.map(t => [t.name.trim().toLowerCase(), t]));
+    const map = new Map<string, Team>();
+    teamsData.forEach(team => {
+        map.set(team.name.toLowerCase(), team);
+    });
     
     // Add variations for matching from raw fixture data
     const nottinghamForest = teamsData.find(t => t.name === 'Nottingham Forest');
@@ -625,6 +628,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-
-    
