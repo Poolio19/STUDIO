@@ -12,7 +12,8 @@ import {
   type UpdateMatchResultsInput,
   type UpdateMatchResultsOutput,
 } from './update-match-results-flow-types';
-import {getFirestore, setDoc, doc} from 'genkit/firestore';
+import { getFirestore, setDoc, doc } from '@genkit-ai/firebase/firestore';
+import { getFlow } from 'genkit';
 
 export async function updateMatchResults(
   input: UpdateMatchResultsInput
@@ -27,6 +28,7 @@ const updateMatchResultsFlow = ai.defineFlow(
     outputSchema: UpdateMatchResultsOutputSchema,
   },
   async ({ results }) => {
+    const { logger } = getFlow().state();
     try {
       const db = getFirestore();
       
@@ -35,7 +37,7 @@ const updateMatchResultsFlow = ai.defineFlow(
       );
 
       if (validResults.length === 0) {
-        console.log("No valid match results to update.");
+        logger.info("No valid match results to update.");
         return { success: true, updatedCount: 0 };
       }
 
@@ -48,11 +50,11 @@ const updateMatchResultsFlow = ai.defineFlow(
       await Promise.all(updatePromises);
       
       const totalUpdatedCount = validResults.length;
-      console.log(`Successfully committed a batch of ${totalUpdatedCount} match results.`);
+      logger.info(`Successfully committed a batch of ${totalUpdatedCount} match results.`);
 
       return { success: true, updatedCount: totalUpdatedCount };
     } catch (error: any) {
-      console.error(`Error in updateMatchResultsFlow:`, error);
+      logger.error(`Error in updateMatchResultsFlow:`, error);
       throw new Error(
         `Flow failed. Reason: ${(error as Error).message}`
       );
