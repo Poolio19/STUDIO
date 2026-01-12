@@ -24,7 +24,7 @@ export async function importPastFixtures(): Promise<ImportPastFixturesOutput> {
 const importPastFixturesFlow = ai.defineFlow(
   {
     name: 'importPastFixturesFlow',
-    inputSchema: z.undefined(),
+    inputSchema: z.void(),
     outputSchema: ImportPastFixturesOutputSchema,
   },
   async (_, { logger }) => {
