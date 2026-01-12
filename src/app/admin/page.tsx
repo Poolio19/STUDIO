@@ -187,12 +187,12 @@ Arsenal v Liverpool
 Brentford v Nott'm Forest
 Brighton v Man Utd
 Crystal Palace v Tottenham
-Ipswich v Chelsea
 Sunderland v Everton
 Man City v Newcastle
 West Ham v Leeds
 Wolves v Aston Villa
 Bournemouth v Fulham
+Ipswich v Chelsea
 
 Week 31: 12th Apr 2026
 Bournemouth v Brentford
@@ -260,7 +260,7 @@ Chelsea v Tottenham
 Crystal Palace v Brentford
 Everton v Burnley
 Fulham v Man City
-Sunderland v Brighton
+Newcastle v Sunderland
 Leeds v Wolves
 Man Utd v Ipswich
 Liverpool v Bournemouth
@@ -348,9 +348,9 @@ export default function AdminPage() {
     [firestore]
   );
 
-  const parseRawFixtures = React.useCallback((week: number): Omit<EditableMatch, 'homeTeam' | 'awayTeam'>[] => {
+  const parseRawFixtures = React.useCallback((week: number): Omit<Match, 'homeTeam' | 'awayTeam'>[] => {
     const lines = rawFutureFixtures.trim().split('\n');
-    const fixturesForWeek: Omit<EditableMatch, 'homeTeam' | 'awayTeam'>[] = [];
+    const fixturesForWeek: Omit<Match, 'homeTeam' | 'awayTeam'>[] = [];
     let currentWeek = 0;
     let matchDate: Date | null = null;
   
