@@ -5,7 +5,6 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { getFlow } from 'genkit';
 import { z } from 'zod';
 import { getFirestoreAdmin } from '@/ai/admin';
 import { calculatePredictionScores } from './calculate-prediction-scores';
@@ -26,8 +25,7 @@ const updateAllDataFlow = ai.defineFlow(
     name: 'updateAllDataFlow',
     outputSchema: UpdateAllDataOutputSchema,
   },
-  async () => {
-    const { logger } = getFlow().state();
+  async (_, { logger }) => {
     const db = await getFirestoreAdmin();
 
     try {
@@ -216,5 +214,3 @@ const updateAllDataFlow = ai.defineFlow(
     }
   }
 );
-
-    

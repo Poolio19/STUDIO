@@ -4,7 +4,6 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { getFlow } from 'genkit';
 import { getFirestoreAdmin } from '@/ai/admin';
 import {
   ReimportFixturesInputSchema,
@@ -26,8 +25,7 @@ const reimportFixturesFlow = ai.defineFlow(
     inputSchema: ReimportFixturesInputSchema,
     outputSchema: ReimportFixturesOutputSchema,
   },
-  async ({ week, fixtures }) => {
-    const { logger } = getFlow().state();
+  async ({ week, fixtures }, { logger }) => {
     const db = await getFirestoreAdmin();
 
     try {
