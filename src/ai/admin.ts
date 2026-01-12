@@ -1,3 +1,4 @@
+'use server';
 import * as admin from 'firebase-admin';
 
 let firestorePromise: Promise<admin.firestore.Firestore> | null = null;
@@ -10,7 +11,8 @@ let firestorePromise: Promise<admin.firestore.Firestore> | null = null;
 function initializeAdmin(): Promise<admin.firestore.Firestore> {
   // Check if the app is already initialized to prevent errors.
   if (admin.apps.length === 0) {
-    // This will use the default service account credentials in a Google Cloud environment.
+    // When running in a Google Cloud environment (like App Hosting),
+    // the SDK automatically detects the service account credentials.
     admin.initializeApp();
   }
   const db = admin.firestore();
