@@ -40,6 +40,7 @@ import {
 import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 import { updateAllData } from '@/ai/flows/update-all-data-flow';
 import { reimportFixtures } from '@/ai/flows/reimport-fixtures-flow';
+import { testDbWrite } from '@/ai/flows/test-db-write-flow';
 import { MatchResultSchema } from '@/ai/flows/update-match-results-flow-types';
 import type { ReimportFixturesInput } from '@/ai/flows/reimport-fixtures-flow-types';
 import type { Match, Team } from '@/lib/types';
@@ -52,7 +53,7 @@ type EditableMatch = Match & {
 
 const rawFutureFixtures = `
 Week 1:
-17th Aug 2025
+17 Aug 2025
 Man Utd v Fulham
 Arsenal v Wolves
 Everton v Brighton
@@ -60,43 +61,43 @@ Ipswich v Liverpool
 Newcastle v Southampton
 Nott'm Forest v Bournemouth
 West Ham v Aston Villa
-18th Aug 2025
+18 Aug 2025
 Brentford v Crystal Palace
-Leicester v Tottenham
-19th Aug 2025
 Chelsea v Man City
+19 Aug 2025
+Leicester v Tottenham
 
 Week 2:
-24th Aug 2025
-Liverpool v Brentford
-Man City v Ipswich
-Southampton v Everton
-Wolves v Chelsea
-Aston Villa v Arsenal
+24 Aug 2025
+Bournemouth v Newcastle
 Brighton v Man Utd
 Crystal Palace v West Ham
 Fulham v Leicester
-25th Aug 2025
-Tottenham v Everton
-Bournemouth v Newcastle
+Liverpool v Brentford
+Man City v Ipswich
+Southampton v Everton
+Tottenham v Nott'm Forest
+Wolves v Chelsea
+25 Aug 2025
+Aston Villa v Arsenal
 
 Week 3:
-31st Aug 2025
-Man Utd v Liverpool
-Newcastle v Man City
-West Ham v Nott'm Forest
+31 Aug 2025
 Arsenal v Brighton
 Brentford v Southampton
 Chelsea v Crystal Palace
 Everton v Bournemouth
 Ipswich v Wolves
 Leicester v Aston Villa
+Man Utd v Liverpool
+Newcastle v Man City
 Tottenham v Fulham
+West Ham v Nott'm Forest
 
 Week 4:
-14th Sep 2025
-Bournemouth v Chelsea
+14 Sep 2025
 Aston Villa v Everton
+Bournemouth v Chelsea
 Brighton v Ipswich
 Crystal Palace v Leicester
 Fulham v West Ham
@@ -104,29 +105,28 @@ Liverpool v Nott'm Forest
 Man City v Arsenal
 Southampton v Man Utd
 Wolves v Newcastle
-15th Sep 2025
+15 Sep 2025
 Tottenham v Brentford
 
 Week 5:
-21st Sep 2025
+21 Sep 2025
 Arsenal v Tottenham
 Bournemouth v Wolves
+Chelsea v Aston Villa
 Everton v Southampton
 Ipswich v Crystal Palace
 Leicester v Man City
 Man Utd v Nott'm Forest
 Newcastle v Brighton
-West Ham v Liverpool
-22nd Sep 2025
+22 Sep 2025
 Fulham v Brentford
-23rd Sep 2025
-Chelsea v Aston Villa
+23 Sep 2025
+West Ham v Liverpool
 
 Week 6:
-28th Sep 2025
+28 Sep 2025
 Brentford v Leicester
 Brighton v Aston Villa
-Chelsea v Ipswich
 Crystal Palace v Man Utd
 Liverpool v Arsenal
 Man City v Fulham
@@ -134,9 +134,11 @@ Nott'm Forest v Newcastle
 Southampton v Bournemouth
 Tottenham v West Ham
 Wolves v Everton
+29 Sep 2025
+Chelsea v Ipswich
 
 Week 7:
-5th Oct 2025
+5 Oct 2025
 Arsenal v Southampton
 Aston Villa v Tottenham
 Bournemouth v Liverpool
@@ -144,12 +146,13 @@ Chelsea v Nott'm Forest
 Everton v Man City
 Ipswich v Man Utd
 Leicester v Wolves
-Fulham v Crystal Palace
 Newcastle v Brentford
 West Ham v Brighton
+6 Oct 2025
+Fulham v Crystal Palace
 
 Week 8:
-19th Oct 2025
+19 Oct 2025
 Brentford v West Ham
 Brighton v Leicester
 Crystal Palace v Newcastle
@@ -162,7 +165,7 @@ Tottenham v Bournemouth
 Wolves v Arsenal
 
 Week 9:
-26th Oct 2025
+26 Oct 2025
 Arsenal v Nott'm Forest
 Aston Villa v Man Utd
 Bournemouth v Man City
@@ -171,13 +174,13 @@ Everton v Ipswich
 Leicester v Southampton
 Newcastle v Tottenham
 West Ham v Wolves
-27th Oct 2025
+27 Oct 2025
 Brighton v Crystal Palace
-28th Oct 2025
+28 Oct 2025
 Fulham v Liverpool
 
 Week 10:
-2nd Nov 2025
+2 Nov 2025
 Brentford v Everton
 Crystal Palace v Aston Villa
 Ipswich v West Ham
@@ -190,20 +193,21 @@ Tottenham v Chelsea
 Wolves v Bournemouth
 
 Week 11:
-9th Nov 2025
+9 Nov 2025
 Arsenal v Ipswich
 Aston Villa v Southampton
 Bournemouth v Brentford
 Brighton v Nott'm Forest
 Chelsea v Man Utd
-Everton v Leicester
 Fulham v Man City
 Newcastle v Liverpool
 West Ham v Everton
 Wolves v Tottenham
+10 Nov 2025
+Everton v Leicester
 
 Week 12:
-23rd Nov 2025
+23 Nov 2025
 Brentford v Brighton
 Crystal Palace v Wolves
 Ipswich v Bournemouth
@@ -213,24 +217,26 @@ Man City v Newcastle
 Man Utd v West Ham
 Nott'm Forest v Tottenham
 Southampton v Chelsea
+24 Nov 2025
 Everton v Fulham
 
 Week 13:
-30th Nov 2025
+30 Nov 2025
 Arsenal v Man Utd
 Aston Villa v Nott'm Forest
 Bournemouth v Leicester
 Brighton v Everton
 Chelsea v Fulham
+Liverpool v Crystal Palace
 Newcastle v Ipswich
 Tottenham v Man City
 West Ham v Southampton
 Wolves v Brentford
-Liverpool v Crystal Palace
 
 Week 14:
-4th Dec 2025
+4 Dec 2025
 Brentford v Man Utd
+Brighton v Chelsea
 Crystal Palace v Tottenham
 Everton v Arsenal
 Fulham v Bournemouth
@@ -239,10 +245,9 @@ Leicester v West Ham
 Man City v Liverpool
 Nott'm Forest v Newcastle
 Southampton v Wolves
-Brighton v Chelsea
 
 Week 15:
-7th Dec 2025
+7 Dec 2025
 Arsenal v Crystal Palace
 Aston Villa v Fulham
 Bournemouth v Brighton
@@ -255,7 +260,8 @@ Tottenham v Ipswich
 Wolves v Brentford
 
 Week 16:
-14th Dec 2025
+14 Dec 2025
+Brentford v Arsenal
 Brighton v Nott'm Forest
 Crystal Palace v Man Utd
 Everton v Newcastle
@@ -265,49 +271,48 @@ Leicester v Chelsea
 Man City v Aston Villa
 Southampton v Liverpool
 West Ham v Bournemouth
-Brentford v Arsenal
 
 Week 17:
-21st Dec 2025
+21 Dec 2025
 Arsenal v West Ham
 Aston Villa v Brentford
 Bournemouth v Man City
 Chelsea v Southampton
+Ipswich v Fulham
 Liverpool v Everton
 Man Utd v Leicester
 Newcastle v Crystal Palace
 Nott'm Forest v Man Utd
 Tottenham v Wolves
-Ipswich v Fulham
 
 Week 18:
-26th Dec 2025
+26 Dec 2025
 Brentford v Tottenham
 Brighton v Ipswich
 Crystal Palace v Bournemouth
 Everton v Chelsea
 Fulham v Newcastle
 Leicester v Nott'm Forest
-Man City v Man Utd
+Man City v Southampton
 Southampton v Aston Villa
 West Ham v Arsenal
 Wolves v Liverpool
 
 Week 19:
-28th Dec 2025
+28 Dec 2025
 Arsenal v Leicester
 Aston Villa v Southampton
 Bournemouth v West Ham
 Chelsea v Crystal Palace
+Ipswich v Brentford
 Liverpool v Man City
 Man Utd v Brighton
 Newcastle v Everton
 Nott'm Forest v Wolves
 Tottenham v Fulham
-Ipswich v Brentford
 
 Week 20:
-4th Jan 2026
+4 Jan 2026
 Brentford v Nott'm Forest
 Brighton v Newcastle
 Crystal Palace v Arsenal
@@ -315,12 +320,12 @@ Everton v Aston Villa
 Fulham v Ipswich
 Leicester v Bournemouth
 Man City v Chelsea
+Tottenham v Southampton
 West Ham v Man Utd
 Wolves v Liverpool
-Tottenham v Southampton
 
 Week 21:
-11th Jan 2026
+11 Jan 2026
 Arsenal v Man City
 Aston Villa v Leicester
 Bournemouth v Everton
@@ -333,7 +338,9 @@ Southampton v Brentford
 Tottenham v Brighton
 
 Week 22:
-18th Jan 2026
+18 Jan 2026
+Arsenal v Bournemouth
+Aston Villa v Newcastle
 Brentford v Ipswich
 Brighton v Southampton
 Crystal Palace v Liverpool
@@ -342,12 +349,11 @@ Fulham v Nott'm Forest
 Leicester v Man Utd
 Man City v Wolves
 West Ham v Chelsea
-Arsenal v Bournemouth
-Newcastle v Aston Villa
 
 Week 23:
-25th Jan 2026
+25 Jan 2026
 Bournemouth v Aston Villa
+Brighton v Brentford
 Chelsea v Leicester
 Ipswich v Arsenal
 Liverpool v West Ham
@@ -356,10 +362,9 @@ Nott'm Forest v Everton
 Southampton v Crystal Palace
 Tottenham v Newcastle
 Wolves v Fulham
-Brighton v Brentford
 
 Week 24:
-1st Feb 2026
+1 Feb 2026
 Arsenal v Liverpool
 Aston Villa v Ipswich
 Brentford v Man City
@@ -372,7 +377,7 @@ Tottenham v Chelsea
 Wolves v Nott'm Forest
 
 Week 25:
-8th Feb 2026
+8 Feb 2026
 Bournemouth v Tottenham
 Brighton v Fulham
 Chelsea v Aston Villa
@@ -385,20 +390,21 @@ Southampton v Newcastle
 West Ham v Brentford
 
 Week 26:
-15th Feb 2026
-Arsenal v Man Utd
+15 Feb 2026
+Arsenal v Fulham
 Aston Villa v Man City
-Brentford v West Ham
+Brentford v Wolves
 Crystal Palace v Ipswich
 Everton v Nott'm Forest
-Fulham v Chelsea
 Leicester v Brighton
 Liverpool v Southampton
-Newcastle v Wolves
+Newcastle v Chelsea
 Tottenham v Everton
+West Ham v Man Utd
 
 Week 27:
-22nd Feb 2026
+22 Feb 2026
+Arsenal v Bournemouth
 Brighton v Liverpool
 Chelsea v Newcastle
 Ipswich v Tottenham
@@ -408,23 +414,22 @@ Nott'm Forest v Aston Villa
 Southampton v Leicester
 West Ham v Fulham
 Wolves v Crystal Palace
-Arsenal v Bournemouth
 
 Week 28:
-1st Mar 2026
+1 Mar 2026
 Arsenal v Chelsea
 Aston Villa v Wolves
 Brentford v Man Utd
+Brighton v Bournemouth
 Crystal Palace v Everton
 Fulham v Man City
 Leicester v Ipswich
 Liverpool v Nott'm Forest
 Newcastle v Southampton
 Tottenham v West Ham
-Brighton v Bournemouth
 
 Week 29:
-8th Mar 2026
+8 Mar 2026
 Bournemouth v Southampton
 Chelsea v Liverpool
 Everton v Leicester
@@ -437,7 +442,7 @@ West Ham v Crystal Palace
 Wolves v Fulham
 
 Week 30:
-15th Mar 2026
+15 Mar 2026
 Arsenal v Ipswich
 Aston Villa v West Ham
 Brentford v Chelsea
@@ -450,7 +455,8 @@ Southampton v Tottenham
 Newcastle v Man Utd
 
 Week 31:
-22nd Mar 2026
+22 Mar 2026
+Arsenal v Fulham
 Chelsea v Southampton
 Everton v Crystal Palace
 Ipswich v Leicester
@@ -460,10 +466,9 @@ Nott'm Forest v Brighton
 Tottenham v Aston Villa
 West Ham v Man City
 Wolves v Bournemouth
-Arsenal v Fulham
 
 Week 32:
-5th Apr 2026
+5 Apr 2026
 Arsenal v Everton
 Aston Villa v Nott'm Forest
 Bournemouth v Ipswich
@@ -476,7 +481,7 @@ Southampton v West Ham
 Chelsea v Brentford
 
 Week 33:
-12th Apr 2026
+12 Apr 2026
 Chelsea v Bournemouth
 Everton v Liverpool
 Fulham v Aston Villa
@@ -489,7 +494,7 @@ West Ham v Brighton
 Wolves v Everton
 
 Week 34:
-19th Apr 2026
+19 Apr 2026
 Aston Villa v Bournemouth
 Brighton v West Ham
 Crystal Palace v Ipswich
@@ -502,7 +507,7 @@ Everton v Brentford
 Man Utd v Crystal Palace
 
 Week 35:
-26th Apr 2026
+26 Apr 2026
 Arsenal v Aston Villa
 Brentford v Leicester
 Fulham v Man City
@@ -515,7 +520,7 @@ Tottenham v Crystal Palace
 Wolves v Southampton
 
 Week 36:
-3rd May 2026
+3 May 2026
 Aston Villa v Liverpool
 Bournemouth v Nott'm Forest
 Brighton v Tottenham
@@ -528,7 +533,7 @@ West Ham v Brentford
 Crystal Palace v Fulham
 
 Week 37:
-10th May 2026
+10 May 2026
 Arsenal v Everton
 Brentford v Man City
 Ipswich v Man City
@@ -541,7 +546,7 @@ Wolves v Aston Villa
 Crystal Palace v Chelsea
 
 Week 38:
-17th May 2026
+17 May 2026
 Aston Villa v Man Utd
 Bournemouth v Liverpool
 Brighton v Newcastle
@@ -562,6 +567,8 @@ export default function AdminPage() {
 
   const [isUpdating, setIsUpdating] = React.useState(false);
   const [isReimporting, setIsReimporting] = React.useState(false);
+  const [isTestRunning, setIsTestRunning] = React.useState(false);
+
 
   const [selectedWeek, setSelectedWeek] = React.useState<number | null>(null);
   const [weekFixtures, setWeekFixtures] = React.useState<EditableMatch[]>([]);
@@ -588,9 +595,12 @@ export default function AdminPage() {
         // Add known simple names
         if (lowerCaseName === 'leicester city') map.set('leicester', team);
         if (lowerCaseName === 'manchester city') map.set('man city', team);
+        if (lowerCaseName === 'manchester utd') map.set('man utd', team);
         if (lowerCaseName === 'manchester united') map.set('man utd', team);
         if (lowerCaseName === 'nottingham forest') map.set('nott\'m forest', team);
         if (lowerCaseName === 'wolverhampton wanderers') map.set('wolves', team);
+        if (lowerCaseName === 'west ham united') map.set('west ham', team);
+
     });
 
     return map;
@@ -602,7 +612,7 @@ export default function AdminPage() {
     [firestore]
   );
   
-  const parseRawFixtures = React.useCallback((week: number): Omit<Match, 'homeTeam' | 'awayTeam'>[] => {
+  const parseRawFixtures = React.useCallback((weekToParse: number): Omit<Match, 'homeTeam' | 'awayTeam'>[] => {
     if (!teamNameMap.size) {
         console.error("Team name map is not ready.");
         return [];
@@ -612,7 +622,6 @@ export default function AdminPage() {
     const fixturesForWeek: Omit<Match, 'homeTeam' | 'awayTeam'>[] = [];
     let currentWeek = -1;
     let currentDate: Date | null = null;
-    let year = 2025; // Default start year
 
     for (const line of lines) {
         const trimmedLine = line.trim();
@@ -620,12 +629,14 @@ export default function AdminPage() {
 
         if (trimmedLine.startsWith('Week')) {
             currentWeek = parseInt(trimmedLine.split(' ')[1].replace(':', ''));
-            currentDate = null; // A new week section resets the current date.
-        } else if (/^\d+(st|nd|rd|th)\s+\w+\s+\d{4}/.test(trimmedLine)) {
+            currentDate = null; 
+        } else if (/^\d{1,2}\s+\w+\s+\d{4}/.test(trimmedLine)) {
             const cleanedDateString = trimmedLine.replace(/(\d+)(st|nd|rd|th)/, '$1');
-            currentDate = new Date(cleanedDateString);
-            year = currentDate.getFullYear();
-        } else if (currentWeek === week && currentDate && !isNaN(currentDate.getTime())) {
+            const parsedDate = new Date(cleanedDateString);
+            if (!isNaN(parsedDate.getTime())) {
+                currentDate = parsedDate;
+            }
+        } else if (currentWeek === weekToParse && currentDate && !isNaN(currentDate.getTime())) {
             const parts = trimmedLine.split(/\s+v\s+/);
             if (parts.length === 2) {
                 const homeTeamName = parts[0].trim().toLowerCase();
@@ -635,10 +646,10 @@ export default function AdminPage() {
                 const awayTeam = teamNameMap.get(awayTeamName);
 
                 if (homeTeam && awayTeam) {
-                    const matchId = `${week}-${homeTeam.id}-${awayTeam.id}`;
+                    const matchId = `${currentWeek}-${homeTeam.id}-${awayTeam.id}`;
                     fixturesForWeek.push({
                         id: matchId,
-                        week: week,
+                        week: currentWeek,
                         homeTeamId: homeTeam.id,
                         awayTeamId: awayTeam.id,
                         homeScore: -1,
@@ -747,13 +758,9 @@ export default function AdminPage() {
             const awayScore = parseInt(scoreData?.awayScore, 10);
 
             return {
-                id: match.id,
-                week: match.week,
-                homeTeamId: match.homeTeamId,
-                awayTeamId: match.awayTeamId,
+                ...match,
                 homeScore: !isNaN(homeScore) ? homeScore : -1,
                 awayScore: !isNaN(awayScore) ? awayScore : -1,
-                matchDate: match.matchDate,
             };
         });
 
@@ -841,6 +848,30 @@ export default function AdminPage() {
     }
   };
 
+  const handleTestWrite = async () => {
+    setIsTestRunning(true);
+    toast({ title: 'Running database write test...' });
+    try {
+      const result = await testDbWrite();
+      if (result.success) {
+        toast({
+          title: 'Test Successful!',
+          description: result.message,
+        });
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Test Failed',
+        description: error.message || 'An unexpected error occurred.',
+      });
+    } finally {
+      setIsTestRunning(false);
+    }
+  };
+
 
   const isLoadingData = teamsLoading || matchesLoading || !firestore || !dbStatus.connected;
   
@@ -857,8 +888,12 @@ export default function AdminPage() {
     teamsData.forEach(team => counts.set(team.id, 0));
 
     playedMatches.forEach(match => {
-        counts.set(match.homeTeamId, (counts.get(match.homeTeamId) || 0) + 1);
-        counts.set(match.awayTeamId, (counts.get(match.awayTeamId) || 0) + 1);
+        if(counts.has(match.homeTeamId)) {
+          counts.set(match.homeTeamId, (counts.get(match.homeTeamId) || 0) + 1);
+        }
+        if(counts.has(match.awayTeamId)) {
+          counts.set(match.awayTeamId, (counts.get(match.awayTeamId) || 0) + 1);
+        }
     });
     
     return Array.from(counts.entries())
@@ -889,12 +924,16 @@ export default function AdminPage() {
                     Check the connection to the Firestore database.
                 </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
                 <div className="flex items-center gap-4 rounded-lg border p-4">
                 {dbStatus.connected ? <Icons.shieldCheck className="h-6 w-6 text-green-500" /> : <Icons.bug className="h-6 w-6 text-red-500" />}
                 <p className="font-medium">{dbStatus.message}</p>
                 </div>
                 {matchesError && <p className="text-sm text-red-500 mt-2">Error loading matches: {matchesError.message}</p>}
+                <Button onClick={handleTestWrite} disabled={isTestRunning}>
+                  {isTestRunning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Run Database Write Test
+                </Button>
             </CardContent>
         </Card>
          <Card>
