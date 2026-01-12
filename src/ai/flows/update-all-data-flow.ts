@@ -35,6 +35,16 @@ export async function updateAllData(): Promise<UpdateAllDataOutput> {
     return updateAllDataFlow();
 }
 
+async function clearCollection(db: FirebaseFirestore.Firestore, collectionPath: string, batch: FirebaseFirestore.WriteBatch) {
+    const collectionRef = db.collection(collectionPath);
+    const snapshot = await collectionRef.get();
+    snapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+    });
+    return snapshot.size;
+}
+
+
 const updateAllDataFlow = ai.defineFlow(
   {
     name: 'updateAllDataFlow',
@@ -67,10 +77,18 @@ const updateAllDataFlow = ai.defineFlow(
         const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
 
         logger.info(`Master Data Update: Fetched ${teams.length} teams, ${playedMatches.length} played matches, ${users.length} users, and ${predictions.length} predictions.`);
+        
+        // 2. Clear old derivative data collections
+        logger.info('Master Data Update: Clearing old standings, player scores, and recent results...');
+        await clearCollection(db, 'standings', batch);
+        await clearCollection(db, 'playerTeamScores', batch);
+        await clearCollection(db, 'teamRecentResults', batch);
+        logger.info('Master Data Update: Old derivative data collections cleared from batch.');
 
-        // 2. Calculate new league standings from scratch
+        // 3. Calculate new league standings from scratch
         logger.info('Master Data Update: Calculating new league standings...');
         const teamStats: { [teamId: string]: Omit<CurrentStanding, 'teamId' | 'rank'> } = {};
+        
         teams.forEach(team => {
             teamStats[team.id] = {
                 points: 0, gamesPlayed: 0, wins: 0, draws: 0, losses: 0,
@@ -127,28 +145,30 @@ const updateAllDataFlow = ai.defineFlow(
             return { ...rest, rank: index + 1 };
         });
 
-        // 3. Batch updates for the 'standings' collection
+        // 4. Batch updates for the 'standings' collection
         finalStandings.forEach(standing => {
             const standingRef = db.collection('standings').doc(standing.teamId);
             batch.set(standingRef, standing);
         });
         logger.info(`Master Data Update: Batched ${finalStandings.length} standings updates.`);
 
-        // 4. Recalculate user scores with AI flow
+        // 5. Recalculate user scores with AI flow
         logger.info('Master Data Update: Recalculating user scores...');
         const actualFinalStandingsString = finalStandings.map(s => s.teamId).join(',');
         const userRankingsString = predictions.map(p => `${p.userId},${p.rankings.join(',')}`).join('\n');
         
-        const { scores: userScores } = await calculatePredictionScores({
+        const { scores: userScores, summary } = await calculatePredictionScores({
             actualFinalStandings: actualFinalStandingsString,
             userRankings: userRankingsString
         });
-        logger.info(`Master Data Update: AI scoring complete. Received scores for ${Object.keys(userScores).length} users.`);
+        logger.info(`Master Data Update: AI scoring complete. Summary: ${summary}. Received scores for ${Object.keys(userScores).length} users.`);
+        
+        const actualTeamRanks = new Map(finalStandings.map(s => [s.teamId, s.rank]));
 
-        // 5. Update user profiles, user histories, and player team scores
+        // 6. Update user profiles, user histories, and player team scores
         logger.info('Master Data Update: Calculating and batching user-related updates...');
         const userUpdates = users.map(user => {
-            const newScore = userScores[user.id] || 0;
+            const newScore = userScores[user.id] !== undefined ? userScores[user.id] : user.score;
             return {
                 ...user,
                 previousScore: user.score,
@@ -185,14 +205,27 @@ const updateAllDataFlow = ai.defineFlow(
 
             if (weekHistoryIndex > -1) {
                 historyData.weeklyScores[weekHistoryIndex] = { week: maxWeeksPlayed, score: user.score, rank: user.rank };
-            } else {
+            } else if (maxWeeksPlayed > 0) {
                 historyData.weeklyScores.push({ week: maxWeeksPlayed, score: user.score, rank: user.rank });
             }
             batch.set(db.collection('userHistories').doc(user.id), historyData);
-        }
-        logger.info(`Master Data Update: Batched ${userUpdates.length} user profile and history updates.`);
 
-        // 6. Update WeeklyTeamStandings
+            const userPrediction = predictions.find(p => p.userId === user.id);
+            if (userPrediction && userPrediction.rankings) {
+                userPrediction.rankings.forEach((teamId, index) => {
+                    const predictedRank = index + 1;
+                    const actualRank = actualTeamRanks.get(teamId) || 0;
+                    const score = actualRank > 0 ? 5 - Math.abs(predictedRank - actualRank) : 0;
+                    
+                    const scoreId = `${user.id}_${teamId}`;
+                    const scoreRef = db.collection('playerTeamScores').doc(scoreId);
+                    batch.set(scoreRef, { userId: user.id, teamId, score });
+                });
+            }
+        }
+        logger.info(`Master Data Update: Batched ${userUpdates.length} user profile and history updates, plus individual team scores.`);
+
+        // 7. Update WeeklyTeamStandings
         if (maxWeeksPlayed > 0) {
             finalStandings.forEach(standing => {
                 const weeklyStandingId = `${maxWeeksPlayed}-${standing.teamId}`;
@@ -202,7 +235,7 @@ const updateAllDataFlow = ai.defineFlow(
             logger.info(`Master Data Update: Batched ${finalStandings.length} weekly team standings for week ${maxWeeksPlayed}.`);
         }
         
-        // 7. Update TeamRecentResults
+        // 8. Update TeamRecentResults
         teams.forEach(team => {
             const teamMatches = playedMatches.filter(m => m.homeTeamId === team.id || m.awayTeamId === team.id).sort((a,b) => b.week - a.week).slice(0, 6);
             const results = Array(6).fill('-') as ('W' | 'D' | 'L' | '-')[];
@@ -217,7 +250,7 @@ const updateAllDataFlow = ai.defineFlow(
         });
         logger.info(`Master Data Update: Batched ${teams.length} team recent results updates.`);
 
-        // 8. Commit all batched writes to Firestore
+        // 9. Commit all batched writes to Firestore
         logger.info('Master Data Update: Committing all batched writes...');
         await batch.commit();
         logger.info('Master Data Update: SUCCESS! All data has been committed to Firestore.');
