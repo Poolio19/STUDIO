@@ -48,5 +48,8 @@ service cloud.firestore {
     match /matches/{matchId} {
       allow read, write: if true;
     }
+    match /test_01/{docId} {
+      allow read, write: if true;
+    }
   }
 }
