@@ -41,20 +41,20 @@ Bournemouth	v	Arsenal
 Aston Villa	v	Brighton
 Chelsea	v	Man City
 Everton	v	West Ham
-Leicester	v	Man Utd
-Southampton	v	Fulham
-Tottenham	v	Ipswich
+Leeds	v	Man Utd
+Burnley	v	Fulham
+Tottenham	v	Sunderland
 Wolves	v	Crystal Palace
 Liverpool	v	Nott'm Forest
 Newcastle	v	Brentford
 
 Week 20: 17th Jan 2026
 Arsenal	v	Tottenham
-Brentford	v	Southampton
+Brentford	v	Burnley
 Brighton	v	Newcastle
-Crystal Palace	v	Leicester
+Crystal Palace	v	Leeds
 Fulham	v	Everton
-Ipswich	v	Chelsea
+Sunderland	v	Chelsea
 Man City	v	Bournemouth
 Man Utd	v	Liverpool
 Nott'm Forest	v	Wolves
@@ -65,46 +65,46 @@ Bournemouth	v	Liverpool
 Aston Villa	v	Fulham
 Chelsea	v	Arsenal
 Everton	v	Brentford
-Leicester	v	Crystal Palace
-Southampton	v	Ipswich
+Leeds	v	Crystal Palace
+Burnley	v	Sunderland
 Tottenham	v	Man City
 Wolves	v	Man Utd
 Newcastle	v	Brighton
 Nott'm Forest	v	West Ham
 
 Week 22: 4th Feb 2026
-Arsenal	v	Southampton
+Arsenal	v	Burnley
 Brentford	v	Wolves
 Brighton	v	Tottenham
 Crystal Palace	v	Everton
 Fulham	v	Nott'm Forest
-Ipswich	v	Bournemouth
+Sunderland	v	Bournemouth
 Man City	v	Aston Villa
 Man Utd	v	Newcastle
 Liverpool	v	Chelsea
-West Ham	v	Leicester
+West Ham	v	Leeds
 
 Week 23: 8th Feb 2026
 Bournemouth	v	Man Utd
 Aston Villa	v	Liverpool
 Chelsea	v	West Ham
 Everton	v	Man City
-Leicester	v	Arsenal
-Southampton	v	Brighton
+Leeds	v	Arsenal
+Burnley	v	Brighton
 Tottenham	v	Brentford
-Wolves	v	Ipswich
+Wolves	v	Sunderland
 Newcastle	v	Crystal Palace
 Nott'm Forest	v	Fulham
 
 Week 24: 15th Feb 2026
 Arsenal	v	Everton
-Brentford	v	Leicester
+Brentford	v	Leeds
 Brighton	v	Wolves
 Crystal Palace	v	Aston Villa
 Fulham	v	Chelsea
-Ipswich	v	Newcastle
+Sunderland	v	Newcastle
 Man City	v	Nott'm Forest
-Man Utd	v	Southampton
+Man Utd	v	Burnley
 Liverpool	v	Tottenham
 West Ham	v	Bournemouth
 
@@ -112,9 +112,9 @@ Week 25: 22nd Feb 2026
 Bournemouth	v	Crystal Palace
 Aston Villa	v	Man Utd
 Chelsea	v	Brighton
-Everton	v	Ipswich
-Leicester	v	Man City
-Southampton	v	West Ham
+Everton	v	Sunderland
+Leeds	v	Man City
+Burnley	v	West Ham
 Tottenham	v	Fulham
 Wolves	v	Arsenal
 Newcastle	v	Liverpool
@@ -126,8 +126,8 @@ Brentford	v	Chelsea
 Brighton	v	Bournemouth
 Crystal Palace	v	Man Utd
 Fulham	v	Newcastle
-Ipswich	v	Leicester
-Man City	v	Southampton
+Sunderland	v	Leeds
+Man City	v	Burnley
 Liverpool	v	Everton
 Tottenham	v	Aston Villa
 West Ham	v	Wolves
@@ -136,11 +136,11 @@ Week 27: 8th Mar 2026
 Bournemouth	v	Fulham
 Aston Villa	v	Crystal Palace
 Everton	v	Man City
-Leicester	v	Brighton
+Leeds	v	Brighton
 Man Utd	v	Arsenal
-Southampton	v	Tottenham
+Burnley	v	Tottenham
 Wolves	v	Brentford
-Newcastle	v	Ipswich
+Newcastle	v	Sunderland
 Nott'm Forest	v	West Ham
 Liverpool	v	Man Utd
 
@@ -148,21 +148,21 @@ Week 28: 15th Mar 2026
 Arsenal	v	Newcastle
 Brentford	v	Aston Villa
 Brighton	v	Liverpool
-Crystal Palace	v	Southampton
+Crystal Palace	v	Burnley
 Fulham	v	Man Utd
-Ipswich	v	Nott'm Forest
+Sunderland	v	Nott'm Forest
 Man City	v	Tottenham
-Leicester	v	Everton
+Leeds	v	Everton
 West Ham	v	Chelsea
 Wolves	v	Bournemouth
 
 Week 29: 22nd Mar 2026
-Bournemouth	v	Leicester
+Bournemouth	v	Leeds
 Aston Villa	v	Wolves
-Chelsea	v	Ipswich
+Chelsea	v	Sunderland
 Everton	v	Fulham
 Man Utd	v	Brentford
-Southampton	v	Man City
+Burnley	v	Man City
 Tottenham	v	West Ham
 Newcastle	v	Arsenal
 Nott'm Forest	v	Crystal Palace
@@ -173,20 +173,20 @@ Arsenal	v	Liverpool
 Brentford	v	Nott'm Forest
 Brighton	v	Man Utd
 Crystal Palace	v	Tottenham
-Fulham	v	Southampton
-Ipswich	v	Everton
+Fulham	v	Burnley
+Sunderland	v	Everton
 Man City	v	Newcastle
-Leicester	v	Bournemouth
+Leeds	v	Bournemouth
 West Ham	v	Man City
 Wolves	v	Aston Villa
 
 Week 31: 12th Apr 2026
 Bournemouth	v	Brentford
-Aston Villa	v	Leicester
+Aston Villa	v	Leeds
 Chelsea	v	Wolves
 Everton	v	Brighton
-Man Utd	v	Ipswich
-Southampton	v	Arsenal
+Man Utd	v	Sunderland
+Burnley	v	Arsenal
 Tottenham	v	Nott'm Forest
 Newcastle	v	Fulham
 Liverpool	v	West Ham
@@ -195,11 +195,11 @@ Man City	v	Crystal Palace
 Week 32: 19th Apr 2026
 Arsenal	v	Aston Villa
 Brentford	v	Man City
-Brighton	v	Southampton
+Brighton	v	Burnley
 Crystal Palace	v	Chelsea
 Fulham	v	Bournemouth
-Ipswich	v	Tottenham
-Leicester	v	Liverpool
+Sunderland	v	Tottenham
+Leeds	v	Liverpool
 West Ham	v	Man Utd
 Wolves	v	Everton
 Nott'm Forest	v	Newcastle
@@ -210,10 +210,10 @@ Aston Villa	v	Nott'm Forest
 Chelsea	v	Fulham
 Everton	v	Arsenal
 Man Utd	v	Crystal Palace
-Southampton	v	Leicester
+Burnley	v	Leeds
 Tottenham	v	Brighton
 Newcastle	v	West Ham
-Liverpool	v	Ipswich
+Liverpool	v	Sunderland
 Man City	v	Brentford
 
 Week 34: 3rd May 2026
@@ -222,32 +222,32 @@ Brentford	v	Everton
 Brighton	v	Man City
 Crystal Palace	v	Liverpool
 Fulham	v	Aston Villa
-Ipswich	v	Southampton
-Leicester	v	Tottenham
+Sunderland	v	Burnley
+Leeds	v	Tottenham
 West Ham	v	Newcastle
 Wolves	v	Nott'm Forest
 Man City	v	Chelsea
 
 Week 35: 10th May 2026
 Bournemouth	v	Aston Villa
-Brentford	v	Ipswich
+Brentford	v	Sunderland
 Brighton	v	Arsenal
 Man Utd	v	Everton
 Nott'm Forest	v	Chelsea
-Southampton	v	Liverpool
+Burnley	v	Liverpool
 Tottenham	v	Wolves
 West Ham	v	Fulham
-Newcastle	v	Leicester
+Newcastle	v	Leeds
 Man City	v	West Ham
 
 Week 36: 17th May 2026
 Arsenal	v	Nott'm Forest
 Chelsea	v	Tottenham
 Crystal Palace	v	Brentford
-Everton	v	Southampton
+Everton	v	Burnley
 Fulham	v	Man City
-Ipswich	v	Brighton
-Leicester	v	Wolves
+Sunderland	v	Brighton
+Leeds	v	Wolves
 Man Utd	v	Newcastle
 Liverpool	v	Bournemouth
 Aston Villa	v	Man Utd
@@ -256,10 +256,10 @@ Week 37: 24th May 2026
 Bournemouth	v	Everton
 Aston Villa	v	Tottenham
 Brentford	v	Fulham
-Brighton	v	Leicester
-Crystal Palace	v	Ipswich
+Brighton	v	Leeds
+Crystal Palace	v	Sunderland
 Man City	v	Arsenal
-Nott'm Forest	v	Southampton
+Nott'm Forest	v	Burnley
 West Ham	v	Liverpool
 Wolves	v	Newcastle
 Man Utd	v	Chelsea
@@ -269,9 +269,9 @@ Arsenal	v	Wolves
 Chelsea	v	Aston Villa
 Everton	v	Nott'm Forest
 Fulham	v	Man Utd
-Ipswich	v	West Ham
-Leicester	v	Bournemouth
-Southampton	v	Crystal Palace
+Sunderland	v	West Ham
+Leeds	v	Bournemouth
+Burnley	v	Crystal Palace
 Tottenham	v	Brentford
 Newcastle	v	Man City
 Liverpool	v	Brighton
@@ -312,18 +312,18 @@ export default function AdminPage() {
 
     // Then, create a map of all known variations to their official names.
     const teamVariations: {[key: string]: string} = {
-        "nott'm forest": "nottingham forest",
-        "wolves": "wolverhampton wanderers",
-        "man city": "manchester city",
-        "man utd": "manchester united"
+        "nott'm forest": "notts forest",
+        "wolves": "wolves",
+        "man city": "man city",
+        "man utd": "man utd"
     };
 
     // Finally, add the variations to the main map, pointing them to the correct Team object.
     for (const variation in teamVariations) {
         const officialName = teamVariations[variation];
-        const teamObject = map.get(officialName);
+        const teamObject = map.get(officialName.toLowerCase());
         if (teamObject) {
-            map.set(variation, teamObject);
+            map.set(variation.toLowerCase(), teamObject);
         }
     }
     
@@ -354,11 +354,11 @@ export default function AdminPage() {
       } else if (trimmedLine && currentWeek === week && matchDate && !isNaN(matchDate.getTime())) {
         const parts = trimmedLine.split(/\s+v\s+/);
         if (parts.length === 2) {
-          const homeTeamName = parts[0].trim();
-          const awayTeamName = parts[1].trim();
+          const homeTeamName = parts[0].trim().toLowerCase();
+          const awayTeamName = parts[1].trim().toLowerCase();
           
-          const homeTeam = teamNameMap.get(homeTeamName.toLowerCase());
-          const awayTeam = teamNameMap.get(awayTeamName.toLowerCase());
+          const homeTeam = teamNameMap.get(homeTeamName) || teamsData?.find(t => t.name.toLowerCase() === homeTeamName);
+          const awayTeam = teamNameMap.get(awayTeamName) || teamsData?.find(t => t.name.toLowerCase() === awayTeamName);
   
           if (homeTeam && awayTeam) {
             const matchId = `${week}-${homeTeam.id}-${awayTeam.id}`;
@@ -378,7 +378,7 @@ export default function AdminPage() {
       }
     }
     return fixturesForWeek;
-  }, [teamNameMap]);
+  }, [teamNameMap, teamsData]);
 
   React.useEffect(() => {
     if (!connectivityCheckDocRef) return;
@@ -639,3 +639,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
