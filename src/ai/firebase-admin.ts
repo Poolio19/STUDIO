@@ -46,7 +46,7 @@ function initializeAdminApp(databaseId?: string): admin.app.App {
     return app;
 
   } catch (e: any) {
-    if (e.message.includes('Could not refresh access token') || e.message.includes('credential')) {
+    if (e.code === 'GOOGLE_APPLICATION_CREDENTIALS_NOT_SET' || (e.message && (e.message.includes('Could not refresh access token') || e.message.includes('credential')))) {
         const errorMessage =
         '********************************************************************************\n' +
         '** FIREBASE ADMIN SDK AUTHENTICATION FAILED                                   **\n' +
