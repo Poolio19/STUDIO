@@ -1,52 +1,49 @@
 
 import admin from 'firebase-admin';
 
-// A map to cache initialized Firebase Admin app instances.
-const appInstances = new Map<string, admin.app.App>();
-
 // This is the Google Cloud Project that Firebase Studio has provisioned for your backend.
 // It is used by the Admin SDK to access your project's resources.
 const TARGET_PROJECT_ID = 'prempred-43933';
 
+// A variable to hold the singleton instance of the Firebase Admin App.
+let adminApp: admin.app.App | null = null;
+
 /**
- * Initializes and returns a Firebase Admin App instance.
- * It ensures that an app for a given project/database combination is only initialized once.
- * @param databaseId The ID of the Firestore database. Pass an empty string or '(default)' for the default database.
+ * Initializes and returns a singleton Firebase Admin App instance.
+ * It ensures that the app is only initialized once.
  * @returns An initialized Firebase Admin App.
  * @throws An error with a detailed message if initialization fails.
  */
-function initializeAdminApp(databaseId?: string): admin.app.App {
-  // Use '(default)' as the internal key for the default database to avoid ambiguity.
-  const effectiveDatabaseId = (databaseId && databaseId !== '(default)') ? databaseId : '(default)';
-  const appName = `${TARGET_PROJECT_ID}-${effectiveDatabaseId}`;
-  
-  if (appInstances.has(appName)) {
-    return appInstances.get(appName)!;
+function initializeAdminApp(): admin.app.App {
+  if (adminApp) {
+    return adminApp;
   }
 
   try {
-    const existingApp = admin.apps.find(app => app?.name === appName);
+    console.log(`Attempting to initialize Firebase Admin SDK for project: '${TARGET_PROJECT_ID}'...`);
+    
+    // Check if the default app already exists. This can happen in some environments.
+    const existingApp = admin.apps.find(app => app?.name === '[DEFAULT]');
     if (existingApp) {
-        appInstances.set(appName, existingApp);
-        return existingApp;
+        adminApp = existingApp;
+        return adminApp;
     }
 
-    console.log(`Attempting to initialize Firebase Admin SDK for project: '${TARGET_PROJECT_ID}' and database: '${effectiveDatabaseId}'...`);
-    const app = admin.initializeApp({
+    adminApp = admin.initializeApp({
       // Using Application Default Credentials. The SDK will automatically find
       // the credentials you set up with 'gcloud auth application-default login'.
       credential: admin.credential.applicationDefault(),
       projectId: TARGET_PROJECT_ID,
-      // Connect to the default database if no databaseId or '(default)' is passed.
       databaseURL: `https://${TARGET_PROJECT_ID}.firebaseio.com`
-    }, appName);
+    });
 
-    console.log(`Successfully initialized Firebase Admin SDK for app: ${appName}`);
-    appInstances.set(appName, app);
-    return app;
+    console.log(`Successfully initialized Firebase Admin SDK.`);
+    return adminApp;
 
   } catch (e: any) {
-    if (e.code === 'GOOGLE_APPLICATION_CREDENTIALS_NOT_SET' || (e.message && (e.message.includes('Could not refresh access token') || e.message.includes('credential')))) {
+    // Enhanced error checking for various credential-related issues.
+    const errorMessageContent = e.message || '';
+    if (e.code === 'GOOGLE_APPLICATION_CREDENTIALS_NOT_SET' || errorMessageContent.includes('Could not refresh access token') || errorMessageContent.includes('credential')) {
         const errorMessage =
         '********************************************************************************\n' +
         '** FIREBASE ADMIN SDK AUTHENTICATION FAILED                                   **\n' +
@@ -55,7 +52,7 @@ function initializeAdminApp(databaseId?: string): admin.app.App {
         'Application Default Credentials (ADC) in your local development environment.\n' +
         'This means the server process cannot access Google Cloud services.\n\n' +
         'THE RAW ERROR MESSAGE:\n' +
-        `  ${e.message}\n\n` +
+        `  ${errorMessageContent}\n\n` +
         'TO FIX THIS, YOU MUST:\n' +
         '1. Ensure you have the Google Cloud CLI installed.\n' +
         '2. Run the following command in your local terminal:\n' +
@@ -81,16 +78,15 @@ function initializeAdminApp(databaseId?: string): admin.app.App {
  * @returns The Firebase Admin Auth service.
  */
 export function getAdminAuth() {
-  // Auth lives at the project level, so we connect to the default instance.
   const app = initializeAdminApp();
   return app.auth();
 }
 
 /**
  * Gets a Firestore database instance from the Admin SDK.
- * @param databaseId Optional. The specific database to connect to. Defaults to '(default)'.
+ * @param databaseId Optional. The specific database to connect to. This parameter is ignored in the singleton implementation but kept for API compatibility.
  */
 export function getAdminFirestore(databaseId?: string) {
-    const app = initializeAdminApp(databaseId);
+    const app = initializeAdminApp();
     return app.firestore();
 }
