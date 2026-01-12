@@ -53,8 +53,8 @@ type EditableMatch = Match & {
 const rawFutureFixtures = `
 Week 1:
 17th Aug 2025
+Man Utd v Fulham
 Arsenal v Wolves
-Chelsea v Man City
 Everton v Brighton
 Ipswich v Liverpool
 Newcastle v Southampton
@@ -62,36 +62,36 @@ Nott'm Forest v Bournemouth
 West Ham v Aston Villa
 18th Aug 2025
 Brentford v Crystal Palace
-Man Utd v Fulham
-19th Aug 2025
 Leicester v Tottenham
+19th Aug 2025
+Chelsea v Man City
 
 Week 2:
 24th Aug 2025
-Bournemouth v Newcastle
+Liverpool v Brentford
+Man City v Ipswich
+Southampton v Everton
+Wolves v Chelsea
 Aston Villa v Arsenal
 Brighton v Man Utd
 Crystal Palace v West Ham
 Fulham v Leicester
-Liverpool v Brentford
-Man City v Ipswich
-Southampton v Tottenham
-Wolves v Chelsea
 25th Aug 2025
 Tottenham v Everton
+Bournemouth v Newcastle
 
 Week 3:
 31st Aug 2025
+Man Utd v Liverpool
+Newcastle v Man City
+West Ham v Nott'm Forest
 Arsenal v Brighton
 Brentford v Southampton
 Chelsea v Crystal Palace
 Everton v Bournemouth
 Ipswich v Wolves
 Leicester v Aston Villa
-Man Utd v Liverpool
-Newcastle v Man City
 Tottenham v Fulham
-West Ham v Nott'm Forest
 
 Week 4:
 14th Sep 2025
@@ -120,7 +120,7 @@ West Ham v Liverpool
 22nd Sep 2025
 Fulham v Brentford
 23rd Sep 2025
-Aston Villa v Chelsea
+Chelsea v Aston Villa
 
 Week 6:
 28th Sep 2025
@@ -315,9 +315,9 @@ Everton v Aston Villa
 Fulham v Ipswich
 Leicester v Bournemouth
 Man City v Chelsea
-Man Utd v Tottenham
 West Ham v Man Utd
 Wolves v Liverpool
+Tottenham v Southampton
 
 Week 21:
 11th Jan 2026
@@ -343,7 +343,7 @@ Leicester v Man Utd
 Man City v Wolves
 West Ham v Chelsea
 Arsenal v Bournemouth
-Aston Villa v Newcastle
+Newcastle v Aston Villa
 
 Week 23:
 25th Jan 2026
@@ -352,11 +352,11 @@ Chelsea v Leicester
 Ipswich v Arsenal
 Liverpool v West Ham
 Man Utd v Man City
-Newcastle v Nott'm Forest
 Nott'm Forest v Everton
 Southampton v Crystal Palace
 Tottenham v Newcastle
 Wolves v Fulham
+Brighton v Brentford
 
 Week 24:
 1st Feb 2026
@@ -394,8 +394,8 @@ Everton v Nott'm Forest
 Fulham v Chelsea
 Leicester v Brighton
 Liverpool v Southampton
-Newcastle v Leicester
-Wolves v Tottenham
+Newcastle v Wolves
+Tottenham v Everton
 
 Week 27:
 22nd Feb 2026
@@ -408,7 +408,7 @@ Nott'm Forest v Aston Villa
 Southampton v Leicester
 West Ham v Fulham
 Wolves v Crystal Palace
-Bournemouth v Arsenal
+Arsenal v Bournemouth
 
 Week 28:
 1st Mar 2026
@@ -446,8 +446,8 @@ Crystal Palace v Nott'm Forest
 Fulham v Man Utd
 Leicester v Everton
 Liverpool v Wolves
-Newcastle v Man Utd
 Southampton v Tottenham
+Newcastle v Man Utd
 
 Week 31:
 22nd Mar 2026
@@ -460,7 +460,7 @@ Nott'm Forest v Brighton
 Tottenham v Aston Villa
 West Ham v Man City
 Wolves v Bournemouth
-Fulham v Arsenal
+Arsenal v Fulham
 
 Week 32:
 5th Apr 2026
@@ -473,7 +473,7 @@ Leicester v Man Utd
 Liverpool v Tottenham
 Newcastle v Fulham
 Southampton v West Ham
-Brentford v Chelsea
+Chelsea v Brentford
 
 Week 33:
 12th Apr 2026
@@ -491,7 +491,6 @@ Wolves v Everton
 Week 34:
 19th Apr 2026
 Aston Villa v Bournemouth
-Bournemouth v Man Utd
 Brighton v West Ham
 Crystal Palace v Ipswich
 Leicester v Fulham
@@ -500,6 +499,7 @@ Man City v Tottenham
 Southampton v Nott'm Forest
 Wolves v Arsenal
 Everton v Brentford
+Man Utd v Crystal Palace
 
 Week 35:
 26th Apr 2026
@@ -582,19 +582,6 @@ export default function AdminPage() {
     if (!teamsData) return new Map<string, Team>();
     const map = new Map<string, Team>();
     teamsData.forEach(team => {
-        map.set(team.name.toLowerCase(), team);
-    });
-    // Manual mappings for common variations
-    const teamVariations: {[key: string]: string} = {
-        "nott'm forest": "notts forest",
-        "wolves": "wolves",
-        "man city": "man city",
-        "man utd": "man utd",
-        "leicester": "leicester city",
-        "southampton": "southampton"
-    };
-
-    teamsData.forEach(team => {
         const lowerCaseName = team.name.toLowerCase();
         map.set(lowerCaseName, team);
 
@@ -623,7 +610,7 @@ export default function AdminPage() {
 
     const lines = rawFutureFixtures.trim().split('\n');
     const fixturesForWeek: Omit<Match, 'homeTeam' | 'awayTeam'>[] = [];
-    let currentWeek = 0;
+    let currentWeek = -1;
     let currentDate: Date | null = null;
     let year = 2025; // Default start year
 
@@ -633,19 +620,12 @@ export default function AdminPage() {
 
         if (trimmedLine.startsWith('Week')) {
             currentWeek = parseInt(trimmedLine.split(' ')[1].replace(':', ''));
-            // Reset date for the new week block
-            currentDate = null; 
-            // Simple logic to switch year
-            if (currentWeek > 18 && year === 2025) {
-                year = 2026;
-            }
-        } else if (/^\d+(st|nd|rd|th)\s+\w+\s+\d{4}/.test(trimmedLine) || /^\d+(st|nd|rd|th)\s+\w+/.test(trimmedLine)) {
-             // It's a date line
+            currentDate = null; // A new week section resets the current date.
+        } else if (/^\d+(st|nd|rd|th)\s+\w+\s+\d{4}/.test(trimmedLine)) {
             const cleanedDateString = trimmedLine.replace(/(\d+)(st|nd|rd|th)/, '$1');
-            const dateStrWithYear = cleanedDateString.includes(String(year)) ? cleanedDateString : `${cleanedDateString} ${year}`;
-            currentDate = new Date(dateStrWithYear);
+            currentDate = new Date(cleanedDateString);
+            year = currentDate.getFullYear();
         } else if (currentWeek === week && currentDate && !isNaN(currentDate.getTime())) {
-            // It's a fixture line for the current week context
             const parts = trimmedLine.split(/\s+v\s+/);
             if (parts.length === 2) {
                 const homeTeamName = parts[0].trim().toLowerCase();
@@ -771,8 +751,8 @@ export default function AdminPage() {
                 week: match.week,
                 homeTeamId: match.homeTeamId,
                 awayTeamId: match.awayTeamId,
-                homeScore: !isNaN(homeScore) ? homeScore : match.homeScore,
-                awayScore: !isNaN(awayScore) ? awayScore : match.awayScore,
+                homeScore: !isNaN(homeScore) ? homeScore : -1,
+                awayScore: !isNaN(awayScore) ? awayScore : -1,
                 matchDate: match.matchDate,
             };
         });
@@ -785,18 +765,6 @@ export default function AdminPage() {
             throw new Error(`Data validation failed: ${errorMessages}`);
         }
         
-        const validResults = parsedResults.data.filter(r => r.homeScore !== -1 && r.awayScore !== -1);
-
-        if (validResults.length === 0) {
-            toast({
-                variant: 'destructive',
-                title: 'No Valid Scores',
-                description: 'No new valid scores were entered for this week. Please enter scores before saving.',
-            });
-            setIsUpdating(false);
-            return;
-        }
-
         const matchUpdateResult = await updateMatchResults({ results: parsedResults.data });
         
         if (!matchUpdateResult.success) {
