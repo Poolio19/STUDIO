@@ -303,12 +303,13 @@ export default function AdminPage() {
   const teamNameMap = React.useMemo(() => {
     if (!teamsData) return new Map<string, Team>();
     
+    // First, create a map with the official team names (lowercase)
     const map = new Map<string, Team>();
     teamsData.forEach(team => {
         map.set(team.name.toLowerCase(), team);
     });
-    
-    // Add variations for matching from raw fixture data
+
+    // Then, add all known variations, pointing them to the correct Team object.
     const teamVariations: {[key: string]: string} = {
         "nott'm forest": "Nottingham Forest",
         "wolves": "Wolverhampton Wanderers",
@@ -317,12 +318,13 @@ export default function AdminPage() {
     };
 
     for (const variation in teamVariations) {
-        const fullName = teamVariations[variation];
-        const teamObject = teamsData.find(t => t.name === fullName);
+        const officialName = teamVariations[variation];
+        const teamObject = teamsData.find(t => t.name === officialName);
         if (teamObject) {
             map.set(variation, teamObject);
         }
     }
+    
     return map;
   }, [teamsData]);
 
