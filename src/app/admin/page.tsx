@@ -350,7 +350,7 @@ export default function AdminPage() {
                     
                     <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <Button variant="destructive" disabled={isImportingPast || !dbStatus.connected}>
+                        <Button variant="destructive" disabled={true || isImportingPast || !dbStatus.connected}>
                             {isImportingPast ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                             Import All Fixtures (Wk 1-38)
                         </Button>
@@ -480,5 +480,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-  

@@ -18,7 +18,15 @@ const ImportPastFixturesOutputSchema = z.object({
 export type ImportPastFixturesOutput = z.infer<typeof ImportPastFixturesOutputSchema>;
 
 export async function importPastFixtures(): Promise<ImportPastFixturesOutput> {
-  return importPastFixturesFlow();
+  // Temporarily disable this flow to prevent crashes.
+  console.log("importPastFixturesFlow is temporarily disabled due to an admin SDK initialization issue.");
+  return {
+    success: false,
+    deletedCount: 0,
+    importedCount: 0,
+    message: "Flow is temporarily disabled.",
+  }
+  // return importPastFixturesFlow();
 }
 
 const importPastFixturesFlow = ai.defineFlow(
@@ -28,6 +36,10 @@ const importPastFixturesFlow = ai.defineFlow(
     outputSchema: ImportPastFixturesOutputSchema,
   },
   async (_, { logger }) => {
+    logger.info('Past Fixtures Import: FLOW DISABLED. Admin SDK initialization is failing.');
+    throw new Error('This flow is temporarily disabled due to a server-side Firebase Admin initialization error.');
+    
+    /*
     const db = await getFirestoreAdmin();
     const matchesCollection = db.collection('matches');
 
@@ -73,5 +85,6 @@ const importPastFixturesFlow = ai.defineFlow(
         logger.error('Past Fixtures Import: FAILED!', error);
         throw new Error(`Flow failed during import: ${error.message}`);
     }
+    */
   }
 );
