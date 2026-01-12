@@ -25,21 +25,20 @@ const testDbWriteFlow = ai.defineFlow(
   async (_, { logger }) => {
     logger.info("Attempting to get Firestore admin instance...");
     const db = await getFirestoreAdmin();
-    logger.info("Firestore admin instance acquired. Getting document reference...");
-    const matchRef = db.collection('matches').doc('19-team_01-team_02');
-    const newScore = 5;
+    logger.info("Firestore admin instance acquired. Getting collection reference...");
+    const testCollectionRef = db.collection('testCollection');
 
-    logger.info(`Attempting to update match '19-team_01-team_02' homeScore to ${newScore}.`);
+    const testData = { test: 'success', timestamp: new Date().toISOString() };
     
-    await matchRef.set({
-      homeScore: newScore,
-    }, { merge: true });
+    logger.info(`Attempting to add a new document to 'testCollection'.`);
+    
+    const docRef = await testCollectionRef.add(testData);
 
-    logger.info('Database write successful.');
+    logger.info(`Database write successful. New document ID: ${docRef.id}`);
     
     return {
       success: true,
-      message: "Successfully updated document '19-team_01-team_02'. homeScore is now 5.",
+      message: `Successfully created document in 'testCollection' with ID: ${docRef.id}.`,
     };
   }
 );

@@ -1,5 +1,3 @@
-'use server';
-
 import * as admin from 'firebase-admin';
 
 // This is a singleton pattern to ensure we only initialize Firebase Admin once.
