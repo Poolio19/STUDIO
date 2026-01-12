@@ -1,12 +1,12 @@
 import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/google-genai';
-import {firebase} from '@genkit-ai/firebase';
+import {firebaseAuth} from '@genkit-ai/firebase/auth';
 import {firebaseConfig} from '@/firebase/config';
 
 export const ai = genkit({
   plugins: [
     googleAI(),
-    firebase({
+    firebaseAuth({
       projectId: firebaseConfig.projectId,
       credentials: {
         // Since we are running in a Google Cloud environment,
