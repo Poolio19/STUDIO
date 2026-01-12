@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 
-import { collection, doc, getDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
 import { Icons, IconName } from '@/components/icons';
 import {
   Select,
@@ -40,7 +40,6 @@ import {
 import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 import { updateAllData } from '@/ai/flows/update-all-data-flow';
 import { reimportFixtures } from '@/ai/flows/reimport-fixtures-flow';
-import { testDbWriteFlow } from '@/ai/flows/test-db-write-flow';
 import { MatchResultSchema } from '@/ai/flows/update-match-results-flow-types';
 import type { ReimportFixturesInput } from '@/ai/flows/reimport-fixtures-flow-types';
 import type { Match, Team } from '@/lib/types';
@@ -851,17 +850,20 @@ export default function AdminPage() {
   const handleTestWrite = async () => {
     setIsTestRunning(true);
     toast({ title: 'Running database write test...' });
+    if (!firestore) {
+      toast({ variant: 'destructive', title: 'Test Failed', description: 'Firestore not available.' });
+      setIsTestRunning(false);
+      return;
+    }
     try {
-      const result = await testDbWriteFlow();
-      if (result.success) {
-        toast({
-          title: 'Test Successful!',
-          description: result.message,
-        });
-      } else {
-        throw new Error(result.message);
-      }
+      const docRef = doc(firestore, 'test_01', 'test_01.01');
+      await setDoc(docRef, { 'test_01.01.01': 'success' });
+      toast({
+        title: 'Test Successful!',
+        description: `Successfully wrote to document 'test_01.01' in collection 'test_01'.`,
+      });
     } catch (error: any) {
+      console.error('Database write test failed:', error);
       toast({
         variant: 'destructive',
         title: 'Test Failed',
@@ -930,7 +932,7 @@ export default function AdminPage() {
                 <p className="font-medium">{dbStatus.message}</p>
                 </div>
                 {matchesError && <p className="text-sm text-red-500 mt-2">Error loading matches: {matchesError.message}</p>}
-                <Button onClick={handleTestWrite} disabled={isTestRunning}>
+                <Button onClick={handleTestWrite} disabled={isTestRunning || !dbStatus.connected}>
                   {isTestRunning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   Run Database Write Test
                 </Button>
