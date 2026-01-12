@@ -3,7 +3,7 @@ import admin from 'firebase-admin';
 
 // This is the Google Cloud Project that Firebase Studio has provisioned for your backend.
 // It is used by the Admin SDK to access your project's resources.
-const TARGET_PROJECT_ID = 'prempred-43933';
+const TARGET_PROJECT_ID = 'studio-2138583336-cec5d';
 
 // A variable to hold the singleton instance of the Firebase Admin App.
 let adminApp: admin.app.App | null = null;
