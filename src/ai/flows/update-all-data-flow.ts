@@ -51,7 +51,7 @@ const updateAllDataFlow = ai.defineFlow(
 
         logger.info(`Fetched ${teams.length} teams, ${playedMatches.length} played matches, ${users.length} users, and ${predictions.length} predictions.`);
 
-        // 2. Calculate new standings
+        // 2. Calculate new standings from scratch
         const teamStats: { [teamId: string]: Omit<CurrentStanding, 'teamId' | 'rank'> } = {};
         teams.forEach(team => {
             teamStats[team.id] = {
@@ -87,12 +87,14 @@ const updateAllDataFlow = ai.defineFlow(
             }
         });
 
-        const newStandings: (CurrentStanding & { teamName: string })[] = Object.entries(teamStats).map(([teamId, stats]) => ({
+        Object.keys(teamStats).forEach(teamId => {
+            teamStats[teamId].goalDifference = teamStats[teamId].goalsFor - teamStats[teamId].goalsAgainst;
+        });
+
+        const newStandings: (Omit<CurrentStanding, 'rank'> & { teamName: string })[] = Object.entries(teamStats).map(([teamId, stats]) => ({
             teamId,
             ...stats,
-            goalDifference: stats.goalsFor - stats.goalsAgainst,
             teamName: teamMap.get(teamId)?.name || 'Unknown',
-            rank: 0 // temp rank
         }));
         
         newStandings.sort((a, b) => {
@@ -138,7 +140,7 @@ const updateAllDataFlow = ai.defineFlow(
 
         userUpdates.sort((a,b) => b.score - a.score || a.name.localeCompare(b.name));
         
-        const maxWeeksPlayed = Math.max(0, ...playedMatches.map(m => m.week));
+        const maxWeeksPlayed = playedMatches.length > 0 ? Math.max(0, ...playedMatches.map(m => m.week)) : 0;
 
         for (let i = 0; i < userUpdates.length; i++) {
             const user = userUpdates[i];
@@ -146,10 +148,15 @@ const updateAllDataFlow = ai.defineFlow(
             user.rankChange = (user.previousRank || 0) > 0 ? user.previousRank - newRank : 0;
             user.rank = newRank;
 
-            if (user.rank > (user.maxRank || 0)) user.maxRank = user.rank;
-            if ((user.minRank === 0 || user.rank < (user.minRank || 99))) user.minRank = user.rank;
-            if (user.score > (user.maxScore || 0)) user.maxScore = user.score;
-            if ((user.minScore === 0 || user.score < (user.minScore || 0))) user.minScore = user.score;
+            const userMaxRank = user.maxRank ?? 0;
+            const userMinRank = user.minRank ?? 99;
+            const userMaxScore = user.maxScore ?? -Infinity;
+            const userMinScore = user.minScore ?? Infinity;
+            
+            if (user.rank > userMaxRank) user.maxRank = user.rank;
+            if (user.rank < userMinRank) user.minRank = user.rank;
+            if (user.score > userMaxScore) user.maxScore = user.score;
+            if (user.score < userMinScore) user.minScore = user.score;
             
             const userRef = db.collection('users').doc(user.id);
             const { id, ...userData } = user;
@@ -171,16 +178,18 @@ const updateAllDataFlow = ai.defineFlow(
         logger.info(`Batched ${userUpdates.length} user profile and history updates.`);
 
         // 6. Update WeeklyTeamStandings
-        finalStandings.forEach(standing => {
-            const weeklyStandingId = `${maxWeeksPlayed}-${standing.teamId}`;
-            const weeklyStandingRef = db.collection('weeklyTeamStandings').doc(weeklyStandingId);
-            batch.set(weeklyStandingRef, {
-                week: maxWeeksPlayed,
-                teamId: standing.teamId,
-                rank: standing.rank,
+        if (maxWeeksPlayed > 0) {
+            finalStandings.forEach(standing => {
+                const weeklyStandingId = `${maxWeeksPlayed}-${standing.teamId}`;
+                const weeklyStandingRef = db.collection('weeklyTeamStandings').doc(weeklyStandingId);
+                batch.set(weeklyStandingRef, {
+                    week: maxWeeksPlayed,
+                    teamId: standing.teamId,
+                    rank: standing.rank,
+                });
             });
-        });
-        logger.info(`Batched ${finalStandings.length} weekly team standings for week ${maxWeeksPlayed}.`);
+            logger.info(`Batched ${finalStandings.length} weekly team standings for week ${maxWeeksPlayed}.`);
+        }
         
         // 7. Update TeamRecentResults
         teams.forEach(team => {
@@ -190,20 +199,20 @@ const updateAllDataFlow = ai.defineFlow(
                 .slice(0, 6);
 
             const results = Array(6).fill('-') as ('W' | 'D' | 'L' | '-')[];
-            teamMatches.forEach((match, i) => {
+            teamMatches.reverse().forEach((match, i) => { // reverse to fill from the left
                 if (i < 6) {
                     if (match.homeScore === match.awayScore) {
-                        results[5-i] = 'D';
+                        results[i] = 'D';
                     } else if ((match.homeTeamId === team.id && match.homeScore > match.awayScore) || (match.awayTeamId === team.id && match.awayScore > match.homeScore)) {
-                        results[5-i] = 'W';
+                        results[i] = 'W';
                     } else {
-                        results[5-i] = 'L';
+                        results[i] = 'L';
                     }
                 }
             });
             
             const recentResultRef = db.collection('teamRecentResults').doc(team.id);
-            batch.set(recentResultRef, { teamId: team.id, results: results.reverse() });
+            batch.set(recentResultRef, { teamId: team.id, results: results });
         });
         logger.info(`Batched ${teams.length} team recent results updates.`);
 
