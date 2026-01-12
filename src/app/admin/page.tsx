@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -50,245 +51,507 @@ type EditableMatch = Match & {
 };
 
 const rawFutureFixtures = `
-Week 19: 2nd Jan 2026
-Bournemouth v Arsenal
-Aston Villa v Brighton
+Week 1:
+17th Aug 2025
+Arsenal v Wolves
 Chelsea v Man City
-Everton v West Ham
-Leeds v Man Utd
-Burnley v Fulham
-Tottenham v Sunderland
-Wolves v Crystal Palace
+Everton v Brighton
+Ipswich v Liverpool
+Newcastle v Southampton
+Nott'm Forest v Bournemouth
+West Ham v Aston Villa
+18th Aug 2025
+Brentford v Crystal Palace
+Man Utd v Fulham
+19th Aug 2025
+Leicester v Tottenham
+
+Week 2:
+24th Aug 2025
+Bournemouth v Newcastle
+Aston Villa v Arsenal
+Brighton v Man Utd
+Crystal Palace v West Ham
+Fulham v Leicester
+Liverpool v Brentford
+Man City v Ipswich
+Southampton v Tottenham
+Wolves v Chelsea
+25th Aug 2025
+Tottenham v Everton
+
+Week 3:
+31st Aug 2025
+Arsenal v Brighton
+Brentford v Southampton
+Chelsea v Crystal Palace
+Everton v Bournemouth
+Ipswich v Wolves
+Leicester v Aston Villa
+Man Utd v Liverpool
+Newcastle v Man City
+Tottenham v Fulham
+West Ham v Nott'm Forest
+
+Week 4:
+14th Sep 2025
+Bournemouth v Chelsea
+Aston Villa v Everton
+Brighton v Ipswich
+Crystal Palace v Leicester
+Fulham v West Ham
 Liverpool v Nott'm Forest
+Man City v Arsenal
+Southampton v Man Utd
+Wolves v Newcastle
+15th Sep 2025
+Tottenham v Brentford
+
+Week 5:
+21st Sep 2025
+Arsenal v Tottenham
+Bournemouth v Wolves
+Everton v Southampton
+Ipswich v Crystal Palace
+Leicester v Man City
+Man Utd v Nott'm Forest
+Newcastle v Brighton
+West Ham v Liverpool
+22nd Sep 2025
+Fulham v Brentford
+23rd Sep 2025
+Aston Villa v Chelsea
+
+Week 6:
+28th Sep 2025
+Brentford v Leicester
+Brighton v Aston Villa
+Chelsea v Ipswich
+Crystal Palace v Man Utd
+Liverpool v Arsenal
+Man City v Fulham
+Nott'm Forest v Newcastle
+Southampton v Bournemouth
+Tottenham v West Ham
+Wolves v Everton
+
+Week 7:
+5th Oct 2025
+Arsenal v Southampton
+Aston Villa v Tottenham
+Bournemouth v Liverpool
+Chelsea v Nott'm Forest
+Everton v Man City
+Ipswich v Man Utd
+Leicester v Wolves
+Fulham v Crystal Palace
+Newcastle v Brentford
+West Ham v Brighton
+
+Week 8:
+19th Oct 2025
+Brentford v West Ham
+Brighton v Leicester
+Crystal Palace v Newcastle
+Liverpool v Chelsea
+Man City v Aston Villa
+Man Utd v Everton
+Nott'm Forest v Ipswich
+Southampton v Fulham
+Tottenham v Bournemouth
+Wolves v Arsenal
+
+Week 9:
+26th Oct 2025
+Arsenal v Nott'm Forest
+Aston Villa v Man Utd
+Bournemouth v Man City
+Chelsea v Brentford
+Everton v Ipswich
+Leicester v Southampton
+Newcastle v Tottenham
+West Ham v Wolves
+27th Oct 2025
+Brighton v Crystal Palace
+28th Oct 2025
+Fulham v Liverpool
+
+Week 10:
+2nd Nov 2025
+Brentford v Everton
+Crystal Palace v Aston Villa
+Ipswich v West Ham
+Liverpool v Brighton
+Man City v Leicester
+Man Utd v Newcastle
+Nott'm Forest v Fulham
+Southampton v Arsenal
+Tottenham v Chelsea
+Wolves v Bournemouth
+
+Week 11:
+9th Nov 2025
+Arsenal v Ipswich
+Aston Villa v Southampton
+Bournemouth v Brentford
+Brighton v Nott'm Forest
+Chelsea v Man Utd
+Everton v Leicester
+Fulham v Man City
+Newcastle v Liverpool
+West Ham v Everton
+Wolves v Tottenham
+
+Week 12:
+23rd Nov 2025
+Brentford v Brighton
+Crystal Palace v Wolves
+Ipswich v Bournemouth
+Leicester v Arsenal
+Liverpool v Aston Villa
+Man City v Newcastle
+Man Utd v West Ham
+Nott'm Forest v Tottenham
+Southampton v Chelsea
+Everton v Fulham
+
+Week 13:
+30th Nov 2025
+Arsenal v Man Utd
+Aston Villa v Nott'm Forest
+Bournemouth v Leicester
+Brighton v Everton
+Chelsea v Fulham
+Newcastle v Ipswich
+Tottenham v Man City
+West Ham v Southampton
+Wolves v Brentford
+Liverpool v Crystal Palace
+
+Week 14:
+4th Dec 2025
+Brentford v Man Utd
+Crystal Palace v Tottenham
+Everton v Arsenal
+Fulham v Bournemouth
+Ipswich v Aston Villa
+Leicester v West Ham
+Man City v Liverpool
+Nott'm Forest v Newcastle
+Southampton v Wolves
+Brighton v Chelsea
+
+Week 15:
+7th Dec 2025
+Arsenal v Crystal Palace
+Aston Villa v Fulham
+Bournemouth v Brighton
+Chelsea v Everton
+Liverpool v Leicester
+Man Utd v Man City
+Newcastle v West Ham
+Nott'm Forest v Southampton
+Tottenham v Ipswich
+Wolves v Brentford
+
+Week 16:
+14th Dec 2025
+Brighton v Nott'm Forest
+Crystal Palace v Man Utd
+Everton v Newcastle
+Fulham v Tottenham
+Ipswich v Wolves
+Leicester v Chelsea
+Man City v Aston Villa
+Southampton v Liverpool
+West Ham v Bournemouth
+Brentford v Arsenal
+
+Week 17:
+21st Dec 2025
+Arsenal v West Ham
+Aston Villa v Brentford
+Bournemouth v Man City
+Chelsea v Southampton
+Liverpool v Everton
+Man Utd v Leicester
+Newcastle v Crystal Palace
+Nott'm Forest v Man Utd
+Tottenham v Wolves
+Ipswich v Fulham
+
+Week 18:
+26th Dec 2025
+Brentford v Tottenham
+Brighton v Ipswich
+Crystal Palace v Bournemouth
+Everton v Chelsea
+Fulham v Newcastle
+Leicester v Nott'm Forest
+Man City v Man Utd
+Southampton v Aston Villa
+West Ham v Arsenal
+Wolves v Liverpool
+
+Week 19:
+28th Dec 2025
+Arsenal v Leicester
+Aston Villa v Southampton
+Bournemouth v West Ham
+Chelsea v Crystal Palace
+Liverpool v Man City
+Man Utd v Brighton
+Newcastle v Everton
+Nott'm Forest v Wolves
+Tottenham v Fulham
 Ipswich v Brentford
 
-Week 20: 17th Jan 2026
-Arsenal v Tottenham
-Brentford v Burnley
-Brighton v Ipswich
-Crystal Palace v Leeds
-Fulham v Everton
-Sunderland v Chelsea
-Man City v Bournemouth
-Man Utd v Liverpool
-Nott'm Forest v Wolves
-West Ham v Aston Villa
-
-Week 21: 24th Jan 2026
-Bournemouth v Liverpool
-Aston Villa v Fulham
-Chelsea v Arsenal
-Everton v Brentford
-Leeds v Crystal Palace
-Burnley v Sunderland
-Tottenham v Man City
-Wolves v Man Utd
-Ipswich v Brighton
-Nott'm Forest v West Ham
-
-Week 22: 4th Feb 2026
-Arsenal v Burnley
-Brentford v Wolves
-Brighton v Tottenham
-Crystal Palace v Everton
-Fulham v Nott'm Forest
-Sunderland v Bournemouth
-Man City v Aston Villa
-Man Utd v Ipswich
-Liverpool v Chelsea
-West Ham v Leeds
-
-Week 23: 8th Feb 2026
-Bournemouth v Man Utd
-Aston Villa v Liverpool
-Chelsea v West Ham
-Everton v Man City
-Leeds v Arsenal
-Burnley v Brighton
-Tottenham v Brentford
-Wolves v Sunderland
-Ipswich v Crystal Palace
-Nott'm Forest v Fulham
-
-Week 24: 15th Feb 2026
-Arsenal v Everton
-Brentford v Leeds
-Brighton v Wolves
-Crystal Palace v Aston Villa
-Fulham v Chelsea
-Sunderland v Ipswich
-Man City v Nott'm Forest
-Man Utd v Burnley
-Liverpool v Tottenham
-West Ham v Bournemouth
-
-Week 25: 22nd Feb 2026
-Bournemouth v Crystal Palace
-Aston Villa v Man Utd
-Chelsea v Brighton
-Everton v Sunderland
-Leeds v Man City
-Burnley v West Ham
-Tottenham v Fulham
-Wolves v Arsenal
-Ipswich v Liverpool
-Nott'm Forest v Brentford
-
-Week 26: 1st Mar 2026
-Arsenal v Nott'm Forest
-Brentford v Chelsea
-Brighton v Bournemouth
-Crystal Palace v Man Utd
-Fulham v Ipswich
-Sunderland v Leeds
-Man City v Burnley
-Liverpool v Everton
-Tottenham v Aston Villa
-West Ham v Wolves
-
-Week 27: 8th Mar 2026
-Bournemouth v Fulham
-Aston Villa v Crystal Palace
-Chelsea v Brighton
-Everton v Leeds
-Man Utd v Arsenal
-Burnley v Tottenham
-Wolves v Brentford
-Ipswich v Sunderland
-Nott'm Forest v West Ham
-Liverpool v Man City
-
-Week 28: 15th Mar 2026
-Arsenal v Ipswich
-Brentford v Aston Villa
-Brighton v Liverpool
-Crystal Palace v Burnley
-Fulham v Man Utd
-Sunderland v Nott'm Forest
-Man City v Tottenham
-Everton v Wolves
-West Ham v Chelsea
-Leeds v Bournemouth
-
-Week 29: 22nd Mar 2026
-Bournemouth v Everton
-Aston Villa v Wolves
-Chelsea v Sunderland
-Fulham v Man City
-Man Utd v Brentford
-Burnley v West Ham
-Tottenham v Leeds
-Ipswich v Arsenal
-Nott'm Forest v Crystal Palace
-Liverpool v Brighton
-
-Week 30: 5th Apr 2026
-Arsenal v Liverpool
+Week 20:
+4th Jan 2026
 Brentford v Nott'm Forest
-Brighton v Man Utd
-Crystal Palace v Tottenham
-Sunderland v Everton
-Man City v Newcastle
-West Ham v Leeds
-Wolves v Aston Villa
-Bournemouth v Fulham
-Ipswich v Chelsea
-
-Week 31: 12th Apr 2026
-Bournemouth v Brentford
-Aston Villa v Leeds
-Chelsea v Wolves
-Everton v Brighton
-Man Utd v Sunderland
-Burnley v Arsenal
-Tottenham v Nott'm Forest
-Ipswich v Fulham
-Liverpool v West Ham
-Man City v Crystal Palace
-
-Week 32: 19th Apr 2026
-Arsenal v Aston Villa
-Brentford v Man City
-Brighton v Burnley
-Crystal Palace v Chelsea
-Fulham v Bournemouth
-Sunderland v Tottenham
-Leeds v Liverpool
+Brighton v Newcastle
+Crystal Palace v Arsenal
+Everton v Aston Villa
+Fulham v Ipswich
+Leicester v Bournemouth
+Man City v Chelsea
+Man Utd v Tottenham
 West Ham v Man Utd
-Wolves v Everton
-Nott'm Forest v Ipswich
+Wolves v Liverpool
 
-Week 33: 26th Apr 2026
-Bournemouth v Wolves
-Aston Villa v Nott'm Forest
-Chelsea v Fulham
-Everton v Arsenal
-Man Utd v Crystal Palace
-Burnley v Leeds
-Tottenham v Brighton
-Ipswich v West Ham
-Liverpool v Sunderland
-Man City v Brentford
-
-Week 34: 3rd May 2026
-Arsenal v Man Utd
-Brentford v Everton
-Brighton v Man City
-Crystal Palace v Liverpool
-Fulham v Aston Villa
-Sunderland v Burnley
-Leeds v Tottenham
-West Ham v Ipswich
-Wolves v Nott'm Forest
-Chelsea v Bournemouth
-
-Week 35: 10th May 2026
-Bournemouth v Aston Villa
-Brentford v Sunderland
-Brighton v Arsenal
-Man Utd v Everton
-Nott'm Forest v Chelsea
-Burnley v Liverpool
-Tottenham v Wolves
-Ipswich v Leeds
-Man City v West Ham
-Fulham v Crystal Palace
-
-Week 36: 17th May 2026
-Arsenal v Brighton
-Chelsea v Tottenham
-Crystal Palace v Brentford
-Everton v Burnley
-Fulham v Man City
-Newcastle v Sunderland
-Leeds v Wolves
-Man Utd v Ipswich
-Liverpool v Bournemouth
-Aston Villa v West Ham
-
-Week 37: 24th May 2026
+Week 21:
+11th Jan 2026
+Arsenal v Man City
+Aston Villa v Leicester
 Bournemouth v Everton
-Aston Villa v Tottenham
-Brentford v Fulham
-Brighton v Leeds
-Crystal Palace v Sunderland
-Man City v Arsenal
-Nott'm Forest v Burnley
-West Ham v Liverpool
-Wolves v Ipswich
-Man Utd v Chelsea
+Chelsea v West Ham
+Ipswich v Man Utd
+Liverpool v Fulham
+Newcastle v Wolves
+Nott'm Forest v Crystal Palace
+Southampton v Brentford
+Tottenham v Brighton
 
-Week 38: 31st May 2026
-Arsenal v Wolves
+Week 22:
+18th Jan 2026
+Brentford v Ipswich
+Brighton v Southampton
+Crystal Palace v Liverpool
+Everton v Tottenham
+Fulham v Nott'm Forest
+Leicester v Man Utd
+Man City v Wolves
+West Ham v Chelsea
+Arsenal v Bournemouth
+Aston Villa v Newcastle
+
+Week 23:
+25th Jan 2026
+Bournemouth v Aston Villa
+Chelsea v Leicester
+Ipswich v Arsenal
+Liverpool v West Ham
+Man Utd v Man City
+Newcastle v Nott'm Forest
+Nott'm Forest v Everton
+Southampton v Crystal Palace
+Tottenham v Newcastle
+Wolves v Fulham
+
+Week 24:
+1st Feb 2026
+Arsenal v Liverpool
+Aston Villa v Ipswich
+Brentford v Man City
+Crystal Palace v Brighton
+Everton v Man Utd
+Fulham v Southampton
+Leicester v West Ham
+Newcastle v Bournemouth
+Tottenham v Chelsea
+Wolves v Nott'm Forest
+
+Week 25:
+8th Feb 2026
+Bournemouth v Tottenham
+Brighton v Fulham
 Chelsea v Aston Villa
+Ipswich v Everton
+Liverpool v Leicester
+Man City v Crystal Palace
+Man Utd v Wolves
+Nott'm Forest v Arsenal
+Southampton v Newcastle
+West Ham v Brentford
+
+Week 26:
+15th Feb 2026
+Arsenal v Man Utd
+Aston Villa v Man City
+Brentford v West Ham
+Crystal Palace v Ipswich
 Everton v Nott'm Forest
+Fulham v Chelsea
+Leicester v Brighton
+Liverpool v Southampton
+Newcastle v Leicester
+Wolves v Tottenham
+
+Week 27:
+22nd Feb 2026
+Brighton v Liverpool
+Chelsea v Newcastle
+Ipswich v Tottenham
+Man City v Everton
+Man Utd v Brentford
+Nott'm Forest v Aston Villa
+Southampton v Leicester
+West Ham v Fulham
+Wolves v Crystal Palace
+Bournemouth v Arsenal
+
+Week 28:
+1st Mar 2026
+Arsenal v Chelsea
+Aston Villa v Wolves
+Brentford v Man Utd
+Crystal Palace v Everton
+Fulham v Man City
+Leicester v Ipswich
+Liverpool v Nott'm Forest
+Newcastle v Southampton
+Tottenham v West Ham
+Brighton v Bournemouth
+
+Week 29:
+8th Mar 2026
+Bournemouth v Southampton
+Chelsea v Liverpool
+Everton v Leicester
+Ipswich v Newcastle
+Man City v Brighton
+Man Utd v Aston Villa
+Nott'm Forest v Brentford
+Tottenham v Arsenal
+West Ham v Crystal Palace
+Wolves v Fulham
+
+Week 30:
+15th Mar 2026
+Arsenal v Ipswich
+Aston Villa v West Ham
+Brentford v Chelsea
+Brighton v Man City
+Crystal Palace v Nott'm Forest
 Fulham v Man Utd
-Sunderland v West Ham
-Leeds v Bournemouth
-Burnley v Crystal Palace
-Tottenham v Brentford
+Leicester v Everton
+Liverpool v Wolves
+Newcastle v Man Utd
+Southampton v Tottenham
+
+Week 31:
+22nd Mar 2026
+Chelsea v Southampton
+Everton v Crystal Palace
+Ipswich v Leicester
+Man City v Newcastle
+Man Utd v Liverpool
+Nott'm Forest v Brighton
+Tottenham v Aston Villa
+West Ham v Man City
+Wolves v Bournemouth
+Fulham v Arsenal
+
+Week 32:
+5th Apr 2026
+Arsenal v Everton
+Aston Villa v Nott'm Forest
+Bournemouth v Ipswich
+Brighton v Wolves
+Crystal Palace v Man City
+Leicester v Man Utd
+Liverpool v Tottenham
+Newcastle v Fulham
+Southampton v West Ham
+Brentford v Chelsea
+
+Week 33:
+12th Apr 2026
+Chelsea v Bournemouth
+Everton v Liverpool
+Fulham v Aston Villa
+Ipswich v Southampton
+Man City v Leicester
+Man Utd v Crystal Palace
+Nott'm Forest v Man City
+Tottenham v Newcastle
+West Ham v Brighton
+Wolves v Everton
+
+Week 34:
+19th Apr 2026
+Aston Villa v Bournemouth
+Bournemouth v Man Utd
+Brighton v West Ham
+Crystal Palace v Ipswich
+Leicester v Fulham
+Liverpool v Newcastle
+Man City v Tottenham
+Southampton v Nott'm Forest
+Wolves v Arsenal
+Everton v Brentford
+
+Week 35:
+26th Apr 2026
+Arsenal v Aston Villa
+Brentford v Leicester
+Fulham v Man City
+Ipswich v West Ham
+Liverpool v Man Utd
+Newcastle v Chelsea
+Nott'm Forest v Everton
+Southampton v Brighton
+Tottenham v Crystal Palace
+Wolves v Southampton
+
+Week 36:
+3rd May 2026
+Aston Villa v Liverpool
+Bournemouth v Nott'm Forest
+Brighton v Tottenham
+Chelsea v Ipswich
+Everton v Wolves
+Leicester v Newcastle
+Man City v Southampton
+Man Utd v Arsenal
+West Ham v Brentford
+Crystal Palace v Fulham
+
+Week 37:
+10th May 2026
+Arsenal v Everton
+Brentford v Man City
 Ipswich v Man City
-Liverpool v Brighton
+Liverpool v Leicester
+Man Utd v Southampton
+Newcastle v Brighton
+Nott'm Forest v West Ham
+Tottenham v Bournemouth
+Wolves v Aston Villa
+Crystal Palace v Chelsea
+
+Week 38:
+17th May 2026
+Aston Villa v Man Utd
+Bournemouth v Liverpool
+Brighton v Newcastle
+Chelsea v Nott'm Forest
+Everton v Ipswich
+Leicester v Crystal Palace
+Man City v Wolves
+Southampton v Arsenal
+West Ham v Tottenham
+Fulham v Brentford
 `;
 
 export default function AdminPage() {
@@ -317,80 +580,100 @@ export default function AdminPage() {
   
   const teamNameMap = React.useMemo(() => {
     if (!teamsData) return new Map<string, Team>();
-    
     const map = new Map<string, Team>();
-    
     teamsData.forEach(team => {
         map.set(team.name.toLowerCase(), team);
     });
-
+    // Manual mappings for common variations
     const teamVariations: {[key: string]: string} = {
         "nott'm forest": "notts forest",
         "wolves": "wolves",
         "man city": "man city",
-        "man utd": "man utd"
+        "man utd": "man utd",
+        "leicester": "leicester city",
+        "southampton": "southampton"
     };
 
-    for (const variation in teamVariations) {
-        const officialName = teamVariations[variation];
-        const teamObject = teamsData.find(t => t.name.toLowerCase() === officialName.toLowerCase());
-        if (teamObject) {
-            map.set(variation.toLowerCase(), teamObject);
-        }
-    }
-    
+    teamsData.forEach(team => {
+        const lowerCaseName = team.name.toLowerCase();
+        map.set(lowerCaseName, team);
+
+        // Add known simple names
+        if (lowerCaseName === 'leicester city') map.set('leicester', team);
+        if (lowerCaseName === 'manchester city') map.set('man city', team);
+        if (lowerCaseName === 'manchester united') map.set('man utd', team);
+        if (lowerCaseName === 'nottingham forest') map.set('nott\'m forest', team);
+        if (lowerCaseName === 'wolverhampton wanderers') map.set('wolves', team);
+    });
+
     return map;
-  }, [teamsData]);
+}, [teamsData]);
 
 
   const connectivityCheckDocRef = useMemoFirebase(
     () => (firestore ? doc(firestore, 'connectivity-test', 'connectivity-doc') : null),
     [firestore]
   );
-
+  
   const parseRawFixtures = React.useCallback((week: number): Omit<Match, 'homeTeam' | 'awayTeam'>[] => {
+    if (!teamNameMap.size) {
+        console.error("Team name map is not ready.");
+        return [];
+    }
+
     const lines = rawFutureFixtures.trim().split('\n');
     const fixturesForWeek: Omit<Match, 'homeTeam' | 'awayTeam'>[] = [];
     let currentWeek = 0;
-    let matchDate: Date | null = null;
-  
+    let currentDate: Date | null = null;
+    let year = 2025; // Default start year
+
     for (const line of lines) {
-      const trimmedLine = line.trim();
-      if (trimmedLine.startsWith('Week')) {
-        currentWeek = parseInt(trimmedLine.split(' ')[1].replace(':', ''));
-        const dateString = trimmedLine.substring(trimmedLine.indexOf(':') + 2);
-        if (dateString) {
-           const cleanedDateString = dateString.replace(/(\d+)(st|nd|rd|th)/, '$1');
-           matchDate = new Date(cleanedDateString);
+        const trimmedLine = line.trim();
+        if (!trimmedLine) continue;
+
+        if (trimmedLine.startsWith('Week')) {
+            currentWeek = parseInt(trimmedLine.split(' ')[1].replace(':', ''));
+            // Reset date for the new week block
+            currentDate = null; 
+            // Simple logic to switch year
+            if (currentWeek > 18 && year === 2025) {
+                year = 2026;
+            }
+        } else if (/^\d+(st|nd|rd|th)\s+\w+\s+\d{4}/.test(trimmedLine) || /^\d+(st|nd|rd|th)\s+\w+/.test(trimmedLine)) {
+             // It's a date line
+            const cleanedDateString = trimmedLine.replace(/(\d+)(st|nd|rd|th)/, '$1');
+            const dateStrWithYear = cleanedDateString.includes(String(year)) ? cleanedDateString : `${cleanedDateString} ${year}`;
+            currentDate = new Date(dateStrWithYear);
+        } else if (currentWeek === week && currentDate && !isNaN(currentDate.getTime())) {
+            // It's a fixture line for the current week context
+            const parts = trimmedLine.split(/\s+v\s+/);
+            if (parts.length === 2) {
+                const homeTeamName = parts[0].trim().toLowerCase();
+                const awayTeamName = parts[1].trim().toLowerCase();
+
+                const homeTeam = teamNameMap.get(homeTeamName);
+                const awayTeam = teamNameMap.get(awayTeamName);
+
+                if (homeTeam && awayTeam) {
+                    const matchId = `${week}-${homeTeam.id}-${awayTeam.id}`;
+                    fixturesForWeek.push({
+                        id: matchId,
+                        week: week,
+                        homeTeamId: homeTeam.id,
+                        awayTeamId: awayTeam.id,
+                        homeScore: -1,
+                        awayScore: -1,
+                        matchDate: currentDate.toISOString(),
+                    });
+                } else {
+                    console.warn(`Could not find teams for fixture: "${trimmedLine}". Mapped Names: Home='${homeTeamName}', Away='${awayTeamName}'. Found: Home? ${!!homeTeam}, Away? ${!!awayTeam}`);
+                }
+            }
         }
-      } else if (trimmedLine && currentWeek === week && matchDate && !isNaN(matchDate.getTime())) {
-        const parts = trimmedLine.split(/\s+v\s+/);
-        if (parts.length === 2) {
-          const homeTeamName = parts[0].trim().toLowerCase();
-          const awayTeamName = parts[1].trim().toLowerCase();
-          
-          const homeTeam = teamNameMap.get(homeTeamName) || teamsData?.find(t => t.name.toLowerCase() === homeTeamName);
-          const awayTeam = teamNameMap.get(awayTeamName) || teamsData?.find(t => t.name.toLowerCase() === awayTeamName);
-  
-          if (homeTeam && awayTeam) {
-            const matchId = `${week}-${homeTeam.id}-${awayTeam.id}`;
-            fixturesForWeek.push({
-              id: matchId,
-              week: week,
-              homeTeamId: homeTeam.id,
-              awayTeamId: awayTeam.id,
-              homeScore: -1,
-              awayScore: -1,
-              matchDate: matchDate.toISOString(),
-            });
-          } else {
-             console.warn(`Could not find teams for fixture: ${trimmedLine}. Home: ${homeTeamName}, Away: ${awayTeamName}`);
-          }
-        }
-      }
     }
     return fixturesForWeek;
-  }, [teamNameMap, teamsData]);
+}, [teamNameMap]);
+
 
   React.useEffect(() => {
     if (!connectivityCheckDocRef) return;
@@ -478,15 +761,18 @@ export default function AdminPage() {
     });
     
     try {
-        const resultsToUpdate = Object.entries(scores).map(([matchId, scoreData]) => {
-            const match = weekFixtures.find(f => f.id === matchId)!;
+        const resultsToUpdate = weekFixtures.map(match => {
+            const scoreData = scores[match.id];
+            const homeScore = parseInt(scoreData?.homeScore, 10);
+            const awayScore = parseInt(scoreData?.awayScore, 10);
+
             return {
                 id: match.id,
                 week: match.week,
                 homeTeamId: match.homeTeamId,
                 awayTeamId: match.awayTeamId,
-                homeScore: parseInt(scoreData.homeScore, 10),
-                awayScore: parseInt(scoreData.awayScore, 10),
+                homeScore: !isNaN(homeScore) ? homeScore : match.homeScore,
+                awayScore: !isNaN(awayScore) ? awayScore : match.awayScore,
                 matchDate: match.matchDate,
             };
         });
@@ -499,19 +785,19 @@ export default function AdminPage() {
             throw new Error(`Data validation failed: ${errorMessages}`);
         }
         
-        const validResults = parsedResults.data.filter(r => !isNaN(r.homeScore) && !isNaN(r.awayScore));
+        const validResults = parsedResults.data.filter(r => r.homeScore !== -1 && r.awayScore !== -1);
 
         if (validResults.length === 0) {
             toast({
                 variant: 'destructive',
                 title: 'No Valid Scores',
-                description: 'No valid scores were entered for this week. Please enter scores before saving.',
+                description: 'No new valid scores were entered for this week. Please enter scores before saving.',
             });
             setIsUpdating(false);
             return;
         }
 
-        const matchUpdateResult = await updateMatchResults({ results: validResults });
+        const matchUpdateResult = await updateMatchResults({ results: parsedResults.data });
         
         if (!matchUpdateResult.success) {
             throw new Error(`The AI flow for updating matches reported an error.`);
@@ -761,7 +1047,7 @@ export default function AdminPage() {
                             </Button>
                         </>
                       ) : (
-                        <p className="text-muted-foreground">No fixtures found for Week {selectedWeek}.</p>
+                        <p className="text-muted-foreground">No fixtures found for Week {selectedWeek}. You may need to re-import them.</p>
                       )}
                   </div>
               )}
