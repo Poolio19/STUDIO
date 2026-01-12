@@ -40,6 +40,7 @@ import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 import { updateAllData } from '@/ai/flows/update-all-data-flow';
 import { reimportFixtures } from '@/ai/flows/reimport-fixtures-flow';
 import { MatchResultSchema } from '@/ai/flows/update-match-results-flow-types';
+import type { ReimportFixturesInput } from '@/ai/flows/reimport-fixtures-flow-types';
 import type { Match, Team } from '@/lib/types';
 
 

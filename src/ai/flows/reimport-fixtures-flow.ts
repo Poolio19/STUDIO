@@ -4,30 +4,14 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'zod';
 import { getFlow } from 'genkit';
 import { getFirestoreAdmin } from '@/ai/admin';
-
-export const ReimportFixturesInputSchema = z.object({
-  week: z.number().int(),
-  fixtures: z.array(z.object({
-    id: z.string(),
-    week: z.number().int(),
-    homeTeamId: z.string(),
-    awayTeamId: z.string(),
-    homeScore: z.number().int(),
-    awayScore: z.number().int(),
-    matchDate: z.string(),
-  })),
-});
-export type ReimportFixturesInput = z.infer<typeof ReimportFixturesInputSchema>;
-
-export const ReimportFixturesOutputSchema = z.object({
-  success: z.boolean(),
-  deletedCount: z.number().int(),
-  importedCount: z.number().int(),
-});
-export type ReimportFixturesOutput = z.infer<typeof ReimportFixturesOutputSchema>;
+import {
+  ReimportFixturesInputSchema,
+  ReimportFixturesOutputSchema,
+  type ReimportFixturesInput,
+  type ReimportFixturesOutput
+} from './reimport-fixtures-flow-types';
 
 
 export async function reimportFixtures(
