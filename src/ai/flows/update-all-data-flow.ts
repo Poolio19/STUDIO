@@ -91,7 +91,7 @@ const updateAllDataFlow = ai.defineFlow(
             teamStats[teamId].goalDifference = teamStats[teamId].goalsFor - teamStats[teamId].goalsAgainst;
         });
 
-        const newStandings: (Omit<CurrentStanding, 'rank'> & { teamName: string })[] = Object.entries(teamStats).map(([teamId, stats]) => ({
+        const newStandings: (Omit<CurrentStanding, 'rank'> & { teamName: string; teamId: string })[] = Object.entries(teamStats).map(([teamId, stats]) => ({
             teamId,
             ...stats,
             teamName: teamMap.get(teamId)?.name || 'Unknown',
@@ -212,7 +212,7 @@ const updateAllDataFlow = ai.defineFlow(
             });
             
             const recentResultRef = db.collection('teamRecentResults').doc(team.id);
-            batch.set(recentResultRef, { teamId: team.id, results: results });
+            batch.set(recentResultRef, { teamId: team.id, results: results.reverse() });
         });
         logger.info(`Batched ${teams.length} team recent results updates.`);
 
