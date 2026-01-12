@@ -12,7 +12,8 @@ import {
   type UpdateMatchResultsInput,
   type UpdateMatchResultsOutput,
 } from './update-match-results-flow-types';
-import { getFirestore, setDoc, doc } from '@genkit-ai/firebase/firestore';
+import { getFirestore } from '@genkit-ai/firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { getFlow } from 'genkit';
 
 export async function updateMatchResults(
