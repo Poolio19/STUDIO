@@ -168,10 +168,10 @@ Sunderland v Nott'm Forest
 Man City v Tottenham
 Everton v Wolves
 West Ham v Chelsea
-Bournemouth v Wolves
+Leeds v Bournemouth
 
 Week 29: 22nd Mar 2026
-Bournemouth v Leeds
+Bournemouth v Everton
 Aston Villa v Wolves
 Chelsea v Sunderland
 Everton v Fulham
@@ -252,10 +252,10 @@ Burnley v Liverpool
 Tottenham v Wolves
 Newcastle v Leeds
 Man City v West Ham
-Fulham v West Ham
+Fulham v Crystal Palace
 
 Week 36: 17th May 2026
-Arsenal v Nott'm Forest
+Arsenal v Brighton
 Chelsea v Tottenham
 Crystal Palace v Brentford
 Everton v Burnley
@@ -348,9 +348,9 @@ export default function AdminPage() {
     [firestore]
   );
 
-  const parseRawFixtures = React.useCallback((week: number): EditableMatch[] => {
+  const parseRawFixtures = React.useCallback((week: number): Omit<EditableMatch, 'homeTeam' | 'awayTeam'>[] => {
     const lines = rawFutureFixtures.trim().split('\n');
-    const fixturesForWeek: EditableMatch[] = [];
+    const fixturesForWeek: Omit<EditableMatch, 'homeTeam' | 'awayTeam'>[] = [];
     let currentWeek = 0;
     let matchDate: Date | null = null;
   
@@ -382,8 +382,6 @@ export default function AdminPage() {
               homeScore: -1,
               awayScore: -1,
               matchDate: matchDate.toISOString(),
-              homeTeam: homeTeam,
-              awayTeam: awayTeam,
             });
           } else {
              console.warn(`Could not find teams for fixture: ${trimmedLine}. Home: ${homeTeamName}, Away: ${awayTeamName}`);
@@ -438,7 +436,12 @@ export default function AdminPage() {
     if (existingFixtures.length > 0) {
         fixturesForWeek = existingFixtures;
     } else {
-        fixturesForWeek = parseRawFixtures(week);
+        const parsedFixtures = parseRawFixtures(week);
+        fixturesForWeek = parsedFixtures.map(f => ({
+            ...f,
+            homeTeam: teamMap.get(f.homeTeamId)!,
+            awayTeam: teamMap.get(f.awayTeamId)!,
+        }));
     }
     
     setWeekFixtures(fixturesForWeek);
