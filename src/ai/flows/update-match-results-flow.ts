@@ -12,15 +12,8 @@ import {
   type UpdateMatchResultsInput,
   type UpdateMatchResultsOutput,
 } from './update-match-results-flow-types';
-import { getFirestore, setDoc, doc } from 'firebase/firestore';
 import { getFlow } from 'genkit';
-import { initializeApp, getApps } from 'firebase/app';
-import { firebaseConfig } from '@/firebase/config';
-
-// Initialize Firebase app if not already initialized
-if (!getApps().length) {
-  initializeApp(firebaseConfig);
-}
+import { getFirestoreAdmin } from '@/ai/admin';
 
 export async function updateMatchResults(
   input: UpdateMatchResultsInput
@@ -37,7 +30,7 @@ const updateMatchResultsFlow = ai.defineFlow(
   async ({ results }) => {
     const { logger } = getFlow().state();
     try {
-      const db = getFirestore();
+      const db = getFirestoreAdmin();
       
       const validResults = results.filter(
         (result) => !isNaN(result.homeScore) && !isNaN(result.awayScore)
@@ -48,13 +41,14 @@ const updateMatchResultsFlow = ai.defineFlow(
         return { success: true, updatedCount: 0 };
       }
 
-      const updatePromises = validResults.map(result => {
+      const batch = db.batch();
+      validResults.forEach(result => {
         const { id, ...matchData } = result;
-        const docRef = doc(db, 'matches', id);
-        return setDoc(docRef, matchData, { merge: true });
+        const docRef = db.collection('matches').doc(id);
+        batch.set(docRef, matchData, { merge: true });
       });
       
-      await Promise.all(updatePromises);
+      await batch.commit();
       
       const totalUpdatedCount = validResults.length;
       logger.info(`Successfully committed a batch of ${totalUpdatedCount} match results.`);
