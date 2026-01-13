@@ -29,28 +29,7 @@ import {
 } from "@/components/ui/alert-dialog"
 
 import type { Match, Team, Prediction, User as UserProfile, UserHistory, CurrentStanding } from '@/lib/types';
-import { Input } from '@/components/ui/input';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { importPastFixtures } from '@/ai/flows/import-past-fixtures-flow';
-import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
-
-
-const matchResultSchema = z.object({
-    id: z.string(),
-    week: z.number(),
-    homeTeamId: z.string(),
-    awayTeamId: z.string(),
-    homeScore: z.coerce.number().min(0, "Score must be non-negative"),
-    awayScore: z.coerce.number().min(0, "Score must be non-negative"),
-    matchDate: z.string(),
-});
-const formSchema = z.object({
-  results: z.array(matchResultSchema),
-});
-type MatchResultFormValues = z.infer<typeof formSchema>;
 
 
 export default function AdminPage() {
@@ -59,11 +38,6 @@ export default function AdminPage() {
   
   const [dbStatus, setDbStatus] = React.useState<{ connected: boolean, message: string }>({ connected: false, message: 'Checking connection...' });
   const [isUpdating, setIsUpdating] = React.useState(false);
-  const [isSubmittingScores, setIsSubmittingScores] = React.useState(false);
-
-  const [teams, setTeams] = React.useState<Team[]>([]);
-  const [allMatches, setAllMatches] = React.useState<Match[]>([]);
-  const teamMap = React.useMemo(() => new Map(teams.map(t => [t.id, t])), [teams]);
 
   const connectivityCheckDocRef = useMemoFirebase(
     () => (firestore ? doc(firestore, 'connectivity-test', 'connectivity-doc') : null),
@@ -73,16 +47,6 @@ export default function AdminPage() {
   React.useEffect(() => {
     if (!firestore) return;
 
-    const fetchData = async () => {
-        const [teamsSnap, matchesSnap] = await Promise.all([
-             getDocs(collection(firestore, 'teams')),
-             getDocs(collection(firestore, 'matches')),
-        ]);
-        setTeams(teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team)));
-        setAllMatches(matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match)));
-    };
-    fetchData();
-    
     const checkConnection = async () => {
       try {
         if (!connectivityCheckDocRef) return;
@@ -103,53 +67,6 @@ export default function AdminPage() {
     checkConnection();
   }, [connectivityCheckDocRef, firestore]);
 
-  const { nextWeekToPlay, nextWeekFixtures } = React.useMemo(() => {
-    if (allMatches.length === 0) return { nextWeekToPlay: null, nextWeekFixtures: [] };
-    const unplayedMatches = allMatches.filter(m => m.homeScore === -1 || m.awayScore === -1);
-    if (unplayedMatches.length === 0) {
-        return { nextWeekToPlay: null, nextWeekFixtures: [] };
-    }
-    const nextWeek = Math.min(...unplayedMatches.map(m => m.week));
-    const fixtures = allMatches.filter(m => m.week === nextWeek);
-    return { nextWeekToPlay: nextWeek, nextWeekFixtures: fixtures };
-  }, [allMatches]);
-
-  const form = useForm<MatchResultFormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      results: nextWeekFixtures.map(f => ({...f, homeScore: 0, awayScore: 0}))
-    },
-  });
-  
-  const { fields } = useFieldArray({
-    control: form.control,
-    name: "results",
-  });
-
-  React.useEffect(() => {
-    form.reset({
-      results: nextWeekFixtures.map(f => ({...f, homeScore: 0, awayScore: 0}))
-    });
-  }, [nextWeekFixtures, form]);
-
-  async function onScoresSubmit(data: MatchResultFormValues) {
-    setIsSubmittingScores(true);
-    toast({ title: 'Submitting Scores...', description: 'Updating fixture library file...' });
-
-    try {
-        const result = await updateMatchResults({ results: data.results });
-        if (result.success) {
-            toast({ title: 'Fixture File Updated!', description: `Successfully updated ${result.updatedCount} matches in the library file.` });
-        } else {
-            throw new Error(result.message || 'An unknown error occurred.');
-        }
-    } catch (error: any) {
-        console.error('Error submitting scores:', error);
-        toast({ variant: 'destructive', title: 'Score Submission Failed', description: error.message || 'An unexpected error occurred.' });
-    } finally {
-        setIsSubmittingScores(false);
-    }
-  }
 
  const handleFullUpdate = async () => {
     setIsUpdating(true);
@@ -376,103 +293,41 @@ export default function AdminPage() {
         </p>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card>
-            <CardHeader>
-                <CardTitle>Update Match Results</CardTitle>
-                <CardDescription>
-                    {nextWeekToPlay ? `Enter the scores for Week ${nextWeekToPlay} and submit them. This will update the fixture library file.` : "All matches have been played!"}
-                </CardDescription>
-            </CardHeader>
-            {nextWeekToPlay && (
-                <CardContent>
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onScoresSubmit)} className="space-y-6">
-                            <div className="space-y-4 max-h-96 overflow-y-auto pr-4">
-                            {fields.map((field, index) => {
-                                const homeTeam = teamMap.get(field.homeTeamId);
-                                const awayTeam = teamMap.get(field.awayTeamId);
-                                return (
-                                    <div key={field.id} className="grid grid-cols-[1fr_50px_10px_50px_1fr] items-center gap-2">
-                                        <span className="font-medium text-right">{homeTeam?.name || field.homeTeamId}</span>
-                                        <FormField
-                                            control={form.control}
-                                            name={`results.${index}.homeScore`}
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormControl>
-                                                        <Input type="number" {...field} className="text-center" />
-                                                    </FormControl>
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <span className="text-center font-bold">-</span>
-                                        <FormField
-                                            control={form.control}
-                                            name={`results.${index}.awayScore`}
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormControl>
-                                                        <Input type="number" {...field} className="text-center" />
-                                                    </FormControl>
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <span className="font-medium text-left">{awayTeam?.name || field.awayTeamId}</span>
-                                    </div>
-                                )
-                            })}
-                            </div>
-                            <Button type="submit" disabled={isSubmittingScores}>
-                                {isSubmittingScores ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                Submit Week {nextWeekToPlay} Results
-                            </Button>
-                        </form>
-                    </Form>
-                </CardContent>
-            )}
-        </Card>
-
-        <Card>
-            <CardHeader>
-                <CardTitle>Master Data Control</CardTitle>
-                <CardDescription>
-                    Your workflow should be:
-                    <ol className="list-decimal list-inside mt-2 space-y-1">
-                        <li>Enter scores for the week on the left and submit to update the library file.</li>
-                        <li>Press the red button below to import fixtures from the library and update all application data.</li>
-                    </ol>
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="flex items-center gap-4 rounded-lg border p-4">
-                {dbStatus.connected ? <Icons.shieldCheck className="h-6 w-6 text-green-500" /> : <Icons.bug className="h-6 w-6 text-red-500" />}
-                <p className="font-medium">{dbStatus.message}</p>
-                </div>
-                
-                <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="lg" className="text-lg" disabled={isUpdating || !dbStatus.connected}>
-                        {isUpdating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                        Update & Recalculate All Data
-                    </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        This will re-import all fixtures from the library and then recalculate standings, scores, and histories. This is a long-running operation.
-                    </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleFullUpdate}>Yes, Run Full Update</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-                </AlertDialog>
-            </CardContent>
-        </Card>
-      </div>
+      <Card>
+          <CardHeader>
+              <CardTitle>Master Data Control</CardTitle>
+              <CardDescription>
+                  This will re-import all fixtures from the library and then recalculate standings, scores, and histories.
+              </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+              <div className="flex items-center gap-4 rounded-lg border p-4">
+              {dbStatus.connected ? <Icons.shieldCheck className="h-6 w-6 text-green-500" /> : <Icons.bug className="h-6 w-6 text-red-500" />}
+              <p className="font-medium">{dbStatus.message}</p>
+              </div>
+              
+              <AlertDialog>
+              <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="lg" className="text-lg" disabled={isUpdating || !dbStatus.connected}>
+                      {isUpdating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+                      Update & Recalculate All Data
+                  </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                  <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                      This will re-import all fixtures from the library and then recalculate standings, scores, and histories. This is a long-running operation.
+                  </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleFullUpdate}>Yes, Run Full Update</AlertDialogAction>
+                  </AlertDialogFooter>
+              </AlertDialogContent>
+              </AlertDialog>
+          </CardContent>
+      </Card>
     </div>
   );
 }
