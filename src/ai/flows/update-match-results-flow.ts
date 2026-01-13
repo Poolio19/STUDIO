@@ -38,12 +38,12 @@ const updateMatchResultsFlow = ai.defineFlow(
     }
 
     try {
-      // The JSON file is imported as a module, so we operate on a copy.
-      const updatedFixtures = [...pastFixtures];
+      // Deep copy the imported JSON to make it mutable.
+      const updatedFixtures = JSON.parse(JSON.stringify(pastFixtures));
       let updatedCount = 0;
 
       results.forEach(newResult => {
-        const index = updatedFixtures.findIndex(f => f.id === newResult.id);
+        const index = updatedFixtures.findIndex((f: any) => f.id === newResult.id);
         if (index !== -1) {
           // Update the specific match with new scores
           updatedFixtures[index] = {

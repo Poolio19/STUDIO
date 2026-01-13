@@ -97,12 +97,14 @@ export default function AdminPage() {
     checkConnection();
   }, [connectivityCheckDocRef, firestore]);
 
-  const { maxWeeksPlayed, nextWeekFixtures } = React.useMemo(() => {
-    const playedMatches = pastFixtures.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
-    const maxWeeksPlayed = playedMatches.length > 0 ? Math.max(0, ...playedMatches.map(m => m.week)) : 0;
-    const nextWeek = maxWeeksPlayed + 1;
-    const nextWeekFixtures = pastFixtures.filter(m => m.week === nextWeek);
-    return { maxWeeksPlayed, nextWeekFixtures };
+  const { nextWeekToPlay, nextWeekFixtures } = React.useMemo(() => {
+    const unplayedMatches = pastFixtures.filter(m => m.homeScore === -1 || m.awayScore === -1);
+    if (unplayedMatches.length === 0) {
+        return { nextWeekToPlay: null, nextWeekFixtures: [] };
+    }
+    const nextWeek = Math.min(...unplayedMatches.map(m => m.week));
+    const fixtures = pastFixtures.filter(m => m.week === nextWeek);
+    return { nextWeekToPlay: nextWeek, nextWeekFixtures: fixtures };
   }, []);
 
   const form = useForm<MatchResultFormValues>({
@@ -129,7 +131,7 @@ export default function AdminPage() {
     try {
         const response = await updateMatchResults(data);
         if (response.success) {
-            toast({ title: 'Scores Submitted Successfully!', description: `${response.updatedCount} results were updated in the fixtures file. You can now press the red button.` });
+            toast({ title: 'Scores Submitted Successfully!', description: `${response.updatedCount} results were updated. You can now press the red button to apply changes.` });
         } else {
             throw new Error('Flow reported failure.');
         }
@@ -189,7 +191,8 @@ export default function AdminPage() {
             userHistoriesSnap,
             standingsSnap,
             playerTeamScoresSnap,
-            teamRecentResultsSnap
+            teamRecentResultsSnap,
+            weeklyTeamStandingsSnap
         ] = await Promise.all([
             getDocs(query(collection(firestore, 'teams'))),
             getDocs(query(collection(firestore, 'matches'))),
@@ -198,7 +201,8 @@ export default function AdminPage() {
             getDocs(query(collection(firestore, 'userHistories'))),
             getDocs(query(collection(firestore, 'standings'))),
             getDocs(query(collection(firestore, 'playerTeamScores'))),
-            getDocs(query(collection(firestore, 'teamRecentResults')))
+            getDocs(query(collection(firestore, 'teamRecentResults'))),
+            getDocs(query(collection(firestore, 'weeklyTeamStandings')))
         ]);
 
         const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
@@ -213,6 +217,7 @@ export default function AdminPage() {
         standingsSnap.forEach(doc => batch.delete(doc.ref));
         playerTeamScoresSnap.forEach(doc => batch.delete(doc.ref));
         teamRecentResultsSnap.forEach(doc => batch.delete(doc.ref));
+        weeklyTeamStandingsSnap.forEach(doc => batch.delete(doc.ref));
         
         toast({ title: 'Step 5/7: Calculating new league standings...' });
         const teamStats: { [teamId: string]: Omit<CurrentStanding, 'teamId' | 'rank'> } = {};
@@ -372,54 +377,56 @@ export default function AdminPage() {
             <CardHeader>
                 <CardTitle>Update Match Results</CardTitle>
                 <CardDescription>
-                    Enter the scores for Week {maxWeeksPlayed + 1} and submit them. This will update the underlying JSON file. Then, use the Master Control to apply the changes.
+                    {nextWeekToPlay ? `Enter the scores for Week ${nextWeekToPlay} and submit them. This will update the underlying fixtures file.` : "All matches have been played!"}
                 </CardDescription>
             </CardHeader>
-            <CardContent>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onScoresSubmit)} className="space-y-6">
-                        <div className="space-y-4 max-h-96 overflow-y-auto pr-4">
-                        {fields.map((field, index) => {
-                            const homeTeam = teamMap.get(field.homeTeamId);
-                            const awayTeam = teamMap.get(field.awayTeamId);
-                            return (
-                                <div key={field.id} className="grid grid-cols-[1fr_50px_10px_50px_1fr] items-center gap-2">
-                                    <span className="font-medium text-right">{homeTeam?.name || field.homeTeamId}</span>
-                                    <FormField
-                                        control={form.control}
-                                        name={`results.${index}.homeScore`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormControl>
-                                                    <Input type="number" {...field} className="text-center" />
-                                                </FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <span className="text-center font-bold">-</span>
-                                     <FormField
-                                        control={form.control}
-                                        name={`results.${index}.awayScore`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormControl>
-                                                    <Input type="number" {...field} className="text-center" />
-                                                </FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <span className="font-medium text-left">{awayTeam?.name || field.awayTeamId}</span>
-                                </div>
-                            )
-                        })}
-                        </div>
-                         <Button type="submit" disabled={isSubmittingScores}>
-                            {isSubmittingScores ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                            Submit Week {maxWeeksPlayed + 1} Results
-                        </Button>
-                    </form>
-                </Form>
-            </CardContent>
+            {nextWeekToPlay && (
+                <CardContent>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onScoresSubmit)} className="space-y-6">
+                            <div className="space-y-4 max-h-96 overflow-y-auto pr-4">
+                            {fields.map((field, index) => {
+                                const homeTeam = teamMap.get(field.homeTeamId);
+                                const awayTeam = teamMap.get(field.awayTeamId);
+                                return (
+                                    <div key={field.id} className="grid grid-cols-[1fr_50px_10px_50px_1fr] items-center gap-2">
+                                        <span className="font-medium text-right">{homeTeam?.name || field.homeTeamId}</span>
+                                        <FormField
+                                            control={form.control}
+                                            name={`results.${index}.homeScore`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <Input type="number" {...field} className="text-center" />
+                                                    </FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <span className="text-center font-bold">-</span>
+                                        <FormField
+                                            control={form.control}
+                                            name={`results.${index}.awayScore`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <Input type="number" {...field} className="text-center" />
+                                                    </FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <span className="font-medium text-left">{awayTeam?.name || field.awayTeamId}</span>
+                                    </div>
+                                )
+                            })}
+                            </div>
+                            <Button type="submit" disabled={isSubmittingScores}>
+                                {isSubmittingScores ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                Submit Week {nextWeekToPlay} Results
+                            </Button>
+                        </form>
+                    </Form>
+                </CardContent>
+            )}
         </Card>
 
         <Card>
