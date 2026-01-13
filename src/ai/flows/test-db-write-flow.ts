@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A one-time test flow to prove database write capability by creating a specific document.
@@ -18,7 +19,7 @@ export type TestDbWriteOutput = z.infer<typeof TestWriteOutputSchema>;
 export const testDbWriteFlow = ai.defineFlow(
   {
     name: 'testDbWriteFlow',
-    inputSchema: z.undefined(),
+    inputSchema: z.void(),
     outputSchema: TestWriteOutputSchema,
   },
   async (_, { logger }) => {
