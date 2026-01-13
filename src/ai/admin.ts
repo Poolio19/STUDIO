@@ -1,8 +1,8 @@
+
 'use server';
 import * as admin from 'firebase-admin';
 import type { firestore as adminFirestore } from 'firebase-admin';
 import { firebaseConfig } from '@/firebase/config';
-import { applicationDefault } from 'firebase-admin/app';
 
 let firestore: adminFirestore.Firestore | null = null;
 
@@ -13,16 +13,19 @@ let firestore: adminFirestore.Firestore | null = null;
  * @returns {adminFirestore.Firestore} The initialized Firestore instance.
  */
 function initializeAdmin(): adminFirestore.Firestore {
+  // Check if the SDK is already initialized to prevent errors.
   if (admin.apps.length === 0) {
     console.log("Firebase Admin SDK: No apps initialized. Initializing a new app instance...");
     try {
+      // Initialize without explicit credentials to use the environment's service account.
+      // Explicitly providing the projectId is a robust way to ensure it connects to the correct project.
       admin.initializeApp({
-        credential: applicationDefault(),
         projectId: firebaseConfig.projectId,
       });
       console.log("Firebase Admin SDK: Initialization successful.");
     } catch (error: any) {
       console.error("Firebase Admin SDK: CRITICAL - Initialization failed!", error);
+      // Re-throw a more informative error.
       throw new Error(`Failed to initialize Firebase Admin SDK: ${error.message}`);
     }
   } else {
