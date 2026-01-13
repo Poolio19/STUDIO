@@ -40,6 +40,7 @@ import {
 import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 import { updateAllData } from '@/ai/flows/update-all-data-flow';
 import { importPastFixtures } from '@/ai/flows/import-past-fixtures-flow';
+import { testDbWriteFlow } from '@/ai/flows/test-db-write-flow';
 import { MatchResultSchema } from '@/ai/flows/update-match-results-flow-types';
 import type { Match, Team } from '@/lib/types';
 
@@ -58,6 +59,7 @@ export default function AdminPage() {
   const [isUpdating, setIsUpdating] = React.useState(false);
   const [isRecalculating, setIsRecalculating] = React.useState(false);
   const [isImportingPast, setIsImportingPast] = React.useState(false);
+  const [isTestingDbWrite, setIsTestingDbWrite] = React.useState(false);
 
 
   const [selectedWeek, setSelectedWeek] = React.useState<number | null>(null);
@@ -267,6 +269,34 @@ export default function AdminPage() {
     }
   };
 
+  const handleTestDbWrite = async () => {
+    setIsTestingDbWrite(true);
+    toast({
+      title: 'Running DB Write Test...',
+      description: 'Attempting to write to collection `test_02`.',
+    });
+    try {
+      const result = await testDbWriteFlow();
+      if (result.success) {
+        toast({
+          title: 'DB Write Test Successful!',
+          description: `Successfully wrote document to path: ${result.path}`,
+        });
+      } else {
+        throw new Error(result.message || 'The test write flow reported a failure.');
+      }
+    } catch (error: any) {
+      console.error('Error during DB write test:', error);
+      toast({
+        variant: 'destructive',
+        title: 'DB Write Test Failed',
+        description: error.message || 'An unexpected error occurred.',
+      });
+    } finally {
+      setIsTestingDbWrite(false);
+    }
+  };
+
 
   const isLoadingData = teamsLoading || matchesLoading || !firestore || !dbStatus.connected;
   
@@ -327,6 +357,10 @@ export default function AdminPage() {
                 {matchesError && <p className="text-sm text-red-500 mt-2">Error loading matches: {matchesError.message}</p>}
                 
                  <div className="flex flex-wrap gap-2">
+                    <Button variant="secondary" disabled={isTestingDbWrite || !dbStatus.connected} onClick={handleTestDbWrite}>
+                        {isTestingDbWrite ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        Test DB Write
+                    </Button>
                     <AlertDialog>
                     <AlertDialogTrigger asChild>
                         <Button disabled={isRecalculating || !dbStatus.connected}>
@@ -480,3 +514,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
