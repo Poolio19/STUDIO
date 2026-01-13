@@ -26,10 +26,10 @@ export const testDbWriteFlow = ai.defineFlow(
     const db = await getFirestoreAdmin();
     logger.info("Firestore admin instance acquired.");
 
-    const collectionName = 'test_01';
-    const documentName = 'test_01.01';
+    const collectionName = 'test_02';
+    const documentName = 'test_02.01';
     const docRef = db.collection(collectionName).doc(documentName);
-    const testData = { 'test_01.01.01': 'success' };
+    const testData = { 'test_02.01.01': 'success' };
     
     logger.info(`Attempting to create document '${documentName}' in collection '${collectionName}'.`);
     
