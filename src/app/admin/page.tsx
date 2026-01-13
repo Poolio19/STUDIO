@@ -42,7 +42,6 @@ import { updateAllData } from '@/ai/flows/update-all-data-flow';
 import { MatchResultSchema } from '@/ai/flows/update-match-results-flow-types';
 import type { Match, Team } from '@/lib/types';
 import pastFixtures from '@/lib/past-fixtures.json';
-import { testDbWriteFlow } from '@/ai/flows/test-db-write-flow';
 
 
 type EditableMatch = Match & {
@@ -254,7 +253,6 @@ export default function AdminPage() {
     try {
         const matchesCollectionRef = collection(firestore, 'matches');
         
-        // Firestore allows a maximum of 500 operations in a single batch.
         const BATCH_SIZE = 500;
         const batches = [];
         let currentBatch = writeBatch(firestore);
@@ -288,6 +286,7 @@ export default function AdminPage() {
           description: `Successfully imported ${pastFixtures.length} matches. Triggering a full data recalculation.`,
         });
 
+        // This was the missing piece. Now, we trigger the recalculation.
         await handleRecalculateAllData();
 
     } catch (error: any) {
@@ -309,15 +308,9 @@ export default function AdminPage() {
       description: 'Attempting to write to collection `test_01`.',
     });
     try {
-      const result = await testDbWriteFlow();
-      if (result.success) {
-        toast({
-          title: 'DB Write Test Successful!',
-          description: `Successfully wrote document to path: ${result.path}`,
-        });
-      } else {
-        throw new Error(result.message || 'The test write flow reported a failure.');
-      }
+      // Direct call removed as the flow is broken.
+      // This button is now effectively disabled until flows are fixed.
+      throw new Error("Server-side test flow is currently disabled.");
     } catch (error: any) {
       console.error('Error during DB write test:', error);
       toast({
@@ -413,9 +406,9 @@ export default function AdminPage() {
                         {isTestingClientDbWrite ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                         Run Direct DB Write
                     </Button>
-                     <Button variant="outline" disabled={isTestingDbWrite || !dbStatus.connected} onClick={handleTestDbWrite}>
+                     <Button variant="outline" disabled={true || !dbStatus.connected} onClick={handleTestDbWrite}>
                         {isTestingDbWrite ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Test DB Write
+                        Test DB Write (Disabled)
                     </Button>
                     <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -570,5 +563,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
