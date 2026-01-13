@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Types and schemas for the update-match-results-flow.
  */
@@ -10,8 +11,8 @@ export const MatchResultSchema = z.object({
     week: z.number().int(),
     homeTeamId: z.string(),
     awayTeamId: z.string(),
-    homeScore: z.number().int(),
-    awayScore: z.number().int(),
+    homeScore: z.coerce.number().int(),
+    awayScore: z.coerce.number().int(),
     matchDate: z.string(),
 });
 

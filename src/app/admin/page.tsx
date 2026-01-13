@@ -30,6 +30,27 @@ import {
 
 import type { Match, Team, Prediction, User as UserProfile, UserHistory, CurrentStanding } from '@/lib/types';
 import pastFixtures from '@/lib/past-fixtures.json';
+import { Input } from '@/components/ui/input';
+import { useForm, useFieldArray } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
+import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+
+const matchResultSchema = z.object({
+    id: z.string(),
+    week: z.number(),
+    homeTeamId: z.string(),
+    awayTeamId: z.string(),
+    homeScore: z.coerce.number().min(0, "Score must be non-negative"),
+    awayScore: z.coerce.number().min(0, "Score must be non-negative"),
+    matchDate: z.string(),
+});
+const formSchema = z.object({
+  results: z.array(matchResultSchema),
+});
+type MatchResultFormValues = z.infer<typeof formSchema>;
+
 
 export default function AdminPage() {
   const { toast } = useToast();
@@ -37,6 +58,10 @@ export default function AdminPage() {
   
   const [dbStatus, setDbStatus] = React.useState<{ connected: boolean, message: string }>({ connected: false, message: 'Checking connection...' });
   const [isUpdating, setIsUpdating] = React.useState(false);
+  const [isSubmittingScores, setIsSubmittingScores] = React.useState(false);
+
+  const [teams, setTeams] = React.useState<Team[]>([]);
+  const teamMap = React.useMemo(() => new Map(teams.map(t => [t.id, t])), [teams]);
 
   const connectivityCheckDocRef = useMemoFirebase(
     () => (firestore ? doc(firestore, 'connectivity-test', 'connectivity-doc') : null),
@@ -44,10 +69,17 @@ export default function AdminPage() {
   );
   
   React.useEffect(() => {
-    if (!connectivityCheckDocRef) return;
+    if (!firestore) return;
+
+    const fetchTeams = async () => {
+        const teamsSnap = await getDocs(collection(firestore, 'teams'));
+        setTeams(teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team)));
+    };
+    fetchTeams();
     
     const checkConnection = async () => {
       try {
+        if (!connectivityCheckDocRef) return;
         await getDoc(connectivityCheckDocRef);
         setDbStatus({ connected: true, message: 'Database is connected.' });
       } catch (error: any) {
@@ -63,7 +95,52 @@ export default function AdminPage() {
     };
     
     checkConnection();
-  }, [connectivityCheckDocRef]);
+  }, [connectivityCheckDocRef, firestore]);
+
+  const { maxWeeksPlayed, nextWeekFixtures } = React.useMemo(() => {
+    const playedMatches = pastFixtures.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
+    const maxWeeksPlayed = playedMatches.length > 0 ? Math.max(0, ...playedMatches.map(m => m.week)) : 0;
+    const nextWeek = maxWeeksPlayed + 1;
+    const nextWeekFixtures = pastFixtures.filter(m => m.week === nextWeek);
+    return { maxWeeksPlayed, nextWeekFixtures };
+  }, []);
+
+  const form = useForm<MatchResultFormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      results: nextWeekFixtures.map(f => ({...f, homeScore: 0, awayScore: 0}))
+    },
+  });
+  
+  const { fields } = useFieldArray({
+    control: form.control,
+    name: "results",
+  });
+
+  React.useEffect(() => {
+    form.reset({
+      results: nextWeekFixtures.map(f => ({...f, homeScore: 0, awayScore: 0}))
+    });
+  }, [nextWeekFixtures, form]);
+
+  async function onScoresSubmit(data: MatchResultFormValues) {
+    setIsSubmittingScores(true);
+    toast({ title: 'Submitting Scores...', description: 'Updating the fixtures file.' });
+    try {
+        const response = await updateMatchResults(data);
+        if (response.success) {
+            toast({ title: 'Scores Submitted Successfully!', description: `${response.updatedCount} results were updated in the fixtures file. You can now press the red button.` });
+        } else {
+            throw new Error('Flow reported failure.');
+        }
+    } catch (error: any) {
+        console.error('Error submitting scores:', error);
+        toast({ variant: 'destructive', title: 'Score Submission Failed', description: error.message || 'An unexpected error occurred.' });
+    } finally {
+        setIsSubmittingScores(false);
+    }
+  }
+
 
   const handleUpdateAndRecalculate = async () => {
     if (!firestore) {
@@ -200,7 +277,10 @@ export default function AdminPage() {
                 const predictedRank = index + 1;
                 const actualRank = actualTeamRanks.get(teamId);
                 if (actualRank !== undefined && actualRank > 0) {
-                    totalScore += 5 - Math.abs(predictedRank - actualRank);
+                    const score = 5 - Math.abs(predictedRank - actualRank);
+                    totalScore += score;
+                     // Write player team score
+                    batch.set(doc(firestore, 'playerTeamScores', `${prediction.userId}_${teamId}`), { userId: prediction.userId, teamId, score });
                 }
             });
             userScores[prediction.userId] = totalScore;
@@ -213,7 +293,7 @@ export default function AdminPage() {
 
         userUpdates.sort((a,b) => b.score - a.score || a.name.localeCompare(b.name));
         
-        const maxWeeksPlayed = playedMatches.length > 0 ? Math.max(0, ...playedMatches.map(m => m.week)) : 0;
+        const maxWeeksPlayedNow = playedMatches.length > 0 ? Math.max(0, ...playedMatches.map(m => m.week)) : 0;
         
         for (let i = 0; i < userUpdates.length; i++) {
             const user = userUpdates[i];
@@ -228,28 +308,18 @@ export default function AdminPage() {
             batch.set(doc(firestore, 'users', user.id), userData, { merge: true });
             
             const historyData = userHistoriesMap.get(user.id) || { userId: user.id, weeklyScores: [] };
-            const weekHistoryIndex = historyData.weeklyScores.findIndex(ws => ws.week === maxWeeksPlayed);
+            const weekHistoryIndex = historyData.weeklyScores.findIndex(ws => ws.week === maxWeeksPlayedNow);
             if (weekHistoryIndex > -1) {
-                historyData.weeklyScores[weekHistoryIndex] = { week: maxWeeksPlayed, score: user.score, rank: user.rank };
-            } else if (maxWeeksPlayed > 0) {
-                historyData.weeklyScores.push({ week: maxWeeksPlayed, score: user.score, rank: user.rank });
+                historyData.weeklyScores[weekHistoryIndex] = { week: maxWeeksPlayedNow, score: user.score, rank: user.rank };
+            } else if (maxWeeksPlayedNow > 0) {
+                historyData.weeklyScores.push({ week: maxWeeksPlayedNow, score: user.score, rank: user.rank });
             }
             batch.set(doc(firestore, 'userHistories', user.id), historyData);
-
-            const userPrediction = predictions.find(p => p.userId === user.id);
-            if (userPrediction && userPrediction.rankings) {
-                userPrediction.rankings.forEach((teamId, index) => {
-                    const predictedRank = index + 1;
-                    const actualRank = actualTeamRanks.get(teamId) || 0;
-                    const score = actualRank > 0 ? 5 - Math.abs(predictedRank - actualRank) : 0;
-                    batch.set(doc(firestore, 'playerTeamScores', `${user.id}_${teamId}`), { userId: user.id, teamId, score });
-                });
-            }
         }
         
-        if (maxWeeksPlayed > 0) {
+        if (maxWeeksPlayedNow > 0) {
             finalStandings.forEach(standing => {
-                batch.set(doc(firestore, 'weeklyTeamStandings', `${maxWeeksPlayed}-${standing.teamId}`), { week: maxWeeksPlayed, teamId: standing.teamId, rank: standing.rank });
+                batch.set(doc(firestore, 'weeklyTeamStandings', `${maxWeeksPlayedNow}-${standing.teamId}`), { week: maxWeeksPlayedNow, teamId: standing.teamId, rank: standing.rank });
             });
         }
         
@@ -297,47 +367,101 @@ export default function AdminPage() {
         </p>
       </header>
 
-      <Card>
-        <CardHeader>
-            <CardTitle>Master Data Control</CardTitle>
-            <CardDescription>
-                This is the main control for updating all application data. Your workflow should be:
-                <ol className="list-decimal list-inside mt-2 space-y-1">
-                    <li>Manually update the fixture data in the <code className="font-mono text-sm bg-muted p-1 rounded">src/lib/past-fixtures.json</code> file.</li>
-                    <li>Return here and press the red button below.</li>
-                </ol>
-            </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-            <div className="flex items-center gap-4 rounded-lg border p-4">
-            {dbStatus.connected ? <Icons.shieldCheck className="h-6 w-6 text-green-500" /> : <Icons.bug className="h-6 w-6 text-red-500" />}
-            <p className="font-medium">{dbStatus.message}</p>
-            </div>
-            
-              <AlertDialog>
-              <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="lg" className="text-lg" disabled={isUpdating || !dbStatus.connected}>
-                      {isUpdating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                      Update & Recalculate All Data
-                  </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                  <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                      This action will first re-import all fixtures from the JSON file, then recalculate all standings, user scores, and histories. This is a long-running and resource-intensive operation.
-                  </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleUpdateAndRecalculate}>Yes, Run Full Update</AlertDialogAction>
-                  </AlertDialogFooter>
-              </AlertDialogContent>
-              </AlertDialog>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card>
+            <CardHeader>
+                <CardTitle>Update Match Results</CardTitle>
+                <CardDescription>
+                    Enter the scores for Week {maxWeeksPlayed + 1} and submit them. This will update the underlying JSON file. Then, use the Master Control to apply the changes.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onScoresSubmit)} className="space-y-6">
+                        <div className="space-y-4 max-h-96 overflow-y-auto pr-4">
+                        {fields.map((field, index) => {
+                            const homeTeam = teamMap.get(field.homeTeamId);
+                            const awayTeam = teamMap.get(field.awayTeamId);
+                            return (
+                                <div key={field.id} className="grid grid-cols-[1fr_50px_10px_50px_1fr] items-center gap-2">
+                                    <span className="font-medium text-right">{homeTeam?.name || field.homeTeamId}</span>
+                                    <FormField
+                                        control={form.control}
+                                        name={`results.${index}.homeScore`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormControl>
+                                                    <Input type="number" {...field} className="text-center" />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <span className="text-center font-bold">-</span>
+                                     <FormField
+                                        control={form.control}
+                                        name={`results.${index}.awayScore`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormControl>
+                                                    <Input type="number" {...field} className="text-center" />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <span className="font-medium text-left">{awayTeam?.name || field.awayTeamId}</span>
+                                </div>
+                            )
+                        })}
+                        </div>
+                         <Button type="submit" disabled={isSubmittingScores}>
+                            {isSubmittingScores ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Submit Week {maxWeeksPlayed + 1} Results
+                        </Button>
+                    </form>
+                </Form>
+            </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Master Data Control</CardTitle>
+                <CardDescription>
+                    Your workflow should be:
+                    <ol className="list-decimal list-inside mt-2 space-y-1">
+                        <li>Enter scores for the week on the left and submit.</li>
+                        <li>Once submitted, press the red button below to update all application data.</li>
+                    </ol>
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="flex items-center gap-4 rounded-lg border p-4">
+                {dbStatus.connected ? <Icons.shieldCheck className="h-6 w-6 text-green-500" /> : <Icons.bug className="h-6 w-6 text-red-500" />}
+                <p className="font-medium">{dbStatus.message}</p>
+                </div>
+                
+                <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="lg" className="text-lg" disabled={isUpdating || !dbStatus.connected}>
+                        {isUpdating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+                        Update & Recalculate All Data
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action will first re-import all fixtures from the JSON file, then recalculate all standings, user scores, and histories. This is a long-running and resource-intensive operation.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleUpdateAndRecalculate}>Yes, Run Full Update</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+                </AlertDialog>
+            </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
-
-    

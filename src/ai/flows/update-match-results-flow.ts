@@ -1,8 +1,9 @@
+
 'use server';
 /**
- * @fileOverview A flow to update match results in Firestore.
+ * @fileOverview A flow to update match results in the past-fixtures.json file.
  *
- * - updateMatchResults - a function that updates match scores.
+ * - updateMatchResults - a function that updates match scores in the JSON file.
  */
 
 import { ai } from '@/ai/genkit';
@@ -12,7 +13,9 @@ import {
   type UpdateMatchResultsInput,
   type UpdateMatchResultsOutput,
 } from './update-match-results-flow-types';
-import { getFirestoreAdmin } from '@/ai/admin';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
+import pastFixtures from '@/lib/past-fixtures.json';
 
 export async function updateMatchResults(
   input: UpdateMatchResultsInput
@@ -28,30 +31,44 @@ const updateMatchResultsFlow = ai.defineFlow(
   },
   async (input, { logger }) => {
     const { results } = input;
-    const db = await getFirestoreAdmin();
-    
-    const validResults = results.filter(
-      (result) => !isNaN(result.homeScore) && !isNaN(result.awayScore)
-    );
+    logger.info(`Received ${results.length} match results to update.`);
 
-    if (validResults.length === 0) {
-      logger.info("No valid match results to update.");
+    if (results.length === 0) {
       return { success: true, updatedCount: 0 };
     }
 
-    const batch = db.batch();
-    results.forEach(result => {
-      const { id, ...matchData } = result;
-      const docRef = db.collection('matches').doc(id);
-      // Use set with merge: true to handle both creation of new docs and update of existing ones
-      batch.set(docRef, matchData, { merge: true });
-    });
-    
-    await batch.commit();
-    
-    const totalUpdatedCount = results.length;
-    logger.info(`Successfully committed a batch of ${totalUpdatedCount} match results.`);
+    try {
+      // The JSON file is imported as a module, so we operate on a copy.
+      const updatedFixtures = [...pastFixtures];
+      let updatedCount = 0;
 
-    return { success: true, updatedCount: totalUpdatedCount };
+      results.forEach(newResult => {
+        const index = updatedFixtures.findIndex(f => f.id === newResult.id);
+        if (index !== -1) {
+          // Update the specific match with new scores
+          updatedFixtures[index] = {
+            ...updatedFixtures[index],
+            homeScore: newResult.homeScore,
+            awayScore: newResult.awayScore,
+          };
+          updatedCount++;
+        }
+      });
+      
+      if (updatedCount > 0) {
+        const filePath = path.join(process.cwd(), 'src', 'lib', 'past-fixtures.json');
+        logger.info(`Writing ${updatedCount} updated fixtures to ${filePath}`);
+        
+        // Write the entire updated array back to the file.
+        await fs.writeFile(filePath, JSON.stringify(updatedFixtures, null, 2));
+      }
+
+      logger.info(`Successfully updated ${updatedCount} match results in past-fixtures.json.`);
+      return { success: true, updatedCount };
+
+    } catch (error: any) {
+        logger.error('Failed to update fixtures file:', error);
+        throw new Error(`Flow failed during file write operation: ${error.message}`);
+    }
   }
 );
