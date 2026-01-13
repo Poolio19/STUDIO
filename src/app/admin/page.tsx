@@ -39,10 +39,10 @@ import {
 
 import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 import { updateAllData } from '@/ai/flows/update-all-data-flow';
-import { testDbWriteFlow } from '@/ai/flows/test-db-write-flow';
 import { MatchResultSchema } from '@/ai/flows/update-match-results-flow-types';
 import type { Match, Team } from '@/lib/types';
 import pastFixtures from '@/lib/past-fixtures.json';
+import { testDbWriteFlow } from '@/ai/flows/test-db-write-flow';
 
 
 type EditableMatch = Match & {
@@ -256,9 +256,9 @@ export default function AdminPage() {
         
         // Firestore allows a maximum of 500 operations in a single batch.
         const BATCH_SIZE = 500;
-        let batch = writeBatch(firestore);
+        const batches = [];
+        let currentBatch = writeBatch(firestore);
         let operationCount = 0;
-        let totalImported = 0;
 
         for (const fixture of pastFixtures) {
             const { id, ...fixtureData } = fixture;
@@ -267,27 +267,25 @@ export default function AdminPage() {
                 continue;
             }
             const docRef = doc(matchesCollectionRef, id);
-            batch.set(docRef, fixtureData);
+            currentBatch.set(docRef, fixtureData);
             operationCount++;
             
-            // If the batch is full, commit it and start a new one.
             if (operationCount === BATCH_SIZE) {
-                await batch.commit();
-                totalImported += operationCount;
-                batch = writeBatch(firestore);
+                batches.push(currentBatch);
+                currentBatch = writeBatch(firestore);
                 operationCount = 0;
             }
         }
         
-        // Commit the final batch if it has any operations.
         if (operationCount > 0) {
-            await batch.commit();
-            totalImported += operationCount;
+            batches.push(currentBatch);
         }
+
+        await Promise.all(batches.map(batch => batch.commit()));
 
         toast({
           title: 'Import Complete!',
-          description: `Successfully imported ${totalImported} matches. Triggering a full data recalculation.`,
+          description: `Successfully imported ${pastFixtures.length} matches. Triggering a full data recalculation.`,
         });
 
         await handleRecalculateAllData();
@@ -414,6 +412,10 @@ export default function AdminPage() {
                     <Button variant="secondary" disabled={isTestingClientDbWrite || !dbStatus.connected} onClick={handleClientDbWrite}>
                         {isTestingClientDbWrite ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                         Run Direct DB Write
+                    </Button>
+                     <Button variant="outline" disabled={isTestingDbWrite || !dbStatus.connected} onClick={handleTestDbWrite}>
+                        {isTestingDbWrite ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        Test DB Write
                     </Button>
                     <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -568,3 +570,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
