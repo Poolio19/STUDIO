@@ -37,7 +37,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-import { calculatePredictionScores } from '@/ai/flows/calculate-prediction-scores';
 import type { Match, Team, Prediction, User as UserProfile, UserHistory, CurrentStanding, WeeklyTeamStanding, PlayerTeamScore } from '@/lib/types';
 import pastFixtures from '@/lib/past-fixtures.json';
 
@@ -295,18 +294,26 @@ export default function AdminPage() {
             batch.set(standingRef, standing);
         });
 
-        // 3. Recalculate user scores with AI flow
-        toast({ title: 'Step 3/5: Calculating user scores with AI...' });
-        const actualFinalStandingsString = finalStandings.map(s => s.teamId).join(',');
-        const userRankingsString = predictions.map(p => `${p.userId},${p.rankings.join(',')}`).join('\n');
-        
-        const { scores: userScores } = await calculatePredictionScores({
-            actualFinalStandings: actualFinalStandingsString,
-            userRankings: userRankingsString
+        // 3. Recalculate user scores with CLIENT-SIDE logic
+        toast({ title: 'Step 3/5: Calculating user scores...' });
+        const actualTeamRanks = new Map(finalStandings.map(s => [s.teamId, s.rank]));
+        const userScores: { [userId: string]: number } = {};
+
+        predictions.forEach(prediction => {
+            if (!prediction.rankings) return;
+            let totalScore = 0;
+            prediction.rankings.forEach((teamId, index) => {
+                const predictedRank = index + 1;
+                const actualRank = actualTeamRanks.get(teamId);
+                
+                if (actualRank !== undefined && actualRank > 0) {
+                    const scoreForTeam = 5 - Math.abs(predictedRank - actualRank);
+                    totalScore += scoreForTeam;
+                }
+            });
+            userScores[prediction.userId] = totalScore;
         });
         
-        const actualTeamRanks = new Map(finalStandings.map(s => [s.teamId, s.rank]));
-
         // 4. Update user profiles, user histories, and player team scores
         toast({ title: 'Step 4/5: Updating user profiles and scores...' });
         const userUpdates = users.map(user => {
@@ -421,6 +428,12 @@ export default function AdminPage() {
         const matchesCollectionRef = collection(firestore, 'matches');
         const batch = writeBatch(firestore);
 
+        // First, clear existing matches to ensure a clean import
+        const existingMatchesSnap = await getDocs(matchesCollectionRef);
+        existingMatchesSnap.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+
         pastFixtures.forEach(fixture => {
             const { id, ...fixtureData } = fixture;
             if (!id) {
@@ -438,6 +451,7 @@ export default function AdminPage() {
           description: `Successfully imported ${pastFixtures.length} matches. Now triggering a full data recalculation.`,
         });
 
+        // Automatically trigger recalculation after successful import
         await handleRecalculateAllData();
 
     } catch (error: any) {
@@ -721,5 +735,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
