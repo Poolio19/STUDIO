@@ -273,7 +273,7 @@ export default function AdminPage() {
     setIsTestingDbWrite(true);
     toast({
       title: 'Running DB Write Test...',
-      description: 'Attempting to write to collection `test_02`.',
+      description: 'Attempting to write to collection `test_01`.',
     });
     try {
       const result = await testDbWriteFlow();
