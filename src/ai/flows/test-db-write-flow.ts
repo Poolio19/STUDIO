@@ -5,8 +5,17 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { getFirestoreAdmin } from '@/ai/admin';
 import { z } from 'zod';
+import * as admin from 'firebase-admin';
+import type { firestore as adminFirestore } from 'firebase-admin';
+
+// Initialize Firebase Admin SDK within this module's scope
+let db: adminFirestore.Firestore;
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+db = admin.firestore();
+
 
 const TestWriteOutputSchema = z.object({
   success: z.boolean(),
@@ -23,8 +32,6 @@ export const testDbWriteFlow = ai.defineFlow(
     outputSchema: TestWriteOutputSchema,
   },
   async (input, context) => {
-    context.logger.info("Attempting to get Firestore admin instance...");
-    const db = await getFirestoreAdmin();
     context.logger.info("Firestore admin instance acquired.");
 
     const collectionName = 'test_01';

@@ -5,9 +5,18 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { getFirestoreAdmin } from '@/ai/admin';
 import { z } from 'zod';
+import * as admin from 'firebase-admin';
+import type { firestore as adminFirestore } from 'firebase-admin';
 import pastFixtures from '@/lib/past-fixtures.json';
+
+// Initialize Firebase Admin SDK within this module's scope
+let db: adminFirestore.Firestore;
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+db = admin.firestore();
+
 
 const ImportPastFixturesOutputSchema = z.object({
   success: z.boolean(),
@@ -28,7 +37,6 @@ const importPastFixturesFlow = ai.defineFlow(
     outputSchema: ImportPastFixturesOutputSchema,
   },
   async (input, context) => {
-    const db = await getFirestoreAdmin();
     const matchesCollection = db.collection('matches');
 
     context.logger.info('Starting import of past fixtures from JSON backup.');
