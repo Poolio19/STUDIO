@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 
-import { collection, doc, getDoc, writeBatch, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, writeBatch, setDoc, getDocs, query } from 'firebase/firestore';
 import { Icons, IconName } from '@/components/icons';
 import {
   Select,
@@ -37,11 +37,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-import { updateAllData } from '@/ai/flows/update-all-data-flow';
-import type { Match, Team, Prediction, User as UserProfile, UserHistory, CurrentStanding } from '@/lib/types';
+import { calculatePredictionScores } from '@/ai/flows/calculate-prediction-scores';
+import type { Match, Team, Prediction, User as UserProfile, UserHistory, CurrentStanding, WeeklyTeamStanding, PlayerTeamScore } from '@/lib/types';
 import pastFixtures from '@/lib/past-fixtures.json';
-import { reimportFixtures } from '@/ai/flows/reimport-fixtures-flow';
-import { importPastFixtures } from '@/ai/flows/import-past-fixtures-flow';
 
 
 type EditableMatch = Match & {
@@ -198,28 +196,209 @@ export default function AdminPage() {
   };
 
   const handleRecalculateAllData = async () => {
-      setIsRecalculating(true);
-      toast({
+    if (!firestore) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Firestore is not available.' });
+        return;
+    }
+    setIsRecalculating(true);
+    toast({
         title: 'Recalculating All Data...',
         description: 'This will update all standings and scores based on the current match results in the database.',
-      });
+    });
 
-      try {
-        const result = await updateAllData();
-        if (result.success) {
-            toast({
-                title: 'Recalculation Complete!',
-                description: result.message || 'All league standings and player scores have been successfully updated.',
-            });
-        } else {
-            throw new Error(result.message || 'Recalculation flow failed to complete.');
+    try {
+        const batch = writeBatch(firestore);
+
+        // 1. Fetch all necessary data from Firestore
+        toast({ title: 'Step 1/5: Fetching all required data...' });
+        const [teamsSnap, matchesSnap, usersSnap, predictionsSnap, userHistoriesSnap] = await Promise.all([
+            getDocs(query(collection(firestore, 'teams'))),
+            getDocs(query(collection(firestore, 'matches'))),
+            getDocs(query(collection(firestore, 'users'))),
+            getDocs(query(collection(firestore, 'predictions'))),
+            getDocs(query(collection(firestore, 'userHistories')))
+        ]);
+
+        const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
+        const teamMap = new Map(teams.map(t => [t.id, t]));
+        
+        const allMatches = matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match));
+        const playedMatches = allMatches.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
+        
+        const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
+        const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
+        const userHistoriesMap = new Map(userHistoriesSnap.docs.map(doc => [doc.id, doc.data() as UserHistory]));
+
+        
+        // 2. Calculate new league standings from scratch
+        toast({ title: 'Step 2/5: Calculating new league standings...' });
+        const teamStats: { [teamId: string]: Omit<CurrentStanding, 'teamId' | 'rank'> } = {};
+        
+        teams.forEach(team => {
+            teamStats[team.id] = {
+                points: 0, gamesPlayed: 0, wins: 0, draws: 0, losses: 0,
+                goalsFor: 0, goalsAgainst: 0, goalDifference: 0
+            };
+        });
+
+        playedMatches.forEach(match => {
+            const homeStats = teamStats[match.homeTeamId];
+            const awayStats = teamStats[match.awayTeamId];
+
+            homeStats.gamesPlayed++;
+            awayStats.gamesPlayed++;
+            homeStats.goalsFor += match.homeScore;
+            awayStats.goalsFor += match.awayScore;
+            homeStats.goalsAgainst += match.awayScore;
+            awayStats.goalsAgainst += match.homeScore;
+
+            if (match.homeScore > match.awayScore) {
+                homeStats.points += 3;
+                homeStats.wins++;
+                awayStats.losses++;
+            } else if (match.homeScore < match.awayScore) {
+                awayStats.points += 3;
+                awayStats.wins++;
+                homeStats.losses++;
+            } else {
+                homeStats.points++;
+                awayStats.points++;
+                homeStats.draws++;
+                awayStats.draws++;
+            }
+        });
+
+        Object.keys(teamStats).forEach(teamId => {
+            teamStats[teamId].goalDifference = teamStats[teamId].goalsFor - teamStats[teamId].goalsAgainst;
+        });
+
+        const newStandings: (Omit<CurrentStanding, 'rank'> & { teamName: string; teamId: string })[] = Object.entries(teamStats).map(([teamId, stats]) => ({
+            teamId,
+            ...stats,
+            teamName: teamMap.get(teamId)?.name || 'Unknown',
+        }));
+        
+        newStandings.sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+            if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
+            return a.teamName.localeCompare(b.teamName);
+        });
+
+        const finalStandings: CurrentStanding[] = newStandings.map((s, index) => {
+            const { teamName, ...rest } = s;
+            return { ...rest, rank: index + 1 };
+        });
+
+        finalStandings.forEach(standing => {
+            const standingRef = doc(firestore, 'standings', standing.teamId);
+            batch.set(standingRef, standing);
+        });
+
+        // 3. Recalculate user scores with AI flow
+        toast({ title: 'Step 3/5: Calculating user scores with AI...' });
+        const actualFinalStandingsString = finalStandings.map(s => s.teamId).join(',');
+        const userRankingsString = predictions.map(p => `${p.userId},${p.rankings.join(',')}`).join('\n');
+        
+        const { scores: userScores } = await calculatePredictionScores({
+            actualFinalStandings: actualFinalStandingsString,
+            userRankings: userRankingsString
+        });
+        
+        const actualTeamRanks = new Map(finalStandings.map(s => [s.teamId, s.rank]));
+
+        // 4. Update user profiles, user histories, and player team scores
+        toast({ title: 'Step 4/5: Updating user profiles and scores...' });
+        const userUpdates = users.map(user => {
+            const newScore = userScores[user.id] !== undefined ? userScores[user.id] : user.score;
+            return {
+                ...user,
+                previousScore: user.score,
+                previousRank: user.rank,
+                score: newScore,
+                scoreChange: newScore - (user.score || 0)
+            };
+        });
+
+        userUpdates.sort((a,b) => b.score - a.score || a.name.localeCompare(b.name));
+        
+        const maxWeeksPlayed = playedMatches.length > 0 ? Math.max(0, ...playedMatches.map(m => m.week)) : 0;
+        
+        for (let i = 0; i < userUpdates.length; i++) {
+            const user = userUpdates[i];
+            const newRank = i + 1;
+            user.rankChange = (user.previousRank || 0) > 0 ? (user.previousRank || newRank) - newRank : 0;
+            user.rank = newRank;
+            
+            user.maxRank = Math.max(user.maxRank || 0, user.rank);
+            user.minRank = Math.min(user.minRank || 99, user.rank);
+            user.maxScore = Math.max(user.maxScore || -Infinity, user.score);
+            user.minScore = Math.min(user.minScore || Infinity, user.score);
+            
+            const userRef = doc(firestore, 'users', user.id);
+            const { id, ...userData } = user;
+            batch.set(userRef, userData, { merge: true });
+            
+            const historyData = userHistoriesMap.get(user.id) || { userId: user.id, weeklyScores: [] };
+            const weekHistoryIndex = historyData.weeklyScores.findIndex(ws => ws.week === maxWeeksPlayed);
+
+            if (weekHistoryIndex > -1) {
+                historyData.weeklyScores[weekHistoryIndex] = { week: maxWeeksPlayed, score: user.score, rank: user.rank };
+            } else if (maxWeeksPlayed > 0) {
+                historyData.weeklyScores.push({ week: maxWeeksPlayed, score: user.score, rank: user.rank });
+            }
+            batch.set(doc(firestore, 'userHistories', user.id), historyData);
+
+            const userPrediction = predictions.find(p => p.userId === user.id);
+            if (userPrediction && userPrediction.rankings) {
+                userPrediction.rankings.forEach((teamId, index) => {
+                    const predictedRank = index + 1;
+                    const actualRank = actualTeamRanks.get(teamId) || 0;
+                    const score = actualRank > 0 ? 5 - Math.abs(predictedRank - actualRank) : 0;
+                    
+                    const scoreId = `${user.id}_${teamId}`;
+                    const scoreRef = doc(firestore, 'playerTeamScores', scoreId);
+                    batch.set(scoreRef, { userId: user.id, teamId, score });
+                });
+            }
         }
+        
+        if (maxWeeksPlayed > 0) {
+            finalStandings.forEach(standing => {
+                const weeklyStandingId = `${maxWeeksPlayed}-${standing.teamId}`;
+                const weeklyStandingRef = doc(firestore, 'weeklyTeamStandings', weeklyStandingId);
+                batch.set(weeklyStandingRef, { week: maxWeeksPlayed, teamId: standing.teamId, rank: standing.rank });
+            });
+        }
+        
+        teams.forEach(team => {
+            const teamMatches = playedMatches.filter(m => m.homeTeamId === team.id || m.awayTeamId === team.id).sort((a,b) => b.week - a.week).slice(0, 6);
+            const results = Array(6).fill('-') as ('W' | 'D' | 'L' | '-')[];
+            teamMatches.reverse().forEach((match, i) => {
+                if (i < 6) {
+                    if (match.homeScore === match.awayScore) results[i] = 'D';
+                    else if ((match.homeTeamId === team.id && match.homeScore > match.awayScore) || (match.awayTeamId === team.id && match.awayScore > match.homeScore)) results[i] = 'W';
+                    else results[i] = 'L';
+                }
+            });
+            batch.set(doc(firestore, 'teamRecentResults', team.id), { teamId: team.id, results: results.reverse() });
+        });
+
+        // 5. Commit all batched writes to Firestore
+        toast({ title: 'Step 5/5: Committing all updates...' });
+        await batch.commit();
+        
+        toast({
+            title: 'Recalculation Complete!',
+            description: 'All league standings and player scores have been successfully updated.',
+        });
+
     } catch (error: any) {
-        console.error('Error during master data update:', error);
+        console.error('Error during client-side master data update:', error);
         toast({
             variant: 'destructive',
             title: 'Recalculation Failed',
-            description: error.message || 'An unexpected error occurred.',
+            description: error.message || 'An unexpected error occurred during client-side recalculation.',
         });
     } finally {
         setIsRecalculating(false);
@@ -256,8 +435,10 @@ export default function AdminPage() {
 
         toast({
           title: 'Import Complete!',
-          description: `Successfully imported ${pastFixtures.length} matches. You may now trigger a full data recalculation.`,
+          description: `Successfully imported ${pastFixtures.length} matches. Now triggering a full data recalculation.`,
         });
+
+        await handleRecalculateAllData();
 
     } catch (error: any) {
         console.error('Error during client-side past fixtures import:', error);
