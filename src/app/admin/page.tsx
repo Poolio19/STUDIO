@@ -209,13 +209,25 @@ export default function AdminPage() {
         const batch = writeBatch(firestore);
 
         // 1. Fetch all necessary data from Firestore
-        toast({ title: 'Step 1/5: Fetching all required data...' });
-        const [teamsSnap, matchesSnap, usersSnap, predictionsSnap, userHistoriesSnap] = await Promise.all([
+        toast({ title: 'Step 1/6: Fetching all required data...' });
+        const [
+            teamsSnap, 
+            matchesSnap, 
+            usersSnap, 
+            predictionsSnap, 
+            userHistoriesSnap,
+            standingsSnap,
+            playerTeamScoresSnap,
+            teamRecentResultsSnap
+        ] = await Promise.all([
             getDocs(query(collection(firestore, 'teams'))),
             getDocs(query(collection(firestore, 'matches'))),
             getDocs(query(collection(firestore, 'users'))),
             getDocs(query(collection(firestore, 'predictions'))),
-            getDocs(query(collection(firestore, 'userHistories')))
+            getDocs(query(collection(firestore, 'userHistories'))),
+            getDocs(query(collection(firestore, 'standings'))),
+            getDocs(query(collection(firestore, 'playerTeamScores'))),
+            getDocs(query(collection(firestore, 'teamRecentResults')))
         ]);
 
         const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
@@ -228,9 +240,14 @@ export default function AdminPage() {
         const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
         const userHistoriesMap = new Map(userHistoriesSnap.docs.map(doc => [doc.id, doc.data() as UserHistory]));
 
+        // 2. Clear old derivative data collections
+        toast({ title: 'Step 2/6: Clearing old calculated data...' });
+        standingsSnap.forEach(doc => batch.delete(doc.ref));
+        playerTeamScoresSnap.forEach(doc => batch.delete(doc.ref));
+        teamRecentResultsSnap.forEach(doc => batch.delete(doc.ref));
         
-        // 2. Calculate new league standings from scratch
-        toast({ title: 'Step 2/5: Calculating new league standings...' });
+        // 3. Calculate new league standings from scratch
+        toast({ title: 'Step 3/6: Calculating new league standings...' });
         const teamStats: { [teamId: string]: Omit<CurrentStanding, 'teamId' | 'rank'> } = {};
         
         teams.forEach(team => {
@@ -294,8 +311,8 @@ export default function AdminPage() {
             batch.set(standingRef, standing);
         });
 
-        // 3. Recalculate user scores with CLIENT-SIDE logic
-        toast({ title: 'Step 3/5: Calculating user scores...' });
+        // 4. Recalculate user scores with CLIENT-SIDE logic
+        toast({ title: 'Step 4/6: Calculating user scores...' });
         const actualTeamRanks = new Map(finalStandings.map(s => [s.teamId, s.rank]));
         const userScores: { [userId: string]: number } = {};
 
@@ -314,8 +331,8 @@ export default function AdminPage() {
             userScores[prediction.userId] = totalScore;
         });
         
-        // 4. Update user profiles, user histories, and player team scores
-        toast({ title: 'Step 4/5: Updating user profiles and scores...' });
+        // 5. Update user profiles, user histories, and player team scores
+        toast({ title: 'Step 5/6: Updating user profiles and scores...' });
         const userUpdates = users.map(user => {
             const newScore = userScores[user.id] !== undefined ? userScores[user.id] : user.score;
             return {
@@ -391,8 +408,8 @@ export default function AdminPage() {
             batch.set(doc(firestore, 'teamRecentResults', team.id), { teamId: team.id, results: results.reverse() });
         });
 
-        // 5. Commit all batched writes to Firestore
-        toast({ title: 'Step 5/5: Committing all updates...' });
+        // 6. Commit all batched writes to Firestore
+        toast({ title: 'Step 6/6: Committing all updates...' });
         await batch.commit();
         
         toast({
@@ -735,3 +752,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
