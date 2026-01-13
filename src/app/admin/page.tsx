@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 
-import { collection, doc, getDoc, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, doc, getDoc, writeBatch, setDoc } from 'firebase/firestore';
 import { Icons, IconName } from '@/components/icons';
 import {
   Select,
@@ -37,11 +37,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
-import { calculatePredictionScores } from '@/ai/flows/calculate-prediction-scores';
-import { MatchResultSchema } from '@/ai/flows/update-match-results-flow-types';
+import { updateAllData } from '@/ai/flows/update-all-data-flow';
 import type { Match, Team, Prediction, User as UserProfile, UserHistory, CurrentStanding } from '@/lib/types';
 import pastFixtures from '@/lib/past-fixtures.json';
+import { reimportFixtures } from '@/ai/flows/reimport-fixtures-flow';
+import { importPastFixtures } from '@/ai/flows/import-past-fixtures-flow';
 
 
 type EditableMatch = Match & {
@@ -49,14 +49,6 @@ type EditableMatch = Match & {
     awayTeam: Team;
 };
 
-async function clearCollection(db: any, collectionPath: string, batch: any) {
-    const collectionRef = collection(db, collectionPath);
-    const snapshot = await getDocs(collectionRef);
-    snapshot.docs.forEach(doc => {
-        batch.delete(doc.ref);
-    });
-    return snapshot.size;
-}
 
 export default function AdminPage() {
   const { toast } = useToast();
@@ -177,6 +169,7 @@ export default function AdminPage() {
             };
         });
 
+        // Use a client-side batch write
         const batch = writeBatch(firestore);
         resultsToUpdate.forEach(result => {
             const { id, homeTeam, awayTeam, ...matchData } = result;
@@ -185,7 +178,6 @@ export default function AdminPage() {
         });
         await batch.commit();
 
-        
         toast({
             title: `Week ${selectedWeek} Matches Updated!`,
             description: `${resultsToUpdate.length} match records were saved. Now recalculating all league data...`,
@@ -206,10 +198,6 @@ export default function AdminPage() {
   };
 
   const handleRecalculateAllData = async () => {
-      if (!firestore) {
-          toast({ variant: 'destructive', title: 'Error', description: 'Firestore not available for recalculation.' });
-          return;
-      }
       setIsRecalculating(true);
       toast({
         title: 'Recalculating All Data...',
@@ -217,139 +205,15 @@ export default function AdminPage() {
       });
 
       try {
-        const batch = writeBatch(firestore);
-
-        const [teamsSnap, matchesSnap, usersSnap, predictionsSnap, userHistoriesSnap] = await Promise.all([
-            getDocs(collection(firestore, 'teams')),
-            getDocs(collection(firestore, 'matches')),
-            getDocs(collection(firestore, 'users')),
-            getDocs(collection(firestore, 'predictions')),
-            getDocs(collection(firestore, 'userHistories'))
-        ]);
-
-        const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
-        const teamMap = new Map(teams.map(t => [t.id, t]));
-        
-        const allMatches = matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match));
-        const playedMatches = allMatches.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
-        
-        const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
-        const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
-        const userHistoriesMap = new Map(userHistoriesSnap.docs.map(doc => [doc.id, doc.data() as UserHistory]));
-
-        // Clear old data
-        await clearCollection(firestore, 'standings', batch);
-        await clearCollection(firestore, 'playerTeamScores', batch);
-        await clearCollection(firestore, 'teamRecentResults', batch);
-
-        // Calculate Standings
-        const teamStats: { [teamId: string]: Omit<CurrentStanding, 'teamId' | 'rank'> } = {};
-        teams.forEach(team => {
-            teamStats[team.id] = {
-                points: 0, gamesPlayed: 0, wins: 0, draws: 0, losses: 0,
-                goalsFor: 0, goalsAgainst: 0, goalDifference: 0
-            };
-        });
-
-        playedMatches.forEach(match => {
-            const homeStats = teamStats[match.homeTeamId];
-            const awayStats = teamStats[match.awayTeamId];
-            homeStats.gamesPlayed++; awayStats.gamesPlayed++;
-            homeStats.goalsFor += match.homeScore; awayStats.goalsFor += match.awayScore;
-            homeStats.goalsAgainst += match.awayScore; awayStats.goalsAgainst += match.homeScore;
-            if (match.homeScore > match.awayScore) { homeStats.points += 3; homeStats.wins++; awayStats.losses++; }
-            else if (match.homeScore < match.awayScore) { awayStats.points += 3; awayStats.wins++; homeStats.losses++; }
-            else { homeStats.points++; awayStats.points++; homeStats.draws++; awayStats.draws++; }
-        });
-        Object.keys(teamStats).forEach(teamId => {
-            teamStats[teamId].goalDifference = teamStats[teamId].goalsFor - teamStats[teamId].goalsAgainst;
-        });
-        const newStandings = Object.entries(teamStats).map(([teamId, stats]) => ({
-            teamId, ...stats, teamName: teamMap.get(teamId)?.name || 'Unknown',
-        }));
-        newStandings.sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.teamName.localeCompare(b.teamName));
-        const finalStandings: CurrentStanding[] = newStandings.map((s, index) => ({
-            teamId: s.teamId, points: s.points, gamesPlayed: s.gamesPlayed, wins: s.wins, draws: s.draws, losses: s.losses,
-            goalsFor: s.goalsFor, goalsAgainst: s.goalsAgainst, goalDifference: s.goalDifference, rank: index + 1
-        }));
-        finalStandings.forEach(standing => batch.set(doc(firestore, 'standings', standing.teamId), standing));
-
-        // Call AI for scores
-        const actualFinalStandingsString = finalStandings.map(s => s.teamId).join(',');
-        const userRankingsString = predictions.map(p => `${p.userId},${p.rankings.join(',')}`).join('\n');
-        const { scores: userScores } = await calculatePredictionScores({
-            actualFinalStandings: actualFinalStandingsString, userRankings: userRankingsString
-        });
-        
-        const actualTeamRanks = new Map(finalStandings.map(s => [s.teamId, s.rank]));
-        
-        // Update user data
-        const userUpdates = users.map(user => ({
-            ...user, previousScore: user.score, previousRank: user.rank,
-            score: userScores[user.id] !== undefined ? userScores[user.id] : user.score,
-            scoreChange: userScores[user.id] !== undefined ? userScores[user.id] - (user.score || 0) : user.scoreChange
-        }));
-        userUpdates.sort((a,b) => b.score - a.score || a.name.localeCompare(b.name));
-        const maxWeeksPlayed = playedMatches.length > 0 ? Math.max(0, ...playedMatches.map(m => m.week)) : 0;
-
-        for (let i = 0; i < userUpdates.length; i++) {
-            const user = userUpdates[i];
-            const newRank = i + 1;
-            user.rankChange = (user.previousRank || 0) > 0 ? (user.previousRank || newRank) - newRank : 0;
-            user.rank = newRank;
-            user.maxRank = Math.max(user.maxRank || 0, user.rank);
-            user.minRank = Math.min(user.minRank || 99, user.rank);
-            user.maxScore = Math.max(user.maxScore || -Infinity, user.score);
-            user.minScore = Math.min(user.minScore || Infinity, user.score);
-            
-            const { id, ...userData } = user;
-            batch.set(doc(firestore, 'users', id), userData, { merge: true });
-
-            const historyData = userHistoriesMap.get(id) || { userId: id, weeklyScores: [] };
-            const weekHistoryIndex = historyData.weeklyScores.findIndex(ws => ws.week === maxWeeksPlayed);
-            if (weekHistoryIndex > -1) {
-                historyData.weeklyScores[weekHistoryIndex] = { week: maxWeeksPlayed, score: user.score, rank: user.rank };
-            } else if (maxWeeksPlayed > 0) {
-                historyData.weeklyScores.push({ week: maxWeeksPlayed, score: user.score, rank: user.rank });
-            }
-            batch.set(doc(firestore, 'userHistories', id), historyData);
-
-            const userPrediction = predictions.find(p => p.userId === id);
-            if (userPrediction?.rankings) {
-                userPrediction.rankings.forEach((teamId, index) => {
-                    const predictedRank = index + 1;
-                    const actualRank = actualTeamRanks.get(teamId) || 0;
-                    const score = actualRank > 0 ? 5 - Math.abs(predictedRank - actualRank) : 0;
-                    batch.set(doc(firestore, 'playerTeamScores', `${id}_${teamId}`), { userId: id, teamId, score });
-                });
-            }
-        }
-
-        if (maxWeeksPlayed > 0) {
-            finalStandings.forEach(standing => {
-                batch.set(doc(firestore, 'weeklyTeamStandings', `${maxWeeksPlayed}-${standing.teamId}`), { week: maxWeeksPlayed, teamId: standing.teamId, rank: standing.rank });
+        const result = await updateAllData();
+        if (result.success) {
+            toast({
+                title: 'Recalculation Complete!',
+                description: result.message || 'All league standings and player scores have been successfully updated.',
             });
+        } else {
+            throw new Error(result.message || 'Recalculation flow failed to complete.');
         }
-        
-        teams.forEach(team => {
-            const teamMatches = playedMatches.filter(m => m.homeTeamId === team.id || m.awayTeamId === team.id).sort((a,b) => b.week - a.week).slice(0, 6);
-            const results = Array(6).fill('-') as ('W' | 'D' | 'L' | '-')[];
-            teamMatches.reverse().forEach((match, i) => {
-                if (i < 6) {
-                    if (match.homeScore === match.awayScore) results[i] = 'D';
-                    else if ((match.homeTeamId === team.id && match.homeScore > match.awayScore) || (match.awayTeamId === team.id && match.awayScore > match.homeScore)) results[i] = 'W';
-                    else results[i] = 'L';
-                }
-            });
-            batch.set(doc(firestore, 'teamRecentResults', team.id), { teamId: team.id, results: results.reverse() });
-        });
-
-        await batch.commit();
-
-        toast({
-            title: 'Recalculation Complete!',
-            description: 'All league standings and player scores have been successfully updated.',
-        });
     } catch (error: any) {
         console.error('Error during master data update:', error);
         toast({
@@ -371,46 +235,29 @@ export default function AdminPage() {
     setIsImportingPast(true);
     toast({
       title: 'Importing All Fixtures...',
-      description: 'Importing from JSON file. This will overwrite existing matches.',
+      description: 'Importing from JSON file. This may overwrite existing matches.',
     });
 
     try {
         const matchesCollectionRef = collection(firestore, 'matches');
-        
-        const BATCH_SIZE = 500;
-        const batches = [];
-        let currentBatch = writeBatch(firestore);
-        let operationCount = 0;
+        const batch = writeBatch(firestore);
 
-        for (const fixture of pastFixtures) {
+        pastFixtures.forEach(fixture => {
             const { id, ...fixtureData } = fixture;
             if (!id) {
                 console.warn('Skipping fixture with no ID:', fixture);
-                continue;
+                return;
             }
             const docRef = doc(matchesCollectionRef, id);
-            currentBatch.set(docRef, fixtureData);
-            operationCount++;
-            
-            if (operationCount >= BATCH_SIZE) {
-                batches.push(currentBatch);
-                currentBatch = writeBatch(firestore);
-                operationCount = 0;
-            }
-        }
-        
-        if (operationCount > 0) {
-            batches.push(currentBatch);
-        }
+            batch.set(docRef, fixtureData);
+        });
 
-        await Promise.all(batches.map(batch => batch.commit()));
+        await batch.commit();
 
         toast({
           title: 'Import Complete!',
-          description: `Successfully imported ${pastFixtures.length} matches. Triggering a full data recalculation.`,
+          description: `Successfully imported ${pastFixtures.length} matches. You may now trigger a full data recalculation.`,
         });
-
-        await handleRecalculateAllData();
 
     } catch (error: any) {
         console.error('Error during client-side past fixtures import:', error);
@@ -431,9 +278,16 @@ export default function AdminPage() {
       description: 'Attempting to write to collection `test_01`.',
     });
     try {
-      // Direct call removed as the flow is broken.
-      // This button is now effectively disabled until flows are fixed.
-      throw new Error("Server-side test flow is currently disabled.");
+        const { testDbWriteFlow } = await import('@/ai/flows/test-db-write-flow');
+        const result = await testDbWriteFlow();
+        if (result.success) {
+            toast({
+                title: 'DB Write Test Successful!',
+                description: result.message,
+            });
+        } else {
+            throw new Error(result.message);
+        }
     } catch (error: any) {
       console.error('Error during DB write test:', error);
       toast({
@@ -529,9 +383,9 @@ export default function AdminPage() {
                         {isTestingClientDbWrite ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                         Run Direct DB Write
                     </Button>
-                     <Button variant="outline" disabled={true || !dbStatus.connected} onClick={handleTestDbWrite}>
+                     <Button variant="outline" disabled={isTestingDbWrite || !dbStatus.connected} onClick={handleTestDbWrite}>
                         {isTestingDbWrite ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Test DB Write (Disabled)
+                        Test DB Write
                     </Button>
                     <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -565,7 +419,7 @@ export default function AdminPage() {
                         <AlertDialogHeader>
                         <AlertDialogTitle>Confirm Data Import</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This will import all fixtures from the JSON backup file, overwriting any existing matches with the same ID. This action is irreversible. It will automatically trigger a full data recalculation upon completion.
+                            This will import all fixtures from the JSON backup file, overwriting any existing matches with the same ID. This action is irreversible.
                         </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
