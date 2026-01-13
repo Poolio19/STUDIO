@@ -29,12 +29,10 @@ import {
 } from "@/components/ui/alert-dialog"
 
 import type { Match, Team, Prediction, User as UserProfile, UserHistory, CurrentStanding } from '@/lib/types';
-import pastFixtures from '@/lib/past-fixtures.json';
 import { Input } from '@/components/ui/input';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 
 const matchResultSchema = z.object({
@@ -61,6 +59,7 @@ export default function AdminPage() {
   const [isSubmittingScores, setIsSubmittingScores] = React.useState(false);
 
   const [teams, setTeams] = React.useState<Team[]>([]);
+  const [allMatches, setAllMatches] = React.useState<Match[]>([]);
   const teamMap = React.useMemo(() => new Map(teams.map(t => [t.id, t])), [teams]);
 
   const connectivityCheckDocRef = useMemoFirebase(
@@ -71,11 +70,15 @@ export default function AdminPage() {
   React.useEffect(() => {
     if (!firestore) return;
 
-    const fetchTeams = async () => {
-        const teamsSnap = await getDocs(collection(firestore, 'teams'));
+    const fetchData = async () => {
+        const [teamsSnap, matchesSnap] = await Promise.all([
+             getDocs(collection(firestore, 'teams')),
+             getDocs(collection(firestore, 'matches')),
+        ]);
         setTeams(teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team)));
+        setAllMatches(matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match)));
     };
-    fetchTeams();
+    fetchData();
     
     const checkConnection = async () => {
       try {
@@ -98,14 +101,15 @@ export default function AdminPage() {
   }, [connectivityCheckDocRef, firestore]);
 
   const { nextWeekToPlay, nextWeekFixtures } = React.useMemo(() => {
-    const unplayedMatches = pastFixtures.filter(m => m.homeScore === -1 || m.awayScore === -1);
+    if (allMatches.length === 0) return { nextWeekToPlay: null, nextWeekFixtures: [] };
+    const unplayedMatches = allMatches.filter(m => m.homeScore === -1 || m.awayScore === -1);
     if (unplayedMatches.length === 0) {
         return { nextWeekToPlay: null, nextWeekFixtures: [] };
     }
     const nextWeek = Math.min(...unplayedMatches.map(m => m.week));
-    const fixtures = pastFixtures.filter(m => m.week === nextWeek);
+    const fixtures = allMatches.filter(m => m.week === nextWeek);
     return { nextWeekToPlay: nextWeek, nextWeekFixtures: fixtures };
-  }, []);
+  }, [allMatches]);
 
   const form = useForm<MatchResultFormValues>({
     resolver: zodResolver(formSchema),
@@ -126,15 +130,31 @@ export default function AdminPage() {
   }, [nextWeekFixtures, form]);
 
   async function onScoresSubmit(data: MatchResultFormValues) {
+    if (!firestore) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Firestore is not available.' });
+        return;
+    }
     setIsSubmittingScores(true);
-    toast({ title: 'Submitting Scores...', description: 'Updating the fixtures file.' });
+    toast({ title: 'Submitting Scores...', description: 'Updating match documents in Firestore.' });
+
     try {
-        const response = await updateMatchResults(data);
-        if (response.success) {
-            toast({ title: 'Scores Submitted Successfully!', description: `${response.updatedCount} results were updated. You can now press the red button to apply changes.` });
-        } else {
-            throw new Error('Flow reported failure.');
-        }
+        const batch = writeBatch(firestore);
+        data.results.forEach(result => {
+            const matchRef = doc(firestore, 'matches', result.id);
+            batch.update(matchRef, { homeScore: result.homeScore, awayScore: result.awayScore });
+        });
+        
+        await batch.commit();
+
+        toast({ title: 'Scores Submitted Successfully!', description: `${data.results.length} matches were updated. You can now press the red button to apply changes.` });
+
+        // Optimistically update local state to reflect changes
+        const updatedMatches = allMatches.map(match => {
+            const updatedResult = data.results.find(r => r.id === match.id);
+            return updatedResult ? { ...match, homeScore: updatedResult.homeScore, awayScore: updatedResult.awayScore } : match;
+        });
+        setAllMatches(updatedMatches);
+        
     } catch (error: any) {
         console.error('Error submitting scores:', error);
         toast({ variant: 'destructive', title: 'Score Submission Failed', description: error.message || 'An unexpected error occurred.' });
@@ -144,7 +164,7 @@ export default function AdminPage() {
   }
 
 
-  const handleUpdateAndRecalculate = async () => {
+  const handleRecalculateAllData = async () => {
     if (!firestore) {
         toast({ variant: 'destructive', title: 'Error', description: 'Firestore is not available.' });
         return;
@@ -152,36 +172,11 @@ export default function AdminPage() {
     setIsUpdating(true);
     toast({
         title: 'Starting Full Data Update...',
-        description: 'This will import fixtures from the JSON file and then recalculate all league data.',
+        description: 'This will recalculate all league data based on the current fixtures in the database.',
     });
 
     try {
-        // Step 1: Import all fixtures from the JSON file
-        toast({ title: 'Step 1/7: Importing fixtures...'});
-        const matchesCollectionRef = collection(firestore, 'matches');
-        const importBatch = writeBatch(firestore);
-
-        const existingMatchesSnap = await getDocs(matchesCollectionRef);
-        existingMatchesSnap.forEach(doc => {
-            importBatch.delete(doc.ref);
-        });
-
-        pastFixtures.forEach(fixture => {
-            const { id, ...fixtureData } = fixture;
-            if (!id) {
-                console.warn('Skipping fixture with no ID:', fixture);
-                return;
-            }
-            const docRef = doc(matchesCollectionRef, id);
-            importBatch.set(docRef, fixtureData);
-        });
-
-        await importBatch.commit();
-        toast({ title: `Step 2/7: Imported ${pastFixtures.length} matches successfully.`, description: 'Now proceeding with recalculation.' });
-
-        // Step 2: Recalculate all data using the imported fixtures
-        const batch = writeBatch(firestore);
-        toast({ title: 'Step 3/7: Fetching all required data...' });
+        toast({ title: 'Step 1/5: Fetching all required data...' });
 
         const [
             teamsSnap, 
@@ -212,14 +207,16 @@ export default function AdminPage() {
         const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
         const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
         const userHistoriesMap = new Map(userHistoriesSnap.docs.map(doc => [doc.id, doc.data() as UserHistory]));
+        
+        const batch = writeBatch(firestore);
 
-        toast({ title: 'Step 4/7: Clearing old calculated data...' });
+        toast({ title: 'Step 2/5: Clearing old calculated data...' });
         standingsSnap.forEach(doc => batch.delete(doc.ref));
         playerTeamScoresSnap.forEach(doc => batch.delete(doc.ref));
         teamRecentResultsSnap.forEach(doc => batch.delete(doc.ref));
         weeklyTeamStandingsSnap.forEach(doc => batch.delete(doc.ref));
         
-        toast({ title: 'Step 5/7: Calculating new league standings...' });
+        toast({ title: 'Step 3/5: Calculating new league standings...' });
         const teamStats: { [teamId: string]: Omit<CurrentStanding, 'teamId' | 'rank'> } = {};
         
         teams.forEach(team => {
@@ -234,7 +231,7 @@ export default function AdminPage() {
             homeStats.goalsFor += match.homeScore;
             awayStats.goalsFor += match.awayScore;
             homeStats.goalsAgainst += match.awayScore;
-            awayStats.goalsAgainst += match.homeScore;
+            awayStats.goalsAgainst += match.homeScore; // Corrected this line
             if (match.homeScore > match.awayScore) {
                 homeStats.points += 3;
                 homeStats.wins++;
@@ -271,7 +268,7 @@ export default function AdminPage() {
             batch.set(standingRef, standing);
         });
 
-        toast({ title: 'Step 6/7: Calculating user scores & updating profiles...' });
+        toast({ title: 'Step 4/5: Calculating user scores & updating profiles...' });
         const actualTeamRanks = new Map(finalStandings.map(s => [s.teamId, s.rank]));
         const userScores: { [userId: string]: number } = {};
 
@@ -284,7 +281,6 @@ export default function AdminPage() {
                 if (actualRank !== undefined && actualRank > 0) {
                     const score = 5 - Math.abs(predictedRank - actualRank);
                     totalScore += score;
-                     // Write player team score
                     batch.set(doc(firestore, 'playerTeamScores', `${prediction.userId}_${teamId}`), { userId: prediction.userId, teamId, score });
                 }
             });
@@ -341,7 +337,7 @@ export default function AdminPage() {
             batch.set(doc(firestore, 'teamRecentResults', team.id), { teamId: team.id, results: results.reverse() });
         });
 
-        toast({ title: 'Step 7/7: Committing all updates...' });
+        toast({ title: 'Step 5/5: Committing all updates...' });
         await batch.commit();
         
         toast({
@@ -377,7 +373,7 @@ export default function AdminPage() {
             <CardHeader>
                 <CardTitle>Update Match Results</CardTitle>
                 <CardDescription>
-                    {nextWeekToPlay ? `Enter the scores for Week ${nextWeekToPlay} and submit them. This will update the underlying fixtures file.` : "All matches have been played!"}
+                    {nextWeekToPlay ? `Enter the scores for Week ${nextWeekToPlay} and submit them. This will update the match data in the database.` : "All matches have been played!"}
                 </CardDescription>
             </CardHeader>
             {nextWeekToPlay && (
@@ -436,7 +432,7 @@ export default function AdminPage() {
                     Your workflow should be:
                     <ol className="list-decimal list-inside mt-2 space-y-1">
                         <li>Enter scores for the week on the left and submit.</li>
-                        <li>Once submitted, press the red button below to update all application data.</li>
+                        <li>Press the red button below to update all application data.</li>
                     </ol>
                 </CardDescription>
             </CardHeader>
@@ -450,19 +446,19 @@ export default function AdminPage() {
                 <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="lg" className="text-lg" disabled={isUpdating || !dbStatus.connected}>
                         {isUpdating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                        Update & Recalculate All Data
+                        Recalculate All Data
                     </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action will first re-import all fixtures from the JSON file, then recalculate all standings, user scores, and histories. This is a long-running and resource-intensive operation.
+                        This action will recalculate all standings, user scores, and histories based on the current match data in the database. This is a long-running and resource-intensive operation.
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleUpdateAndRecalculate}>Yes, Run Full Update</AlertDialogAction>
+                    <AlertDialogAction onClick={handleRecalculateAllData}>Yes, Run Full Recalculation</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
                 </AlertDialog>
