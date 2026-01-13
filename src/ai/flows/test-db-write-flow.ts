@@ -27,9 +27,9 @@ export const testDbWriteFlow = ai.defineFlow(
     logger.info("Firestore admin instance acquired.");
 
     const collectionName = 'test_01';
-    const documentName = 'test_01.02'; // Using a new document name for a clear test
+    const documentName = 'test_01.02.01'; // Using a new unique document name for a clear test
     const docRef = db.collection(collectionName).doc(documentName);
-    const testData = { 'test_01.02.01': 'success' };
+    const testData = { 'test_01.02.01.success': true, timestamp: new Date().toISOString() };
     
     logger.info(`Attempting to create document '${documentName}' in collection '${collectionName}'.`);
     
