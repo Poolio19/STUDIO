@@ -41,7 +41,8 @@ const updateMatchResultsFlow = ai.defineFlow(
     inputSchema: UpdateMatchResultsInputSchema,
     outputSchema: UpdateMatchResultsOutputSchema,
   },
-  async ({ results }, { logger }) => {
+  async (input, { logger }) => {
+    const { results } = input;
     logger.info(`Starting update of ${results.length} match results in fixture file.`);
 
     try {

@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A one-time test flow to prove database write capability by creating a specific document.
@@ -21,7 +22,7 @@ export const testDbWriteFlow = ai.defineFlow(
     inputSchema: z.void(),
     outputSchema: TestWriteOutputSchema,
   },
-  async (_, { logger }) => {
+  async (input, { logger }) => {
     logger.info("Attempting to get Firestore admin instance...");
     const db = await getFirestoreAdmin();
     logger.info("Firestore admin instance acquired.");

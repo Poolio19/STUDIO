@@ -27,7 +27,7 @@ const importPastFixturesFlow = ai.defineFlow(
     inputSchema: z.void(),
     outputSchema: ImportPastFixturesOutputSchema,
   },
-  async (_, { logger }) => {
+  async (input, { logger }) => {
     const db = await getFirestoreAdmin();
     const matchesCollection = db.collection('matches');
 
