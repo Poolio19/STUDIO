@@ -41,9 +41,9 @@ const updateMatchResultsFlow = ai.defineFlow(
     inputSchema: UpdateMatchResultsInputSchema,
     outputSchema: UpdateMatchResultsOutputSchema,
   },
-  async (input, { logger }) => {
+  async (input, context) => {
     const { results } = input;
-    logger.info(`Starting update of ${results.length} match results in fixture file.`);
+    context.logger.info(`Starting update of ${results.length} match results in fixture file.`);
 
     try {
       // Create a deep, mutable copy of the imported fixtures.
@@ -65,7 +65,7 @@ const updateMatchResultsFlow = ai.defineFlow(
       }
 
       if (updatedCount !== results.length) {
-        logger.warn(`Mismatch in update count. Expected: ${results.length}, Actual: ${updatedCount}.`);
+        context.logger.warn(`Mismatch in update count. Expected: ${results.length}, Actual: ${updatedCount}.`);
       }
       
       if (updatedCount === 0) {
@@ -78,12 +78,12 @@ const updateMatchResultsFlow = ai.defineFlow(
 
       // Define the path to the JSON file using an absolute path
       const filePath = path.join(process.cwd(), 'src', 'lib', 'past-fixtures.json');
-      logger.info(`Writing ${updatedFixtures.length} fixtures back to ${filePath}`);
+      context.logger.info(`Writing ${updatedFixtures.length} fixtures back to ${filePath}`);
 
       // Write the entire updated array back to the file
       await fs.writeFile(filePath, JSON.stringify(updatedFixtures, null, 2), 'utf-8');
 
-      logger.info(`Successfully updated ${updatedCount} matches.`);
+      context.logger.info(`Successfully updated ${updatedCount} matches.`);
       return {
         success: true,
         updatedCount,
@@ -91,7 +91,7 @@ const updateMatchResultsFlow = ai.defineFlow(
       };
 
     } catch (error: any) {
-      logger.error('Fixture File Update FAILED!', error);
+      context.logger.error('Fixture File Update FAILED!', error);
       // Re-throw a more user-friendly error
       throw new Error(`Flow failed during file write: ${error.message}`);
     }

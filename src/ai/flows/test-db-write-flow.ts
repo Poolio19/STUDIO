@@ -22,23 +22,23 @@ export const testDbWriteFlow = ai.defineFlow(
     inputSchema: z.void(),
     outputSchema: TestWriteOutputSchema,
   },
-  async (input, { logger }) => {
-    logger.info("Attempting to get Firestore admin instance...");
+  async (input, context) => {
+    context.logger.info("Attempting to get Firestore admin instance...");
     const db = await getFirestoreAdmin();
-    logger.info("Firestore admin instance acquired.");
+    context.logger.info("Firestore admin instance acquired.");
 
     const collectionName = 'test_01';
     const documentName = 'test_01.02.01'; // Using a new unique document name for a clear test
     const docRef = db.collection(collectionName).doc(documentName);
     const testData = { 'test_01.02.01.success': true, timestamp: new Date().toISOString() };
     
-    logger.info(`Attempting to create document '${documentName}' in collection '${collectionName}'.`);
+    context.logger.info(`Attempting to create document '${documentName}' in collection '${collectionName}'.`);
     
     // Using set() will create the document if it doesn't exist, or overwrite it if it does.
     await docRef.set(testData);
 
     const successMessage = `Successfully wrote to document '${documentName}' in collection '${collectionName}'.`;
-    logger.info(successMessage);
+    context.logger.info(successMessage);
     
     return {
       success: true,

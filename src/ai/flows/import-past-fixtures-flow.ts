@@ -27,11 +27,11 @@ const importPastFixturesFlow = ai.defineFlow(
     inputSchema: z.void(),
     outputSchema: ImportPastFixturesOutputSchema,
   },
-  async (input, { logger }) => {
+  async (input, context) => {
     const db = await getFirestoreAdmin();
     const matchesCollection = db.collection('matches');
 
-    logger.info('Starting import of past fixtures from JSON backup.');
+    context.logger.info('Starting import of past fixtures from JSON backup.');
 
     try {
       const batch = db.batch();
@@ -40,7 +40,7 @@ const importPastFixturesFlow = ai.defineFlow(
       const snapshot = await matchesCollection.get();
       const deletedCount = snapshot.size;
       if (deletedCount > 0) {
-        logger.info(`Found ${deletedCount} existing matches. Deleting...`);
+        context.logger.info(`Found ${deletedCount} existing matches. Deleting...`);
         snapshot.docs.forEach(doc => {
           batch.delete(doc.ref);
         });
@@ -48,11 +48,11 @@ const importPastFixturesFlow = ai.defineFlow(
 
       // 2. Import new fixtures from the JSON file
       const importedCount = pastFixtures.length;
-      logger.info(`Importing ${importedCount} new fixtures from past-fixtures.json.`);
+      context.logger.info(`Importing ${importedCount} new fixtures from past-fixtures.json.`);
       pastFixtures.forEach(fixture => {
         const { id, ...fixtureData } = fixture;
         if (!id) {
-            logger.warn('Skipping fixture with no ID:', fixture);
+            context.logger.warn('Skipping fixture with no ID:', fixture);
             return;
         }
         const docRef = matchesCollection.doc(id);
@@ -61,7 +61,7 @@ const importPastFixturesFlow = ai.defineFlow(
 
       // 3. Commit the batch
       await batch.commit();
-      logger.info(`Successfully committed import. Deleted: ${deletedCount}, Imported: ${importedCount}.`);
+      context.logger.info(`Successfully committed import. Deleted: ${deletedCount}, Imported: ${importedCount}.`);
 
       return {
         success: true,
@@ -70,7 +70,7 @@ const importPastFixturesFlow = ai.defineFlow(
         message: 'Successfully imported past fixtures.',
       };
     } catch (error: any) {
-        logger.error('Past Fixtures Import: FAILED!', error);
+        context.logger.error('Past Fixtures Import: FAILED!', error);
         throw new Error(`Flow failed during import: ${error.message}`);
     }
   }
