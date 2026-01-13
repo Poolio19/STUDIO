@@ -1,49 +1,43 @@
 'use server';
 import * as admin from 'firebase-admin';
-import { applicationDefault } from 'firebase-admin/app';
+import type { firestore as adminFirestore } from 'firebase-admin';
 import { firebaseConfig } from '@/firebase/config';
+import { applicationDefault } from 'firebase-admin/app';
 
-let firestore: admin.firestore.Firestore | null = null;
+let firestore: adminFirestore.Firestore | null = null;
 
 /**
- * Initializes the Firebase Admin SDK and returns a Firestore instance.
- * It uses a singleton pattern to ensure initialization only happens once.
- * This version explicitly provides the project ID and credentials to avoid
- * issues in environments where auto-discovery fails.
- * @returns {admin.firestore.Firestore} The initialized Firestore instance.
+ * Initializes the Firebase Admin SDK if not already initialized
+ * and returns a Firestore instance. This singleton pattern is crucial
+ * for serverless environments like Next.js to prevent re-initialization errors.
+ * @returns {adminFirestore.Firestore} The initialized Firestore instance.
  */
-function initializeAdmin(): admin.firestore.Firestore {
+function initializeAdmin(): adminFirestore.Firestore {
   if (admin.apps.length === 0) {
-    console.log("Firebase Admin SDK: Initializing with explicit config...");
+    console.log("Firebase Admin SDK: No apps initialized. Initializing a new app instance...");
     try {
       admin.initializeApp({
-        // When running in a Google Cloud environment, applicationDefault() 
-        // finds the service account credentials automatically.
         credential: applicationDefault(),
-        // Explicitly providing the project ID from the client config
-        // makes the initialization more robust.
         projectId: firebaseConfig.projectId,
       });
       console.log("Firebase Admin SDK: Initialization successful.");
     } catch (error: any) {
       console.error("Firebase Admin SDK: CRITICAL - Initialization failed!", error);
-      // If initialization fails, we cannot proceed. Throw the error
-      // to make the failure visible in the server logs.
       throw new Error(`Failed to initialize Firebase Admin SDK: ${error.message}`);
     }
   } else {
-    console.log("Firebase Admin SDK: Already initialized.");
+    console.log("Firebase Admin SDK: App already initialized.");
   }
   
-  // Return the Firestore instance from the (now guaranteed) initialized app.
+  // Return the Firestore instance from the initialized app.
   return admin.firestore();
 }
 
 /**
  * Gets a Firestore admin instance, initializing it if necessary.
- * @returns {Promise<admin.firestore.Firestore>} A promise that resolves to the Firestore instance.
+ * @returns {Promise<adminFirestore.Firestore>} A promise that resolves to the Firestore instance.
  */
-export async function getFirestoreAdmin(): Promise<admin.firestore.Firestore> {
+export async function getFirestoreAdmin(): Promise<adminFirestore.Firestore> {
   if (!firestore) {
     firestore = initializeAdmin();
   }
