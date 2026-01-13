@@ -60,6 +60,7 @@ export default function AdminPage() {
   const [isRecalculating, setIsRecalculating] = React.useState(false);
   const [isImportingPast, setIsImportingPast] = React.useState(false);
   const [isTestingDbWrite, setIsTestingDbWrite] = React.useState(false);
+  const [isTestingClientDbWrite, setIsTestingClientDbWrite] = React.useState(false);
 
 
   const [selectedWeek, setSelectedWeek] = React.useState<number | null>(null);
@@ -331,6 +332,25 @@ export default function AdminPage() {
     }
   };
 
+  const handleClientDbWrite = async () => {
+    if (!firestore) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Firestore is not available.' });
+      return;
+    }
+    setIsTestingClientDbWrite(true);
+    toast({ title: 'Running Client-Side DB Write Test...', description: 'Attempting to write to collection `direct_test`.' });
+    try {
+      const testDocRef = doc(firestore, 'direct_test', 'test-doc-01');
+      await setDoc(testDocRef, { success: true, timestamp: new Date() });
+      toast({ title: 'Client-Side Write Successful!', description: 'Successfully wrote a document to `direct_test` collection.' });
+    } catch (error: any) {
+      console.error("Client-side DB write test failed:", error);
+      toast({ variant: 'destructive', title: 'Client-Side Write Failed', description: error.message || 'An unknown error occurred.' });
+    } finally {
+      setIsTestingClientDbWrite(false);
+    }
+  };
+
 
   const isLoadingData = teamsLoading || matchesLoading || !firestore || !dbStatus.connected;
   
@@ -391,9 +411,9 @@ export default function AdminPage() {
                 {matchesError && <p className="text-sm text-red-500 mt-2">Error loading matches: {matchesError.message}</p>}
                 
                  <div className="flex flex-wrap gap-2">
-                    <Button variant="secondary" disabled={isTestingDbWrite || !dbStatus.connected} onClick={handleTestDbWrite}>
-                        {isTestingDbWrite ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Test DB Write
+                    <Button variant="secondary" disabled={isTestingClientDbWrite || !dbStatus.connected} onClick={handleClientDbWrite}>
+                        {isTestingClientDbWrite ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        Run Direct DB Write
                     </Button>
                     <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -548,5 +568,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    

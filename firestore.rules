@@ -9,6 +9,11 @@ service cloud.firestore {
       allow read: if true;
     }
 
+    // Rule for the new direct client-side test
+    match /direct_test/{docId} {
+      allow read, write: if true;
+    }
+
     // WARNING: The rest of the rules are insecure for production.
     // They are for debugging and initial development purposes.
     // TODO: Secure these rules before deploying to a production environment.
