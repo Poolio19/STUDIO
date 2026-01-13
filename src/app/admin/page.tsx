@@ -541,7 +541,8 @@ export default function AdminPage() {
   const teamMatchCounts = React.useMemo(() => {
     if (!matchesData || !teamsData) return [];
     
-    const playedMatches = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
+    // Filter for matches that have been played, up to week 18.
+    const playedMatches = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1 && m.week <= 18 && m.week > 0);
     const counts = new Map<string, number>();
 
     teamsData.forEach(team => counts.set(team.id, 0));
