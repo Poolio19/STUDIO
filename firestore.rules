@@ -12,6 +12,9 @@ service cloud.firestore {
     // WARNING: The rest of the rules are insecure for production.
     // They are for debugging and initial development purposes.
     // TODO: Secure these rules before deploying to a production environment.
+    match /test_01/{docId} {
+      allow read, write: if true;
+    }
     match /test_02/{docId} {
       allow read, write: if true;
     }
