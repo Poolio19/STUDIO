@@ -17,7 +17,7 @@ function initializeAdmin(): adminFirestore.Firestore {
   if (admin.apps.length === 0) {
     console.log("Firebase Admin SDK: No apps initialized. Initializing a new app instance...");
     try {
-      // Initialize without explicit credentials to use the environment's service account.
+      // Initialize without explicit credentials to use the environment's default service account.
       // Explicitly providing the projectId is a robust way to ensure it connects to the correct project.
       admin.initializeApp({
         projectId: firebaseConfig.projectId,
