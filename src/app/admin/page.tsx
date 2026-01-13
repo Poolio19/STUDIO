@@ -34,6 +34,9 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { importPastFixtures } from '@/ai/flows/import-past-fixtures-flow';
+import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
+
 
 const matchResultSchema = z.object({
     id: z.string(),
@@ -56,6 +59,7 @@ export default function AdminPage() {
   
   const [dbStatus, setDbStatus] = React.useState<{ connected: boolean, message: string }>({ connected: false, message: 'Checking connection...' });
   const [isUpdating, setIsUpdating] = React.useState(false);
+  const [isImporting, setIsImporting] = React.useState(false);
   const [isSubmittingScores, setIsSubmittingScores] = React.useState(false);
 
   const [teams, setTeams] = React.useState<Team[]>([]);
@@ -130,31 +134,16 @@ export default function AdminPage() {
   }, [nextWeekFixtures, form]);
 
   async function onScoresSubmit(data: MatchResultFormValues) {
-    if (!firestore) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Firestore is not available.' });
-        return;
-    }
     setIsSubmittingScores(true);
-    toast({ title: 'Submitting Scores...', description: 'Updating match documents in Firestore.' });
+    toast({ title: 'Submitting Scores...', description: 'Updating fixture library file...' });
 
     try {
-        const batch = writeBatch(firestore);
-        data.results.forEach(result => {
-            const matchRef = doc(firestore, 'matches', result.id);
-            batch.update(matchRef, { homeScore: result.homeScore, awayScore: result.awayScore });
-        });
-        
-        await batch.commit();
-
-        toast({ title: 'Scores Submitted Successfully!', description: `${data.results.length} matches were updated. You can now press the red button to apply changes.` });
-
-        // Optimistically update local state to reflect changes
-        const updatedMatches = allMatches.map(match => {
-            const updatedResult = data.results.find(r => r.id === match.id);
-            return updatedResult ? { ...match, homeScore: updatedResult.homeScore, awayScore: updatedResult.awayScore } : match;
-        });
-        setAllMatches(updatedMatches);
-        
+        const result = await updateMatchResults({ results: data.results });
+        if (result.success) {
+            toast({ title: 'Fixture File Updated!', description: `Successfully updated ${result.updatedCount} matches in the library file.` });
+        } else {
+            throw new Error(result.message || 'An unknown error occurred.');
+        }
     } catch (error: any) {
         console.error('Error submitting scores:', error);
         toast({ variant: 'destructive', title: 'Score Submission Failed', description: error.message || 'An unexpected error occurred.' });
@@ -163,20 +152,46 @@ export default function AdminPage() {
     }
   }
 
+ const handleFullUpdate = async () => {
+    setIsUpdating(true);
+    toast({ title: 'Starting Full Update...', description: 'Step 1: Re-importing all fixtures.' });
+
+    try {
+        const importResult = await importPastFixtures();
+        if (!importResult.success) {
+            throw new Error(importResult.message || 'Fixture import failed.');
+        }
+        
+        toast({ title: `Import Complete (${importResult.importedCount} fixtures)`, description: 'Step 2: Recalculating all league data.' });
+
+        await handleRecalculateAllData();
+        
+        toast({
+            title: 'Full Data Update Complete!',
+            description: 'All fixtures and application data have been successfully updated.',
+        });
+
+    } catch (error: any) {
+        console.error('Error during full update process:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Update Failed',
+            description: error.message || 'An unexpected error occurred during the update.',
+        });
+    } finally {
+        setIsUpdating(false);
+    }
+  };
+
 
   const handleRecalculateAllData = async () => {
     if (!firestore) {
         toast({ variant: 'destructive', title: 'Error', description: 'Firestore is not available.' });
         return;
     }
-    setIsUpdating(true);
-    toast({
-        title: 'Starting Full Data Update...',
-        description: 'This will recalculate all league data based on the current fixtures in the database.',
-    });
-
+    
     try {
-        toast({ title: 'Step 1/5: Fetching all required data...' });
+        toast({ title: 'Recalculation: Fetching all required data...' });
 
         const [
             teamsSnap, 
@@ -210,13 +225,13 @@ export default function AdminPage() {
         
         const batch = writeBatch(firestore);
 
-        toast({ title: 'Step 2/5: Clearing old calculated data...' });
+        toast({ title: 'Recalculation: Clearing old calculated data...' });
         standingsSnap.forEach(doc => batch.delete(doc.ref));
         playerTeamScoresSnap.forEach(doc => batch.delete(doc.ref));
         teamRecentResultsSnap.forEach(doc => batch.delete(doc.ref));
         weeklyTeamStandingsSnap.forEach(doc => batch.delete(doc.ref));
         
-        toast({ title: 'Step 3/5: Calculating new league standings...' });
+        toast({ title: 'Recalculation: Calculating new league standings...' });
         const teamStats: { [teamId: string]: Omit<CurrentStanding, 'teamId' | 'rank'> } = {};
         
         teams.forEach(team => {
@@ -231,7 +246,7 @@ export default function AdminPage() {
             homeStats.goalsFor += match.homeScore;
             awayStats.goalsFor += match.awayScore;
             homeStats.goalsAgainst += match.awayScore;
-            awayStats.goalsAgainst += match.homeScore; // Corrected this line
+            awayStats.goalsAgainst += match.homeScore;
             if (match.homeScore > match.awayScore) {
                 homeStats.points += 3;
                 homeStats.wins++;
@@ -268,7 +283,7 @@ export default function AdminPage() {
             batch.set(standingRef, standing);
         });
 
-        toast({ title: 'Step 4/5: Calculating user scores & updating profiles...' });
+        toast({ title: 'Recalculation: Calculating user scores & updating profiles...' });
         const actualTeamRanks = new Map(finalStandings.map(s => [s.teamId, s.rank]));
         const userScores: { [userId: string]: number } = {};
 
@@ -337,23 +352,17 @@ export default function AdminPage() {
             batch.set(doc(firestore, 'teamRecentResults', team.id), { teamId: team.id, results: results.reverse() });
         });
 
-        toast({ title: 'Step 5/5: Committing all updates...' });
+        toast({ title: 'Recalculation: Committing all updates...' });
         await batch.commit();
-        
-        toast({
-            title: 'Full Data Update Complete!',
-            description: 'All fixtures, league standings, and player scores have been successfully updated.',
-        });
 
     } catch (error: any) {
-        console.error('Error during full client-side data update:', error);
+        console.error('Error during client-side data recalculation:', error);
         toast({
             variant: 'destructive',
-            title: 'Update Failed',
-            description: error.message || 'An unexpected error occurred during the update.',
+            title: 'Recalculation Failed',
+            description: error.message || 'An unexpected error occurred during recalculation.',
         });
-    } finally {
-        setIsUpdating(false);
+        throw error; // Re-throw to be caught by the parent handler
     }
   };
 
@@ -373,7 +382,7 @@ export default function AdminPage() {
             <CardHeader>
                 <CardTitle>Update Match Results</CardTitle>
                 <CardDescription>
-                    {nextWeekToPlay ? `Enter the scores for Week ${nextWeekToPlay} and submit them. This will update the match data in the database.` : "All matches have been played!"}
+                    {nextWeekToPlay ? `Enter the scores for Week ${nextWeekToPlay} and submit them. This will update the fixture library file.` : "All matches have been played!"}
                 </CardDescription>
             </CardHeader>
             {nextWeekToPlay && (
@@ -431,8 +440,8 @@ export default function AdminPage() {
                 <CardDescription>
                     Your workflow should be:
                     <ol className="list-decimal list-inside mt-2 space-y-1">
-                        <li>Enter scores for the week on the left and submit.</li>
-                        <li>Press the red button below to update all application data.</li>
+                        <li>Enter scores for the week on the left and submit to update the library file.</li>
+                        <li>Press the red button below to import fixtures from the library and update all application data.</li>
                     </ol>
                 </CardDescription>
             </CardHeader>
@@ -446,19 +455,19 @@ export default function AdminPage() {
                 <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="lg" className="text-lg" disabled={isUpdating || !dbStatus.connected}>
                         {isUpdating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                        Recalculate All Data
+                        Update & Recalculate All Data
                     </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action will recalculate all standings, user scores, and histories based on the current match data in the database. This is a long-running and resource-intensive operation.
+                        This will re-import all fixtures from the library and then recalculate standings, scores, and histories. This is a long-running operation.
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleRecalculateAllData}>Yes, Run Full Recalculation</AlertDialogAction>
+                    <AlertDialogAction onClick={handleFullUpdate}>Yes, Run Full Update</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
                 </AlertDialog>
