@@ -59,7 +59,6 @@ export default function AdminPage() {
   
   const [dbStatus, setDbStatus] = React.useState<{ connected: boolean, message: string }>({ connected: false, message: 'Checking connection...' });
   const [isUpdating, setIsUpdating] = React.useState(false);
-  const [isImporting, setIsImporting] = React.useState(false);
   const [isSubmittingScores, setIsSubmittingScores] = React.useState(false);
 
   const [teams, setTeams] = React.useState<Team[]>([]);

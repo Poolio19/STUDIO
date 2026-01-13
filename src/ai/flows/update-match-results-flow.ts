@@ -75,7 +75,7 @@ const updateMatchResultsFlow = ai.defineFlow(
         };
       }
 
-      // Define the path to the JSON file
+      // Define the path to the JSON file using an absolute path
       const filePath = path.join(process.cwd(), 'src', 'lib', 'past-fixtures.json');
       logger.info(`Writing ${updatedFixtures.length} fixtures back to ${filePath}`);
 
