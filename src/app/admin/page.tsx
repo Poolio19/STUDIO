@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 
-import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, setDoc, writeBatch } from 'firebase/firestore';
 import { Icons, IconName } from '@/components/icons';
 import {
   Select,
@@ -39,10 +39,10 @@ import {
 
 import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 import { updateAllData } from '@/ai/flows/update-all-data-flow';
-import { importPastFixtures } from '@/ai/flows/import-past-fixtures-flow';
 import { testDbWriteFlow } from '@/ai/flows/test-db-write-flow';
 import { MatchResultSchema } from '@/ai/flows/update-match-results-flow-types';
 import type { Match, Team } from '@/lib/types';
+import pastFixtures from '@/lib/past-fixtures.json';
 
 
 type EditableMatch = Match & {
@@ -240,32 +240,66 @@ export default function AdminPage() {
   };
 
    const handleImportPastFixtures = async () => {
+    if (!firestore) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Firestore not available.' });
+        return;
+    }
     setIsImportingPast(true);
     toast({
       title: 'Importing All Fixtures...',
-      description: 'Importing weeks 1-38 from the backup file. This will delete ALL existing matches.',
+      description: 'Importing from JSON file. This will overwrite existing matches.',
     });
+
     try {
-      const result = await importPastFixtures();
-      if (result.success) {
+        const matchesCollectionRef = collection(firestore, 'matches');
+        
+        // Firestore allows a maximum of 500 operations in a single batch.
+        const BATCH_SIZE = 500;
+        let batch = writeBatch(firestore);
+        let operationCount = 0;
+        let totalImported = 0;
+
+        for (const fixture of pastFixtures) {
+            const { id, ...fixtureData } = fixture;
+            if (!id) {
+                console.warn('Skipping fixture with no ID:', fixture);
+                continue;
+            }
+            const docRef = doc(matchesCollectionRef, id);
+            batch.set(docRef, fixtureData);
+            operationCount++;
+            
+            // If the batch is full, commit it and start a new one.
+            if (operationCount === BATCH_SIZE) {
+                await batch.commit();
+                totalImported += operationCount;
+                batch = writeBatch(firestore);
+                operationCount = 0;
+            }
+        }
+        
+        // Commit the final batch if it has any operations.
+        if (operationCount > 0) {
+            await batch.commit();
+            totalImported += operationCount;
+        }
+
         toast({
           title: 'Import Complete!',
-          description: `Successfully imported ${result.importedCount} matches and deleted ${result.deletedCount} old matches.`,
+          description: `Successfully imported ${totalImported} matches. Triggering a full data recalculation.`,
         });
-        // Optional: Trigger a full recalculation after import
+
         await handleRecalculateAllData();
-      } else {
-        throw new Error(result.message || 'The past fixtures import flow failed.');
-      }
+
     } catch (error: any) {
-      console.error('Error during past fixtures import:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Import Failed',
-        description: error.message || 'An unexpected error occurred during the import.',
-      });
+        console.error('Error during client-side past fixtures import:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Import Failed',
+            description: error.message || 'An unexpected error occurred during the import.',
+        });
     } finally {
-      setIsImportingPast(false);
+        setIsImportingPast(false);
     }
   };
 
@@ -393,7 +427,7 @@ export default function AdminPage() {
                         <AlertDialogHeader>
                         <AlertDialogTitle>Confirm Data Import</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This will delete ALL existing matches in the database and import the correct results and fixtures for weeks 1-38 from the code backup. This action is irreversible. It will automatically trigger a full data recalculation upon completion.
+                            This will import all fixtures from the JSON backup file, overwriting any existing matches with the same ID. This action is irreversible. It will automatically trigger a full data recalculation upon completion.
                         </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -514,3 +548,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
