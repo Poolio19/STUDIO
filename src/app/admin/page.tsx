@@ -48,12 +48,20 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 
 
+const scoreSchema = z.union([z.literal('P'), z.literal('p'), z.coerce.number().int()]);
+const scoreTransformer = (val: 'P' | 'p' | number | string) => {
+    if (typeof val === 'string' && val.toLowerCase() === 'p') return -1;
+    if (val === '' || val === null || val === undefined) return -1;
+    const num = Number(val);
+    return isNaN(num) ? -1 : num;
+}
+
 const scoresFormSchema = z.object({
   week: z.coerce.number().min(1).max(38),
   results: z.array(z.object({
     id: z.string(),
-    homeScore: z.coerce.number().min(-1),
-    awayScore: z.coerce.number().min(-1),
+    homeScore: z.preprocess(scoreTransformer, z.number().int()),
+    awayScore: z.preprocess(scoreTransformer, z.number().int()),
   })),
 });
 
@@ -434,10 +442,10 @@ export default function AdminPage() {
                                 render={({ field }) => (
                                     <Input
                                         {...field}
-                                        type="number"
+                                        type="text"
                                         className="w-20 text-center"
                                         value={field.value === -1 ? '' : field.value}
-                                        onChange={e => field.onChange(e.target.value === '' ? -1 : e.target.valueAsNumber)}
+                                        onChange={e => field.onChange(e.target.value === '' ? -1 : e.target.value.toUpperCase())}
                                     />
                                 )}
                             />
@@ -448,10 +456,10 @@ export default function AdminPage() {
                                 render={({ field }) => (
                                     <Input
                                         {...field}
-                                        type="number"
+                                        type="text"
                                         className="w-20 text-center"
                                         value={field.value === -1 ? '' : field.value}
-                                        onChange={e => field.onChange(e.target.value === '' ? -1 : e.target.valueAsNumber)}
+                                        onChange={e => field.onChange(e.target.value === '' ? -1 : e.target.value.toUpperCase())}
                                     />
                                 )}
                             />
