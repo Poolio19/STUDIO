@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -28,10 +27,33 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-import type { Match, Team, Prediction, User as UserProfile, UserHistory, CurrentStanding } from '@/lib/types';
+import type { Match, Team, Prediction, User as UserProfile, UserHistory, CurrentStanding, MatchResult } from '@/lib/types';
 import { importPastFixtures } from '@/ai/flows/import-past-fixtures-flow';
-import { reimportFixtures } from '@/ai/flows/reimport-fixtures-flow';
-import week23Fixtures from '@/lib/week-23-fixtures.json';
+import allFixtures from '@/lib/past-fixtures.json';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from '@/components/ui/input';
+import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
+
+
+const scoresFormSchema = z.object({
+  week: z.number().min(1).max(38),
+  results: z.array(z.object({
+    id: z.string(),
+    homeScore: z.coerce.number().min(-1),
+    awayScore: z.coerce.number().min(-1),
+  })),
+});
+
+type ScoresFormValues = z.infer<typeof scoresFormSchema>;
 
 
 export default function AdminPage() {
@@ -40,13 +62,51 @@ export default function AdminPage() {
   
   const [dbStatus, setDbStatus] = React.useState<{ connected: boolean, message: string }>({ connected: false, message: 'Checking connection...' });
   const [isUpdating, setIsUpdating] = React.useState(false);
-  const [isUpdatingWeek, setIsUpdatingWeek] = React.useState(false);
+  const [isSubmittingScores, setIsSubmittingScores] = React.useState(false);
+
+  const [teamsMap, setTeamsMap] = React.useState<Map<string, Team>>(new Map());
 
   const connectivityCheckDocRef = useMemoFirebase(
     () => (firestore ? doc(firestore, 'connectivity-test', 'connectivity-doc') : null),
     [firestore]
   );
   
+  const scoresForm = useForm<ScoresFormValues>({
+    resolver: zodResolver(scoresFormSchema),
+    defaultValues: {
+      week: 1,
+      results: [],
+    },
+  });
+
+  const { fields, replace } = useFieldArray({
+    control: scoresForm.control,
+    name: "results",
+  });
+
+  const selectedWeek = scoresForm.watch('week');
+
+  React.useEffect(() => {
+    async function fetchTeams() {
+      if (!firestore) return;
+      const teamsSnap = await getDocs(query(collection(firestore, 'teams')));
+      const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
+      setTeamsMap(new Map(teams.map(t => [t.id, t])));
+    }
+    fetchTeams();
+  }, [firestore]);
+  
+  React.useEffect(() => {
+    const weekFixtures = allFixtures.filter(fixture => fixture.week === selectedWeek);
+    const results = weekFixtures.map(fixture => ({
+      id: fixture.id,
+      homeScore: fixture.homeScore,
+      awayScore: fixture.awayScore,
+    }));
+    replace(results);
+  }, [selectedWeek, replace]);
+
+
   React.useEffect(() => {
     if (!firestore) return;
 
@@ -70,25 +130,33 @@ export default function AdminPage() {
     checkConnection();
   }, [connectivityCheckDocRef, firestore]);
 
-  const handleUpdateWeek23 = async () => {
-    setIsUpdatingWeek(true);
-    toast({ title: 'Updating Week 23...', description: 'Re-importing fixtures for week 23.' });
-
+  const onScoresSubmit = async (data: ScoresFormValues) => {
+    setIsSubmittingScores(true);
+    toast({ title: `Updating scores for Week ${data.week}...` });
     try {
-      const result = await reimportFixtures({ week: 23, fixtures: week23Fixtures as Match[] });
+      const result = await updateMatchResults({
+        week: data.week,
+        results: data.results,
+      });
+
       if (!result.success) {
-        throw new Error('Week 23 fixture import failed.');
+        throw new Error(result.message || 'Failed to update scores.');
       }
-      toast({ title: 'Week 23 Updated!', description: `Imported ${result.importedCount} fixtures.` });
+
+      toast({
+        title: 'Scores Updated!',
+        description: `${result.updatedCount} matches for Week ${data.week} were updated.`,
+      });
+
     } catch (error: any) {
-      console.error('Error during week 23 update:', error);
+      console.error('Error during score update:', error);
       toast({
         variant: 'destructive',
         title: 'Update Failed',
         description: error.message || 'An unexpected error occurred.',
       });
     } finally {
-      setIsUpdatingWeek(false);
+      setIsSubmittingScores(false);
     }
   };
 
@@ -307,6 +375,8 @@ export default function AdminPage() {
     }
   };
 
+  const weekOptions = Array.from({ length: 38 }, (_, i) => i + 1);
+
   return (
     <div className="space-y-8">
       <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
@@ -321,16 +391,61 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card>
             <CardHeader>
-                <CardTitle>Update Week 23</CardTitle>
+                <CardTitle>Update Match Results</CardTitle>
                 <CardDescription>
-                    This will re-import the fixtures for Week 23 from the dedicated library file.
+                    Select a week and enter the scores. Click Submit to update the database.
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <Button onClick={handleUpdateWeek23} disabled={isUpdatingWeek || !dbStatus.connected}>
-                    {isUpdatingWeek ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                    Update Week 23 Results
-                </Button>
+                <form onSubmit={scoresForm.handleSubmit(onScoresSubmit)} className="space-y-4">
+                  <Controller
+                    control={scoresForm.control}
+                    name="week"
+                    render={({ field }) => (
+                      <Select onValueChange={(value) => field.onChange(parseInt(value))} value={String(field.value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a week" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {weekOptions.map(week => (
+                            <SelectItem key={week} value={String(week)}>Week {week}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+
+                  <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+                    {fields.map((field, index) => {
+                       const fixture = allFixtures.find(f => f.id === field.id);
+                       if (!fixture) return null;
+                       const homeTeam = teamsMap.get(fixture.homeTeamId);
+                       const awayTeam = teamsMap.get(fixture.awayTeamId);
+
+                      return (
+                        <div key={field.id} className="grid grid-cols-[1fr_50px_10px_50px_1fr] items-center gap-2">
+                            <span className="text-right font-medium">{homeTeam?.name || fixture.homeTeamId}</span>
+                             <Input
+                                {...scoresForm.register(`results.${index}.homeScore`)}
+                                type="number"
+                                className="w-full text-center"
+                            />
+                            <span className="text-center font-bold">-</span>
+                            <Input
+                                {...scoresForm.register(`results.${index}.awayScore`)}
+                                type="number"
+                                className="w-full text-center"
+                            />
+                            <span className="font-medium">{awayTeam?.name || fixture.awayTeamId}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <Button type="submit" disabled={isSubmittingScores}>
+                    {isSubmittingScores ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+                    Submit Scores
+                  </Button>
+                </form>
             </CardContent>
         </Card>
 
@@ -338,13 +453,13 @@ export default function AdminPage() {
             <CardHeader>
                 <CardTitle>Master Data Control</CardTitle>
                 <CardDescription>
-                    This will re-import all fixtures from the main library and then recalculate all data.
+                    These are system-wide operations. Use with caution.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="flex items-center gap-4 rounded-lg border p-4">
-                {dbStatus.connected ? <Icons.shieldCheck className="h-6 w-6 text-green-500" /> : <Icons.bug className="h-6 w-6 text-red-500" />}
-                <p className="font-medium">{dbStatus.message}</p>
+                  {dbStatus.connected ? <Icons.shieldCheck className="h-6 w-6 text-green-500" /> : <Icons.bug className="h-6 w-6 text-red-500" />}
+                  <p className="font-medium">{dbStatus.message}</p>
                 </div>
                 
                 <AlertDialog>

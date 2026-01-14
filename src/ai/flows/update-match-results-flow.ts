@@ -1,0 +1,102 @@
+
+'use server';
+/**
+ * @fileOverview A flow to update a week's match results in the database.
+ */
+
+import { ai } from '@/ai/genkit';
+import { z } from 'zod';
+import * as admin from 'firebase-admin';
+
+// Define the schema for a single match result
+const MatchResultSchema = z.object({
+  id: z.string(),
+  homeScore: z.number(),
+  awayScore: z.number(),
+});
+
+// Define the input schema for the flow
+const UpdateMatchResultsInputSchema = z.object({
+  week: z.number(),
+  results: z.array(MatchResultSchema),
+});
+export type UpdateMatchResultsInput = z.infer<typeof UpdateMatchResultsInputSchema>;
+
+// Define the output schema for the flow
+const UpdateMatchResultsOutputSchema = z.object({
+  success: z.boolean(),
+  updatedCount: z.number(),
+  message: z.string().optional(),
+});
+export type UpdateMatchResultsOutput = z.infer<typeof UpdateMatchResultsOutputSchema>;
+
+
+/**
+ * Gets a Firestore admin instance, initializing the app if needed.
+ */
+function getDb() {
+  if (admin.apps.length === 0) {
+    admin.initializeApp();
+  }
+  return admin.firestore();
+}
+
+/**
+ * Exported wrapper function to be called from the client.
+ */
+export async function updateMatchResults(
+  input: UpdateMatchResultsInput
+): Promise<UpdateMatchResultsOutput> {
+  return updateMatchResultsFlow(input);
+}
+
+
+const updateMatchResultsFlow = ai.defineFlow(
+  {
+    name: 'updateMatchResultsFlow',
+    inputSchema: UpdateMatchResultsInputSchema,
+    outputSchema: UpdateMatchResultsOutputSchema,
+  },
+  async (input, context) => {
+    const { week, results } = input;
+    const db = getDb();
+    const matchesCollection = db.collection('matches');
+
+    context.logger.info(`Starting score update for Week ${week}.`);
+
+    try {
+      const batch = db.batch();
+      let updatedCount = 0;
+
+      for (const result of results) {
+        if (!result.id) {
+          context.logger.warn('Skipping result with no ID:', result);
+          continue;
+        }
+
+        const docRef = matchesCollection.doc(result.id);
+        
+        // We only update scores, preserving other match data.
+        batch.update(docRef, {
+          homeScore: result.homeScore,
+          awayScore: result.awayScore,
+        });
+        updatedCount++;
+      }
+
+      await batch.commit();
+      
+      context.logger.info(`Successfully updated ${updatedCount} matches for Week ${week}.`);
+
+      return {
+        success: true,
+        updatedCount,
+        message: `Successfully updated ${updatedCount} matches.`,
+      };
+
+    } catch (error: any) {
+      context.logger.error(`Failed to update scores for Week ${week}:`, error);
+      throw new Error(`Flow failed during score update: ${error.message}`);
+    }
+  }
+);
