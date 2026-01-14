@@ -31,7 +31,7 @@ import {
 import type { Match, Team, Prediction, User as UserProfile, UserHistory, CurrentStanding, MatchResult } from '@/lib/types';
 import { importPastFixtures } from '@/ai/flows/import-past-fixtures-flow';
 import allFixtures from '@/lib/past-fixtures.json';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {
@@ -80,12 +80,8 @@ export default function AdminPage() {
     },
   });
 
-  const { fields, replace } = useFieldArray({
-    control: scoresForm.control,
-    name: "results",
-  });
-
   const selectedWeek = scoresForm.watch('week');
+  const weekFixtures = React.useMemo(() => allFixtures.filter(fixture => fixture.week === selectedWeek), [selectedWeek]);
 
   React.useEffect(() => {
     async function fetchTeams() {
@@ -98,14 +94,13 @@ export default function AdminPage() {
   }, [firestore]);
   
   React.useEffect(() => {
-    const weekFixtures = allFixtures.filter(fixture => fixture.week === selectedWeek);
     const results = weekFixtures.map(fixture => ({
       id: fixture.id,
       homeScore: fixture.homeScore,
       awayScore: fixture.awayScore,
     }));
-    replace(results);
-  }, [selectedWeek, replace]);
+    scoresForm.setValue('results', results);
+  }, [selectedWeek, weekFixtures, scoresForm]);
 
 
   React.useEffect(() => {
@@ -394,7 +389,7 @@ export default function AdminPage() {
             <CardHeader>
                 <CardTitle>Write Match Results</CardTitle>
                 <CardDescription>
-                    Select a week and enter the scores to update the database directly.
+                    Select a week to enter the scores and update the database directly.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -417,16 +412,15 @@ export default function AdminPage() {
                   />
 
                   <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
-                    {fields.map((field, index) => {
-                       const fixture = allFixtures.find(f => f.id === field.id);
+                    {weekFixtures.map((fixture, index) => {
                        if (!fixture) return null;
                        const homeTeam = teamsMap.get(fixture.homeTeamId);
                        const awayTeam = teamsMap.get(fixture.awayTeamId);
 
                       return (
-                        <div key={field.id} className="grid grid-cols-[1fr_auto_10px_auto_1fr] items-center gap-2">
+                        <div key={fixture.id} className="grid grid-cols-[1fr_auto_10px_auto_1fr] items-center gap-2">
                             <span className="text-right font-medium">{homeTeam?.name || fixture.homeTeamId}</span>
-                             <Controller
+                            <Controller
                                 control={scoresForm.control}
                                 name={`results.${index}.homeScore`}
                                 render={({ field }) => (
@@ -440,7 +434,7 @@ export default function AdminPage() {
                                 )}
                             />
                             <span className="text-center font-bold">-</span>
-                            <Controller
+                             <Controller
                                 control={scoresForm.control}
                                 name={`results.${index}.awayScore`}
                                 render={({ field }) => (
@@ -505,5 +499,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
