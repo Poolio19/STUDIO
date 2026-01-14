@@ -50,10 +50,16 @@ import { Separator } from '@/components/ui/separator';
 
 const scoreSchema = z.union([z.literal('P'), z.literal('p'), z.coerce.number().int()]);
 const scoreTransformer = (val: 'P' | 'p' | number | string) => {
-    if (typeof val === 'string' && val.toLowerCase() === 'p') return -1;
-    if (val === '' || val === null || val === undefined) return -1;
+    if (typeof val === 'string' && val.toLowerCase() === 'p') return -2; // Postponed is -2
+    if (val === '' || val === null || val === undefined) return -1; // Not played is -1
     const num = Number(val);
     return isNaN(num) ? -1 : num;
+}
+
+const displayScore = (val: number | string) => {
+    if (val === -1) return '';
+    if (val === -2) return 'P';
+    return val;
 }
 
 const scoresFormSchema = z.object({
@@ -84,7 +90,7 @@ export default function AdminPage() {
     return Math.max(...playedFixtures.map(fixture => fixture.week));
   }, []);
   
-  const nextUnplayedWeek = lastPlayedWeek + 1;
+  const nextUnplayedWeek = lastPlayedWeek < 38 ? lastPlayedWeek + 1 : 38;
 
   const scoresForm = useForm<ScoresFormValues>({
     resolver: zodResolver(scoresFormSchema),
@@ -239,7 +245,7 @@ export default function AdminPage() {
         const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
         const teamMap = new Map(teams.map(t => [t.id, t]));
         const allMatches = matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match));
-        const playedMatches = allMatches.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
+        const playedMatches = allMatches.filter(m => m.homeScore > -1 && m.awayScore > -1);
         const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
         const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
         const userHistoriesMap = new Map(userHistoriesSnap.docs.map(doc => [doc.id, doc.data() as UserHistory]));
@@ -444,8 +450,8 @@ export default function AdminPage() {
                                         {...field}
                                         type="text"
                                         className="w-20 text-center"
-                                        value={field.value === -1 ? '' : field.value}
-                                        onChange={e => field.onChange(e.target.value === '' ? -1 : e.target.value.toUpperCase())}
+                                        value={displayScore(field.value)}
+                                        onChange={e => field.onChange(e.target.value.toUpperCase())}
                                     />
                                 )}
                             />
@@ -458,8 +464,8 @@ export default function AdminPage() {
                                         {...field}
                                         type="text"
                                         className="w-20 text-center"
-                                        value={field.value === -1 ? '' : field.value}
-                                        onChange={e => field.onChange(e.target.value === '' ? -1 : e.target.value.toUpperCase())}
+                                        value={displayScore(field.value)}
+                                        onChange={e => field.onChange(e.target.value.toUpperCase())}
                                     />
                                 )}
                             />
