@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -391,9 +392,9 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card>
             <CardHeader>
-                <CardTitle>Update Match Results</CardTitle>
+                <CardTitle>Write Match Results</CardTitle>
                 <CardDescription>
-                    Select a week and enter the scores. Click Submit to update the database.
+                    Select a week, enter the scores, and click the button to write the results to the database.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -443,7 +444,7 @@ export default function AdminPage() {
                   </div>
                   <Button type="submit" disabled={isSubmittingScores}>
                     {isSubmittingScores ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                    Submit Scores
+                    Write Match Results for Week {selectedWeek}
                   </Button>
                 </form>
             </CardContent>
