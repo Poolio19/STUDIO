@@ -28,9 +28,10 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-import type { Match, Team, Prediction, User as UserProfile, UserHistory, CurrentStanding } from '@/lib/types';
+import type { Match, Team, Prediction, User as UserProfile, UserHistory, CurrentStanding, WeekResults } from '@/lib/types';
 import { importPastFixtures } from '@/ai/flows/import-past-fixtures-flow';
-import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
+import { createResultsFile } from '@/ai/flows/create-results-file-flow';
+import { importResultsFile } from '@/ai/flows/import-results-file-flow';
 
 
 import allFixtures from '@/lib/past-fixtures.json';
@@ -79,7 +80,9 @@ export default function AdminPage() {
   const firestore = useFirestore();
   
   const [isUpdating, setIsUpdating] = React.useState(false);
-  const [isWritingResults, setIsWritingResults] = React.useState(false);
+  const [isWritingFile, setIsWritingFile] = React.useState(false);
+  const [isImportingFile, setIsImportingFile] = React.useState(false);
+  const [latestFilePath, setLatestFilePath] = React.useState<string | null>(null);
 
   const [teamsMap, setTeamsMap] = React.useState<Map<string, Team>>(new Map());
   
@@ -122,33 +125,63 @@ export default function AdminPage() {
   }, [selectedWeek, weekFixtures, scoresForm]);
 
 
-  const onWriteResultsSubmit = async (data: ScoresFormValues) => {
-    setIsWritingResults(true);
-    toast({ title: `Writing results to database for Week ${data.week}...` });
+  const onWriteResultsFileSubmit = async (data: ScoresFormValues) => {
+    setIsWritingFile(true);
+    toast({ title: `Creating results file for Week ${data.week}...` });
     try {
-      const result = await updateMatchResults({
+      const result = await createResultsFile({
         week: data.week,
-        results: data.results,
+        results: data.results.map(r => ({ id: r.id, homeScore: r.homeScore, awayScore: r.awayScore })),
       });
-
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to write results to database.');
+  
+      if (!result.success || !result.filePath) {
+        throw new Error(result.message || 'Failed to create results file.');
       }
-
+  
+      setLatestFilePath(result.filePath);
       toast({
-        title: 'Results Written!',
-        description: `Updated ${result.updatedCount} matches for Week ${data.week}.`,
+        title: 'File Created!',
+        description: result.message,
       });
-
+  
     } catch (error: any) {
-      console.error('Error during results submission:', error);
+      console.error('Error during file creation:', error);
       toast({
         variant: 'destructive',
-        title: 'Submission Failed',
+        title: 'File Creation Failed',
         description: error.message || 'An unexpected error occurred.',
       });
     } finally {
-      setIsWritingResults(false);
+      setIsWritingFile(false);
+    }
+  };
+
+  const handleImportResultsFile = async () => {
+    if (!latestFilePath) {
+      toast({ variant: 'destructive', title: 'Error', description: 'No results file has been created yet.' });
+      return;
+    }
+    setIsImportingFile(true);
+    toast({ title: `Importing results from ${latestFilePath}...` });
+    try {
+      const result = await importResultsFile({ filePath: latestFilePath });
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to import results file.');
+      }
+      toast({
+        title: 'Import Complete!',
+        description: `Updated ${result.updatedCount} matches for Week ${result.week}.`,
+      });
+
+    } catch (error: any) {
+      console.error('Error during file import:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Import Failed',
+        description: error.message || 'An unexpected error occurred during import.',
+      });
+    } finally {
+      setIsImportingFile(false);
     }
   };
 
@@ -376,13 +409,13 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card>
             <CardHeader>
-                <CardTitle>Step 1: Write Week's Results</CardTitle>
+                <CardTitle>Step 1 &amp; 2: Enter &amp; Write Results</CardTitle>
                 <CardDescription>
-                    Select a week, enter the scores, then write the results directly to the database.
+                    Select a week, enter the scores, then create a temporary results file and write it to the database.
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <form onSubmit={scoresForm.handleSubmit(onWriteResultsSubmit)} className="space-y-4">
+                <form onSubmit={scoresForm.handleSubmit(onWriteResultsFileSubmit)} className="space-y-4">
                   <Controller
                     control={scoresForm.control}
                     name="week"
@@ -442,9 +475,13 @@ export default function AdminPage() {
                     })}
                   </div>
                   <div className='flex items-center gap-4'>
-                    <Button type="submit" disabled={isWritingResults}>
-                        {isWritingResults ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                        1. Write Week {selectedWeek} Results to DB
+                    <Button type="submit" disabled={isWritingFile}>
+                        {isWritingFile ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+                        1. Create Week {selectedWeek} Results File
+                    </Button>
+                     <Button type="button" onClick={handleImportResultsFile} disabled={isImportingFile || !latestFilePath}>
+                        {isImportingFile ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+                        2. Write Week {selectedWeek} Results to DB
                     </Button>
                   </div>
                 </form>
@@ -453,7 +490,7 @@ export default function AdminPage() {
 
         <Card>
             <CardHeader>
-                <CardTitle>Step 2: Master Data Control</CardTitle>
+                <CardTitle>Step 3: Master Data Control</CardTitle>
                 <CardDescription>
                     After writing new results to the database, run this to recalculate all scores and standings.
                 </CardDescription>
@@ -464,7 +501,7 @@ export default function AdminPage() {
                 <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="lg" className="text-lg" disabled={isUpdating}>
                         {isUpdating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                        2. Update & Recalculate All Data
+                        3. Update &amp; Recalculate All Data
                     </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -486,3 +523,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
