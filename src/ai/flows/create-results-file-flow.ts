@@ -8,6 +8,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import * as os from 'os';
 import type { WeekResults } from '@/lib/types';
 
 
@@ -43,8 +44,8 @@ const createResultsFileFlow = ai.defineFlow(
   async (input, context) => {
     const { week, results } = input;
     const fileName = `wk-${week}-results.json`;
-    // IMPORTANT: In a sandboxed cloud environment, we can only write to /tmp
-    const filePath = path.join('/tmp', fileName);
+    // IMPORTANT: In a sandboxed cloud environment, we can only write to os.tmpdir()
+    const filePath = path.join(os.tmpdir(), fileName);
     
     const fileContent: WeekResults = { week, results };
 
