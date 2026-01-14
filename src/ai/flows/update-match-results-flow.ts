@@ -87,7 +87,7 @@ const updateMatchResultsFlow = ai.defineFlow(
         success: true,
         updatedCount,
         week,
-        message: `Successfully updated ${updatedCount} matches.`,
+        message: `Successfully updated ${updatedCount} matches for Week ${result.week}.`,
       };
 
     } catch (error: any) {
