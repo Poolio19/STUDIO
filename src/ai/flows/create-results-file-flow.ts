@@ -41,7 +41,7 @@ const createResultsFileFlow = ai.defineFlow(
     inputSchema: CreateResultsFileInputSchema,
     outputSchema: CreateResultsFileOutputSchema,
   },
-  async (input, context) => {
+  async (input) => {
     const { week, results } = input;
     const fileName = `wk-${week}-results.json`;
     // IMPORTANT: In a sandboxed cloud environment, we can only write to os.tmpdir()
@@ -49,13 +49,9 @@ const createResultsFileFlow = ai.defineFlow(
     
     const fileContent: WeekResults = { week, results };
 
-    context.logger.info(`Attempting to create results file for Week ${week} at ${filePath}`);
-
     try {
       await fs.writeFile(filePath, JSON.stringify(fileContent, null, 2));
       
-      context.logger.info(`Successfully created file: ${filePath}`);
-
       return {
         success: true,
         filePath: filePath,
@@ -63,7 +59,7 @@ const createResultsFileFlow = ai.defineFlow(
       };
 
     } catch (error: any) {
-      context.logger.error(`Failed to create file for Week ${week}:`, error);
+      console.error(`Failed to create file for Week ${week}:`, error);
       // It's important to throw an error that the client can handle.
       throw new Error(`Flow failed during file creation: ${error.message}`);
     }
