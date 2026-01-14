@@ -5,14 +5,43 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { getFirestoreAdmin } from '@/ai/admin';
-import {
-  ReimportFixturesInputSchema,
-  ReimportFixturesOutputSchema,
-  type ReimportFixturesInput,
-  type ReimportFixturesOutput
-} from './reimport-fixtures-flow-types';
+import { z } from 'zod';
+import * as admin from 'firebase-admin';
 
+const MatchSchema = z.object({
+  id: z.string(),
+  week: z.number(),
+  homeTeamId: z.string(),
+  awayTeamId: z.string(),
+  homeScore: z.number(),
+  awayScore: z.number(),
+  matchDate: z.string(),
+});
+
+const ReimportFixturesInputSchema = z.object({
+  week: z.number(),
+  fixtures: z.array(MatchSchema),
+});
+export type ReimportFixturesInput = z.infer<typeof ReimportFixturesInputSchema>;
+
+const ReimportFixturesOutputSchema = z.object({
+  success: z.boolean(),
+  deletedCount: z.number(),
+  importedCount: z.number(),
+});
+export type ReimportFixturesOutput = z.infer<
+  typeof ReimportFixturesOutputSchema
+>;
+
+/**
+ * Gets a Firestore admin instance, initializing the app if needed.
+ */
+function getDb() {
+  if (admin.apps.length === 0) {
+    admin.initializeApp();
+  }
+  return admin.firestore();
+}
 
 export async function reimportFixtures(
   input: ReimportFixturesInput
@@ -28,11 +57,10 @@ const reimportFixturesFlow = ai.defineFlow(
   },
   async (input, context) => {
     const { week, fixtures } = input;
-    const db = await getFirestoreAdmin();
+    const db = getDb();
 
     context.logger.info(`Starting re-import for Week ${week}.`);
 
-    // 1. Find all existing matches for the given week
     const matchesCollection = db.collection('matches');
     const querySnapshot = await matchesCollection.where('week', '==', week).get();
     const existingDocs = querySnapshot.docs;
@@ -40,7 +68,6 @@ const reimportFixturesFlow = ai.defineFlow(
 
     const batch = db.batch();
 
-    // 2. Delete all existing matches for that week
     if (deletedCount > 0) {
       context.logger.info(`Found ${deletedCount} existing matches for Week ${week}. Deleting...`);
       existingDocs.forEach(doc => {
@@ -48,7 +75,6 @@ const reimportFixturesFlow = ai.defineFlow(
       });
     }
 
-    // 3. Add the new, correct fixtures for that week
     const importedCount = fixtures.length;
     context.logger.info(`Importing ${importedCount} new fixtures for Week ${week}.`);
     fixtures.forEach(fixture => {
@@ -57,7 +83,6 @@ const reimportFixturesFlow = ai.defineFlow(
       batch.set(docRef, fixtureData);
     });
 
-    // 4. Commit the batch
     await batch.commit();
     context.logger.info(`Successfully committed re-import for Week ${week}. Deleted: ${deletedCount}, Imported: ${importedCount}.`);
 

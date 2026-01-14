@@ -30,6 +30,8 @@ import {
 
 import type { Match, Team, Prediction, User as UserProfile, UserHistory, CurrentStanding } from '@/lib/types';
 import { importPastFixtures } from '@/ai/flows/import-past-fixtures-flow';
+import { reimportFixtures } from '@/ai/flows/reimport-fixtures-flow';
+import week23Fixtures from '@/lib/week-23-fixtures.json';
 
 
 export default function AdminPage() {
@@ -38,6 +40,7 @@ export default function AdminPage() {
   
   const [dbStatus, setDbStatus] = React.useState<{ connected: boolean, message: string }>({ connected: false, message: 'Checking connection...' });
   const [isUpdating, setIsUpdating] = React.useState(false);
+  const [isUpdatingWeek, setIsUpdatingWeek] = React.useState(false);
 
   const connectivityCheckDocRef = useMemoFirebase(
     () => (firestore ? doc(firestore, 'connectivity-test', 'connectivity-doc') : null),
@@ -66,6 +69,28 @@ export default function AdminPage() {
     
     checkConnection();
   }, [connectivityCheckDocRef, firestore]);
+
+  const handleUpdateWeek23 = async () => {
+    setIsUpdatingWeek(true);
+    toast({ title: 'Updating Week 23...', description: 'Re-importing fixtures for week 23.' });
+
+    try {
+      const result = await reimportFixtures({ week: 23, fixtures: week23Fixtures as Match[] });
+      if (!result.success) {
+        throw new Error('Week 23 fixture import failed.');
+      }
+      toast({ title: 'Week 23 Updated!', description: `Imported ${result.importedCount} fixtures.` });
+    } catch (error: any) {
+      console.error('Error during week 23 update:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Update Failed',
+        description: error.message || 'An unexpected error occurred.',
+      });
+    } finally {
+      setIsUpdatingWeek(false);
+    }
+  };
 
 
  const handleFullUpdate = async () => {
@@ -293,41 +318,58 @@ export default function AdminPage() {
         </p>
       </header>
 
-      <Card>
-          <CardHeader>
-              <CardTitle>Master Data Control</CardTitle>
-              <CardDescription>
-                  This will re-import all fixtures from the library and then recalculate standings, scores, and histories.
-              </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-              <div className="flex items-center gap-4 rounded-lg border p-4">
-              {dbStatus.connected ? <Icons.shieldCheck className="h-6 w-6 text-green-500" /> : <Icons.bug className="h-6 w-6 text-red-500" />}
-              <p className="font-medium">{dbStatus.message}</p>
-              </div>
-              
-              <AlertDialog>
-              <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="lg" className="text-lg" disabled={isUpdating || !dbStatus.connected}>
-                      {isUpdating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                      Update & Recalculate All Data
-                  </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                  <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                      This will re-import all fixtures from the library and then recalculate standings, scores, and histories. This is a long-running operation.
-                  </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleFullUpdate}>Yes, Run Full Update</AlertDialogAction>
-                  </AlertDialogFooter>
-              </AlertDialogContent>
-              </AlertDialog>
-          </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <Card>
+            <CardHeader>
+                <CardTitle>Update Week 23</CardTitle>
+                <CardDescription>
+                    This will re-import the fixtures for Week 23 from the dedicated library file.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Button onClick={handleUpdateWeek23} disabled={isUpdatingWeek || !dbStatus.connected}>
+                    {isUpdatingWeek ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+                    Update Week 23 Results
+                </Button>
+            </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Master Data Control</CardTitle>
+                <CardDescription>
+                    This will re-import all fixtures from the main library and then recalculate all data.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="flex items-center gap-4 rounded-lg border p-4">
+                {dbStatus.connected ? <Icons.shieldCheck className="h-6 w-6 text-green-500" /> : <Icons.bug className="h-6 w-6 text-red-500" />}
+                <p className="font-medium">{dbStatus.message}</p>
+                </div>
+                
+                <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="lg" className="text-lg" disabled={isUpdating || !dbStatus.connected}>
+                        {isUpdating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+                        Update & Recalculate All Data
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will re-import all fixtures from the library and then recalculate standings, scores, and histories. This is a long-running operation.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleFullUpdate}>Yes, Run Full Update</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+                </AlertDialog>
+            </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -1,0 +1,12 @@
+[
+  { "id": "23-team_19-team_17", "week": 23, "homeTeamId": "team_19", "awayTeamId": "team_17", "homeScore": 1, "awayScore": 1, "matchDate": " 2026-01-24T00:00:00.000Z" },
+  { "id": "23-team_15-team_02", "week": 23, "homeTeamId": "team_15", "awayTeamId": "team_02", "homeScore": 2, "awayScore": 0, "matchDate": " 2026-01-24T00:00:00.000Z" },
+  { "id": "23-team_13-team_20", "week": 23, "homeTeamId": "team_13", "awayTeamId": "team_20", "homeScore": 3, "awayScore": 0, "matchDate": " 2026-01-24T00:00:00.000Z" },
+  { "id": "23-team_09-team_05", "week": 23, "homeTeamId": "team_09", "awayTeamId": "team_05", "homeScore": 0, "awayScore": 0, "matchDate": " 2026-01-24T00:00:00.000Z" },
+  { "id": "23-team_08-team_10", "week": 23, "homeTeamId": "team_08", "awayTeamId": "team_10", "homeScore": 1, "awayScore": 2, "matchDate": " 2026-01-24T00:00:00.000Z" },
+  { "id": "23-team_07-team_06", "week": 23, "homeTeamId": "team_07", "awayTeamId": "team_06", "homeScore": 1, "awayScore": 1, "matchDate": " 2026-01-24T00:00:00.000Z" },
+  { "id": "23-team_11-team_18", "week": 23, "homeTeamId": "team_11", "awayTeamId": "team_18", "homeScore": 2, "awayScore": 2, "matchDate": " 2026-01-24T00:00:00.000Z" },
+  { "id": "23-team_04-team_16", "week": 23, "homeTeamId": "team_04", "awayTeamId": "team_16", "homeScore": 0, "awayScore": 1, "matchDate": " 2026-01-24T00:00:00.000Z" },
+  { "id": "23-team_01-team_14", "week": 23, "homeTeamId": "team_01", "awayTeamId": "team_14", "homeScore": 3, "awayScore": 1, "matchDate": " 2026-01-24T00:00:00.000Z" },
+  { "id": "23-team_03-team_12", "week": 23, "homeTeamId": "team_03", "awayTeamId": "team_12", "homeScore": 0, "awayScore": 2, "matchDate": " 2026-01-24T00:00:00.000Z" }
+]
