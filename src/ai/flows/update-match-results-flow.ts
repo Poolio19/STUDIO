@@ -35,11 +35,10 @@ export type UpdateMatchResultsOutput = z.infer<typeof UpdateMatchResultsOutputSc
 
 
 // Initialize Firebase Admin SDK within this module's scope
-let db: admin.firestore.Firestore;
 if (admin.apps.length === 0) {
   admin.initializeApp();
 }
-db = admin.firestore();
+const db = admin.firestore();
 
 
 /**
@@ -62,15 +61,13 @@ const updateMatchResultsFlow = ai.defineFlow(
     const { week, results } = input;
     const matchesCollection = db.collection('matches');
 
-    context.logger.info(`Starting score update for Week ${week}.`);
-
     try {
       const batch = db.batch();
       let updatedCount = 0;
 
       for (const result of results) {
         if (!result.id) {
-          context.logger.warn('Skipping result with no ID:', result);
+          console.warn('Skipping result with no ID:', result);
           continue;
         }
 
@@ -86,8 +83,6 @@ const updateMatchResultsFlow = ai.defineFlow(
 
       await batch.commit();
       
-      context.logger.info(`Successfully updated ${updatedCount} matches for Week ${week}.`);
-
       return {
         success: true,
         updatedCount,
@@ -96,7 +91,7 @@ const updateMatchResultsFlow = ai.defineFlow(
       };
 
     } catch (error: any) {
-      context.logger.error(`Failed to update scores for Week ${week}:`, error);
+      console.error(`Failed to update scores for Week ${week}:`, error);
       throw new Error(`Flow failed during score update: ${error.message}`);
     }
   }
