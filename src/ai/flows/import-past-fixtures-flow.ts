@@ -10,14 +10,6 @@ import * as admin from 'firebase-admin';
 import type { firestore as adminFirestore } from 'firebase-admin';
 import pastFixtures from '@/lib/past-fixtures.json';
 
-// Initialize Firebase Admin SDK within this module's scope
-let db: adminFirestore.Firestore;
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-db = admin.firestore();
-
-
 const ImportPastFixturesOutputSchema = z.object({
   success: z.boolean(),
   deletedCount: z.number().int(),
@@ -30,6 +22,17 @@ export async function importPastFixtures(): Promise<ImportPastFixturesOutput> {
   return importPastFixturesFlow();
 }
 
+/**
+ * Gets a Firestore admin instance, initializing the app if needed.
+ * This is a safer pattern for Next.js server environments.
+ */
+function getDb() {
+    if (admin.apps.length === 0) {
+        admin.initializeApp();
+    }
+    return admin.firestore();
+}
+
 const importPastFixturesFlow = ai.defineFlow(
   {
     name: 'importPastFixturesFlow',
@@ -37,6 +40,7 @@ const importPastFixturesFlow = ai.defineFlow(
     outputSchema: ImportPastFixturesOutputSchema,
   },
   async (input, context) => {
+    const db = getDb();
     const matchesCollection = db.collection('matches');
 
     context.logger.info('Starting import of past fixtures from JSON backup.');
