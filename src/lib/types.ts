@@ -125,3 +125,8 @@ export type WeeklyTeamStanding = {
     teamId: string;
     rank: number;
 };
+
+export type WeekResults = {
+    week: number;
+    results: MatchResult[];
+}

@@ -28,8 +28,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-import type { Match, Team, Prediction, User as UserProfile, UserHistory, CurrentStanding } from '@/lib/types';
+import type { Match, Team, Prediction, User as UserProfile, UserHistory, CurrentStanding, WeekResults } from '@/lib/types';
 import { importPastFixtures } from '@/ai/flows/import-past-fixtures-flow';
+import { createResultsFile } from '@/ai/flows/create-results-file-flow';
+import { importResultsFile } from '@/ai/flows/import-results-file-flow';
+
 import allFixtures from '@/lib/past-fixtures.json';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -42,7 +45,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
-import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
+import { Separator } from '@/components/ui/separator';
 
 
 const scoresFormSchema = z.object({
@@ -61,17 +64,12 @@ export default function AdminPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
   
-  const [dbStatus, setDbStatus] = React.useState<{ connected: boolean, message: string }>({ connected: false, message: 'Checking connection...' });
   const [isUpdating, setIsUpdating] = React.useState(false);
-  const [isSubmittingScores, setIsSubmittingScores] = React.useState(false);
-
+  const [isCreatingFile, setIsCreatingFile] = React.useState(false);
+  const [isImportingFile, setIsImportingFile] = React.useState(false);
   const [teamsMap, setTeamsMap] = React.useState<Map<string, Team>>(new Map());
+  const [lastCreatedFile, setLastCreatedFile] = React.useState<string | null>(null);
 
-  const connectivityCheckDocRef = useMemoFirebase(
-    () => (firestore ? doc(firestore, 'connectivity-test', 'connectivity-doc') : null),
-    [firestore]
-  );
-  
   const scoresForm = useForm<ScoresFormValues>({
     resolver: zodResolver(scoresFormSchema),
     defaultValues: {
@@ -103,77 +101,79 @@ export default function AdminPage() {
   }, [selectedWeek, weekFixtures, scoresForm]);
 
 
-  React.useEffect(() => {
-    if (!firestore) return;
-
-    const checkConnection = async () => {
-      try {
-        if (!connectivityCheckDocRef) return;
-        await getDoc(connectivityCheckDocRef);
-        setDbStatus({ connected: true, message: 'Database is connected.' });
-      } catch (error: any) {
-         if (error.code === 'permission-denied') {
-            setDbStatus({ connected: true, message: 'Database is connected (with secure rules).' });
-        } else if (error.code === 'unavailable' || error.message.includes('offline')) {
-            setDbStatus({ connected: false, message: 'Database connection failed: Client is offline.' });
-        } else {
-            console.error("Database connection check failed:", error);
-            setDbStatus({ connected: false, message: `Connection failed: ${error.message}` });
-        }
-      }
-    };
-    
-    checkConnection();
-  }, [connectivityCheckDocRef, firestore]);
-
-  const onScoresSubmit = async (data: ScoresFormValues) => {
-    setIsSubmittingScores(true);
-    toast({ title: `Updating scores for Week ${data.week}...` });
+  const onCreateFileSubmit = async (data: ScoresFormValues) => {
+    setIsCreatingFile(true);
+    toast({ title: `Creating results file for Week ${data.week}...` });
     try {
-      const result = await updateMatchResults({
+      const result = await createResultsFile({
         week: data.week,
         results: data.results,
       });
 
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to update scores.');
+      if (!result.success || !result.filePath) {
+        throw new Error(result.message || 'Failed to create file.');
       }
 
       toast({
-        title: 'Scores Updated!',
-        description: `${result.updatedCount} matches for Week ${data.week} were updated.`,
+        title: 'File Created!',
+        description: `Results saved to ${result.filePath}`,
       });
+      setLastCreatedFile(result.filePath);
 
     } catch (error: any) {
-      console.error('Error during score update:', error);
+      console.error('Error during file creation:', error);
       toast({
         variant: 'destructive',
-        title: 'Update Failed',
+        title: 'File Creation Failed',
         description: error.message || 'An unexpected error occurred.',
       });
     } finally {
-      setIsSubmittingScores(false);
+      setIsCreatingFile(false);
     }
   };
 
-
- const handleFullUpdate = async () => {
-    setIsUpdating(true);
-    toast({ title: 'Starting Full Update...', description: 'Step 1: Re-importing all fixtures.' });
-
+  const handleImportFile = async () => {
+    if (!lastCreatedFile) {
+        toast({ variant: 'destructive', title: 'Error', description: 'No file has been created to import.' });
+        return;
+    }
+    setIsImportingFile(true);
+    toast({ title: `Importing results from ${lastCreatedFile}...` });
     try {
-        const importResult = await importPastFixtures();
-        if (!importResult.success) {
-            throw new Error(importResult.message || 'Fixture import failed.');
+        const result = await importResultsFile({ filePath: lastCreatedFile });
+
+        if (!result.success) {
+            throw new Error(result.message || 'Failed to import results.');
         }
         
-        toast({ title: `Import Complete (${importResult.importedCount} fixtures)`, description: 'Step 2: Recalculating all league data.' });
+        toast({
+            title: 'Import Complete!',
+            description: `${result.updatedCount} matches updated for Week ${result.week}.`,
+        });
 
+    } catch (error: any) {
+        console.error('Error during file import:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Import Failed',
+            description: error.message || 'An unexpected error occurred.',
+        });
+    } finally {
+        setIsImportingFile(false);
+    }
+  }
+
+
+ const handleFullUpdateAndRecalculate = async () => {
+    setIsUpdating(true);
+    toast({ title: 'Starting Full Recalculation...', description: 'This will recalculate all league data based on the current scores in the database.' });
+
+    try {
         await handleRecalculateAllData();
         
         toast({
-            title: 'Full Data Update Complete!',
-            description: 'All fixtures and application data have been successfully updated.',
+            title: 'Full Data Recalculation Complete!',
+            description: 'All application data has been successfully updated.',
         });
 
     } catch (error: any) {
@@ -387,13 +387,13 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card>
             <CardHeader>
-                <CardTitle>Write Match Results</CardTitle>
+                <CardTitle>Step 1 & 2: Enter & Write Week's Results</CardTitle>
                 <CardDescription>
-                    Select a week to enter the scores and update the database directly.
+                    Select a week, enter the scores, then create a JSON file. Once the file is created, you can write it to the database.
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <form onSubmit={scoresForm.handleSubmit(onScoresSubmit)} className="space-y-4">
+                <form onSubmit={scoresForm.handleSubmit(onCreateFileSubmit)} className="space-y-4">
                   <Controller
                     control={scoresForm.control}
                     name="week"
@@ -452,44 +452,47 @@ export default function AdminPage() {
                       )
                     })}
                   </div>
-                  <Button type="submit" disabled={isSubmittingScores}>
-                    {isSubmittingScores ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                    Write Match Results for Week {selectedWeek}
-                  </Button>
+                  <div className='flex items-center gap-4'>
+                    <Button type="submit" disabled={isCreatingFile}>
+                        {isCreatingFile ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+                        1. Create Week {selectedWeek} Results File
+                    </Button>
+                     <Button type="button" onClick={handleImportFile} disabled={isImportingFile || !lastCreatedFile}>
+                        {isImportingFile ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+                        2. Write File to DB
+                    </Button>
+                  </div>
+                   {lastCreatedFile && <p className="text-sm text-muted-foreground">Last file created: {lastCreatedFile.split('/').pop()}</p>}
                 </form>
             </CardContent>
         </Card>
 
         <Card>
             <CardHeader>
-                <CardTitle>Master Data Control</CardTitle>
+                <CardTitle>Step 3: Master Data Control</CardTitle>
                 <CardDescription>
-                    These are system-wide operations. Use with caution.
+                    After writing new results to the database, run this to recalculate all scores and standings.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                <div className="flex items-center gap-4 rounded-lg border p-4">
-                  {dbStatus.connected ? <Icons.shieldCheck className="h-6 w-6 text-green-500" /> : <Icons.bug className="h-6 w-6 text-red-500" />}
-                  <p className="font-medium">{dbStatus.message}</p>
-                </div>
                 
                 <AlertDialog>
                 <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="lg" className="text-lg" disabled={isUpdating || !dbStatus.connected}>
+                    <Button variant="destructive" size="lg" className="text-lg" disabled={isUpdating}>
                         {isUpdating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                        Update & Recalculate All Data
+                        3. Update & Recalculate All Data
                     </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This will re-import all fixtures from the library and then recalculate standings, scores, and histories. This is a long-running operation.
+                        This will recalculate standings, scores, and histories based on the current data in the database. This is a long-running operation.
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleFullUpdate}>Yes, Run Full Update</AlertDialogAction>
+                    <AlertDialogAction onClick={handleFullUpdateAndRecalculate}>Yes, Run Full Recalculation</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
                 </AlertDialog>
@@ -499,5 +502,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    

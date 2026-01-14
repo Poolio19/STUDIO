@@ -7,6 +7,8 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import * as admin from 'firebase-admin';
+import type { WeekResults } from '@/lib/types';
+
 
 // Define the schema for a single match result
 const MatchResultSchema = z.object({
@@ -100,5 +102,3 @@ const updateMatchResultsFlow = ai.defineFlow(
     }
   }
 );
-
-    
