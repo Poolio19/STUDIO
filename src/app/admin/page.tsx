@@ -394,7 +394,7 @@ export default function AdminPage() {
             <CardHeader>
                 <CardTitle>Write Match Results</CardTitle>
                 <CardDescription>
-                    Select a week, enter the scores, and click the button to write the results to the database.
+                    Select a week and enter the scores to update the database directly.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -426,16 +426,30 @@ export default function AdminPage() {
                       return (
                         <div key={field.id} className="grid grid-cols-[1fr_50px_10px_50px_1fr] items-center gap-2">
                             <span className="text-right font-medium">{homeTeam?.name || fixture.homeTeamId}</span>
-                             <Input
-                                {...scoresForm.register(`results.${index}.homeScore`)}
-                                type="number"
-                                className="w-full text-center"
+                             <Controller
+                                control={scoresForm.control}
+                                name={`results.${index}.homeScore`}
+                                render={({ field }) => (
+                                    <Input
+                                        {...field}
+                                        type="number"
+                                        className="w-full text-center"
+                                        onChange={e => field.onChange(e.target.valueAsNumber)}
+                                    />
+                                )}
                             />
                             <span className="text-center font-bold">-</span>
-                            <Input
-                                {...scoresForm.register(`results.${index}.awayScore`)}
-                                type="number"
-                                className="w-full text-center"
+                            <Controller
+                                control={scoresForm.control}
+                                name={`results.${index}.awayScore`}
+                                render={({ field }) => (
+                                    <Input
+                                        {...field}
+                                        type="number"
+                                        className="w-full text-center"
+                                        onChange={e => field.onChange(e.target.valueAsNumber)}
+                                    />
+                                )}
                             />
                             <span className="font-medium">{awayTeam?.name || fixture.awayTeamId}</span>
                         </div>
@@ -489,3 +503,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
