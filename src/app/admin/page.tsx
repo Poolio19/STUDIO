@@ -127,6 +127,7 @@ export default function AdminPage() {
 
   const onWriteResultsFileSubmit = async (data: ScoresFormValues) => {
     setIsWritingFile(true);
+    setLatestFilePath(null);
     toast({ title: `Creating results file for Week ${data.week}...` });
     try {
       const result = await createResultsFile({
@@ -141,7 +142,7 @@ export default function AdminPage() {
       setLatestFilePath(result.filePath);
       toast({
         title: 'File Created!',
-        description: result.message,
+        description: `Results file created at: ${result.filePath}`,
       });
   
     } catch (error: any) {
@@ -158,7 +159,7 @@ export default function AdminPage() {
 
   const handleImportResultsFile = async () => {
     if (!latestFilePath) {
-      toast({ variant: 'destructive', title: 'Error', description: 'No results file has been created yet.' });
+      toast({ variant: 'destructive', title: 'Error', description: 'No results file has been created yet. Please complete Step 1.' });
       return;
     }
     setIsImportingFile(true);
@@ -170,7 +171,7 @@ export default function AdminPage() {
       }
       toast({
         title: 'Import Complete!',
-        description: `Updated ${result.updatedCount} matches for Week ${result.week}.`,
+        description: `Updated ${result.updatedCount} matches for Week ${result.week}. You can now run the full recalculation.`,
       });
 
     } catch (error: any) {
@@ -409,7 +410,7 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card>
             <CardHeader>
-                <CardTitle>Step 1 &amp; 2: Enter &amp; Write Results</CardTitle>
+                <CardTitle>Step 1 & 2: Enter & Write Results</CardTitle>
                 <CardDescription>
                     Select a week, enter the scores, then create a temporary results file and write it to the database.
                 </CardDescription>
@@ -501,7 +502,7 @@ export default function AdminPage() {
                 <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="lg" className="text-lg" disabled={isUpdating}>
                         {isUpdating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                        3. Update &amp; Recalculate All Data
+                        3. Update & Recalculate All Data
                     </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
