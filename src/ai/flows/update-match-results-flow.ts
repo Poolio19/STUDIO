@@ -28,20 +28,19 @@ export type UpdateMatchResultsInput = z.infer<typeof UpdateMatchResultsInputSche
 const UpdateMatchResultsOutputSchema = z.object({
   success: z.boolean(),
   updatedCount: z.number(),
+  week: z.number(),
   message: z.string().optional(),
 });
 export type UpdateMatchResultsOutput = z.infer<typeof UpdateMatchResultsOutputSchema>;
 
 
-/**
- * Gets a Firestore admin instance, initializing the app if needed.
- */
-function getDb() {
-  if (admin.apps.length === 0) {
-    admin.initializeApp();
-  }
-  return admin.firestore();
+// Initialize Firebase Admin SDK within this module's scope
+let db: admin.firestore.Firestore;
+if (admin.apps.length === 0) {
+  admin.initializeApp();
 }
+db = admin.firestore();
+
 
 /**
  * Exported wrapper function to be called from the client.
@@ -61,7 +60,6 @@ const updateMatchResultsFlow = ai.defineFlow(
   },
   async (input, context) => {
     const { week, results } = input;
-    const db = getDb();
     const matchesCollection = db.collection('matches');
 
     context.logger.info(`Starting score update for Week ${week}.`);
@@ -93,6 +91,7 @@ const updateMatchResultsFlow = ai.defineFlow(
       return {
         success: true,
         updatedCount,
+        week,
         message: `Successfully updated ${updatedCount} matches.`,
       };
 
