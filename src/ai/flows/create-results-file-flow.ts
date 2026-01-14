@@ -26,6 +26,7 @@ const CreateResultsFileOutputSchema = z.object({
   success: z.boolean(),
   filePath: z.string().optional(),
   message: z.string().optional(),
+  fileContent: z.string().optional(), // Return the file content as a string
 });
 export type CreateResultsFileOutput = z.infer<typeof CreateResultsFileOutputSchema>;
 
@@ -47,20 +48,21 @@ const createResultsFileFlow = ai.defineFlow(
     // IMPORTANT: In a sandboxed cloud environment, we can only write to os.tmpdir()
     const filePath = path.join(os.tmpdir(), fileName);
     
-    const fileContent: WeekResults = { week, results };
+    const weekResults: WeekResults = { week, results };
+    const fileContentString = JSON.stringify(weekResults, null, 2);
 
     try {
-      await fs.writeFile(filePath, JSON.stringify(fileContent, null, 2));
+      await fs.writeFile(filePath, fileContentString);
       
       return {
         success: true,
         filePath: filePath,
         message: `Successfully created ${fileName}`,
+        fileContent: fileContentString, // Send the content back to the client
       };
 
     } catch (error: any) {
       console.error(`Failed to create file for Week ${week}:`, error);
-      // It's important to throw an error that the client can handle.
       throw new Error(`Flow failed during file creation: ${error.message}`);
     }
   }

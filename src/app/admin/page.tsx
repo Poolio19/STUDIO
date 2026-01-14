@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { useFirestore, useMemoFirebase } from '@/firebase';
+import { useFirestore } from '@/firebase';
 
 import { collection, doc, getDoc, writeBatch, getDocs, query } from 'firebase/firestore';
 import { Icons } from '@/components/icons';
@@ -29,9 +29,8 @@ import {
 } from "@/components/ui/alert-dialog"
 
 import type { Match, Team, Prediction, User as UserProfile, UserHistory, CurrentStanding, WeekResults } from '@/lib/types';
-import { importPastFixtures } from '@/ai/flows/import-past-fixtures-flow';
 import { createResultsFile } from '@/ai/flows/create-results-file-flow';
-import { importResultsFile } from '@/ai/flows/import-results-file-flow';
+import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 
 
 import allFixtures from '@/lib/past-fixtures.json';
@@ -46,8 +45,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-
 
 const scoreSchema = z.union([z.literal('P'), z.literal('p'), z.coerce.number().int()]);
 const scoreTransformer = (val: 'P' | 'p' | number | string) => {
@@ -83,6 +80,8 @@ export default function AdminPage() {
   const [isWritingFile, setIsWritingFile] = React.useState(false);
   const [isImportingFile, setIsImportingFile] = React.useState(false);
   const [latestFilePath, setLatestFilePath] = React.useState<string | null>(null);
+  const [latestFileContent, setLatestFileContent] = React.useState<string | null>(null);
+
 
   const [teamsMap, setTeamsMap] = React.useState<Map<string, Team>>(new Map());
   
@@ -128,6 +127,7 @@ export default function AdminPage() {
   const onWriteResultsFileSubmit = async (data: ScoresFormValues) => {
     setIsWritingFile(true);
     setLatestFilePath(null);
+    setLatestFileContent(null);
     toast({ title: `Creating results file for Week ${data.week}...` });
     try {
       const result = await createResultsFile({
@@ -135,11 +135,13 @@ export default function AdminPage() {
         results: data.results.map(r => ({ id: r.id, homeScore: r.homeScore, awayScore: r.awayScore })),
       });
   
-      if (!result.success || !result.filePath) {
+      if (!result.success || !result.filePath || !result.fileContent) {
         throw new Error(result.message || 'Failed to create results file.');
       }
   
       setLatestFilePath(result.filePath);
+      setLatestFileContent(result.fileContent);
+
       toast({
         title: 'File Created!',
         description: `Results file created at: ${result.filePath}`,
@@ -158,14 +160,21 @@ export default function AdminPage() {
   };
 
   const handleImportResultsFile = async () => {
-    if (!latestFilePath) {
-      toast({ variant: 'destructive', title: 'Error', description: 'No results file has been created yet. Please complete Step 1.' });
+    if (!latestFileContent) {
+      toast({ variant: 'destructive', title: 'Error', description: 'No results file content available. Please complete Step 1.' });
       return;
     }
     setIsImportingFile(true);
-    toast({ title: `Importing results from ${latestFilePath}...` });
+    toast({ title: `Writing Week ${selectedWeek} results to database...` });
+
     try {
-      const result = await importResultsFile({ filePath: latestFilePath });
+      const weekData: WeekResults = JSON.parse(latestFileContent);
+      
+      const result = await updateMatchResults({
+        week: weekData.week,
+        results: weekData.results,
+      });
+
       if (!result.success) {
         throw new Error(result.message || 'Failed to import results file.');
       }
@@ -175,11 +184,11 @@ export default function AdminPage() {
       });
 
     } catch (error: any) {
-      console.error('Error during file import:', error);
+      console.error('Error during database update:', error);
       toast({
         variant: 'destructive',
-        title: 'Import Failed',
-        description: error.message || 'An unexpected error occurred during import.',
+        title: 'Database Update Failed',
+        description: error.message || 'An unexpected error occurred during the update.',
       });
     } finally {
       setIsImportingFile(false);
@@ -480,7 +489,7 @@ export default function AdminPage() {
                         {isWritingFile ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
                         1. Create Week {selectedWeek} Results File
                     </Button>
-                     <Button type="button" onClick={handleImportResultsFile} disabled={isImportingFile || !latestFilePath}>
+                     <Button type="button" onClick={handleImportResultsFile} disabled={isImportingFile || !latestFileContent}>
                         {isImportingFile ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
                         2. Write Week {selectedWeek} Results to DB
                     </Button>
@@ -524,5 +533,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
