@@ -46,7 +46,7 @@ import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
 
 
 const scoresFormSchema = z.object({
-  week: z.number().min(1).max(38),
+  week: z.coerce.number().min(1).max(38),
   results: z.array(z.object({
     id: z.string(),
     homeScore: z.coerce.number().min(-1),
@@ -403,7 +403,7 @@ export default function AdminPage() {
                     control={scoresForm.control}
                     name="week"
                     render={({ field }) => (
-                      <Select onValueChange={(value) => field.onChange(parseInt(value))} value={String(field.value)}>
+                      <Select onValueChange={(value) => field.onChange(parseInt(value, 10))} value={String(field.value)}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a week" />
                         </SelectTrigger>
@@ -424,7 +424,7 @@ export default function AdminPage() {
                        const awayTeam = teamsMap.get(fixture.awayTeamId);
 
                       return (
-                        <div key={field.id} className="grid grid-cols-[1fr_50px_10px_50px_1fr] items-center gap-2">
+                        <div key={field.id} className="grid grid-cols-[1fr_auto_10px_auto_1fr] items-center gap-2">
                             <span className="text-right font-medium">{homeTeam?.name || fixture.homeTeamId}</span>
                              <Controller
                                 control={scoresForm.control}
@@ -433,8 +433,9 @@ export default function AdminPage() {
                                     <Input
                                         {...field}
                                         type="number"
-                                        className="w-full text-center"
-                                        onChange={e => field.onChange(e.target.valueAsNumber)}
+                                        className="w-20 text-center"
+                                        value={field.value === -1 ? '' : field.value}
+                                        onChange={e => field.onChange(e.target.value === '' ? -1 : e.target.valueAsNumber)}
                                     />
                                 )}
                             />
@@ -446,8 +447,9 @@ export default function AdminPage() {
                                     <Input
                                         {...field}
                                         type="number"
-                                        className="w-full text-center"
-                                        onChange={e => field.onChange(e.target.valueAsNumber)}
+                                        className="w-20 text-center"
+                                        value={field.value === -1 ? '' : field.value}
+                                        onChange={e => field.onChange(e.target.value === '' ? -1 : e.target.valueAsNumber)}
                                     />
                                 )}
                             />
