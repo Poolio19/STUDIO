@@ -34,11 +34,16 @@ const UpdateMatchResultsOutputSchema = z.object({
 export type UpdateMatchResultsOutput = z.infer<typeof UpdateMatchResultsOutputSchema>;
 
 
-// Initialize Firebase Admin SDK within this module's scope
-if (admin.apps.length === 0) {
-  admin.initializeApp();
+/**
+ * Gets a Firestore admin instance, initializing the app if needed.
+ * This is a safer pattern for Next.js server environments.
+ */
+function getDb() {
+    if (admin.apps.length === 0) {
+        admin.initializeApp();
+    }
+    return admin.firestore();
 }
-const db = admin.firestore();
 
 
 /**
@@ -59,6 +64,7 @@ const updateMatchResultsFlow = ai.defineFlow(
   },
   async (input, context) => {
     const { week, results } = input;
+    const db = getDb();
     const matchesCollection = db.collection('matches');
 
     try {
