@@ -7,14 +7,14 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import * as admin from 'firebase-admin';
-import type { WeekResults } from '@/lib/types';
+import type { MatchResult } from '@/lib/types';
 
 
 // Define the schema for a single match result
 const MatchResultSchema = z.object({
   id: z.string(),
-  homeScore: z.number(),
-  awayScore: z.number(),
+  homeScore: z.number().int(),
+  awayScore: z.number().int(),
 });
 
 // Define the input schema for the flow
