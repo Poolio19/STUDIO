@@ -69,11 +69,19 @@ export default function AdminPage() {
   const [isImportingFile, setIsImportingFile] = React.useState(false);
   const [teamsMap, setTeamsMap] = React.useState<Map<string, Team>>(new Map());
   const [lastCreatedFile, setLastCreatedFile] = React.useState<string | null>(null);
+  
+  const lastPlayedWeek = React.useMemo(() => {
+    const playedFixtures = allFixtures.filter(fixture => fixture.homeScore > -1 && fixture.awayScore > -1);
+    if (playedFixtures.length === 0) return 0;
+    return Math.max(...playedFixtures.map(fixture => fixture.week));
+  }, []);
+  
+  const nextUnplayedWeek = lastPlayedWeek + 1;
 
   const scoresForm = useForm<ScoresFormValues>({
     resolver: zodResolver(scoresFormSchema),
     defaultValues: {
-      week: 1,
+      week: nextUnplayedWeek,
       results: [],
     },
   });
@@ -502,3 +510,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
