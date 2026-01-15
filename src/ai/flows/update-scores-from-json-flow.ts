@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview A flow to update a week's match results in the database.
+ * @fileOverview A flow to update a week's match results in the database from a JSON object.
  */
 
 import { ai } from '@/ai/genkit';
@@ -18,33 +18,29 @@ const MatchResultSchema = z.object({
 });
 
 // Define the input schema for the flow
-const UpdateMatchResultsInputSchema = z.object({
+const UpdateScoresInputSchema = z.object({
   week: z.number(),
   results: z.array(MatchResultSchema),
 });
-export type UpdateMatchResultsInput = z.infer<typeof UpdateMatchResultsInputSchema>;
+export type UpdateScoresInput = z.infer<typeof UpdateScoresInputSchema>;
 
 // Define the output schema for the flow
-const UpdateMatchResultsOutputSchema = z.object({
+const UpdateScoresOutputSchema = z.object({
   success: z.boolean(),
   updatedCount: z.number(),
   week: z.number(),
   message: z.string().optional(),
 });
-export type UpdateMatchResultsOutput = z.infer<typeof UpdateMatchResultsOutputSchema>;
+export type UpdateScoresOutput = z.infer<typeof UpdateScoresOutputSchema>;
 
 
 /**
  * Gets a Firestore admin instance, initializing the app if needed.
- * This is a safer pattern for Next.js server environments.
+ * This is a safer pattern for Next.js server environments, copied from a working flow.
  */
 function getDb() {
     if (admin.apps.length === 0) {
-        // Explicitly initialize with application default credentials.
-        // This is the robust way to connect in a managed server environment.
-        admin.initializeApp({
-            credential: admin.credential.applicationDefault(),
-        });
+        admin.initializeApp();
     }
     return admin.firestore();
 }
@@ -53,18 +49,18 @@ function getDb() {
 /**
  * Exported wrapper function to be called from the client.
  */
-export async function updateMatchResults(
-  input: UpdateMatchResultsInput
-): Promise<UpdateMatchResultsOutput> {
-  return updateMatchResultsFlow(input);
+export async function updateScoresFromJson(
+  input: UpdateScoresInput
+): Promise<UpdateScoresOutput> {
+  return updateScoresFromJsonFlow(input);
 }
 
 
-const updateMatchResultsFlow = ai.defineFlow(
+const updateScoresFromJsonFlow = ai.defineFlow(
   {
-    name: 'updateMatchResultsFlow',
-    inputSchema: UpdateMatchResultsInputSchema,
-    outputSchema: UpdateMatchResultsOutputSchema,
+    name: 'updateScoresFromJsonFlow',
+    inputSchema: UpdateScoresInputSchema,
+    outputSchema: UpdateScoresOutputSchema,
   },
   async (input, context) => {
     const { week, results } = input;
@@ -77,7 +73,7 @@ const updateMatchResultsFlow = ai.defineFlow(
 
       for (const result of results) {
         if (!result.id) {
-          console.warn('Skipping result with no ID:', result);
+          context.logger.warn('Skipping result with no ID:', result);
           continue;
         }
 
@@ -93,6 +89,8 @@ const updateMatchResultsFlow = ai.defineFlow(
 
       await batch.commit();
       
+      context.logger.info(`Successfully updated ${updatedCount} matches for Week ${week}.`);
+
       return {
         success: true,
         updatedCount,
@@ -101,7 +99,7 @@ const updateMatchResultsFlow = ai.defineFlow(
       };
 
     } catch (error: any) {
-      console.error(`Failed to update scores for Week ${week}:`, error);
+      context.logger.error(`Failed to update scores for Week ${week}:`, error);
       throw new Error(`Flow failed during score update: ${error.message}`);
     }
   }

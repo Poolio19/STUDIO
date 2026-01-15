@@ -30,7 +30,7 @@ import {
 
 import type { Match, Team, Prediction, User as UserProfile, UserHistory, CurrentStanding, WeekResults } from '@/lib/types';
 import { createResultsFile } from '@/ai/flows/create-results-file-flow';
-import { updateMatchResults } from '@/ai/flows/update-match-results-flow';
+import { updateScoresFromJson } from '@/ai/flows/update-scores-from-json-flow';
 
 
 import allFixtures from '@/lib/past-fixtures.json';
@@ -171,7 +171,7 @@ export default function AdminPage() {
     try {
       const weekData: WeekResults = JSON.parse(latestFileContent);
       
-      const result = await updateMatchResults({
+      const result = await updateScoresFromJson({
         week: weekData.week,
         results: weekData.results,
       });
