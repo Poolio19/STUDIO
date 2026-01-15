@@ -377,35 +377,37 @@ export default function AdminPage() {
         for (let i = 0; i < rankedUsers.length; i++) {
             const userWithNewData = rankedUsers[i];
             const newRank = i + 1;
-        
+            
             const oldData = oldUsersDataMap.get(userWithNewData.id);
-            if (!oldData) continue;
             
-            const historyData = userHistoriesMap.get(userWithNewData.id) || { userId: userWithNewData.id, weeklyScores: [] };
-            
+            const sourceHistory = userHistoriesMap.get(userWithNewData.id);
+            const historyData = {
+                userId: userWithNewData.id,
+                weeklyScores: sourceHistory ? [...sourceHistory.weeklyScores] : [],
+            };
+
             const recentHistoryBeforeNow = historyData.weeklyScores
                 .filter(ws => ws.week < maxWeeksPlayedNow)
                 .sort((a, b) => b.week - a.week);
             const previousWeekHistory = recentHistoryBeforeNow.length > 0 ? recentHistoryBeforeNow[0] : null;
 
-            // Base "previous" on last week's history if it exists, otherwise assume 0 for a new season/player.
             const previousScoreForChange = previousWeekHistory?.score ?? 0;
             const previousRankForChange = previousWeekHistory?.rank ?? 0;
 
             const scoreChange = userWithNewData.newScore - previousScoreForChange;
             const rankChange = previousRankForChange > 0 ? previousRankForChange - newRank : 0;
-        
-            const oldMinScore = oldData.minScore ?? oldData.score;
-            const oldMaxScore = oldData.maxScore ?? oldData.score;
-            const oldMinRank = (oldData.minRank && oldData.minRank > 0) ? oldData.minRank : (oldData.rank > 0 ? oldData.rank : 999);
-            const oldMaxRank = oldData.maxRank ?? oldData.rank ?? 0;
+            
+            // Robustly calculate new min/max score and rank
+            let currentMinScore = oldData?.minScore ?? userWithNewData.newScore;
+            let currentMaxScore = oldData?.maxScore ?? userWithNewData.newScore;
+            let currentMinRank = (oldData?.minRank && oldData.minRank > 0) ? oldData.minRank : 999;
+            let currentMaxRank = oldData?.maxRank ?? 0;
 
-            const newMinScore = Math.min(oldMinScore, userWithNewData.newScore);
-            const newMaxScore = Math.max(oldMaxScore, userWithNewData.newScore);
-            const newMinRank = newRank > 0 ? Math.min(oldMinRank, newRank) : oldMinRank;
-            const newMaxRank = newRank > 0 ? Math.max(oldMaxRank, newRank) : oldMaxRank;
+            const newMinScore = Math.min(currentMinScore, userWithNewData.newScore);
+            const newMaxScore = Math.max(currentMaxScore, userWithNewData.newScore);
+            const newMinRank = newRank > 0 ? Math.min(currentMinRank, newRank) : currentMinRank;
+            const newMaxRank = newRank > 0 ? Math.max(currentMaxRank, newRank) : currentMaxRank;
 
-        
             const finalUserData: Partial<UserProfile> = {
                 score: userWithNewData.newScore,
                 rank: newRank,
@@ -432,7 +434,7 @@ export default function AdminPage() {
         
             if (historyData.weeklyScores.length > 0) {
                 historyData.weeklyScores.sort((a, b) => a.week - b.week);
-                batch.set(doc(firestore, 'userHistories', userWithNewData.id), historyData, { merge: true });
+                batch.set(doc(firestore, 'userHistories', userWithNewData.id), historyData);
             }
         }
         
