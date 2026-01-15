@@ -72,48 +72,60 @@ export default function StandingsPage() {
             return { ...standing, ...team, recentResults };
         }).sort((a,b) => a.rank - b.rank);
 
+        const playedMatches = matchesData.filter(m => m.homeScore > -1 && m.awayScore > -1);
+        const currentGamesPlayed = playedMatches.length > 0 ? Math.max(0, ...playedMatches.map(m => m.week)) : 0;
+
         const finalChartData = (() => {
             const teamNameMap = new Map(teamsData.map(t => [t.id, t.name]));
+            const maxWeek = currentGamesPlayed;
+            
+            // Step 1: Create a complete history for each team
+            const teamHistories: { [teamId: string]: { [week: number]: number } } = {};
+            
+            // Initialize with week 0 from current standings
+            standingsData.forEach(s => {
+                if (!teamHistories[s.teamId]) teamHistories[s.teamId] = {};
+                teamHistories[s.teamId][0] = s.rank;
+            });
 
-            if (weeklyTeamStandings.length === 0) {
-                 const week0Data: { [key: string]: any } = { week: 0 };
-                standingsData.forEach(standing => {
-                    const teamName = teamMap.get(standing.teamId)?.name;
+            weeklyTeamStandings.forEach(ws => {
+                if (!teamHistories[ws.teamId]) teamHistories[ws.teamId] = {};
+                teamHistories[ws.teamId][ws.week] = ws.rank;
+            });
+            
+            // Step 2: Forward-fill the histories
+            Object.keys(teamHistories).forEach(teamId => {
+                let lastKnownRank = teamHistories[teamId][0] || 20;
+                for (let week = 0; week <= maxWeek; week++) {
+                    if (teamHistories[teamId][week] !== undefined) {
+                        lastKnownRank = teamHistories[teamId][week];
+                    } else {
+                        teamHistories[teamId][week] = lastKnownRank;
+                    }
+                }
+            });
+            
+            // Step 3: Transform into Recharts format
+            const transformedData = [];
+            for (let week = 0; week <= maxWeek; week++) {
+                const weekData: { [key: string]: any } = { week };
+                Object.keys(teamHistories).forEach(teamId => {
+                    const teamName = teamNameMap.get(teamId);
                     if (teamName) {
-                        week0Data[teamName] = standing.rank;
-                        week0Data[`${teamName}-outer`] = standing.rank;
-                        week0Data[`${teamName}-inner`] = standing.rank;
+                        const rank = teamHistories[teamId][week];
+                        weekData[teamName] = rank;
+                        // Add the keys the chart component expects for styling
+                        weekData[`${teamName}-outer`] = rank;
+                        weekData[`${teamName}-inner`] = rank;
                     }
                 });
-                return [week0Data];
+                transformedData.push(weekData);
             }
 
-            const standingsByWeek: { [week: number]: { teamId: string, rank: number }[] } = {};
-            for (const standing of weeklyTeamStandings) {
-                if (!standingsByWeek[standing.week]) {
-                    standingsByWeek[standing.week] = [];
-                }
-                standingsByWeek[standing.week].push(standing);
-            }
-            
-            const sortedWeeks = Object.keys(standingsByWeek).map(Number).sort((a, b) => a - b);
-            
-            return sortedWeeks.map(week => {
-                const weekData: { [key: string]: any } = { week };
-                for (const standing of standingsByWeek[week]) {
-                    const teamName = teamNameMap.get(standing.teamId);
-                    if (teamName) {
-                        weekData[teamName] = standing.rank;
-                        weekData[`${teamName}-outer`] = standing.rank;
-                        weekData[`${teamName}-inner`] = standing.rank;
-                    }
-                }
-                return weekData;
-            });
+            return transformedData;
         })();
 
         const resultsByWeek = new Map<number, (Match & {homeTeam: Team, awayTeam: Team})[]>();
-        const playedMatches = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
         playedMatches.sort((a,b) => a.week - b.week).forEach(match => {
             if (match.week === 0) return;
             const weekMatches = resultsByWeek.get(match.week) || [];
@@ -124,8 +136,6 @@ export default function StandingsPage() {
             }
             resultsByWeek.set(match.week, weekMatches);
         });
-
-        const currentGamesPlayed = playedMatches.length > 0 ? Math.max(...playedMatches.map(m => m.week), 0) : 0;
 
         return { 
             standingsWithTeamData: finalStandingsWithTeamData, 
@@ -312,3 +322,5 @@ export default function StandingsPage() {
     </div>
   );
 }
+
+    
