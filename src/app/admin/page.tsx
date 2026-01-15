@@ -275,7 +275,7 @@ export default function AdminPage() {
         const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
         const userHistoriesMap = new Map(userHistoriesSnap.docs.map(doc => [doc.id, doc.data() as UserHistory]));
         
-        // --- 2. Create a clean "before" snapshot of user data ---
+        // --- 2. Create a clean "before" snapshot of user data for calculating season highs/lows ---
         const oldUsersDataMap = new Map(users.map(u => [u.id, {
             score: u.score || 0,
             rank: u.rank || 0,
@@ -380,9 +380,17 @@ export default function AdminPage() {
         
             const oldData = oldUsersDataMap.get(userWithNewData.id);
             if (!oldData) continue;
-        
-            const scoreChange = userWithNewData.newScore - oldData.score;
-            const rankChange = oldData.rank > 0 ? oldData.rank - newRank : 0;
+            
+            const historyData = userHistoriesMap.get(userWithNewData.id) || { userId: userWithNewData.id, weeklyScores: [] };
+            const previousWeekNumber = maxWeeksPlayedNow > 0 ? maxWeeksPlayedNow - 1 : 0;
+            const previousWeekHistory = historyData.weeklyScores.find(ws => ws.week === previousWeekNumber);
+
+            // Base "previous" on last week's history if it exists, otherwise assume 0 for a new season/player.
+            const previousScoreForChange = previousWeekHistory?.score ?? 0;
+            const previousRankForChange = previousWeekHistory?.rank ?? 0;
+
+            const scoreChange = userWithNewData.newScore - previousScoreForChange;
+            const rankChange = previousRankForChange > 0 ? previousRankForChange - newRank : 0;
         
             const oldMinScore = oldData.minScore ?? oldData.score;
             const oldMaxScore = oldData.maxScore ?? oldData.score;
@@ -398,8 +406,8 @@ export default function AdminPage() {
             const finalUserData: Partial<UserProfile> = {
                 score: userWithNewData.newScore,
                 rank: newRank,
-                previousScore: oldData.score,
-                previousRank: oldData.rank,
+                previousScore: previousScoreForChange,
+                previousRank: previousRankForChange,
                 scoreChange: scoreChange,
                 rankChange: rankChange,
                 maxScore: newMaxScore,
@@ -410,7 +418,6 @@ export default function AdminPage() {
         
             batch.set(doc(firestore, 'users', userWithNewData.id), finalUserData, { merge: true });
         
-            const historyData = userHistoriesMap.get(userWithNewData.id) || { userId: userWithNewData.id, weeklyScores: [] };
             const weekHistoryIndex = historyData.weeklyScores.findIndex(ws => ws.week === maxWeeksPlayedNow);
             const newWeekEntry = { week: maxWeeksPlayedNow, score: userWithNewData.newScore, rank: newRank };
         
