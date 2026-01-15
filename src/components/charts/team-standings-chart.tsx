@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/chart';
 import type { Team } from '@/lib/types';
 import * as React from 'react';
+import { cn } from '@/lib/utils';
 
 interface TeamStandingsChartProps {
   chartData: any[];
@@ -120,7 +121,7 @@ export function TeamStandingsChart({
               <LineChart
                 data={chartData}
                 margin={{
-                  top: 20,
+                  top: 60,
                   right: 20,
                   left: -20,
                   bottom: 50,
