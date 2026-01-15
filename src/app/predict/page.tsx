@@ -111,7 +111,7 @@ export default function PredictPage() {
     }
   
     let initialItems: PredictionItem[] = [];
-    const teamMap = new Map(teams.map(team => ({
+    const teamMap = new Map(teams.map(team => [team.id, {
         id: team.id,
         teamId: team.id,
         teamName: team.name || 'Unknown Team',
@@ -120,9 +120,9 @@ export default function PredictPage() {
         bgColourFaint: team.bgColourFaint,
         bgColourSolid: team.bgColourSolid,
         textColour: team.textColour,
-    })));
+    }]));
   
-    if (user && userPrediction && userPrediction.rankings && userPrediction.rankings.length > 0) {
+    if (userPrediction?.rankings && userPrediction.rankings.length > 0) {
       initialItems = userPrediction.rankings
         .map(teamId => teamMap.get(teamId))
         .filter((item): item is PredictionItem => !!item);
@@ -135,12 +135,18 @@ export default function PredictPage() {
         .filter((item): item is PredictionItem => !!item);
     }
   
-    if (initialItems.length > 0 && JSON.stringify(initialItems.map(i => i.id)) !== JSON.stringify(items.map(i => i.id))) {
-      setItems(initialItems);
-      form.setValue('predictions', initialItems);
+    // Only update if the form is clean, to avoid overwriting user's drag-and-drop changes
+    if (!form.formState.isDirty && initialItems.length > 0) {
+        setItems(initialItems);
+        form.setValue('predictions', initialItems);
     }
-  }, [isLoading, teams, user, userPrediction, previousSeasonStandings, form, items]);
 
+  }, [isLoading, teams, previousSeasonStandings, userPrediction, form, user]);
+
+  const handleReorder = (newOrder: PredictionItem[]) => {
+    setItems(newOrder);
+    form.setValue('predictions', newOrder, { shouldDirty: true });
+  }
 
   const sortedPreviousStandings = React.useMemo(() => {
     if (!teams || !previousSeasonStandings) return [];
@@ -239,7 +245,7 @@ export default function PredictPage() {
              {/* Your Prediction */}
             <div className="flex flex-col">
               <div className="font-medium pb-2 text-muted-foreground text-center">
-                Your Prediction (2025-26)
+                Your Pred 25-26
               </div>
               <Card>
                 <CardContent className="p-0">
@@ -258,7 +264,7 @@ export default function PredictPage() {
                       </TableBody>
                     </Table>
                   ) : (
-                    <Reorder.Group axis="y" values={items} onReorder={setItems} className="flex-1 p-1">
+                    <Reorder.Group axis="y" values={items} onReorder={handleReorder} className="flex-1 p-1">
                       {items.map((item, index) => {
                         const TeamIcon = Icons[item.teamLogo as IconName] || Icons.match;
                         const isLiverpool = item.id === 'team_12';
@@ -303,7 +309,7 @@ export default function PredictPage() {
             {/* Current Standings */}
             <div className="flex flex-col">
               <div className="font-medium pb-2 text-muted-foreground flex justify-between">
-                <span>Current Standings (2025-26)</span>
+                <span>Current 25-26</span>
                 <div className="flex">
                   <span className="w-16 text-right">Pts</span>
                   <span className="w-16 text-right">GD</span>
@@ -341,7 +347,7 @@ export default function PredictPage() {
             {/* Last Season */}
             <div className="flex flex-col">
               <div className="font-medium pb-2 text-muted-foreground flex justify-between">
-                <span>Last Season (2024-25)</span>
+                <span>Last Year 24-25</span>
                 <div className="flex">
                   <span className="w-16 text-right">Pts</span>
                   <span className="w-16 text-right">GD</span>
@@ -372,3 +378,5 @@ export default function PredictPage() {
     </div>
   );
 }
+
+    
