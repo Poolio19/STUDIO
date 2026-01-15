@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -70,21 +69,22 @@ export function TeamStandingsChart({
       const week = `Wk ${label}`;
 
       return (
-        <div className="rounded-lg border bg-background p-2.5 shadow-xl">
-          <p className="mb-2 font-medium">{week}</p>
+        <div className="rounded-lg border bg-background/90 p-2.5 shadow-xl backdrop-blur-sm">
+          <p className="mb-2 font-medium text-center">{week}</p>
           <div className="grid grid-cols-1 gap-1.5">
             {sortedPayload.map((pld: any, index: number) => {
               const teamName = pld.dataKey;
               const team = sortedTeams.find(t => t.name === teamName);
+              const rank = pld.value;
 
               return (
                 <div key={index} className="flex items-center gap-2">
+                  <span className="font-bold w-6 text-right tabular-nums">#{rank}</span>
                   <div
-                    className="size-2.5 rounded-sm"
+                    className="size-2.5 rounded-sm shrink-0"
                     style={{ backgroundColor: team?.bgColourSolid }}
                   ></div>
-                  <span className="font-medium">{teamName}:</span>
-                  <span className="text-muted-foreground">Rank {pld.value}</span>
+                  <span className="font-medium">{teamName}</span>
                 </div>
               );
             })}
