@@ -79,45 +79,42 @@ export default function StandingsPage() {
             const teamNameMap = new Map(teamsData.map(t => [t.id, t.name]));
             const maxWeek = currentGamesPlayed;
             
-            // Step 1: Initialize histories and gather all ranks by week
-            const teamHistories: { [teamId: string]: { [week: number]: number } } = {};
+            const teamHistories: { [week: number]: { [teamId: string]: number } } = {};
             
-            teamsData.forEach(team => {
-                teamHistories[team.id] = {};
-            });
-            
+            for (let i = 0; i <= maxWeek; i++) {
+                teamHistories[i] = {};
+            }
+
             standingsData.forEach(s => {
-                if (teamHistories[s.teamId]) {
-                    teamHistories[s.teamId][0] = s.rank;
+                if (teamHistories[0]) {
+                     teamHistories[0][s.teamId] = s.rank;
                 }
             });
 
             weeklyTeamStandings.forEach(ws => {
-                if (teamHistories[ws.teamId]) {
-                    teamHistories[ws.teamId][ws.week] = ws.rank;
-                }
+                if (!teamHistories[ws.week]) teamHistories[ws.week] = {};
+                teamHistories[ws.week][ws.teamId] = ws.rank;
             });
             
-            // Step 2: Forward-fill the histories
-            Object.keys(teamHistories).forEach(teamId => {
-                let lastKnownRank = teamHistories[teamId][0] || 20; // Default to 20 if no rank at week 0
+            const filledHistories: { [teamId: string]: { [week: number]: number } } = {};
+            teamsData.forEach(team => {
+                filledHistories[team.id] = {};
+                let lastKnownRank = teamHistories[0]?.[team.id] || 20; 
                 for (let week = 0; week <= maxWeek; week++) {
-                    if (teamHistories[teamId][week] !== undefined) {
-                        lastKnownRank = teamHistories[teamId][week];
-                    } else {
-                        teamHistories[teamId][week] = lastKnownRank;
+                    if (teamHistories[week]?.[team.id] !== undefined) {
+                        lastKnownRank = teamHistories[week][team.id];
                     }
+                    filledHistories[team.id][week] = lastKnownRank;
                 }
             });
             
-            // Step 3: Transform into recharts format
             const transformedData = [];
             for (let week = 0; week <= maxWeek; week++) {
                 const weekData: { [key: string]: any } = { week };
-                Object.keys(teamHistories).forEach(teamId => {
+                Object.keys(filledHistories).forEach(teamId => {
                     const teamName = teamNameMap.get(teamId);
                     if (teamName) {
-                        weekData[teamName] = teamHistories[teamId][week];
+                        weekData[teamName] = filledHistories[teamId][week];
                     }
                 });
                 transformedData.push(weekData);
@@ -157,7 +154,7 @@ export default function StandingsPage() {
     };
 
     const weekHeaders = Array.from({ length: 6 }, (_, i) => {
-        const week = gamesPlayed - 5 + i;
+        const week = gamesPlayed - i;
         return week > 0 ? `WK${week}` : '';
     }).filter(Boolean);
 
@@ -207,8 +204,8 @@ export default function StandingsPage() {
               </TableRow>
                <TableRow>
                  <TableHead colSpan={11}></TableHead>
-                {Array(6-weekHeaders.length).fill(0).map((_, i) => <TableHead key={`empty-${i}`} className="w-12"></TableHead>)}
                 {weekHeaders.map(header => <TableHead key={header} className="text-center w-12">{header}</TableHead>)}
+                {Array(6-weekHeaders.length).fill(0).map((_, i) => <TableHead key={`empty-${i}`} className="w-12"></TableHead>)}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -216,7 +213,7 @@ export default function StandingsPage() {
                   if (!team) return null;
                   const TeamIcon = Icons[team.logo as IconName] || Icons.match;
                   const isLiverpool = team.id === 'team_12';
-                  const resultsToDisplay = team.recentResults;
+                  const resultsToDisplay = [...team.recentResults].reverse();
 
                   return (
                   <TableRow
