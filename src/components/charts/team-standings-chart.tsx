@@ -116,7 +116,7 @@ export function TeamStandingsChart({
             })}
         </div>
         <div className="relative">
-          <ChartContainer config={chartConfig} className="h-[700px] w-full">
+          <ChartContainer config={chartConfig} className="h-[700px] w-full border-2 border-red-500">
             <ResponsiveContainer>
               <LineChart
                 data={chartData}
