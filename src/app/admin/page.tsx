@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useFirestore } from '@/firebase';
 
-import { collection, doc, getDoc, writeBatch, getDocs, query } from 'firebase/firestore';
+import { collection, doc, writeBatch, getDocs, query } from 'firebase/firestore';
 import { Icons } from '@/components/icons';
 import {
   AlertDialog,
@@ -30,8 +30,6 @@ import {
 
 import type { Match, Team, Prediction, User as UserProfile, UserHistory, CurrentStanding, WeekResults } from '@/lib/types';
 import { createResultsFile } from '@/ai/flows/create-results-file-flow';
-import { updateScoresFromJson } from '@/ai/flows/update-scores-from-json-flow';
-
 
 import allFixtures from '@/lib/past-fixtures.json';
 import { useForm, Controller } from 'react-hook-form';
@@ -145,7 +143,7 @@ export default function AdminPage() {
 
       toast({
         title: 'File Created!',
-        description: `Results file created at: ${result.filePath}`,
+        description: `Results file created locally and is ready for import.`,
       });
   
     } catch (error: any) {
@@ -161,27 +159,42 @@ export default function AdminPage() {
   };
 
   const handleImportResultsFile = async () => {
+    if (!firestore) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Firestore is not available.' });
+      return;
+    }
     if (!latestFileContent) {
       toast({ variant: 'destructive', title: 'Error', description: 'No results file content available. Please complete Step 1.' });
       return;
     }
+
     setIsImportingFile(true);
     toast({ title: `Writing Week ${selectedWeek} results to database...` });
 
     try {
       const weekData: WeekResults = JSON.parse(latestFileContent);
-      
-      const result = await updateScoresFromJson({
-        week: weekData.week,
-        results: weekData.results,
-      });
+      const batch = writeBatch(firestore);
+      let updatedCount = 0;
 
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to import results file.');
+      for (const result of weekData.results) {
+        if (!result.id) {
+          console.warn('Skipping result with no ID:', result);
+          continue;
+        }
+
+        const docRef = doc(firestore, 'matches', result.id);
+        batch.update(docRef, {
+          homeScore: result.homeScore,
+          awayScore: result.awayScore,
+        });
+        updatedCount++;
       }
+
+      await batch.commit();
+
       toast({
         title: 'Import Complete!',
-        description: `Updated ${result.updatedCount} matches for Week ${result.week}. You can now run the full recalculation.`,
+        description: `Updated ${updatedCount} matches for Week ${weekData.week}. You can now run the full recalculation.`,
       });
 
     } catch (error: any) {
@@ -534,3 +547,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    

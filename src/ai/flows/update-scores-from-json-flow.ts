@@ -36,7 +36,7 @@ export type UpdateScoresOutput = z.infer<typeof UpdateScoresOutputSchema>;
 
 /**
  * Gets a Firestore admin instance, initializing the app if needed.
- * This is a safer pattern for Next.js server environments, copied from a working flow.
+ * This is a safer pattern for Next.js server environments.
  */
 function getDb() {
     if (admin.apps.length === 0) {
@@ -104,3 +104,5 @@ const updateScoresFromJsonFlow = ai.defineFlow(
     }
   }
 );
+
+    
