@@ -66,11 +66,8 @@ export function TeamStandingsChart({
         (a, b) => a.value - b.value
       );
 
-      const week = `Wk ${label}`;
-
       return (
-        <div className="rounded-lg border bg-background/90 p-4 shadow-xl backdrop-blur-sm min-w-[12rem]">
-            <p className="mb-3 font-bold text-center text-lg">{week}</p>
+        <div className="rounded-lg border bg-background/90 p-2.5 shadow-xl backdrop-blur-sm min-w-[12rem]">
             <div className="grid grid-cols-1 gap-2">
                 {sortedPayload.map((pld: any, index: number) => {
                     const teamName = pld.dataKey;
