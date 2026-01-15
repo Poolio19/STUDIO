@@ -274,9 +274,9 @@ export default function AdminPage() {
         const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
         const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
         const userHistoriesMap = new Map(userHistoriesSnap.docs.map(doc => [doc.id, doc.data() as UserHistory]));
-
+        
         // --- 2. Create a clean "before" snapshot of user data ---
-        const oldUsersData = new Map(users.map(u => [u.id, {
+        const oldUsersDataMap = new Map(users.map(u => [u.id, {
             score: u.score || 0,
             rank: u.rank || 0,
             minScore: u.minScore ?? u.score ?? 0,
@@ -362,14 +362,12 @@ export default function AdminPage() {
         });
         
         // --- 6. Rank users and calculate changes ---
-        toast({ title: 'Recalculation: Updating user profiles and changes...' });
-        const usersWithNewScores = users.map(user => ({
+        toast({ title: 'Recalculation: Updating user profiles and histories...' });
+        const rankedUsers = users.map(user => ({
             id: user.id,
             name: user.name,
             newScore: userScores[user.id] ?? 0,
-        }));
-        
-        const rankedUsers = usersWithNewScores.sort((a, b) => b.newScore - a.newScore || a.name.localeCompare(b.name));
+        })).sort((a, b) => b.newScore - a.newScore || a.name.localeCompare(b.name));
         
         const maxWeeksPlayedNow = playedMatches.length > 0 ? Math.max(0, ...playedMatches.map(m => m.week)) : 0;
         
@@ -377,15 +375,14 @@ export default function AdminPage() {
             const rankedUser = rankedUsers[i];
             const newRank = i + 1;
         
-            const oldData = oldUsersData.get(rankedUser.id);
-            if (!oldData) continue; // Skip if no old data exists for this user
+            const oldData = oldUsersDataMap.get(rankedUser.id);
+            if (!oldData) continue;
         
             const scoreChange = rankedUser.newScore - oldData.score;
             const rankChange = oldData.rank > 0 ? oldData.rank - newRank : 0;
         
             const newMinScore = Math.min(oldData.minScore, rankedUser.newScore);
             const newMaxScore = Math.max(oldData.maxScore, rankedUser.newScore);
-        
             const newMinRank = Math.min(oldData.minRank, newRank > 0 ? newRank : 999);
             const newMaxRank = Math.max(oldData.maxRank, newRank > 0 ? newRank : 0);
         
@@ -415,7 +412,7 @@ export default function AdminPage() {
             }
         
             historyData.weeklyScores.sort((a, b) => a.week - b.week);
-            batch.set(doc(firestore, 'userHistories', rankedUser.id), historyData);
+            batch.set(doc(firestore, 'userHistories', rankedUser.id), historyData, { merge: true });
         }
         
         // --- 7. Generate weekly historical standings and recent results ---
@@ -432,6 +429,8 @@ export default function AdminPage() {
             matchesUpToWeek.forEach(match => {
                 const homeStats = currentTeamStatsForWeek[match.homeTeamId];
                 const awayStats = currentTeamStatsForWeek[match.awayTeamId];
+                if (!homeStats || !awayStats) return;
+                
                 homeStats.gamesPlayed++;
                 awayStats.gamesPlayed++;
                 homeStats.goalsFor += match.homeScore;
