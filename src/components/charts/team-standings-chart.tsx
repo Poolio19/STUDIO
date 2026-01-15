@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -68,7 +69,7 @@ export function TeamStandingsChart({
       );
 
       return (
-        <div className="rounded-lg border bg-background/90 p-2.5 text-base leading-tight shadow-xl backdrop-blur-sm min-w-[12rem]">
+        <div className="rounded-lg border bg-background/90 p-2 text-base leading-tight shadow-xl backdrop-blur-sm min-w-[12rem]">
             <div className="grid grid-cols-1 gap-2">
                 {sortedPayload.map((pld: any, index: number) => {
                     const teamName = pld.dataKey;
@@ -78,13 +79,13 @@ export function TeamStandingsChart({
                     return (
                         <div key={index} className="flex items-center gap-2 text-sm">
                             <span className="font-bold w-6 text-right tabular-nums">{rank}</span>
-                             <div className="relative inline-block h-2 w-3 shrink-0 align-middle">
+                             <div className="relative inline-block h-1.5 w-2.5 shrink-0 align-middle">
                                 <div
                                     className="absolute inset-0 rounded-sm"
                                     style={{ backgroundColor: team?.bgColourSolid }}
                                 />
                                 <div
-                                    className="absolute left-1/2 top-1/2 h-1 w-1 -translate-x-1/2 -translate-y-1/2"
+                                    className="absolute left-1/2 top-1/2 h-0.5 w-0.5 -translate-x-1/2 -translate-y-1/2"
                                     style={{ backgroundColor: team?.iconColour }}
                                 />
                             </div>
@@ -106,7 +107,7 @@ export function TeamStandingsChart({
         <CardDescription>Team league position changes over the season.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-5 gap-x-4 gap-y-1 text-xs mb-6 px-4">
+        <div className="grid grid-cols-5 gap-x-4 gap-y-1 text-sm mb-6 px-4">
             {legendTeams.map((team, index) => {
             if (!team) return <div key={`empty-${index}`} />;
             return (
