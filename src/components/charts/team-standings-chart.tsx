@@ -147,7 +147,7 @@ export function TeamStandingsChart({
                   domain={[1, 20]}
                   tickCount={20}
                 />
-                <Tooltip content={<CustomTooltip />} offset={-24} />
+                <Tooltip content={<CustomTooltip />} offset={-16} />
                 {sortedTeams.map(team => (
                   <Line
                     key={team.id}
