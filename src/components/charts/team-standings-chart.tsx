@@ -116,7 +116,7 @@ export function TeamStandingsChart({
             })}
         </div>
         <div className="relative">
-          <ChartContainer config={chartConfig} className="h-[700px] w-full border-2 border-red-500">
+          <ChartContainer config={chartConfig} className="h-[700px] w-full">
             <ResponsiveContainer>
               <LineChart
                 data={chartData}
@@ -148,7 +148,7 @@ export function TeamStandingsChart({
                   domain={[1, 20]}
                   tickCount={20}
                 />
-                <Tooltip content={<CustomTooltip />} offset={-40} />
+                <Tooltip content={<CustomTooltip />} offset={-40} allowEscapeViewBox={{ x: false, y: true }} />
                 {sortedTeams.map(team => (
                   <Line
                     key={team.id}
