@@ -61,7 +61,8 @@ export function TeamStandingsChart({
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      const filteredPayload = payload.filter((p: any) => p.value !== undefined);
+      // We only care about the inner line for the tooltip, so filter out the outer ones
+      const filteredPayload = payload.filter((p: any) => p.value !== undefined && !p.dataKey.endsWith('-outer'));
       
       const sortedPayload = [...filteredPayload].sort(
         (a, b) => a.value - b.value
@@ -158,6 +159,7 @@ export function TeamStandingsChart({
                       stroke={team.bgColourFaint || '#ccc'}
                       strokeWidth={10}
                       dot={false}
+                      activeDot={false}
                       legendType="none"
                       tooltipType="none"
                     />
@@ -168,8 +170,6 @@ export function TeamStandingsChart({
                       strokeWidth={3}
                       dot={false}
                       name={team.name}
-                      legendType="none"
-                      tooltipType="none"
                     />
                   </React.Fragment>
                 ))}
