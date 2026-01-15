@@ -73,11 +73,10 @@ export default function StandingsPage() {
         }).sort((a,b) => a.rank - b.rank);
 
         const finalChartData = (() => {
-            if (teamsData.length === 0) {
-                return [];
-            }
+            const teamNameMap = new Map(teamsData.map(t => [t.id, t.name]));
+
             if (weeklyTeamStandings.length === 0) {
-                const week0Data: { [key: string]: any } = { week: 0 };
+                 const week0Data: { [key: string]: any } = { week: 0 };
                 standingsData.forEach(standing => {
                     const teamName = teamMap.get(standing.teamId)?.name;
                     if (teamName) {
@@ -89,7 +88,6 @@ export default function StandingsPage() {
                 return [week0Data];
             }
 
-            const teamNameMap = new Map(teamsData.map(t => [t.id, t.name]));
             const standingsByWeek: { [week: number]: { teamId: string, rank: number }[] } = {};
             for (const standing of weeklyTeamStandings) {
                 if (!standingsByWeek[standing.week]) {
