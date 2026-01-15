@@ -274,6 +274,16 @@ export default function AdminPage() {
         const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
         const userHistoriesMap = new Map(userHistoriesSnap.docs.map(doc => [doc.id, doc.data() as UserHistory]));
         
+        // **CAPTURE OLD STATE**
+        const oldUsersData = new Map(users.map(u => [u.id, {
+            score: u.score || 0,
+            rank: u.rank || 0,
+            minScore: u.minScore,
+            maxScore: u.maxScore,
+            minRank: u.minRank,
+            maxRank: u.maxRank,
+        }]));
+
         const batch = writeBatch(firestore);
 
         toast({ title: 'Recalculation: Clearing old calculated data...' });
@@ -353,37 +363,35 @@ export default function AdminPage() {
             userScores[prediction.userId] = totalScore;
         });
         
-        const rankedUsers = users.map(user => ({
+        const usersWithNewScores = users.map(user => ({
             id: user.id,
             name: user.name,
-            newScore: userScores[user.id] ?? (user.score || 0),
-        })).sort((a, b) => b.newScore - a.newScore || a.name.localeCompare(b.name));
+            newScore: userScores[user.id] ?? 0,
+        }));
+        
+        const rankedUsers = usersWithNewScores.sort((a, b) => b.newScore - a.newScore || a.name.localeCompare(b.name));
         
         const maxWeeksPlayedNow = playedMatches.length > 0 ? Math.max(0, ...playedMatches.map(m => m.week)) : 0;
-        const oldUsersMap = new Map(users.map(u => [u.id, u]));
         
         rankedUsers.forEach((rankedUser, index) => {
             const newRank = index + 1;
-            const oldUser = oldUsersMap.get(rankedUser.id);
-            if (!oldUser) return;
+            const oldData = oldUsersData.get(rankedUser.id);
+            if (!oldData) return;
         
-            const previousScore = oldUser.score || 0;
-            const previousRank = oldUser.rank || 0;
+            const scoreChange = rankedUser.newScore - oldData.score;
+            const rankChange = oldData.rank > 0 ? oldData.rank - newRank : 0;
         
-            const scoreChange = rankedUser.newScore - previousScore;
-            const rankChange = previousRank > 0 ? previousRank - newRank : 0;
+            const newMinScore = Math.min(oldData.minScore ?? rankedUser.newScore, rankedUser.newScore);
+            const newMaxScore = Math.max(oldData.maxScore ?? rankedUser.newScore, rankedUser.newScore);
         
-            const newMinScore = Math.min(oldUser.minScore ?? rankedUser.newScore, rankedUser.newScore);
-            const newMaxScore = Math.max(oldUser.maxScore ?? rankedUser.newScore, rankedUser.newScore);
-        
-            const newMinRank = Math.min(oldUser.minRank ?? 999, newRank > 0 ? newRank : 999);
-            const newMaxRank = Math.max(oldUser.maxRank ?? 0, newRank > 0 ? newRank : 0);
+            const newMinRank = Math.min(oldData.minRank ?? 999, newRank > 0 ? newRank : 999);
+            const newMaxRank = Math.max(oldData.maxRank ?? 0, newRank > 0 ? newRank : 0);
         
             const finalUserData: Partial<UserProfile> = {
                 score: rankedUser.newScore,
                 rank: newRank,
-                previousScore: previousScore,
-                previousRank: previousRank,
+                previousScore: oldData.score,
+                previousRank: oldData.rank,
                 scoreChange: scoreChange,
                 rankChange: rankChange,
                 maxScore: newMaxScore,
@@ -482,7 +490,6 @@ export default function AdminPage() {
                     else results[i] = 'L';
                 }
             });
-            results.reverse(); // Oldest game first
             batch.set(doc(firestore, 'teamRecentResults', team.id), { teamId: team.id, results: results });
         });
 
