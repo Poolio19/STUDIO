@@ -341,21 +341,20 @@ export default function AdminPage() {
           userScoresForWeek[prediction.userId] = totalScore;
         });
   
-        // C. Rank users for the week
+        // C. Rank users for the week, handling ties correctly.
         const rankedUsersForWeek = users
-          .map(user => ({ ...user, scoreForWeek: userScoresForWeek[user.id] ?? 0 }))
-          .sort((a, b) => b.scoreForWeek - a.scoreForWeek || a.name.localeCompare(b.name));
-        
-        let lastScore = -Infinity;
+            .map(user => ({ ...user, scoreForWeek: userScoresForWeek[user.id] ?? 0 }))
+            .sort((a, b) => b.scoreForWeek - a.scoreForWeek || a.name.localeCompare(b.name));
+            
         let currentRank = 0;
-        for (let i = 0; i < rankedUsersForWeek.length; i++) {
-          const user = rankedUsersForWeek[i];
-          if (i === 0 || user.scoreForWeek < lastScore) {
-            currentRank = i + 1;
-          }
-          lastScore = user.scoreForWeek;
-          allUserHistories[user.id].weeklyScores.push({ week: week, score: user.scoreForWeek, rank: currentRank });
-        }
+        let lastScore = Infinity;
+        rankedUsersForWeek.forEach((user, index) => {
+            if (user.scoreForWeek < lastScore) {
+                currentRank = index + 1;
+                lastScore = user.scoreForWeek;
+            }
+            allUserHistories[user.id].weeklyScores.push({ week: week, score: user.scoreForWeek, rank: currentRank });
+        });
       }
   
       // --- 4. Process final user states and write histories ---
@@ -364,24 +363,24 @@ export default function AdminPage() {
         const userHistory = allUserHistories[user.id];
         if (!userHistory || userHistory.weeklyScores.length === 0) continue;
   
-        const finalWeekData = userHistory.weeklyScores[userHistory.weeklyScores.length - 1];
-        const previousWeekIndex = userHistory.weeklyScores.findIndex(ws => ws.week === finalWeekData.week) -1;
-        const previousWeekData = previousWeekIndex >= 0 ? userHistory.weeklyScores[previousWeekIndex] : null;
+        const finalWeekIndex = userHistory.weeklyScores.length - 1;
+        const finalWeekData = userHistory.weeklyScores[finalWeekIndex];
+        const previousWeekData = userHistory.weeklyScores[finalWeekIndex - 1]; // Get data from one week prior
 
         const allRanks = userHistory.weeklyScores.map(ws => ws.rank).filter(r => r > 0);
         const allScores = userHistory.weeklyScores.map(ws => ws.score);
         
         const finalUserData: Partial<UserProfile> = {
-          score: finalWeekData.score,
-          rank: finalWeekData.rank,
-          previousScore: previousWeekData?.score ?? 0,
-          previousRank: previousWeekData?.rank ?? 0,
-          scoreChange: finalWeekData.score - (previousWeekData?.score ?? 0),
-          rankChange: (previousWeekData?.rank ?? 0) > 0 ? (previousWeekData!.rank - finalWeekData.rank) : 0,
-          maxScore: allScores.length > 0 ? Math.max(...allScores) : 0,
-          minScore: allScores.length > 0 ? Math.min(...allScores) : 0,
-          maxRank: allRanks.length > 0 ? Math.max(...allRanks) : 0,
-          minRank: allRanks.length > 0 ? Math.min(...allRanks) : 0,
+            score: finalWeekData.score,
+            rank: finalWeekData.rank,
+            previousScore: previousWeekData?.score ?? 0,
+            previousRank: previousWeekData?.rank ?? 0,
+            scoreChange: finalWeekData.score - (previousWeekData?.score ?? 0),
+            rankChange: (previousWeekData?.rank ?? 0) > 0 ? (previousWeekData!.rank - finalWeekData.rank) : 0,
+            maxScore: allScores.length > 0 ? Math.max(...allScores) : 0,
+            minScore: allScores.length > 0 ? Math.min(...allScores) : 0,
+            maxRank: allRanks.length > 0 ? Math.max(...allRanks) : 0, // This is worst rank
+            minRank: allRanks.length > 0 ? Math.min(...allRanks) : 0,  // This is best rank
         };
         mainBatch.set(doc(firestore, 'users', user.id), finalUserData, { merge: true });
         mainBatch.set(doc(firestore, 'userHistories', user.id), userHistory);
@@ -390,16 +389,16 @@ export default function AdminPage() {
       // --- 5. Calculate and store Monthly MimoM awards ---
       toast({ title: 'Recalculation: Calculating monthly awards...' });
 
-      const monthWeekRanges = [
-        { id: 'aug', month: 'August', year: 2025, startWeek: 0, endWeek: 4 },
-        { id: 'sep', month: 'September', year: 2025, startWeek: 4, endWeek: 8 },
-        { id: 'oct', month: 'October', year: 2025, startWeek: 8, endWeek: 11 },
-        { id: 'nov', month: 'November', year: 2025, startWeek: 11, endWeek: 14 },
-        { id: 'dec', month: 'December', year: 2025, startWeek: 14, endWeek: 19 },
-        { id: 'jan', month: 'January', year: 2026, startWeek: 19, endWeek: 23 },
-        { id: 'feb', month: 'February', year: 2026, startWeek: 23, endWeek: 27 },
-        { id: 'mar', month: 'March', year: 2026, startWeek: 27, endWeek: 31 },
-        { id: 'apr', month: 'April', year: 2026, startWeek: 31, endWeek: 35 },
+      const monthStartWeeks = [
+        { id: 'aug', month: 'August', year: 2025, startWeek: 1, endWeek: 4 },
+        { id: 'sep', month: 'September', year: 2025, startWeek: 4, endWeek: 7 },
+        { id: 'oct', month: 'October', year: 2025, startWeek: 7, endWeek: 10 },
+        { id: 'nov', month: 'November', year: 2025, startWeek: 10, endWeek: 14 },
+        { id: 'dec', month: 'December', year: 2025, startWeek: 14, endWeek: 20 },
+        { id: 'jan', month: 'January', year: 2026, startWeek: 20, endWeek: 25 },
+        { id: 'feb', month: 'February', year: 2026, startWeek: 25, endWeek: 29 },
+        { id: 'mar', month: 'March', year: 2026, startWeek: 29, endWeek: 32 },
+        { id: 'apr', month: 'April', year: 2026, startWeek: 32, endWeek: 35 },
         { id: 'may', month: 'May', year: 2026, startWeek: 35, endWeek: 38 },
       ];
       
@@ -411,7 +410,7 @@ export default function AdminPage() {
       const maxRank = nonProUsers.length > 0 ? nonProUsers.length : 50;
 
 
-      for (const month of monthWeekRanges) {
+      for (const month of monthStartWeeks) {
         if (playedWeeks.includes(month.endWeek)) {
           const monthlyImprovements: { userId: string; improvement: number; endRank: number }[] = [];
           
@@ -513,9 +512,21 @@ export default function AdminPage() {
       const newStandings = Object.entries(finalTeamStats)
         .map(([teamId, stats]) => ({ teamId, ...stats, teamName: teamMap.get(teamId)?.name || 'Unknown' }))
         .sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.teamName.localeCompare(b.teamName));
+      
+      let currentRank = 0;
+      let lastPoints = Infinity;
+      let lastGD = Infinity;
+      let lastGF = Infinity;
       newStandings.forEach((s, index) => {
+          if (s.points < lastPoints || s.goalDifference < lastGD || s.goalsFor < lastGF) {
+              currentRank = index + 1;
+          }
+          lastPoints = s.points;
+          lastGD = s.goalDifference;
+          lastGF = s.goalsFor;
+
           const { teamName, ...rest } = s;
-          mainBatch.set(doc(firestore, 'standings', s.teamId), { ...rest, rank: index + 1 });
+          mainBatch.set(doc(firestore, 'standings', s.teamId), { ...rest, rank: currentRank });
       });
 
       teams.forEach(team => {
@@ -563,7 +574,7 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card>
             <CardHeader>
-                <CardTitle>Step 1 &amp; 2: Enter &amp; Write Results</CardTitle>
+                <CardTitle>Step 1 & 2: Enter & Write Results</CardTitle>
                 <CardDescription>
                     Select a week, enter the scores, then create a temporary results file and write it to the database.
                 </CardDescription>
@@ -655,7 +666,7 @@ export default function AdminPage() {
                 <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="lg" className="text-lg" disabled={isUpdating}>
                         {isUpdating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                        3. Update &amp; Recalculate All Data
+                        3. Update & Recalculate All Data
                     </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
