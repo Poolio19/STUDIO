@@ -79,10 +79,8 @@ export default function StandingsPage() {
             const teamNameMap = new Map(teamsData.map(t => [t.id, t.name]));
             const maxWeek = currentGamesPlayed;
             
-            // Step 1: Create a complete history for each team
             const teamHistories: { [teamId: string]: { [week: number]: number } } = {};
             
-            // Initialize with week 0 from current standings
             standingsData.forEach(s => {
                 if (!teamHistories[s.teamId]) teamHistories[s.teamId] = {};
                 teamHistories[s.teamId][0] = s.rank;
@@ -90,10 +88,9 @@ export default function StandingsPage() {
 
             weeklyTeamStandings.forEach(ws => {
                 if (!teamHistories[ws.teamId]) teamHistories[ws.teamId] = {};
-                teamHistories[ws.week][ws.teamId] = ws.rank;
+                teamHistories[ws.teamId][ws.week] = ws.rank;
             });
             
-            // Step 2: Forward-fill the histories
             Object.keys(teamHistories).forEach(teamId => {
                 let lastKnownRank = teamHistories[teamId][0] || 20;
                 for (let week = 0; week <= maxWeek; week++) {
@@ -105,7 +102,6 @@ export default function StandingsPage() {
                 }
             });
             
-            // Step 3: Transform into Recharts format
             const transformedData = [];
             for (let week = 0; week <= maxWeek; week++) {
                 const weekData: { [key: string]: any } = { week };
