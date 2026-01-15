@@ -78,49 +78,42 @@ export default function StandingsPage() {
         const finalChartData = (() => {
             const teamNameMap = new Map(teamsData.map(t => [t.id, t.name]));
             const maxWeek = currentGamesPlayed;
-            
-            const teamHistories: { [week: number]: { [teamId: string]: number } } = {};
-            
+
+            const teamHistories: { [teamId: string]: { [week: number]: number } } = {};
+            teamsData.forEach(team => {
+                teamHistories[team.id] = {};
+            });
+
+            const weekDataContainer: { [week: number]: { [teamId: string]: number } } = {};
             for (let i = 0; i <= maxWeek; i++) {
-                teamHistories[i] = {};
+                weekDataContainer[i] = {};
             }
 
             weeklyTeamStandings.forEach(ws => {
-                if (!teamHistories[ws.week]) {
-                    teamHistories[ws.week] = {};
-                }
-                teamHistories[ws.week][ws.teamId] = ws.rank;
+                if (!weekDataContainer[ws.week]) weekDataContainer[ws.week] = {};
+                weekDataContainer[ws.week][ws.teamId] = ws.rank;
             });
             
-            const filledHistories: { [teamId: string]: { [week: number]: number } } = {};
             teamsData.forEach(team => {
-                filledHistories[team.id] = {};
-                // Find initial rank from standings if week 0 data isn't directly in weeklyTeamStandings
-                const initialStanding = standingsData.find(s => s.teamId === team.id);
-                let lastKnownRank = initialStanding ? initialStanding.rank : 20;
-
+                let lastKnownRank = standingsData.find(s => s.teamId === team.id)?.rank ?? 20;
                 for (let week = 0; week <= maxWeek; week++) {
-                    if (week === 0) {
-                        filledHistories[team.id][week] = lastKnownRank;
-                    } else {
-                        if (teamHistories[week]?.[team.id] !== undefined) {
-                            lastKnownRank = teamHistories[week][team.id];
-                        }
-                        filledHistories[team.id][week] = lastKnownRank;
+                    if (weekDataContainer[week]?.[team.id] !== undefined) {
+                        lastKnownRank = weekDataContainer[week][team.id];
                     }
+                    teamHistories[team.id][week] = lastKnownRank;
                 }
             });
             
             const transformedData = [];
             for (let week = 0; week <= maxWeek; week++) {
-                const weekData: { [key: string]: any } = { week };
-                Object.keys(filledHistories).forEach(teamId => {
+                const weekEntry: { [key: string]: any } = { week };
+                Object.keys(teamHistories).forEach(teamId => {
                     const teamName = teamNameMap.get(teamId);
                     if (teamName) {
-                        weekData[teamName] = filledHistories[teamId][week];
+                         weekEntry[teamName] = teamHistories[teamId][week];
                     }
                 });
-                transformedData.push(weekData);
+                transformedData.push(weekEntry);
             }
 
             return transformedData;
