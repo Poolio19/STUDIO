@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -276,8 +275,8 @@ export default function LeaderboardPage() {
                                   <ScoreIcon className="size-5" />
                               </div>
                           </TableCell>
-                          <TableCell className="text-center font-medium">{user.maxRank}</TableCell>
-                          <TableCell className="text-center font-medium border-r">{user.minRank}</TableCell>
+                          <TableCell className="text-center font-medium">{user.minRank}</TableCell>
+                          <TableCell className="text-center font-medium border-r">{user.maxRank}</TableCell>
                           <TableCell className="text-center font-medium">{user.maxScore}</TableCell>
                           <TableCell className="text-center font-medium">{user.minScore}</TableCell>
                       </TableRow>

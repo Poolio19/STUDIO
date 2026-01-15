@@ -382,8 +382,11 @@ export default function AdminPage() {
             if (!oldData) continue;
             
             const historyData = userHistoriesMap.get(userWithNewData.id) || { userId: userWithNewData.id, weeklyScores: [] };
-            const previousWeekNumber = maxWeeksPlayedNow > 0 ? maxWeeksPlayedNow - 1 : 0;
-            const previousWeekHistory = historyData.weeklyScores.find(ws => ws.week === previousWeekNumber);
+            
+            const recentHistoryBeforeNow = historyData.weeklyScores
+                .filter(ws => ws.week < maxWeeksPlayedNow)
+                .sort((a, b) => b.week - a.week);
+            const previousWeekHistory = recentHistoryBeforeNow.length > 0 ? recentHistoryBeforeNow[0] : null;
 
             // Base "previous" on last week's history if it exists, otherwise assume 0 for a new season/player.
             const previousScoreForChange = previousWeekHistory?.score ?? 0;
