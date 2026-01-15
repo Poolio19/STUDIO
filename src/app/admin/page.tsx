@@ -47,9 +47,10 @@ import {
 import { Input } from '@/components/ui/input';
 
 const scoreSchema = z.union([z.literal('P'), z.literal('p'), z.coerce.number().int()]);
-const scoreTransformer = (val: 'P' | 'p' | number | string) => {
+
+const scoreTransformer = (val: 'P' | 'p' | number | string | null | undefined) => {
+    if (val === undefined || val === null || val === '') return -1; // Not played is -1
     if (typeof val === 'string' && val.toLowerCase() === 'p') return -2; // Postponed is -2
-    if (val === '' || val === null || val === undefined) return -1; // Not played is -1
     const num = Number(val);
     return isNaN(num) ? -1 : num;
 }
