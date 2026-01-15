@@ -30,6 +30,7 @@ import {
 
 import type { Match, Team, Prediction, User as UserProfile, UserHistory, CurrentStanding, WeekResults } from '@/lib/types';
 import { createResultsFile } from '@/ai/flows/create-results-file-flow';
+import { updateScoresFromJson } from '@/ai/flows/update-scores-from-json-flow';
 
 import allFixtures from '@/lib/past-fixtures.json';
 import { useForm, Controller } from 'react-hook-form';
@@ -393,14 +394,14 @@ export default function AdminPage() {
         teams.forEach(team => {
             const teamMatches = playedMatches.filter(m => m.homeTeamId === team.id || m.awayTeamId === team.id).sort((a,b) => b.week - a.week).slice(0, 6);
             const results = Array(6).fill('-') as ('W' | 'D' | 'L' | '-')[];
-            teamMatches.reverse().forEach((match, i) => {
+            teamMatches.forEach((match, i) => {
                 if (i < 6) {
                     if (match.homeScore === match.awayScore) results[i] = 'D';
                     else if ((match.homeTeamId === team.id && match.homeScore > match.awayScore) || (match.awayTeamId === team.id && match.awayScore > match.homeScore)) results[i] = 'W';
                     else results[i] = 'L';
                 }
             });
-            batch.set(doc(firestore, 'teamRecentResults', team.id), { teamId: team.id, results: results.reverse() });
+            batch.set(doc(firestore, 'teamRecentResults', team.id), { teamId: team.id, results: results });
         });
 
         toast({ title: 'Recalculation: Committing all updates...' });
@@ -547,5 +548,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    

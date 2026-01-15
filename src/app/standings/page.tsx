@@ -90,7 +90,7 @@ export default function StandingsPage() {
 
             weeklyTeamStandings.forEach(ws => {
                 if (!teamHistories[ws.teamId]) teamHistories[ws.teamId] = {};
-                teamHistories[ws.teamId][ws.week] = ws.rank;
+                teamHistories[ws.week][ws.teamId] = ws.rank;
             });
             
             // Step 2: Forward-fill the histories
