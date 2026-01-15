@@ -237,298 +237,203 @@ export default function AdminPage() {
 
   const handleRecalculateAllData = async () => {
     if (!firestore) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Firestore is not available.' });
-        return;
+      toast({ variant: 'destructive', title: 'Error', description: 'Firestore is not available.' });
+      return;
     }
     
     try {
-        toast({ title: 'Recalculation: Fetching all required data...' });
-
-        // --- 1. Fetch all necessary data from Firestore ---
-        const [
-            teamsSnap, 
-            matchesSnap, 
-            usersSnap, 
-            predictionsSnap, 
-            userHistoriesSnap,
-            standingsSnap,
-            playerTeamScoresSnap,
-            teamRecentResultsSnap,
-            weeklyTeamStandingsSnap
-        ] = await Promise.all([
-            getDocs(query(collection(firestore, 'teams'))),
-            getDocs(query(collection(firestore, 'matches'))),
-            getDocs(query(collection(firestore, 'users'))),
-            getDocs(query(collection(firestore, 'predictions'))),
-            getDocs(query(collection(firestore, 'userHistories'))),
-            getDocs(query(collection(firestore, 'standings'))),
-            getDocs(query(collection(firestore, 'playerTeamScores'))),
-            getDocs(query(collection(firestore, 'teamRecentResults'))),
-            getDocs(query(collection(firestore, 'weeklyTeamStandings')))
-        ]);
-
-        const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
-        const teamMap = new Map(teams.map(t => [t.id, t]));
-        const allMatches = matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match));
-        const playedMatches = allMatches.filter(m => m.homeScore > -1 && m.awayScore > -1);
-        const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
-        const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
-        const userHistoriesMap = new Map(userHistoriesSnap.docs.map(doc => [doc.id, doc.data() as UserHistory]));
-        
-        // --- 2. Create a clean "before" snapshot of user data for calculating season highs/lows ---
-        const oldUsersDataMap = new Map(users.map(u => [u.id, {
-            score: u.score || 0,
-            rank: u.rank || 0,
-            minScore: u.minScore,
-            maxScore: u.maxScore,
-            minRank: u.minRank,
-            maxRank: u.maxRank,
-        }]));
-
-
-        const batch = writeBatch(firestore);
-
-        // --- 3. Clear old calculated data that will be fully replaced ---
-        toast({ title: 'Recalculation: Clearing old calculated data...' });
-        standingsSnap.forEach(doc => batch.delete(doc.ref));
-        playerTeamScoresSnap.forEach(doc => batch.delete(doc.ref));
-        teamRecentResultsSnap.forEach(doc => batch.delete(doc.ref));
-        weeklyTeamStandingsSnap.forEach(doc => batch.delete(doc.ref));
-        
-        // --- 4. Calculate new league standings ---
-        toast({ title: 'Recalculation: Calculating new league standings...' });
-        const finalTeamStats: { [teamId: string]: Omit<CurrentStanding, 'teamId' | 'rank'> } = {};
+      toast({ title: 'Recalculation: Fetching base data...' });
+  
+      // --- 1. Fetch all base data ---
+      const [teamsSnap, matchesSnap, usersSnap, predictionsSnap] = await Promise.all([
+        getDocs(query(collection(firestore, 'teams'))),
+        getDocs(query(collection(firestore, 'matches'))),
+        getDocs(query(collection(firestore, 'users'))),
+        getDocs(query(collection(firestore, 'predictions'))),
+      ]);
+  
+      const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
+      const teamMap = new Map(teams.map(t => [t.id, t]));
+      const allMatches = matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match));
+      const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
+      const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
+  
+      // --- 2. Clear all derived data collections ---
+      toast({ title: 'Recalculation: Clearing old derived data...' });
+      const collectionsToClear = ['standings', 'playerTeamScores', 'teamRecentResults', 'weeklyTeamStandings', 'userHistories'];
+      const deletionBatch = writeBatch(firestore);
+      for (const collectionName of collectionsToClear) {
+        const snap = await getDocs(query(collection(firestore, collectionName)));
+        snap.forEach(doc => deletionBatch.delete(doc.ref));
+      }
+      await deletionBatch.commit();
+      
+      const mainBatch = writeBatch(firestore);
+  
+      // --- 3. Build history week by week ---
+      const playedMatches = allMatches.filter(m => m.homeScore > -1 && m.awayScore > -1);
+      const playedWeeks = [...new Set(playedMatches.map(m => m.week))].sort((a, b) => a - b);
+  
+      const allUserHistories: { [userId: string]: UserHistory } = {};
+      users.forEach(u => {
+        allUserHistories[u.id] = { userId: u.id, weeklyScores: [] };
+      });
+  
+      for (const week of playedWeeks) {
+        toast({ title: `Recalculation: Processing Week ${week}...` });
+  
+        // A. Calculate team standings up to the current week
+        const matchesUpToWeek = allMatches.filter(m => m.week <= week && m.homeScore > -1 && m.awayScore > -1);
+        const weeklyTeamStats: { [teamId: string]: Omit<CurrentStanding, 'teamId' | 'rank' > } = {};
         teams.forEach(team => {
-            finalTeamStats[team.id] = { points: 0, gamesPlayed: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0 };
+            weeklyTeamStats[team.id] = { points: 0, gamesPlayed: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0 };
         });
-
-        playedMatches.forEach(match => {
-            const homeStats = finalTeamStats[match.homeTeamId];
-            const awayStats = finalTeamStats[match.awayTeamId];
+        matchesUpToWeek.forEach(match => {
+            const homeStats = weeklyTeamStats[match.homeTeamId];
+            const awayStats = weeklyTeamStats[match.awayTeamId];
             if (!homeStats || !awayStats) return;
-
+            
             homeStats.gamesPlayed++;
             awayStats.gamesPlayed++;
             homeStats.goalsFor += match.homeScore;
             awayStats.goalsFor += match.awayScore;
             homeStats.goalsAgainst += match.awayScore;
             awayStats.goalsAgainst += match.homeScore;
-            if (match.homeScore > match.awayScore) {
-                homeStats.points += 3; homeStats.wins++; awayStats.losses++;
-            } else if (match.homeScore < match.awayScore) {
-                awayStats.points += 3; awayStats.wins++; homeStats.losses++;
-            } else {
-                homeStats.points++; awayStats.points++; homeStats.draws++; awayStats.draws++;
-            }
+            
+            if (match.homeScore > match.awayScore) { homeStats.points += 3; homeStats.wins++; awayStats.losses++; }
+            else if (match.homeScore < match.awayScore) { awayStats.points += 3; awayStats.wins++; homeStats.losses++; }
+            else { homeStats.points++; awayStats.points++; homeStats.draws++; awayStats.draws++; }
         });
-
-        Object.keys(finalTeamStats).forEach(teamId => {
-            finalTeamStats[teamId].goalDifference = finalTeamStats[teamId].goalsFor - finalTeamStats[teamId].goalsAgainst;
+        Object.keys(weeklyTeamStats).forEach(teamId => {
+            weeklyTeamStats[teamId].goalDifference = weeklyTeamStats[teamId].goalsFor - weeklyTeamStats[teamId].goalsAgainst;
         });
-
-        const newStandings = Object.entries(finalTeamStats).map(([teamId, stats]) => ({
-            teamId, ...stats, teamName: teamMap.get(teamId)?.name || 'Unknown',
-        }));
+        const weeklyStandingsRanked = Object.entries(weeklyTeamStats)
+            .map(([teamId, stats]) => ({ teamId, ...stats, teamName: teamMap.get(teamId)?.name || 'Unknown' }))
+            .sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.teamName.localeCompare(b.teamName));
         
-        newStandings.sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.teamName.localeCompare(b.teamName));
+        const rankedTeamsForWeek = weeklyStandingsRanked.map((s, i) => ({ ...s, rank: i + 1 }));
+        const actualTeamRanksForWeek = new Map(rankedTeamsForWeek.map(s => [s.teamId, s.rank]));
 
-        const finalStandings: CurrentStanding[] = newStandings.map((s, index) => {
-            const { teamName, ...rest } = s;
-            return { ...rest, rank: index + 1 };
+        rankedTeamsForWeek.forEach(standing => {
+          mainBatch.set(doc(firestore, 'weeklyTeamStandings', `${week}-${standing.teamId}`), {
+              week: week,
+              teamId: standing.teamId,
+              rank: standing.rank
+          });
         });
 
-        finalStandings.forEach(standing => {
-            const standingRef = doc(firestore, 'standings', standing.teamId);
-            batch.set(standingRef, standing);
-        });
-
-        // --- 5. Calculate new user scores & prepare for ranking ---
-        toast({ title: 'Recalculation: Calculating user scores...' });
-        const actualTeamRanks = new Map(finalStandings.map(s => [s.teamId, s.rank]));
-        const userScores: { [userId: string]: number } = {};
-        
+        // B. Calculate user scores for the week
+        const userScoresForWeek: { [userId: string]: number } = {};
         predictions.forEach(prediction => {
-            if (!prediction.rankings) return;
-            let totalScore = 0;
-            prediction.rankings.forEach((teamId, index) => {
-                const predictedRank = index + 1;
-                const actualRank = actualTeamRanks.get(teamId);
-                if (actualRank !== undefined && actualRank > 0) {
-                    const score = 5 - Math.abs(predictedRank - actualRank);
-                    totalScore += score;
-                    batch.set(doc(firestore, 'playerTeamScores', `${prediction.userId}_${teamId}`), { userId: prediction.userId, teamId, score });
-                }
-            });
-            userScores[prediction.userId] = totalScore;
+          if (!prediction.rankings) return;
+          let totalScore = 0;
+          prediction.rankings.forEach((teamId, index) => {
+            const predictedRank = index + 1;
+            const actualRank = actualTeamRanksForWeek.get(teamId);
+            if (actualRank !== undefined && actualRank > 0) {
+              const score = 5 - Math.abs(predictedRank - actualRank);
+              totalScore += score;
+              if (week === playedWeeks[playedWeeks.length -1]) { // Only write final player scores
+                mainBatch.set(doc(firestore, 'playerTeamScores', `${prediction.userId}_${teamId}`), { userId: prediction.userId, teamId, score });
+              }
+            }
+          });
+          userScoresForWeek[prediction.userId] = totalScore;
         });
+  
+        // C. Rank users for the week
+        const rankedUsersForWeek = users
+          .map(user => ({ ...user, scoreForWeek: userScoresForWeek[user.id] ?? 0 }))
+          .sort((a, b) => b.scoreForWeek - a.scoreForWeek || a.name.localeCompare(b.name));
         
-        // --- 6. Rank users and calculate changes ---
-        toast({ title: 'Recalculation: Updating user profiles and histories...' });
-        
-        const rankedUsers = users
-          .map(user => ({
-            ...user,
-            newScore: userScores[user.id] ?? 0,
-          }))
-          .sort((a, b) => b.newScore - a.newScore || a.name.localeCompare(b.name));
-
-        const maxWeeksPlayedNow = playedMatches.length > 0 ? Math.max(0, ...playedMatches.map(m => m.week)) : 0;
-        
-        let lastScore = Infinity;
+        let lastScore = -Infinity;
         let currentRank = 0;
-
-        for (let i = 0; i < rankedUsers.length; i++) {
-            const userWithNewData = rankedUsers[i];
-            
-            // Handle tied ranks
-            if (i === 0) {
-                currentRank = 1;
-            } else if (userWithNewData.newScore < lastScore) {
-                currentRank = i + 1;
-            }
-            const newRank = currentRank;
-            lastScore = userWithNewData.newScore;
-            
-            const oldData = oldUsersDataMap.get(userWithNewData.id);
-            
-            const sourceHistory = userHistoriesMap.get(userWithNewData.id);
-            const historyData = {
-                userId: userWithNewData.id,
-                weeklyScores: sourceHistory ? [...sourceHistory.weeklyScores] : [],
-            };
-
-            const lastPlayedWeekInHistory = historyData.weeklyScores
-                .map(ws => ws.week)
-                .filter(w => w < maxWeeksPlayedNow)
-                .reduce((max, week) => Math.max(max, week), 0);
-
-            const previousWeekHistory = lastPlayedWeekInHistory > 0 
-                ? historyData.weeklyScores.find(ws => ws.week === lastPlayedWeekInHistory) 
-                : null;
-
-            const previousScoreForChange = previousWeekHistory?.score ?? 0;
-            const previousRankForChange = previousWeekHistory?.rank ?? 0;
-
-            const scoreChange = userWithNewData.newScore - previousScoreForChange;
-            const rankChange = previousRankForChange > 0 ? previousRankForChange - newRank : 0;
-            
-            // Calculate new min/max score and rank
-            let minRankSoFar = oldData?.minRank;
-            let maxRankSoFar = oldData?.maxRank;
-        
-            if (!minRankSoFar || minRankSoFar === 0) {
-              minRankSoFar = newRank;
-            }
-            if (!maxRankSoFar || maxRankSoFar === 0) {
-              maxRankSoFar = newRank;
-            }
-            
-            const newMinRank = Math.min(minRankSoFar, newRank);
-            const newMaxRank = Math.max(maxRankSoFar, newRank);
-        
-            let minScoreSoFar = oldData?.minScore ?? userWithNewData.newScore;
-            let maxScoreSoFar = oldData?.maxScore ?? userWithNewData.newScore;
-        
-            const newMinScore = Math.min(minScoreSoFar, userWithNewData.newScore);
-            const newMaxScore = Math.max(maxScoreSoFar, userWithNewData.newScore);
-
-
-            const finalUserData: Partial<UserProfile> = {
-                score: userWithNewData.newScore,
-                rank: newRank,
-                previousScore: previousScoreForChange,
-                previousRank: previousRankForChange,
-                scoreChange: scoreChange,
-                rankChange: rankChange,
-                maxScore: newMaxScore,
-                minScore: newMinScore,
-                maxRank: newMaxRank,
-                minRank: newMinRank,
-            };
-        
-            batch.set(doc(firestore, 'users', userWithNewData.id), finalUserData, { merge: true });
-        
-            const weekHistoryIndex = historyData.weeklyScores.findIndex(ws => ws.week === maxWeeksPlayedNow);
-            const newWeekEntry = { week: maxWeeksPlayedNow, score: userWithNewData.newScore, rank: newRank };
-        
-            if (weekHistoryIndex > -1) {
-              historyData.weeklyScores[weekHistoryIndex] = newWeekEntry;
-            } else if (maxWeeksPlayedNow > 0) {
-              historyData.weeklyScores.push(newWeekEntry);
-            }
-        
-            if (historyData.weeklyScores.length > 0) {
-                historyData.weeklyScores.sort((a, b) => a.week - b.week);
-                batch.set(doc(firestore, 'userHistories', userWithNewData.id), historyData);
-            }
+        for (let i = 0; i < rankedUsersForWeek.length; i++) {
+          const user = rankedUsersForWeek[i];
+          if (i === 0 || user.scoreForWeek < lastScore) {
+            currentRank = i + 1;
+          }
+          lastScore = user.scoreForWeek;
+          allUserHistories[user.id].weeklyScores.push({ week: week, score: user.scoreForWeek, rank: currentRank });
         }
+      }
+  
+      // --- 4. Process final user states and write histories ---
+      toast({ title: 'Recalculation: Finalizing user profiles...' });
+      for (const user of users) {
+        const userHistory = allUserHistories[user.id];
+        if (!userHistory || userHistory.weeklyScores.length === 0) continue;
+  
+        const finalWeekData = userHistory.weeklyScores[userHistory.weeklyScores.length - 1];
+        const previousWeekData = userHistory.weeklyScores.length > 1 ? userHistory.weeklyScores[userHistory.weeklyScores.length - 2] : null;
+  
+        const allRanks = userHistory.weeklyScores.map(ws => ws.rank).filter(r => r > 0);
+        const allScores = userHistory.weeklyScores.map(ws => ws.score);
         
-        // --- 7. Generate weekly historical standings and recent results ---
-        toast({ title: 'Recalculation: Generating weekly historical data...' });
-        const playedWeeks = [...new Set(playedMatches.map(m => m.week))].sort((a, b) => a - b);
+        const finalUserData: Partial<UserProfile> = {
+          score: finalWeekData.score,
+          rank: finalWeekData.rank,
+          previousScore: previousWeekData?.score ?? 0,
+          previousRank: previousWeekData?.rank ?? 0,
+          scoreChange: finalWeekData.score - (previousWeekData?.score ?? 0),
+          rankChange: (previousWeekData?.rank ?? 0) > 0 ? (previousWeekData!.rank - finalWeekData.rank) : 0,
+          maxScore: allScores.length > 0 ? Math.max(...allScores) : 0,
+          minScore: allScores.length > 0 ? Math.min(...allScores) : 0,
+          maxRank: allRanks.length > 0 ? Math.max(...allRanks) : 0,
+          minRank: allRanks.length > 0 ? Math.min(...allRanks) : 0,
+        };
+        mainBatch.set(doc(firestore, 'users', user.id), finalUserData, { merge: true });
+        mainBatch.set(doc(firestore, 'userHistories', user.id), userHistory);
+      }
+      
+      // --- 5. Generate final league standings and recent results ---
+      toast({ title: 'Recalculation: Generating final standings...' });
+      const finalMatches = allMatches.filter(m => m.week <= (playedWeeks[playedWeeks.length -1] || 0) && m.homeScore > -1 && m.awayScore > -1);
+      const finalTeamStats: { [teamId: string]: Omit<CurrentStanding, 'teamId' | 'rank'> } = {};
+      teams.forEach(team => {
+          finalTeamStats[team.id] = { points: 0, gamesPlayed: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0 };
+      });
+      finalMatches.forEach(match => {
+          const homeStats = finalTeamStats[match.homeTeamId];
+          const awayStats = finalTeamStats[match.awayTeamId];
+          if (!homeStats || !awayStats) return;
+          
+          homeStats.gamesPlayed++; awayStats.gamesPlayed++;
+          homeStats.goalsFor += match.homeScore; awayStats.goalsFor += match.awayScore;
+          homeStats.goalsAgainst += match.awayScore; awayStats.goalsAgainst += match.homeScore;
 
-        for (const week of playedWeeks) {
-            const matchesUpToWeek = allMatches.filter(m => m.week <= week && m.homeScore > -1 && m.awayScore > -1);
-            const currentTeamStatsForWeek: { [teamId: string]: any } = {};
-            teams.forEach(team => {
-                currentTeamStatsForWeek[team.id] = { teamName: team.name, points: 0, gamesPlayed: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0 };
-            });
+          if (match.homeScore > match.awayScore) { homeStats.points += 3; homeStats.wins++; awayStats.losses++; }
+          else if (match.homeScore < match.awayScore) { awayStats.points += 3; awayStats.wins++; homeStats.losses++; }
+          else { homeStats.points++; awayStats.points++; homeStats.draws++; awayStats.draws++; }
+      });
+      Object.keys(finalTeamStats).forEach(teamId => {
+          finalTeamStats[teamId].goalDifference = finalTeamStats[teamId].goalsFor - finalTeamStats[teamId].goalsAgainst;
+      });
+      const newStandings = Object.entries(finalTeamStats)
+        .map(([teamId, stats]) => ({ teamId, ...stats, teamName: teamMap.get(teamId)?.name || 'Unknown' }))
+        .sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.teamName.localeCompare(b.teamName));
+      newStandings.forEach((s, index) => {
+          const { teamName, ...rest } = s;
+          mainBatch.set(doc(firestore, 'standings', s.teamId), { ...rest, rank: index + 1 });
+      });
 
-            matchesUpToWeek.forEach(match => {
-                const homeStats = currentTeamStatsForWeek[match.homeTeamId];
-                const awayStats = currentTeamStatsForWeek[match.awayTeamId];
-                if (!homeStats || !awayStats) return;
-                
-                homeStats.gamesPlayed++;
-                awayStats.gamesPlayed++;
-                homeStats.goalsFor += match.homeScore;
-                awayStats.goalsFor += match.awayScore;
-                homeStats.goalsAgainst += match.awayScore;
-                awayStats.goalsAgainst += match.homeScore;
-                if (match.homeScore > match.awayScore) {
-                    homeStats.points += 3; homeStats.wins++; awayStats.losses++;
-                } else if (match.homeScore < match.awayScore) {
-                    awayStats.points += 3; awayStats.wins++; homeStats.losses++;
-                } else {
-                    homeStats.points++; awayStats.points++; homeStats.draws++; awayStats.draws++;
-                }
-            });
-            Object.keys(currentTeamStatsForWeek).forEach(teamId => {
-                currentTeamStatsForWeek[teamId].goalDifference = currentTeamStatsForWeek[teamId].goalsFor - currentTeamStatsForWeek[teamId].goalsAgainst;
-            });
-            const weeklyStandingsRanked = Object.entries(currentTeamStatsForWeek)
-                .map(([teamId, stats]) => ({ teamId, ...stats }))
-                .sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.teamName.localeCompare(b.teamName));
-            
-            weeklyStandingsRanked.forEach((standing, index) => {
-                const rank = index + 1;
-                batch.set(doc(firestore, 'weeklyTeamStandings', `${week}-${standing.teamId}`), {
-                    week: week,
-                    teamId: standing.teamId,
-                    rank: rank
-                });
-            });
-        }
-        
-        teams.forEach(team => {
-            const teamMatches = playedMatches
-                .filter(m => m.homeTeamId === team.id || m.awayTeamId === team.id)
-                .sort((a,b) => b.week - a.week);
-            const results: ('W' | 'D' | 'L' | '-')[] = Array(6).fill('-');
-            teamMatches.slice(0, 6).forEach((match, i) => {
-                if (i < 6) {
-                    if (match.homeScore === match.awayScore) results[i] = 'D';
-                    else if ((match.homeTeamId === team.id && match.homeScore > match.awayScore) || (match.awayTeamId === team.id && match.awayScore > match.homeScore)) results[i] = 'W';
-                    else results[i] = 'L';
-                }
-            });
-            batch.set(doc(firestore, 'teamRecentResults', team.id), { teamId: team.id, results: results.reverse() });
+      teams.forEach(team => {
+        const teamMatches = playedMatches.filter(m => m.homeTeamId === team.id || m.awayTeamId === team.id).sort((a,b) => b.week - a.week);
+        const results: ('W' | 'D' | 'L' | '-')[] = Array(6).fill('-');
+        teamMatches.slice(0, 6).forEach((match, i) => {
+            if (i < 6) {
+                if (match.homeScore === match.awayScore) results[i] = 'D';
+                else if ((match.homeTeamId === team.id && match.homeScore > match.awayScore) || (match.awayTeamId === team.id && match.awayScore > match.homeScore)) results[i] = 'W';
+                else results[i] = 'L';
+            }
         });
+        mainBatch.set(doc(firestore, 'teamRecentResults', team.id), { teamId: team.id, results: results.reverse() });
+      });
 
-        // --- 8. Commit all changes to the database ---
-        toast({ title: 'Recalculation: Committing all updates...' });
-        await batch.commit();
-
+      // --- 6. Commit all changes ---
+      toast({ title: 'Recalculation: Committing all updates...' });
+      await mainBatch.commit();
+  
     } catch (error: any) {
         console.error('Error during client-side data recalculation:', error);
         toast({
@@ -539,6 +444,7 @@ export default function AdminPage() {
         throw error; // Re-throw to be caught by the parent handler
     }
   };
+
 
   const weekOptions = Array.from({ length: 38 }, (_, i) => i + 1);
 
@@ -670,5 +576,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
