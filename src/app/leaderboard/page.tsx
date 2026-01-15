@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -203,30 +204,30 @@ export default function LeaderboardPage() {
           <Table>
             <TableHeader>
                <TableRow>
-                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-blue-200/50 dark:bg-blue-800/30">PremPred Standings</TableHead>
-                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-green-200/50 dark:bg-green-800/30">Changes In The Past Week</TableHead>
-                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground bg-purple-200/50 dark:bg-purple-800/30">Seasons Highs And Lows</TableHead>
+                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-blue-200/50 dark:bg-blue-800/30 py-2">PremPred Standings</TableHead>
+                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-green-200/50 dark:bg-green-800/30 py-2">Changes In The Past Week</TableHead>
+                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground bg-purple-200/50 dark:bg-purple-800/30 py-2">Seasons Highs And Lows</TableHead>
               </TableRow>
               <TableRow>
-                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-blue-100/50 dark:bg-blue-900/20">Week {currentWeek}, Current Standings</TableHead>
-                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-green-100/50 dark:bg-green-900/20">Position</TableHead>
-                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-green-100/50 dark:bg-green-900/20">Points</TableHead>
-                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-purple-100/50 dark:bg-purple-900/20">Position</TableHead>
-                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground bg-purple-100/50 dark:bg-purple-900/20">Points</TableHead>
+                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-blue-100/50 dark:bg-blue-900/20 py-2">Week {currentWeek}, Current Standings</TableHead>
+                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-green-100/50 dark:bg-green-900/20 py-2">Position</TableHead>
+                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-green-100/50 dark:bg-green-900/20 py-2">Points</TableHead>
+                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-purple-100/50 dark:bg-purple-900/20 py-2">Position</TableHead>
+                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground bg-purple-100/50 dark:bg-purple-900/20 py-2">Points</TableHead>
               </TableRow>
               <TableRow>
-                <TableHead className="w-[80px] bg-blue-50/50 dark:bg-blue-900/10">Position</TableHead>
-                <TableHead className="bg-blue-50/50 dark:bg-blue-900/10">Player</TableHead>
-                <TableHead className="text-center bg-blue-50/50 dark:bg-blue-900/10">Points</TableHead>
-                <TableHead className="text-center border-r bg-blue-50/50 dark:bg-blue-900/10">Winnings</TableHead>
-                <TableHead className="text-center bg-green-50/50 dark:bg-green-900/10">Was</TableHead>
-                <TableHead className="w-[130px] text-center border-r bg-green-50/50 dark:bg-green-900/10">Move</TableHead>
-                <TableHead className="text-center bg-green-50/50 dark:bg-green-900/10">Was</TableHead>
-                <TableHead className="w-[130px] text-center border-r bg-green-50/50 dark:bg-green-900/10">Change</TableHead>
-                <TableHead className="text-center bg-purple-50/50 dark:bg-purple-900/10">High</TableHead>
-                <TableHead className="text-center border-r bg-purple-5-50/50 dark:bg-purple-900/10">Low</TableHead>
-                <TableHead className="text-center bg-purple-50/50 dark:bg-purple-900/10">High</TableHead>
-                <TableHead className="text-center bg-purple-50/50 dark:bg-purple-900/10">Low</TableHead>
+                <TableHead className="w-[80px] bg-blue-50/50 dark:bg-blue-900/10 py-2">Position</TableHead>
+                <TableHead className="bg-blue-50/50 dark:bg-blue-900/10 py-2">Player</TableHead>
+                <TableHead className="text-center bg-blue-50/50 dark:bg-blue-900/10 py-2">Points</TableHead>
+                <TableHead className="text-center border-r bg-blue-50/50 dark:bg-blue-900/10 py-2">Winnings</TableHead>
+                <TableHead className="text-center bg-green-50/50 dark:bg-green-900/10 py-2">Was</TableHead>
+                <TableHead className="w-[130px] text-center border-r bg-green-50/50 dark:bg-green-900/10 py-2">Move</TableHead>
+                <TableHead className="text-center bg-green-50/50 dark:bg-green-900/10 py-2">Was</TableHead>
+                <TableHead className="w-[130px] text-center border-r bg-green-50/50 dark:bg-green-900/10 py-2">Change</TableHead>
+                <TableHead className="text-center bg-purple-50/50 dark:bg-purple-900/10 py-2">High</TableHead>
+                <TableHead className="text-center border-r bg-purple-5-50/50 dark:bg-purple-900/10 py-2">Low</TableHead>
+                <TableHead className="text-center bg-purple-50/50 dark:bg-purple-900/10 py-2">High</TableHead>
+                <TableHead className="text-center bg-purple-50/50 dark:bg-purple-900/10 py-2">Low</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -247,38 +248,38 @@ export default function LeaderboardPage() {
                   
                   return (
                       <TableRow key={user.id} className={cn(getRankColour(user))}>
-                          <TableCell className="font-medium text-center">{user.rank}</TableCell>
-                          <TableCell>
+                          <TableCell className="font-medium text-center py-1">{user.rank}</TableCell>
+                          <TableCell className="py-1">
                             <div className="flex items-center gap-3">
-                                <Avatar className="h-9 w-9">
+                                <Avatar className="h-8 w-8">
                                 <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
                                 <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <span>{user.isPro ? user.name.toUpperCase() : user.name}</span>
                             </div>
                           </TableCell>
-                          <TableCell className="text-center font-bold text-lg">{user.score}</TableCell>
-                          <TableCell className="text-center font-medium border-r">
+                          <TableCell className="text-center font-bold text-lg py-1">{user.score}</TableCell>
+                          <TableCell className="text-center font-medium border-r py-1">
                             {user.isPro ? '-' : (userWinnings > 0 ? `£${userWinnings.toFixed(2)}` : '£0.00')}
                           </TableCell>
-                          <TableCell className="text-center font-medium">{user.previousRank}</TableCell>
-                          <TableCell className={cn("font-bold text-center border-r", getRankChangeColour(user.rankChange))}>
+                          <TableCell className="text-center font-medium py-1">{user.previousRank}</TableCell>
+                          <TableCell className={cn("font-bold text-center border-r py-1", getRankChangeColour(user.rankChange))}>
                               <div className="flex items-center justify-center gap-2">
                                   <span>{Math.abs(user.rankChange)}</span>
                                   <RankIcon className="size-5" />
                               </div>
                           </TableCell>
-                          <TableCell className="text-center font-medium">{user.previousScore}</TableCell>
-                          <TableCell className={cn("font-bold text-center border-r", getRankChangeColour(user.scoreChange))}>
+                          <TableCell className="text-center font-medium py-1">{user.previousScore}</TableCell>
+                          <TableCell className={cn("font-bold text-center border-r py-1", getRankChangeColour(user.scoreChange))}>
                               <div className="flex items-center justify-center gap-2">
                                   <span>{formatPointsChange(user.scoreChange)}</span>
                                   <ScoreIcon className="size-5" />
                               </div>
                           </TableCell>
-                          <TableCell className="text-center font-medium">{user.minRank}</TableCell>
-                          <TableCell className="text-center font-medium border-r">{user.maxRank}</TableCell>
-                          <TableCell className="text-center font-medium">{user.maxScore}</TableCell>
-                          <TableCell className="text-center font-medium">{user.minScore}</TableCell>
+                          <TableCell className="text-center font-medium py-1">{user.minRank}</TableCell>
+                          <TableCell className="text-center font-medium border-r py-1">{user.maxRank}</TableCell>
+                          <TableCell className="text-center font-medium py-1">{user.maxScore}</TableCell>
+                          <TableCell className="text-center font-medium py-1">{user.minScore}</TableCell>
                       </TableRow>
                   );
                 })
@@ -290,3 +291,5 @@ export default function LeaderboardPage() {
     </div>
   );
 }
+
+    
