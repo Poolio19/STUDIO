@@ -278,10 +278,10 @@ export default function AdminPage() {
         const oldUsersData = new Map(users.map(u => [u.id, {
             score: u.score || 0,
             rank: u.rank || 0,
-            minScore: u.minScore,
-            maxScore: u.maxScore,
-            minRank: u.minRank,
-            maxRank: u.maxRank,
+            minScore: u.minScore ?? u.score ?? 0,
+            maxScore: u.maxScore ?? u.score ?? 0,
+            minRank: u.minRank ?? u.rank ?? 999,
+            maxRank: u.maxRank ?? u.rank ?? 0,
         }]));
 
         const batch = writeBatch(firestore);
@@ -302,6 +302,8 @@ export default function AdminPage() {
         playedMatches.forEach(match => {
             const homeStats = finalTeamStats[match.homeTeamId];
             const awayStats = finalTeamStats[match.awayTeamId];
+            if (!homeStats || !awayStats) return;
+
             homeStats.gamesPlayed++;
             awayStats.gamesPlayed++;
             homeStats.goalsFor += match.homeScore;
@@ -373,19 +375,21 @@ export default function AdminPage() {
         
         const maxWeeksPlayedNow = playedMatches.length > 0 ? Math.max(0, ...playedMatches.map(m => m.week)) : 0;
         
-        rankedUsers.forEach((rankedUser, index) => {
-            const newRank = index + 1;
+        for (let i = 0; i < rankedUsers.length; i++) {
+            const rankedUser = rankedUsers[i];
+            const newRank = i + 1;
+        
             const oldData = oldUsersData.get(rankedUser.id);
-            if (!oldData) return;
+            if (!oldData) continue;
         
             const scoreChange = rankedUser.newScore - oldData.score;
             const rankChange = oldData.rank > 0 ? oldData.rank - newRank : 0;
         
-            const newMinScore = Math.min(oldData.minScore ?? rankedUser.newScore, rankedUser.newScore);
-            const newMaxScore = Math.max(oldData.maxScore ?? rankedUser.newScore, rankedUser.newScore);
+            const newMinScore = Math.min(oldData.minScore, rankedUser.newScore);
+            const newMaxScore = Math.max(oldData.maxScore, rankedUser.newScore);
         
-            const newMinRank = Math.min(oldData.minRank ?? 999, newRank > 0 ? newRank : 999);
-            const newMaxRank = Math.max(oldData.maxRank ?? 0, newRank > 0 ? newRank : 0);
+            const newMinRank = Math.min(oldData.minRank, newRank > 0 ? newRank : 999);
+            const newMaxRank = Math.max(oldData.maxRank, newRank > 0 ? newRank : 0);
         
             const finalUserData: Partial<UserProfile> = {
                 score: rankedUser.newScore,
@@ -414,13 +418,13 @@ export default function AdminPage() {
         
             historyData.weeklyScores.sort((a, b) => a.week - b.week);
             batch.set(doc(firestore, 'userHistories', rankedUser.id), historyData);
-        });
+        }
         
         toast({ title: 'Recalculation: Generating weekly historical standings...'});
         const playedWeeks = [...new Set(playedMatches.map(m => m.week))].sort((a, b) => a - b);
 
         for (const week of playedWeeks) {
-            const weeklyTeamStats: { [teamId: string]: Omit<CurrentStanding, 'teamId' | 'rank' | 'teamName'> & { teamName: string } } = {};
+            const weeklyTeamStats: { [teamId: string]: { teamName: string, points: number, gamesPlayed: number, wins: number, draws: number, losses: number, goalsFor: number, goalsAgainst: number, goalDifference: number } } = {};
             
             teams.forEach(team => {
                 weeklyTeamStats[team.id] = { teamName: team.name, points: 0, gamesPlayed: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0 };
@@ -434,6 +438,50 @@ export default function AdminPage() {
                 
                 if (!homeStats || !awayStats) return;
 
+                if (match.week === week) { // Only update stats for matches in the current week iteration
+                    homeStats.gamesPlayed++;
+                    awayStats.gamesPlayed++;
+                    homeStats.goalsFor += match.homeScore;
+                    awayStats.goalsFor += match.awayScore;
+                    homeStats.goalsAgainst += match.awayScore;
+                    awayStats.goalsAgainst += match.homeScore;
+
+                    if (match.homeScore > match.awayScore) {
+                        homeStats.points += 3;
+                        homeStats.wins++;
+                        awayStats.losses++;
+                    } else if (match.homeScore < match.awayScore) {
+                        awayStats.points += 3;
+                        awayStats.wins++;
+                        homeStats.losses++;
+                    } else {
+                        homeStats.points++;
+                        awayStats.points++;
+                        homeStats.draws++;
+                        awayStats.draws++;
+                    }
+                }
+            });
+
+            // Need to accumulate stats from previous weeks
+            if (week > 1) {
+                const prevWeekStandings = Object.entries(weeklyTeamStats)
+                    .map(([teamId, stats]) => {
+                        const prevWeekDoc = weeklyTeamStandings.find(wts => wts.week === week - 1 && wts.teamId === teamId);
+                        // This part is complex and might not be correctly getting previous totals.
+                        // A better approach is to calculate the total stats up to `week` in each loop.
+                        return null; // Refactoring needed here.
+                    })
+            }
+            // Refactored logic: Always calculate total stats up to the current week
+            const currentTeamStatsForWeek: { [teamId: string]: any } = {};
+            teams.forEach(team => {
+                currentTeamStatsForWeek[team.id] = { teamName: team.name, points: 0, gamesPlayed: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0 };
+            });
+
+            matchesUpToWeek.forEach(match => {
+                const homeStats = currentTeamStatsForWeek[match.homeTeamId];
+                const awayStats = currentTeamStatsForWeek[match.awayTeamId];
                 homeStats.gamesPlayed++;
                 awayStats.gamesPlayed++;
                 homeStats.goalsFor += match.homeScore;
@@ -442,26 +490,19 @@ export default function AdminPage() {
                 awayStats.goalsAgainst += match.homeScore;
 
                 if (match.homeScore > match.awayScore) {
-                    homeStats.points += 3;
-                    homeStats.wins++;
-                    awayStats.losses++;
+                    homeStats.points += 3; homeStats.wins++; awayStats.losses++;
                 } else if (match.homeScore < match.awayScore) {
-                    awayStats.points += 3;
-                    awayStats.wins++;
-                    homeStats.losses++;
+                    awayStats.points += 3; awayStats.wins++; homeStats.losses++;
                 } else {
-                    homeStats.points++;
-                    awayStats.points++;
-                    homeStats.draws++;
-                    awayStats.draws++;
+                    homeStats.points++; awayStats.points++; homeStats.draws++; awayStats.draws++;
                 }
             });
 
-            Object.keys(weeklyTeamStats).forEach(teamId => {
-                weeklyTeamStats[teamId].goalDifference = weeklyTeamStats[teamId].goalsFor - weeklyTeamStats[teamId].goalsAgainst;
+            Object.keys(currentTeamStatsForWeek).forEach(teamId => {
+                currentTeamStatsForWeek[teamId].goalDifference = currentTeamStatsForWeek[teamId].goalsFor - currentTeamStatsForWeek[teamId].goalsAgainst;
             });
 
-            const weeklyStandingsRanked = Object.entries(weeklyTeamStats)
+            const weeklyStandingsRanked = Object.entries(currentTeamStatsForWeek)
                 .map(([teamId, stats]) => ({ teamId, ...stats }))
                 .sort((a, b) => b.points - a.points || b.goalDifference - b.goalsFor || b.goalsFor - a.goalsFor || a.teamName.localeCompare(b.teamName));
             
@@ -478,12 +519,11 @@ export default function AdminPage() {
         teams.forEach(team => {
             const teamMatches = playedMatches
                 .filter(m => m.homeTeamId === team.id || m.awayTeamId === team.id)
-                .sort((a,b) => b.week - a.week)
-                .slice(0, 6);
+                .sort((a,b) => b.week - a.week);
             
-            const results = Array(6).fill('-') as ('W' | 'D' | 'L' | '-')[];
+            const results: ('W' | 'D' | 'L' | '-')[] = Array(6).fill('-');
             
-            teamMatches.forEach((match, i) => {
+            teamMatches.slice(0, 6).forEach((match, i) => {
                 if (i < 6) {
                     if (match.homeScore === match.awayScore) results[i] = 'D';
                     else if ((match.homeTeamId === team.id && match.homeScore > match.awayScore) || (match.awayTeamId === team.id && match.awayScore > match.homeScore)) results[i] = 'W';
