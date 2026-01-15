@@ -355,36 +355,48 @@ export default function AdminPage() {
         
         const userUpdates = users.map(user => {
             const newScore = userScores[user.id] !== undefined ? userScores[user.id] : user.score;
-            return { ...user, previousScore: user.score, previousRank: user.rank, score: newScore, scoreChange: newScore - (user.score || 0) };
+            return {
+              ...user,
+              previousScore: user.score,
+              previousRank: user.rank,
+              score: newScore,
+            };
         });
 
-        userUpdates.sort((a,b) => b.score - a.score || a.name.localeCompare(b.name));
+        userUpdates.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
         
         const maxWeeksPlayedNow = playedMatches.length > 0 ? Math.max(0, ...playedMatches.map(m => m.week)) : 0;
         
-        for (let i = 0; i < userUpdates.length; i++) {
-            const user = userUpdates[i];
-            const newRank = i + 1;
-            user.rankChange = (user.previousRank || 0) > 0 ? (user.previousRank || newRank) - newRank : 0;
-            user.rank = newRank;
-            user.maxRank = Math.max(user.maxRank || 0, user.rank);
-            user.minRank = Math.min(user.minRank || 99, user.rank);
-            user.maxScore = Math.max(user.maxScore || -Infinity, user.score);
-            user.minScore = Math.min(user.minScore || Infinity, user.score);
-            const { id, ...userData } = user;
+        userUpdates.forEach((user, index) => {
+            const newRank = index + 1;
+            const updatedUser = {
+              ...user,
+              rank: newRank,
+              scoreChange: user.score - user.previousScore,
+              rankChange: user.previousRank > 0 ? user.previousRank - newRank : 0,
+              maxRank: Math.max(user.maxRank || 0, newRank),
+              minRank: Math.min(user.minRank || 99, newRank),
+              maxScore: Math.max(user.maxScore || -Infinity, user.score),
+              minScore: Math.min(user.minScore || Infinity, user.score),
+            };
+        
+            const { id, ...userData } = updatedUser;
             batch.set(doc(firestore, 'users', user.id), userData, { merge: true });
-            
+        
             const historyData = userHistoriesMap.get(user.id) || { userId: user.id, weeklyScores: [] };
             const weekHistoryIndex = historyData.weeklyScores.findIndex(ws => ws.week === maxWeeksPlayedNow);
-            if (weekHistoryIndex > -1) {
-                historyData.weeklyScores[weekHistoryIndex] = { week: maxWeeksPlayedNow, score: user.score, rank: user.rank };
-            } else if (maxWeeksPlayedNow > 0) {
-                historyData.weeklyScores.push({ week: maxWeeksPlayedNow, score: user.score, rank: user.rank });
-            }
-            batch.set(doc(firestore, 'userHistories', user.id), historyData);
-        }
         
-        // **START: Corrected Weekly Standings Calculation**
+            const newWeekEntry = { week: maxWeeksPlayedNow, score: updatedUser.score, rank: updatedUser.rank };
+        
+            if (weekHistoryIndex > -1) {
+              historyData.weeklyScores[weekHistoryIndex] = newWeekEntry;
+            } else if (maxWeeksPlayedNow > 0) {
+              historyData.weeklyScores.push(newWeekEntry);
+            }
+        
+            batch.set(doc(firestore, 'userHistories', user.id), historyData);
+        });
+        
         toast({ title: 'Recalculation: Generating weekly historical standings...'});
         const playedWeeks = [...new Set(playedMatches.map(m => m.week))].sort((a, b) => a - b);
 
@@ -444,24 +456,23 @@ export default function AdminPage() {
                 });
             });
         }
-        // **END: Corrected Weekly Standings Calculation**
         
         teams.forEach(team => {
             const teamMatches = playedMatches
                 .filter(m => m.homeTeamId === team.id || m.awayTeamId === team.id)
-                .sort((a,b) => b.week - a.week) 
+                .sort((a,b) => b.week - a.week)
                 .slice(0, 6);
             
             const results = Array(6).fill('-') as ('W' | 'D' | 'L' | '-')[];
             
-            teamMatches.forEach((match, i) => {
+            teamMatches.reverse().forEach((match, i) => {
                 if (i < 6) {
                     if (match.homeScore === match.awayScore) results[i] = 'D';
                     else if ((match.homeTeamId === team.id && match.homeScore > match.awayScore) || (match.awayTeamId === team.id && match.awayScore > match.homeScore)) results[i] = 'W';
                     else results[i] = 'L';
                 }
             });
-            batch.set(doc(firestore, 'teamRecentResults', team.id), { teamId: team.id, results: results });
+            batch.set(doc(firestore, 'teamRecentResults', team.id), { teamId: team.id, results: results.reverse() });
         });
 
         toast({ title: 'Recalculation: Committing all updates...' });
