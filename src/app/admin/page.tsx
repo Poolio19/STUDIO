@@ -363,24 +363,25 @@ export default function AdminPage() {
         const userHistory = allUserHistories[user.id];
         if (!userHistory || userHistory.weeklyScores.length === 0) continue;
   
-        const finalWeekIndex = userHistory.weeklyScores.length - 1;
-        const finalWeekData = userHistory.weeklyScores[finalWeekIndex];
-        const previousWeekData = userHistory.weeklyScores[finalWeekIndex - 1]; // Get data from one week prior
+        userHistory.weeklyScores.sort((a,b) => a.week - b.week);
+        const latestWeekIndex = userHistory.weeklyScores.length - 1;
+        const latestWeekData = userHistory.weeklyScores[latestWeekIndex];
+        const previousWeekData = userHistory.weeklyScores[latestWeekIndex - 1];
 
         const allRanks = userHistory.weeklyScores.map(ws => ws.rank).filter(r => r > 0);
         const allScores = userHistory.weeklyScores.map(ws => ws.score);
         
         const finalUserData: Partial<UserProfile> = {
-            score: finalWeekData.score,
-            rank: finalWeekData.rank,
+            score: latestWeekData.score,
+            rank: latestWeekData.rank,
             previousScore: previousWeekData?.score ?? 0,
             previousRank: previousWeekData?.rank ?? 0,
-            scoreChange: finalWeekData.score - (previousWeekData?.score ?? 0),
-            rankChange: (previousWeekData?.rank ?? 0) > 0 ? (previousWeekData!.rank - finalWeekData.rank) : 0,
+            scoreChange: latestWeekData.score - (previousWeekData?.score ?? 0),
+            rankChange: (previousWeekData?.rank ?? 0) > 0 ? (previousWeekData!.rank - latestWeekData.rank) : 0,
             maxScore: allScores.length > 0 ? Math.max(...allScores) : 0,
             minScore: allScores.length > 0 ? Math.min(...allScores) : 0,
-            maxRank: allRanks.length > 0 ? Math.max(...allRanks) : 0, // This is worst rank
-            minRank: allRanks.length > 0 ? Math.min(...allRanks) : 0,  // This is best rank
+            minRank: allRanks.length > 0 ? Math.min(...allRanks) : 0, // Best rank
+            maxRank: allRanks.length > 0 ? Math.max(...allRanks) : 0,  // Worst rank
         };
         mainBatch.set(doc(firestore, 'users', user.id), finalUserData, { merge: true });
         mainBatch.set(doc(firestore, 'userHistories', user.id), userHistory);
@@ -389,7 +390,7 @@ export default function AdminPage() {
       // --- 5. Calculate and store Monthly MimoM awards ---
       toast({ title: 'Recalculation: Calculating monthly awards...' });
 
-      const monthStartWeeks = [
+      const awardPeriods = [
         { id: 'aug', month: 'August', year: 2025, startWeek: 1, endWeek: 4 },
         { id: 'sep', month: 'September', year: 2025, startWeek: 4, endWeek: 7 },
         { id: 'oct', month: 'October', year: 2025, startWeek: 7, endWeek: 10 },
@@ -403,22 +404,22 @@ export default function AdminPage() {
       ];
       
       const specialAwards = [
-          { id: 'xmas', special: 'Christmas No. 1', year: 2025, week: 18 },
+          { id: 'xmas', special: 'Christmas No. 1', year: 2025, week: 17 },
       ];
 
       const nonProUsers = users.filter(u => !u.isPro);
       const maxRank = nonProUsers.length > 0 ? nonProUsers.length : 50;
 
 
-      for (const month of monthStartWeeks) {
-        if (playedWeeks.includes(month.endWeek)) {
+      for (const period of awardPeriods) {
+        if (playedWeeks.includes(period.endWeek)) {
           const monthlyImprovements: { userId: string; improvement: number; endRank: number }[] = [];
           
           nonProUsers.forEach(user => {
             const userHistory = allUserHistories[user.id];
             if (userHistory) {
-              const startWeekData = userHistory.weeklyScores.find(ws => ws.week === month.startWeek);
-              const endWeekData = userHistory.weeklyScores.find(ws => ws.week === month.endWeek);
+              const startWeekData = userHistory.weeklyScores.find(ws => ws.week === period.startWeek);
+              const endWeekData = userHistory.weeklyScores.find(ws => ws.week === period.endWeek);
               
               const startRank = startWeekData && startWeekData.rank > 0 ? startWeekData.rank : maxRank;
               
@@ -436,10 +437,10 @@ export default function AdminPage() {
             const winners = monthlyImprovements.filter(u => u.improvement === bestImprovement);
 
             winners.forEach(winner => {
-              const awardId = `${month.id}-${winner.userId}`;
+              const awardId = `${period.id}-${winner.userId}`;
               mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
-                month: month.month,
-                year: month.year,
+                month: period.month,
+                year: period.year,
                 userId: winner.userId,
                 type: 'winner',
               });
@@ -451,10 +452,10 @@ export default function AdminPage() {
                 const secondBestImprovement = remainingPlayers[0].improvement;
                 const runnersUp = remainingPlayers.filter(u => u.improvement === secondBestImprovement);
                 runnersUp.forEach(runnerUp => {
-                   const awardId = `${month.id}-ru-${runnerUp.userId}`;
+                   const awardId = `${period.id}-ru-${runnerUp.userId}`;
                    mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
-                    month: month.month,
-                    year: month.year,
+                    month: period.month,
+                    year: period.year,
                     userId: runnerUp.userId,
                     type: 'runner-up',
                   });
@@ -518,7 +519,7 @@ export default function AdminPage() {
       let lastGD = Infinity;
       let lastGF = Infinity;
       newStandings.forEach((s, index) => {
-          if (s.points < lastPoints || s.goalDifference < lastGD || s.goalsFor < lastGF) {
+          if (s.points < lastPoints || (s.points === lastPoints && s.goalDifference < lastGD) || (s.points === lastPoints && s.goalDifference === lastGD && s.goalsFor < lastGF)) {
               currentRank = index + 1;
           }
           lastPoints = s.points;
