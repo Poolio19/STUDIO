@@ -40,7 +40,11 @@ export type UpdateMatchResultsOutput = z.infer<typeof UpdateMatchResultsOutputSc
  */
 function getDb() {
     if (admin.apps.length === 0) {
-        admin.initializeApp();
+        // Explicitly initialize with application default credentials.
+        // This is the robust way to connect in a managed server environment.
+        admin.initializeApp({
+            credential: admin.credential.applicationDefault(),
+        });
     }
     return admin.firestore();
 }

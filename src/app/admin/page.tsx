@@ -309,7 +309,7 @@ export default function AdminPage() {
             teamId, ...stats, teamName: teamMap.get(teamId)?.name || 'Unknown',
         }));
         
-        newStandings.sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.teamName.localeCompare(b.teamName));
+        newStandings.sort((a, b) => b.points - a.points || b.goalDifference - a.goalsFor || b.goalsFor - a.goalsFor || a.teamName.localeCompare(b.teamName));
 
         const finalStandings: CurrentStanding[] = newStandings.map((s, index) => {
             const { teamName, ...rest } = s;
