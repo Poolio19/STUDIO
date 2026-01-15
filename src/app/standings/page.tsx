@@ -85,26 +85,29 @@ export default function StandingsPage() {
                 teamHistories[i] = {};
             }
 
-            standingsData.forEach(s => {
-                if (teamHistories[0]) {
-                     teamHistories[0][s.teamId] = s.rank;
-                }
-            });
-
             weeklyTeamStandings.forEach(ws => {
-                if (!teamHistories[ws.week]) teamHistories[ws.week] = {};
+                if (!teamHistories[ws.week]) {
+                    teamHistories[ws.week] = {};
+                }
                 teamHistories[ws.week][ws.teamId] = ws.rank;
             });
             
             const filledHistories: { [teamId: string]: { [week: number]: number } } = {};
             teamsData.forEach(team => {
                 filledHistories[team.id] = {};
-                let lastKnownRank = teamHistories[0]?.[team.id] || 20; 
+                // Find initial rank from standings if week 0 data isn't directly in weeklyTeamStandings
+                const initialStanding = standingsData.find(s => s.teamId === team.id);
+                let lastKnownRank = initialStanding ? initialStanding.rank : 20;
+
                 for (let week = 0; week <= maxWeek; week++) {
-                    if (teamHistories[week]?.[team.id] !== undefined) {
-                        lastKnownRank = teamHistories[week][team.id];
+                    if (week === 0) {
+                        filledHistories[team.id][week] = lastKnownRank;
+                    } else {
+                        if (teamHistories[week]?.[team.id] !== undefined) {
+                            lastKnownRank = teamHistories[week][team.id];
+                        }
+                        filledHistories[team.id][week] = lastKnownRank;
                     }
-                    filledHistories[team.id][week] = lastKnownRank;
                 }
             });
             
@@ -154,9 +157,10 @@ export default function StandingsPage() {
     };
 
     const weekHeaders = Array.from({ length: 6 }, (_, i) => {
-        const week = gamesPlayed - i;
+        const week = gamesPlayed - 5 + i;
         return week > 0 ? `WK${week}` : '';
     }).filter(Boolean);
+
 
   if (isLoading) {
     return (
@@ -213,7 +217,7 @@ export default function StandingsPage() {
                   if (!team) return null;
                   const TeamIcon = Icons[team.logo as IconName] || Icons.match;
                   const isLiverpool = team.id === 'team_12';
-                  const resultsToDisplay = [...team.recentResults].reverse();
+                  const resultsToDisplay = [...team.recentResults];
 
                   return (
                   <TableRow
