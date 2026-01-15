@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -67,8 +68,8 @@ export function TeamStandingsChart({
       );
 
       return (
-        <div className="rounded-lg border bg-background/90 p-2.5 shadow-xl backdrop-blur-sm min-w-[12rem]">
-            <div className="grid grid-cols-1 gap-2">
+        <div className="rounded-lg border bg-background/90 p-2.5 shadow-xl backdrop-blur-sm min-w-[12rem] text-base leading-tight">
+            <div className="grid grid-cols-1 gap-2.5">
                 {sortedPayload.map((pld: any, index: number) => {
                     const teamName = pld.dataKey;
                     const team = sortedTeams.find(t => t.name === teamName);
@@ -146,7 +147,7 @@ export function TeamStandingsChart({
                   domain={[1, 20]}
                   tickCount={20}
                 />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<CustomTooltip />} offset={-24} />
                 {sortedTeams.map(team => (
                   <Line
                     key={team.id}
