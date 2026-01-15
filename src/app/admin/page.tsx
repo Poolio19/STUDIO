@@ -374,9 +374,20 @@ export default function AdminPage() {
 
         const maxWeeksPlayedNow = playedMatches.length > 0 ? Math.max(0, ...playedMatches.map(m => m.week)) : 0;
         
+        let lastScore = Infinity;
+        let currentRank = 0;
+
         for (let i = 0; i < rankedUsers.length; i++) {
             const userWithNewData = rankedUsers[i];
-            const newRank = i + 1;
+            
+            // Handle tied ranks
+            if (i === 0) {
+                currentRank = 1;
+            } else if (userWithNewData.newScore < lastScore) {
+                currentRank = i + 1;
+            }
+            const newRank = currentRank;
+            lastScore = userWithNewData.newScore;
             
             const oldData = oldUsersDataMap.get(userWithNewData.id);
             
@@ -386,10 +397,14 @@ export default function AdminPage() {
                 weeklyScores: sourceHistory ? [...sourceHistory.weeklyScores] : [],
             };
 
-            const recentHistoryBeforeNow = historyData.weeklyScores
-                .filter(ws => ws.week < maxWeeksPlayedNow)
-                .sort((a, b) => b.week - a.week);
-            const previousWeekHistory = recentHistoryBeforeNow.length > 0 ? recentHistoryBeforeNow[0] : null;
+            const lastPlayedWeekInHistory = historyData.weeklyScores
+                .map(ws => ws.week)
+                .filter(w => w < maxWeeksPlayedNow)
+                .reduce((max, week) => Math.max(max, week), 0);
+
+            const previousWeekHistory = lastPlayedWeekInHistory > 0 
+                ? historyData.weeklyScores.find(ws => ws.week === lastPlayedWeekInHistory) 
+                : null;
 
             const previousScoreForChange = previousWeekHistory?.score ?? 0;
             const previousRankForChange = previousWeekHistory?.rank ?? 0;
@@ -397,16 +412,26 @@ export default function AdminPage() {
             const scoreChange = userWithNewData.newScore - previousScoreForChange;
             const rankChange = previousRankForChange > 0 ? previousRankForChange - newRank : 0;
             
-            // Robustly calculate new min/max score and rank
-            let currentMinScore = oldData?.minScore ?? userWithNewData.newScore;
-            let currentMaxScore = oldData?.maxScore ?? userWithNewData.newScore;
-            let currentMinRank = (oldData?.minRank && oldData.minRank > 0) ? oldData.minRank : 999;
-            let currentMaxRank = oldData?.maxRank ?? 0;
+            // Calculate new min/max score and rank
+            let minRankSoFar = oldData?.minRank;
+            let maxRankSoFar = oldData?.maxRank;
+        
+            if (!minRankSoFar || minRankSoFar === 0) {
+              minRankSoFar = newRank;
+            }
+            if (!maxRankSoFar || maxRankSoFar === 0) {
+              maxRankSoFar = newRank;
+            }
+            
+            const newMinRank = Math.min(minRankSoFar, newRank);
+            const newMaxRank = Math.max(maxRankSoFar, newRank);
+        
+            let minScoreSoFar = oldData?.minScore ?? userWithNewData.newScore;
+            let maxScoreSoFar = oldData?.maxScore ?? userWithNewData.newScore;
+        
+            const newMinScore = Math.min(minScoreSoFar, userWithNewData.newScore);
+            const newMaxScore = Math.max(maxScoreSoFar, userWithNewData.newScore);
 
-            const newMinScore = Math.min(currentMinScore, userWithNewData.newScore);
-            const newMaxScore = Math.max(currentMaxScore, userWithNewData.newScore);
-            const newMinRank = newRank > 0 ? Math.min(currentMinRank, newRank) : currentMinRank;
-            const newMaxRank = newRank > 0 ? Math.max(currentMaxRank, newRank) : currentMaxRank;
 
             const finalUserData: Partial<UserProfile> = {
                 score: userWithNewData.newScore,
@@ -531,7 +556,7 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card>
             <CardHeader>
-                <CardTitle>Step 1 & 2: Enter & Write Results</CardTitle>
+                <CardTitle>Step 1 &amp; 2: Enter &amp; Write Results</CardTitle>
                 <CardDescription>
                     Select a week, enter the scores, then create a temporary results file and write it to the database.
                 </CardDescription>
@@ -623,7 +648,7 @@ export default function AdminPage() {
                 <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="lg" className="text-lg" disabled={isUpdating}>
                         {isUpdating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                        3. Update & Recalculate All Data
+                        3. Update &amp; Recalculate All Data
                     </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -645,3 +670,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
