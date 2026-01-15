@@ -61,8 +61,7 @@ export function TeamStandingsChart({
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      // We only care about the inner line for the tooltip, so filter out the outer ones
-      const filteredPayload = payload.filter((p: any) => p.value !== undefined && !p.dataKey.endsWith('-outer'));
+      const filteredPayload = payload.filter((p: any) => p.value !== undefined);
       
       const sortedPayload = [...filteredPayload].sort(
         (a, b) => a.value - b.value
@@ -152,26 +151,15 @@ export function TeamStandingsChart({
                 />
                 <Tooltip content={<CustomTooltip />} />
                 {sortedTeams.map(team => (
-                  <React.Fragment key={team.id}>
-                    <Line
-                      dataKey={team.name}
-                      type="monotone"
-                      stroke={team.bgColourFaint || '#ccc'}
-                      strokeWidth={10}
-                      dot={false}
-                      activeDot={false}
-                      legendType="none"
-                      tooltipType="none"
-                    />
-                     <Line
-                      dataKey={team.name}
-                      type="monotone"
-                      stroke={team.bgColourSolid || '#000'}
-                      strokeWidth={3}
-                      dot={false}
-                      name={team.name}
-                    />
-                  </React.Fragment>
+                  <Line
+                    key={team.id}
+                    dataKey={team.name}
+                    type="monotone"
+                    stroke={team.bgColourSolid || '#000'}
+                    strokeWidth={2}
+                    dot={false}
+                    name={team.name}
+                  />
                 ))}
               </LineChart>
             </ResponsiveContainer>
