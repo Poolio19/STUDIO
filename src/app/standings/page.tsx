@@ -79,20 +79,28 @@ export default function StandingsPage() {
             const teamNameMap = new Map(teamsData.map(t => [t.id, t.name]));
             const maxWeek = currentGamesPlayed;
             
+            // Step 1: Initialize histories and gather all ranks by week
             const teamHistories: { [teamId: string]: { [week: number]: number } } = {};
             
+            teamsData.forEach(team => {
+                teamHistories[team.id] = {};
+            });
+            
             standingsData.forEach(s => {
-                if (!teamHistories[s.teamId]) teamHistories[s.teamId] = {};
-                teamHistories[s.teamId][0] = s.rank;
+                if (teamHistories[s.teamId]) {
+                    teamHistories[s.teamId][0] = s.rank;
+                }
             });
 
             weeklyTeamStandings.forEach(ws => {
-                if (!teamHistories[ws.teamId]) teamHistories[ws.teamId] = {};
-                teamHistories[ws.teamId][ws.week] = ws.rank;
+                if (teamHistories[ws.teamId]) {
+                    teamHistories[ws.teamId][ws.week] = ws.rank;
+                }
             });
             
+            // Step 2: Forward-fill the histories
             Object.keys(teamHistories).forEach(teamId => {
-                let lastKnownRank = teamHistories[teamId][0] || 20;
+                let lastKnownRank = teamHistories[teamId][0] || 20; // Default to 20 if no rank at week 0
                 for (let week = 0; week <= maxWeek; week++) {
                     if (teamHistories[teamId][week] !== undefined) {
                         lastKnownRank = teamHistories[teamId][week];
@@ -102,6 +110,7 @@ export default function StandingsPage() {
                 }
             });
             
+            // Step 3: Transform into recharts format
             const transformedData = [];
             for (let week = 0; week <= maxWeek; week++) {
                 const weekData: { [key: string]: any } = { week };
@@ -207,7 +216,7 @@ export default function StandingsPage() {
                   if (!team) return null;
                   const TeamIcon = Icons[team.logo as IconName] || Icons.match;
                   const isLiverpool = team.id === 'team_12';
-                  const resultsToDisplay = team.recentResults.slice(-weekHeaders.length);
+                  const resultsToDisplay = team.recentResults;
 
                   return (
                   <TableRow
@@ -245,13 +254,7 @@ export default function StandingsPage() {
                       <TableCell className="text-center">{team.goalsFor}</TableCell>
                       <TableCell className="text-center">{team.goalsAgainst}</TableCell>
                       <TableCell className="text-center font-bold">{team.points}</TableCell>
-                      {Array(6-resultsToDisplay.length).fill('-').map((_, index) => (
-                      <TableCell key={index} className={cn("text-center font-bold p-0 w-12")}>
-                          <div className={cn("flex items-center justify-center h-10 w-full", getResultColor('-'))}>
-                          -
-                          </div>
-                      </TableCell>
-                      ))}
+                      
                       {resultsToDisplay.map((result, index) => (
                       <TableCell key={index} className={cn("text-center font-bold p-0 w-12", index === resultsToDisplay.length - 1 && 'rounded-r-md')}>
                           <div className={cn("flex items-center justify-center h-10 w-full", getResultColor(result), index === resultsToDisplay.length - 1 && 'rounded-r-md')}>

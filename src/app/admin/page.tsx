@@ -392,7 +392,11 @@ export default function AdminPage() {
         }
         
         teams.forEach(team => {
-            const teamMatches = playedMatches.filter(m => m.homeTeamId === team.id || m.awayTeamId === team.id).sort((a,b) => b.week - a.week).slice(0, 6);
+            const teamMatches = playedMatches
+                .filter(m => m.homeTeamId === team.id || m.awayTeamId === team.id)
+                .sort((a,b) => b.week - a.week)
+                .slice(0, 6)
+                .reverse(); // oldest to newest
             const results = Array(6).fill('-') as ('W' | 'D' | 'L' | '-')[];
             teamMatches.forEach((match, i) => {
                 if (i < 6) {
