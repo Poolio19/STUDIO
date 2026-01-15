@@ -69,7 +69,7 @@ export function TeamStandingsChart({
       );
 
       return (
-        <div className="rounded-lg border bg-background/90 p-2.5 shadow-xl backdrop-blur-sm min-w-[12rem] text-base leading-tight">
+        <div className="rounded-lg border bg-background/90 p-2 text-base leading-tight shadow-xl backdrop-blur-sm min-w-[12rem]">
             <div className="grid grid-cols-1 gap-1.5">
                 {sortedPayload.map((pld: any, index: number) => {
                     const teamName = pld.dataKey;
@@ -145,7 +145,7 @@ export function TeamStandingsChart({
                   axisLine={false}
                   tickMargin={8}
                   reversed
-                  domain={[0.5, 20.5]}
+                  domain={[0.25, 20.75]}
                   ticks={[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]}
                 />
                 <Tooltip content={<CustomTooltip />} />
