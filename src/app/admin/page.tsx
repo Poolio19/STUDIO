@@ -443,7 +443,7 @@ export default function AdminPage() {
                     )}
                   />
 
-                  <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+                  <div className="space-y-2 pr-2">
                     {weekFixtures.map((fixture, index) => {
                        if (!fixture) return null;
                        const homeTeam = teamsMap.get(fixture.homeTeamId);
@@ -459,7 +459,7 @@ export default function AdminPage() {
                                     <Input
                                         {...field}
                                         type="text"
-                                        className="w-20 text-center"
+                                        className="w-20 text-center h-8"
                                         value={displayScore(field.value)}
                                         onChange={e => field.onChange(e.target.value.toUpperCase())}
                                     />
@@ -473,7 +473,7 @@ export default function AdminPage() {
                                     <Input
                                         {...field}
                                         type="text"
-                                        className="w-20 text-center"
+                                        className="w-20 text-center h-8"
                                         value={displayScore(field.value)}
                                         onChange={e => field.onChange(e.target.value.toUpperCase())}
                                     />
