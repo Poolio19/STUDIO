@@ -70,14 +70,14 @@ export function TeamStandingsChart({
 
       return (
         <div className="rounded-lg border bg-background/90 p-2 shadow-xl backdrop-blur-sm min-w-[12rem] text-base leading-tight">
-            <div className="grid grid-cols-1 gap-1.5">
+            <div className="grid grid-cols-1 gap-1">
                 {sortedPayload.map((pld: any, index: number) => {
                     const teamName = pld.dataKey;
                     const team = sortedTeams.find(t => t.name === teamName);
                     const rank = pld.value;
 
                     return (
-                        <div key={index} className="flex items-center gap-2 text-base">
+                        <div key={index} className="flex items-center gap-2 text-sm">
                             <span className="font-bold w-6 text-right tabular-nums">{rank}</span>
                             <div
                                 className="size-3 rounded-sm shrink-0"
@@ -148,7 +148,7 @@ export function TeamStandingsChart({
                   domain={[1, 20]}
                   tickCount={20}
                 />
-                <Tooltip content={<CustomTooltip />} offset={-40} allowEscapeViewBox={{ x: false, y: true }} />
+                <Tooltip content={<CustomTooltip />} offset={-50} allowEscapeViewBox={{ x: false, y: true }} />
                 {sortedTeams.map(team => (
                   <Line
                     key={team.id}
