@@ -62,7 +62,7 @@ export function TeamStandingsChart({
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      const filteredPayload = payload.filter((p: any) => p.value !== undefined);
+      const filteredPayload = payload.filter((p: any) => p.value !== undefined && !p.strokeDasharray);
       
       const sortedPayload = [...filteredPayload].sort(
         (a, b) => a.value - b.value
@@ -107,18 +107,18 @@ export function TeamStandingsChart({
         <CardDescription>Team league position changes over the season.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-5 gap-x-4 gap-y-1 text-base mb-6 px-4">
+        <div className="grid grid-cols-5 gap-x-4 gap-y-1 text-sm mb-6 px-4">
             {legendTeams.map((team, index) => {
             if (!team) return <div key={`empty-${index}`} />;
             return (
                 <div key={team.id} className="flex items-center space-x-2 truncate py-0">
-                    <div className="relative inline-block h-2 w-3 shrink-0 align-middle">
+                    <div className="relative inline-block h-3 w-4 shrink-0 align-middle">
                         <div
                             className="absolute inset-0 rounded-sm"
                             style={{ backgroundColor: team.bgColourSolid }}
                         />
                         <div
-                            className="absolute left-1/2 top-1/2 h-1 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full"
+                            className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full"
                             style={{ backgroundColor: team.iconColour }}
                         />
                     </div>
@@ -170,6 +170,19 @@ export function TeamStandingsChart({
                     strokeWidth={3}
                     dot={false}
                     name={team.name}
+                  />
+                ))}
+                {sortedTeams.map(team => (
+                  <Line
+                    key={`${team.id}-dashed`}
+                    dataKey={team.name}
+                    type="monotone"
+                    stroke={team.iconColour || '#888'}
+                    strokeWidth={2}
+                    strokeDasharray="3 3"
+                    dot={false}
+                    name={team.name}
+                    legendType="none"
                   />
                 ))}
               </LineChart>
