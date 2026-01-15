@@ -54,10 +54,10 @@ const scoreTransformer = (val: 'P' | 'p' | number | string) => {
     return isNaN(num) ? -1 : num;
 }
 
-const displayScore = (val: number | string) => {
-    if (val === -1) return '';
+const displayScore = (val: number | undefined | null | string) => {
+    if (val === undefined || val === null || val === -1) return '';
     if (val === -2) return 'P';
-    return val;
+    return String(val);
 }
 
 const scoresFormSchema = z.object({
