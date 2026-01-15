@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -13,13 +14,6 @@ import { ShieldAlert } from 'lucide-react';
 export default function RulesAndScoringPage() {
   return (
     <div className="space-y-8">
-      <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
-        <h1 className="text-3xl font-bold tracking-tight">Rules And Scoring</h1>
-        <p className="text-slate-400">
-          Understand how scores are calculated and other important rules.
-        </p>
-      </header>
-
       <Card>
         <CardHeader>
           <CardTitle>Scoring System</CardTitle>

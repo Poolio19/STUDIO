@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -563,15 +564,6 @@ export default function AdminPage() {
 
   return (
     <div className="space-y-8">
-      <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
-        <h1 className="text-3xl font-bold tracking-tight">
-          Data Administration
-        </h1>
-        <p className="text-slate-400">
-          Manage your application's data sources and imports.
-        </p>
-      </header>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card>
             <CardHeader>

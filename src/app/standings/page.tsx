@@ -165,10 +165,6 @@ export default function StandingsPage() {
   if (isLoading) {
     return (
         <div className="space-y-8">
-            <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
-                <h1 className="text-3xl font-bold tracking-tight">Premier League</h1>
-                <p className="text-slate-400">Official league standings, results, and form guide for the 2025-26 season.</p>
-            </header>
             <div className="flex justify-center items-center h-96">
                 <div className="flex items-center gap-2 text-muted-foreground">
                     <Loader2 className="size-5 animate-spin" />
@@ -181,11 +177,6 @@ export default function StandingsPage() {
 
   return (
     <div className="space-y-8">
-       <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
-          <h1 className="text-3xl font-bold tracking-tight">Premier League</h1>
-          <p className="text-slate-400">Official league standings, results, and form guide for the 2025-26 season.</p>
-      </header>
-        
       <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData as (Team & { rank: number })[]} />
 
       <Card>

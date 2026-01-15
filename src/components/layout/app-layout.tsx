@@ -5,14 +5,63 @@ import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from '@/compon
 import { SidebarNav } from './sidebar-nav';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import { useUser, useFirebaseConfigStatus } from '@/firebase';
+import { useUser, useFirebaseConfigStatus, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
 import { Loader2, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { usePathname } from 'next/navigation';
+import { useMemo } from 'react';
+import { collection } from 'firebase/firestore';
+import type { Match } from '@/lib/types';
+
+const pageInfoMap: { [key: string]: { title: string; description: string | ((seasonStarted: boolean) => string) } } = {
+  '/standings': { title: 'Premier League', description: 'Official league standings, results, and form guide for the 2025-26 season.' },
+  '/leaderboard': { title: 'Leaderboard', description: 'See who\'s winning the prediction game.' },
+  '/most-improved': { title: 'Most Improved Manager Of The Month', description: 'Celebrating the meek, rarely-vaunted, mid-season heroes of the PremPred - with cash!' },
+  '/stats': { title: 'Prediction Stats Matrix', description: 'A detailed breakdown of each player\'s prediction scores for every team.' },
+  '/consensus': { title: 'Prediction Consensus', description: 'See how the community predicts the final league standings.' },
+  '/performance': { title: 'Player Score Graph', description: 'Track player score progression over the season.' },
+  '/rankings': { title: 'Player Position Graph', description: 'Track player rank progression over the season.' },
+  '/scoring': { title: 'Rules & Scoring', description: 'Understand how scores are calculated and other important rules.' },
+  '/predict': { 
+      title: 'Your Pred Your Choice!', 
+      description: (seasonStarted: boolean) => seasonStarted
+          ? 'The season has started. Your predictions are locked in.'
+          : 'Drag and drop the teams to create your PremPred entry; then sit back and pray for glory'
+  },
+  '/profile': { title: 'Personal Pred Profile', description: 'Pred Performance and Personal Particulars' },
+  '/admin': { title: 'Data Administration', description: 'Manage your application\'s data sources and imports.' },
+};
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   const { isUserLoading } = useUser();
   const { isConfigured } = useFirebaseConfigStatus();
+  const pathname = usePathname();
+  const firestore = useFirestore();
+
+  const matchesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'matches') : null, [firestore]);
+  const { data: matchesData } = useCollection<Match>(matchesQuery);
+
+  const currentWeek = useMemo(() => {
+    if (matchesData && matchesData.length > 0) {
+        const playedMatches = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
+        return Math.max(...playedMatches.map(m => m.week), 0);
+    }
+    return 0;
+  }, [matchesData]);
+
+  const seasonStarted = currentWeek > 0;
+
+  const pageInfo = pageInfoMap[pathname];
+  const title = pageInfo ? pageInfo.title : 'PremPred 2025-2026';
+  let description = '';
+  if (pageInfo) {
+      if (typeof pageInfo.description === 'function') {
+          description = pageInfo.description(seasonStarted);
+      } else {
+          description = pageInfo.description;
+      }
+  }
 
 
   if (!isConfigured) {
@@ -60,9 +109,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <SidebarNav />
       </Sidebar>
       <SidebarInset className="flex flex-col">
-        <header className={cn("flex h-14 items-center gap-4 border-b bg-card px-6", { "hidden": isMobile })}>
+        <header className={cn("flex h-auto min-h-14 items-center gap-4 border-b bg-card px-6 py-3", { "hidden": isMobile })}>
           <SidebarTrigger />
-          <h1 className="text-lg font-semibold">PremPred 2025-2026</h1>
+          <div>
+            <h1 className="text-lg font-semibold">{title}</h1>
+            {description && <p className="text-sm text-muted-foreground">{description}</p>}
+          </div>
         </header>
         <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">{children}</main>
       </SidebarInset>

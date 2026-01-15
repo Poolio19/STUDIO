@@ -233,13 +233,6 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-8">
-      <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
-        <h1 className="text-3xl font-bold tracking-tight">Personal Pred Profile</h1>
-        <p className="text-slate-400">
-          Pred Performance and Personal Particulars
-        </p>
-      </header>
-
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
         <div className="lg:col-span-1 space-y-8">
           <Card>

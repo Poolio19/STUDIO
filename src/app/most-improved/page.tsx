@@ -212,10 +212,6 @@ export default function MostImprovedPage() {
   if (isLoading) {
     return (
         <div className="flex flex-col gap-8">
-            <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
-                <h1 className="text-3xl font-bold tracking-tight">Most Improved Manager Of The Month</h1>
-                <p className="text-slate-400">Celebrating the meek, rarely-vaunted, mid-season heroes of the PremPred - with cash!</p>
-            </header>
             <div className="flex justify-center items-center h-96">
                 <div className="flex items-center gap-2 text-muted-foreground">
                     <Loader2 className="size-5 animate-spin" />
@@ -228,10 +224,6 @@ export default function MostImprovedPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
-          <h1 className="text-3xl font-bold tracking-tight">Most Improved Manager Of The Month</h1>
-          <p className="text-slate-400">Celebrating the meek, rarely-vaunted, mid-season heroes of the PremPred - with cash!</p>
-      </header>
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
             <div className="flex flex-col gap-8 lg:col-span-2">
                 <Card>

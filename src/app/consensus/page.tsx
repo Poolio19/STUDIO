@@ -89,12 +89,6 @@ export default function ConsensusPage() {
   if (isLoading) {
     return (
        <div className="space-y-8">
-         <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
-           <h1 className="text-3xl font-bold tracking-tight">Prediction Consensus</h1>
-           <p className="text-slate-400">
-             See how the community predicts the final league standings.
-           </p>
-         </header>
          <Card>
             <CardHeader>
                 <CardTitle>Consensus Matrix</CardTitle>
@@ -116,12 +110,6 @@ export default function ConsensusPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
-        <h1 className="text-3xl font-bold tracking-tight">Prediction Consensus</h1>
-        <p className="text-slate-400">
-          See how the community predicts the final league standings.
-        </p>
-      </header>
       <Card>
         <CardHeader>
           <CardTitle>Consensus Matrix</CardTitle>

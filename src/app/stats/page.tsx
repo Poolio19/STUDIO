@@ -64,12 +64,6 @@ export default function StatsPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="bg-slate-900 text-slate-50 p-6 rounded-lg">
-        <h1 className="text-3xl font-bold tracking-tight">Prediction Stats Matrix</h1>
-        <p className="text-slate-400">
-          A detailed breakdown of each player's prediction scores for every team.
-        </p>
-      </header>
       <Card>
         <CardHeader>
             <CardTitle>Stats Matrix</CardTitle>
