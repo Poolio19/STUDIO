@@ -107,7 +107,7 @@ export function TeamStandingsChart({
         <CardDescription>Team league position changes over the season.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-5 gap-x-4 gap-y-1 text-sm mb-6 px-4">
+        <div className="grid grid-cols-5 gap-x-4 gap-y-1 text-base mb-6 px-4">
             {legendTeams.map((team, index) => {
             if (!team) return <div key={`empty-${index}`} />;
             return (
@@ -179,7 +179,7 @@ export function TeamStandingsChart({
                     type="monotone"
                     stroke={team.iconColour || '#888'}
                     strokeWidth={2}
-                    strokeDasharray="3 3"
+                    strokeDasharray="3 6"
                     dot={false}
                     name={team.name}
                     legendType="none"
