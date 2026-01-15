@@ -353,53 +353,47 @@ export default function AdminPage() {
             userScores[prediction.userId] = totalScore;
         });
         
-        const userUpdatesWithChanges = users.map(user => {
-            const newScore = userScores[user.id] !== undefined ? userScores[user.id] : (user.score || 0);
-            return {
-                ...user,
-                id: user.id,
-                name: user.name,
-                oldRank: user.rank || 0,
-                oldScore: user.score || 0,
-                oldMaxRank: user.maxRank,
-                oldMinRank: user.minRank,
-                oldMaxScore: user.maxScore,
-                oldMinScore: user.minScore,
-                newScore: newScore,
-            };
-        });
-        
-        userUpdatesWithChanges.sort((a, b) => b.newScore - a.newScore || a.name.localeCompare(b.name));
+        const userUpdates = users.map(user => ({
+            ...user,
+            newScore: userScores[user.id] ?? user.score ?? 0,
+        }));
+
+        userUpdates.sort((a, b) => b.newScore - a.newScore || a.name.localeCompare(b.name));
         
         const maxWeeksPlayedNow = playedMatches.length > 0 ? Math.max(0, ...playedMatches.map(m => m.week)) : 0;
         
-        userUpdatesWithChanges.forEach((userWithChanges, index) => {
+        userUpdates.forEach((user, index) => {
             const newRank = index + 1;
-            const rankChange = userWithChanges.oldRank > 0 ? userWithChanges.oldRank - newRank : 0;
-            const scoreChange = userWithChanges.newScore - userWithChanges.oldScore;
-        
-            const finalUserData = {
-                ...userWithChanges,
-                score: userWithChanges.newScore,
+
+            const previousRank = user.rank || 0;
+            const previousScore = user.score || 0;
+
+            const rankChange = previousRank > 0 ? previousRank - newRank : 0;
+            const scoreChange = user.newScore - previousScore;
+            
+            const newMaxScore = Math.max(user.maxScore ?? -Infinity, user.newScore);
+            const newMinScore = Math.min(user.minScore ?? Infinity, user.newScore);
+            const newMaxRank = Math.min(user.maxRank ?? 999, newRank > 0 ? newRank : 999);
+            const newMinRank = Math.max(user.minRank ?? 0, newRank > 0 ? newRank : 0);
+
+            const finalUserData: Partial<UserProfile> = {
+                score: user.newScore,
                 rank: newRank,
-                previousScore: userWithChanges.oldScore,
-                previousRank: userWithChanges.oldRank,
+                previousScore: previousScore,
+                previousRank: previousRank,
                 scoreChange: scoreChange,
                 rankChange: rankChange,
-                maxScore: Math.max(userWithChanges.oldMaxScore || -Infinity, userWithChanges.newScore),
-                minScore: Math.min(userWithChanges.oldMinScore || Infinity, userWithChanges.newScore),
-                maxRank: Math.min(userWithChanges.oldMaxRank || 99, newRank),
-                minRank: Math.max(userWithChanges.oldMinRank || 0, newRank),
+                maxScore: newMaxScore,
+                minScore: newMinScore,
+                maxRank: newMaxRank,
+                minRank: newMinRank,
             };
 
-            const { oldRank, oldScore, oldMaxRank, oldMinRank, oldMaxScore, oldMinScore, newScore, id, ...userDataForFirestore } = finalUserData;
-            
-            batch.set(doc(firestore, 'users', userWithChanges.id), userDataForFirestore, { merge: true });
+            batch.set(doc(firestore, 'users', user.id), finalUserData, { merge: true });
         
-            const historyData = userHistoriesMap.get(userWithChanges.id) || { userId: userWithChanges.id, weeklyScores: [] };
+            const historyData = userHistoriesMap.get(user.id) || { userId: user.id, weeklyScores: [] };
             const weekHistoryIndex = historyData.weeklyScores.findIndex(ws => ws.week === maxWeeksPlayedNow);
-        
-            const newWeekEntry = { week: maxWeeksPlayedNow, score: finalUserData.score, rank: finalUserData.rank };
+            const newWeekEntry = { week: maxWeeksPlayedNow, score: user.newScore, rank: newRank };
         
             if (weekHistoryIndex > -1) {
               historyData.weeklyScores[weekHistoryIndex] = newWeekEntry;
@@ -408,7 +402,7 @@ export default function AdminPage() {
             }
         
             historyData.weeklyScores.sort((a, b) => a.week - b.week);
-            batch.set(doc(firestore, 'userHistories', userWithChanges.id), historyData);
+            batch.set(doc(firestore, 'userHistories', user.id), historyData);
         });
         
         toast({ title: 'Recalculation: Generating weekly historical standings...'});
@@ -474,7 +468,8 @@ export default function AdminPage() {
             const teamMatches = playedMatches
                 .filter(m => m.homeTeamId === team.id || m.awayTeamId === team.id)
                 .sort((a,b) => b.week - a.week)
-                .slice(0, 6);
+                .slice(0, 6)
+                .reverse();
             
             const results = Array(6).fill('-') as ('W' | 'D' | 'L' | '-')[];
             
