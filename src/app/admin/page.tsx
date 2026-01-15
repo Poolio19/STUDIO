@@ -260,7 +260,7 @@ export default function AdminPage() {
   
       // --- 2. Clear all derived data collections ---
       toast({ title: 'Recalculation: Clearing old derived data...' });
-      const collectionsToClear = ['standings', 'playerTeamScores', 'teamRecentResults', 'weeklyTeamStandings', 'userHistories'];
+      const collectionsToClear = ['standings', 'playerTeamScores', 'teamRecentResults', 'weeklyTeamStandings', 'userHistories', 'monthlyMimoM'];
       const deletionBatch = writeBatch(firestore);
       for (const collectionName of collectionsToClear) {
         const snap = await getDocs(query(collection(firestore, collectionName)));
@@ -365,8 +365,9 @@ export default function AdminPage() {
         if (!userHistory || userHistory.weeklyScores.length === 0) continue;
   
         const finalWeekData = userHistory.weeklyScores[userHistory.weeklyScores.length - 1];
-        const previousWeekData = userHistory.weeklyScores.length > 1 ? userHistory.weeklyScores[userHistory.weeklyScores.length - 2] : null;
-  
+        const previousWeekIndex = userHistory.weeklyScores.findIndex(ws => ws.week === finalWeekData.week) -1;
+        const previousWeekData = previousWeekIndex >= 0 ? userHistory.weeklyScores[previousWeekIndex] : null;
+
         const allRanks = userHistory.weeklyScores.map(ws => ws.rank).filter(r => r > 0);
         const allScores = userHistory.weeklyScores.map(ws => ws.score);
         
@@ -385,8 +386,108 @@ export default function AdminPage() {
         mainBatch.set(doc(firestore, 'users', user.id), finalUserData, { merge: true });
         mainBatch.set(doc(firestore, 'userHistories', user.id), userHistory);
       }
+
+      // --- 5. Calculate and store Monthly MimoM awards ---
+      toast({ title: 'Recalculation: Calculating monthly awards...' });
+
+      const monthWeekRanges = [
+        { id: 'aug', month: 'August', year: 2025, startWeek: 0, endWeek: 4 },
+        { id: 'sep', month: 'September', year: 2025, startWeek: 4, endWeek: 8 },
+        { id: 'oct', month: 'October', year: 2025, startWeek: 8, endWeek: 11 },
+        { id: 'nov', month: 'November', year: 2025, startWeek: 11, endWeek: 14 },
+        { id: 'dec', month: 'December', year: 2025, startWeek: 14, endWeek: 19 },
+        { id: 'jan', month: 'January', year: 2026, startWeek: 19, endWeek: 23 },
+        { id: 'feb', month: 'February', year: 2026, startWeek: 23, endWeek: 27 },
+        { id: 'mar', month: 'March', year: 2026, startWeek: 27, endWeek: 31 },
+        { id: 'apr', month: 'April', year: 2026, startWeek: 31, endWeek: 35 },
+        { id: 'may', month: 'May', year: 2026, startWeek: 35, endWeek: 38 },
+      ];
       
-      // --- 5. Generate final league standings and recent results ---
+      const specialAwards = [
+          { id: 'xmas', special: 'Christmas No. 1', year: 2025, week: 18 },
+      ];
+
+      const nonProUsers = users.filter(u => !u.isPro);
+      const maxRank = nonProUsers.length > 0 ? nonProUsers.length : 50;
+
+
+      for (const month of monthWeekRanges) {
+        if (playedWeeks.includes(month.endWeek)) {
+          const monthlyImprovements: { userId: string; improvement: number; endRank: number }[] = [];
+          
+          nonProUsers.forEach(user => {
+            const userHistory = allUserHistories[user.id];
+            if (userHistory) {
+              const startWeekData = userHistory.weeklyScores.find(ws => ws.week === month.startWeek);
+              const endWeekData = userHistory.weeklyScores.find(ws => ws.week === month.endWeek);
+              
+              const startRank = startWeekData && startWeekData.rank > 0 ? startWeekData.rank : maxRank;
+              
+              if (endWeekData && endWeekData.rank > 0) {
+                const improvement = startRank - endWeekData.rank;
+                monthlyImprovements.push({ userId: user.id, improvement, endRank: endWeekData.rank });
+              }
+            }
+          });
+
+          if (monthlyImprovements.length > 0) {
+            monthlyImprovements.sort((a, b) => b.improvement - a.improvement || a.endRank - b.endRank);
+            
+            const bestImprovement = monthlyImprovements[0].improvement;
+            const winners = monthlyImprovements.filter(u => u.improvement === bestImprovement);
+
+            winners.forEach(winner => {
+              const awardId = `${month.id}-${winner.userId}`;
+              mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
+                month: month.month,
+                year: month.year,
+                userId: winner.userId,
+                type: 'winner',
+              });
+            });
+
+            if (winners.length === 1) {
+              const remainingPlayers = monthlyImprovements.filter(u => u.improvement < bestImprovement);
+              if (remainingPlayers.length > 0) {
+                const secondBestImprovement = remainingPlayers[0].improvement;
+                const runnersUp = remainingPlayers.filter(u => u.improvement === secondBestImprovement);
+                runnersUp.forEach(runnerUp => {
+                   const awardId = `${month.id}-ru-${runnerUp.userId}`;
+                   mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
+                    month: month.month,
+                    year: month.year,
+                    userId: runnerUp.userId,
+                    type: 'runner-up',
+                  });
+                });
+              }
+            }
+          }
+        }
+      }
+
+      for (const award of specialAwards) {
+          if (playedWeeks.includes(award.week)) {
+              nonProUsers.forEach(user => {
+                  const userHistory = allUserHistories[user.id];
+                  if (userHistory) {
+                      const awardWeekData = userHistory.weeklyScores.find(ws => ws.week === award.week);
+                      if (awardWeekData && awardWeekData.rank === 1) {
+                          const awardId = `${award.id}-${user.id}`;
+                          mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
+                              month: '',
+                              year: award.year,
+                              userId: user.id,
+                              special: award.special,
+                              type: 'winner'
+                          });
+                      }
+                  }
+              });
+          }
+      }
+
+      // --- 6. Generate final league standings and recent results ---
       toast({ title: 'Recalculation: Generating final standings...' });
       const finalMatches = allMatches.filter(m => m.week <= (playedWeeks[playedWeeks.length -1] || 0) && m.homeScore > -1 && m.awayScore > -1);
       const finalTeamStats: { [teamId: string]: Omit<CurrentStanding, 'teamId' | 'rank'> } = {};
@@ -430,7 +531,7 @@ export default function AdminPage() {
         mainBatch.set(doc(firestore, 'teamRecentResults', team.id), { teamId: team.id, results: results.reverse() });
       });
 
-      // --- 6. Commit all changes ---
+      // --- 7. Commit all changes ---
       toast({ title: 'Recalculation: Committing all updates...' });
       await mainBatch.commit();
   
