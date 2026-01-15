@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -70,7 +69,7 @@ export function TeamStandingsChart({
 
       return (
         <div className="rounded-lg border bg-background/90 p-2 text-base leading-tight shadow-xl backdrop-blur-sm min-w-[12rem]">
-            <div className="grid grid-cols-1 gap-1.5">
+            <div className="grid grid-cols-1 gap-2">
                 {sortedPayload.map((pld: any, index: number) => {
                     const teamName = pld.dataKey;
                     const team = sortedTeams.find(t => t.name === teamName);
@@ -168,4 +167,3 @@ export function TeamStandingsChart({
     </Card>
   );
 }
-    
