@@ -76,34 +76,40 @@ export default function StandingsPage() {
         const currentGamesPlayed = playedMatches.length > 0 ? Math.max(0, ...playedMatches.map(m => m.week)) : 0;
 
         const finalChartData = (() => {
+            if (!weeklyTeamStandings || weeklyTeamStandings.length === 0) {
+                const weekZeroData: { [key: string]: any } = { week: 0 };
+                finalStandingsWithTeamData.forEach(team => {
+                    weekZeroData[team.name] = team.rank;
+                });
+                return [weekZeroData];
+            }
             const teamNameMap = new Map(teamsData.map(t => [t.id, t.name]));
             const maxWeek = currentGamesPlayed;
-
+            
+            // Step 1: Group ranks by week
+            const ranksByWeek: { [week: number]: { [teamId: string]: number } } = {};
+            weeklyTeamStandings.forEach(ws => {
+                if (!ranksByWeek[ws.week]) {
+                    ranksByWeek[ws.week] = {};
+                }
+                ranksByWeek[ws.week][ws.teamId] = ws.rank;
+            });
+        
+            // Step 2: Create a full history for each team, forward-filling ranks
             const teamHistories: { [teamId: string]: { [week: number]: number } } = {};
             teamsData.forEach(team => {
                 teamHistories[team.id] = {};
-            });
-            
-            const weekDataContainer: { [week: number]: { [teamId: string]: number } } = {};
-            for (let i = 0; i <= maxWeek; i++) {
-                weekDataContainer[i] = {};
-            }
-
-            weeklyTeamStandings.forEach(ws => {
-                if (!weekDataContainer[ws.week]) weekDataContainer[ws.week] = {};
-                weekDataContainer[ws.week][ws.teamId] = ws.rank;
-            });
-            
-            teamsData.forEach(team => {
-                let lastKnownRank = standingsData.find(s => s.teamId === team.id)?.rank ?? 20;
+                let lastKnownRank = finalStandingsWithTeamData.find(s => s.teamId === team.id)?.rank ?? 20; // Default to last known rank
+        
                 for (let week = 0; week <= maxWeek; week++) {
-                    if (weekDataContainer[week]?.[team.id] !== undefined) {
-                        lastKnownRank = weekDataContainer[week][team.id];
+                    if (ranksByWeek[week] && ranksByWeek[week][team.id] !== undefined) {
+                        lastKnownRank = ranksByWeek[week][team.id];
                     }
                     teamHistories[team.id][week] = lastKnownRank;
                 }
             });
-
+        
+            // Step 3: Transform into the final chart data structure
             const transformedData = [];
             for (let week = 0; week <= maxWeek; week++) {
                 const weekEntry: { [key: string]: any } = { week };
@@ -115,9 +121,10 @@ export default function StandingsPage() {
                 });
                 transformedData.push(weekEntry);
             }
-
+        
             return transformedData;
         })();
+
 
         const resultsByWeek = new Map<number, (Match & {homeTeam: Team, awayTeam: Team})[]>();
         playedMatches.sort((a,b) => a.week - b.week).forEach(match => {

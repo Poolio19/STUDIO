@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -284,15 +283,15 @@ export default function AdminPage() {
         weeklyTeamStandingsSnap.forEach(doc => batch.delete(doc.ref));
         
         toast({ title: 'Recalculation: Calculating new league standings...' });
-        const teamStats: { [teamId: string]: Omit<CurrentStanding, 'teamId' | 'rank'> } = {};
+        const finalTeamStats: { [teamId: string]: Omit<CurrentStanding, 'teamId' | 'rank'> } = {};
         
         teams.forEach(team => {
-            teamStats[team.id] = { points: 0, gamesPlayed: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0 };
+            finalTeamStats[team.id] = { points: 0, gamesPlayed: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0 };
         });
 
         playedMatches.forEach(match => {
-            const homeStats = teamStats[match.homeTeamId];
-            const awayStats = teamStats[match.awayTeamId];
+            const homeStats = finalTeamStats[match.homeTeamId];
+            const awayStats = finalTeamStats[match.awayTeamId];
             homeStats.gamesPlayed++;
             awayStats.gamesPlayed++;
             homeStats.goalsFor += match.homeScore;
@@ -315,11 +314,11 @@ export default function AdminPage() {
             }
         });
 
-        Object.keys(teamStats).forEach(teamId => {
-            teamStats[teamId].goalDifference = teamStats[teamId].goalsFor - teamStats[teamId].goalsAgainst;
+        Object.keys(finalTeamStats).forEach(teamId => {
+            finalTeamStats[teamId].goalDifference = finalTeamStats[teamId].goalsFor - finalTeamStats[teamId].goalsAgainst;
         });
 
-        const newStandings: (Omit<CurrentStanding, 'rank'> & { teamName: string; teamId: string })[] = Object.entries(teamStats).map(([teamId, stats]) => ({
+        const newStandings: (Omit<CurrentStanding, 'rank'> & { teamName: string; teamId: string })[] = Object.entries(finalTeamStats).map(([teamId, stats]) => ({
             teamId, ...stats, teamName: teamMap.get(teamId)?.name || 'Unknown',
         }));
         
@@ -385,17 +384,73 @@ export default function AdminPage() {
             batch.set(doc(firestore, 'userHistories', user.id), historyData);
         }
         
-        if (maxWeeksPlayedNow > 0) {
-            finalStandings.forEach(standing => {
-                batch.set(doc(firestore, 'weeklyTeamStandings', `${maxWeeksPlayedNow}-${standing.teamId}`), { week: maxWeeksPlayedNow, teamId: standing.teamId, rank: standing.rank });
+        // **START: Corrected Weekly Standings Calculation**
+        toast({ title: 'Recalculation: Generating weekly historical standings...'});
+        const playedWeeks = [...new Set(playedMatches.map(m => m.week))].sort((a, b) => a - b);
+
+        for (const week of playedWeeks) {
+            const matchesUpToWeek = allMatches.filter(m => m.week <= week && m.homeScore > -1 && m.awayScore > -1);
+            const weeklyTeamStats: { [teamId: string]: Omit<CurrentStanding, 'teamId' | 'rank'> } = {};
+
+            teams.forEach(team => {
+                weeklyTeamStats[team.id] = { points: 0, gamesPlayed: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0 };
+            });
+
+            matchesUpToWeek.forEach(match => {
+                const homeStats = weeklyTeamStats[match.homeTeamId];
+                const awayStats = weeklyTeamStats[match.awayTeamId];
+                
+                if (!homeStats || !awayStats) return;
+
+                homeStats.gamesPlayed++;
+                awayStats.gamesPlayed++;
+                homeStats.goalsFor += match.homeScore;
+                awayStats.goalsFor += match.awayScore;
+                homeStats.goalsAgainst += match.awayScore;
+                awayStats.goalsAgainst += match.homeScore;
+
+                if (match.homeScore > match.awayScore) {
+                    homeStats.points += 3;
+                    homeStats.wins++;
+                    awayStats.losses++;
+                } else if (match.homeScore < match.awayScore) {
+                    awayStats.points += 3;
+                    awayStats.wins++;
+                    homeStats.losses++;
+                } else {
+                    homeStats.points++;
+                    awayStats.points++;
+                    homeStats.draws++;
+                    awayStats.draws++;
+                }
+            });
+
+            Object.keys(weeklyTeamStats).forEach(teamId => {
+                weeklyTeamStats[teamId].goalDifference = weeklyTeamStats[teamId].goalsFor - weeklyTeamStats[teamId].goalsAgainst;
+            });
+
+            const weeklyStandingsRanked: (Omit<CurrentStanding, 'rank'> & { teamName: string; teamId: string })[] = Object.entries(weeklyTeamStats).map(([teamId, stats]) => ({
+                teamId, ...stats, teamName: teamMap.get(teamId)?.name || 'Unknown',
+            }));
+
+            weeklyStandingsRanked.sort((a, b) => b.points - a.points || b.goalDifference - b.goalsFor || b.goalsFor - a.goalsFor || a.teamName.localeCompare(b.teamName));
+            
+            weeklyStandingsRanked.forEach((standing, index) => {
+                const rank = index + 1;
+                batch.set(doc(firestore, 'weeklyTeamStandings', `${week}-${standing.teamId}`), {
+                    week: week,
+                    teamId: standing.teamId,
+                    rank: rank
+                });
             });
         }
+        // **END: Corrected Weekly Standings Calculation**
         
         teams.forEach(team => {
             const teamMatches = playedMatches
                 .filter(m => m.homeTeamId === team.id || m.awayTeamId === team.id)
-                .sort((a,b) => b.week - a.week) // Newest to oldest
-                .slice(0, 6); 
+                .sort((a,b) => b.week - a.week) 
+                .slice(0, 6);
             
             const results = Array(6).fill('-') as ('W' | 'D' | 'L' | '-')[];
             
