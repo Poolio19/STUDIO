@@ -112,11 +112,7 @@ export default function StandingsPage() {
                 Object.keys(teamHistories).forEach(teamId => {
                     const teamName = teamNameMap.get(teamId);
                     if (teamName) {
-                        const rank = teamHistories[teamId][week];
-                        weekData[teamName] = rank;
-                        // Add the keys the chart component expects for styling
-                        weekData[`${teamName}-outer`] = rank;
-                        weekData[`${teamName}-inner`] = rank;
+                        weekData[teamName] = teamHistories[teamId][week];
                     }
                 });
                 transformedData.push(weekData);
@@ -322,5 +318,3 @@ export default function StandingsPage() {
     </div>
   );
 }
-
-    
