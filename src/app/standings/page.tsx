@@ -217,7 +217,7 @@ export default function StandingsPage() {
                   if (!team) return null;
                   const TeamIcon = Icons[team.logo as IconName] || Icons.match;
                   const isLiverpool = team.id === 'team_12';
-                  const resultsToDisplay = [...team.recentResults].reverse();
+                  const resultsToDisplay = [...team.recentResults];
 
                   return (
                   <TableRow
