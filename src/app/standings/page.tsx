@@ -83,7 +83,7 @@ export default function StandingsPage() {
             teamsData.forEach(team => {
                 teamHistories[team.id] = {};
             });
-
+            
             const weekDataContainer: { [week: number]: { [teamId: string]: number } } = {};
             for (let i = 0; i <= maxWeek; i++) {
                 weekDataContainer[i] = {};
@@ -103,14 +103,14 @@ export default function StandingsPage() {
                     teamHistories[team.id][week] = lastKnownRank;
                 }
             });
-            
+
             const transformedData = [];
             for (let week = 0; week <= maxWeek; week++) {
                 const weekEntry: { [key: string]: any } = { week };
                 Object.keys(teamHistories).forEach(teamId => {
                     const teamName = teamNameMap.get(teamId);
                     if (teamName) {
-                         weekEntry[teamName] = teamHistories[teamId][week];
+                        weekEntry[teamName] = teamHistories[teamId][week];
                     }
                 });
                 transformedData.push(weekEntry);
@@ -210,7 +210,7 @@ export default function StandingsPage() {
                   if (!team) return null;
                   const TeamIcon = Icons[team.logo as IconName] || Icons.match;
                   const isLiverpool = team.id === 'team_12';
-                  const resultsToDisplay = [...team.recentResults];
+                  const resultsToDisplay = [...team.recentResults].reverse();
 
                   return (
                   <TableRow
