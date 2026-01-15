@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -69,8 +68,8 @@ export function TeamStandingsChart({
       );
 
       return (
-        <div className="rounded-lg border bg-background/90 p-2.5 text-base leading-tight shadow-xl backdrop-blur-sm min-w-[12rem]">
-            <div className="grid grid-cols-1 gap-2">
+        <div className="rounded-lg border bg-background/90 p-2 text-base leading-tight shadow-xl backdrop-blur-sm min-w-[12rem]">
+            <div className="grid grid-cols-1 gap-3">
                 {sortedPayload.map((pld: any, index: number) => {
                     const teamName = pld.dataKey;
                     const team = sortedTeams.find(t => t.name === teamName);
@@ -79,10 +78,16 @@ export function TeamStandingsChart({
                     return (
                         <div key={index} className="flex items-center gap-2 text-sm">
                             <span className="font-bold w-6 text-right tabular-nums">{rank}</span>
-                            <div
-                                className="size-3 rounded-sm shrink-0"
-                                style={{ backgroundColor: team?.bgColourSolid }}
-                            ></div>
+                             <div className="relative inline-block h-3 w-4 shrink-0">
+                                <div
+                                    className="absolute inset-0 rounded-sm"
+                                    style={{ backgroundColor: team?.bgColourSolid }}
+                                />
+                                <div
+                                    className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2"
+                                    style={{ backgroundColor: team?.iconColour }}
+                                />
+                            </div>
                             <span className="font-medium">{teamName}</span>
                         </div>
                     );
@@ -106,11 +111,17 @@ export function TeamStandingsChart({
             if (!team) return <div key={`empty-${index}`} />;
             return (
                 <div key={team.id} className="flex items-center space-x-2 truncate py-0">
-                <span
-                    className="inline-block h-2 w-2 rounded-sm shrink-0"
-                    style={{ backgroundColor: team.bgColourSolid }}
-                ></span>
-                <span className="truncate" title={`${team.name}`}>{team.name}</span>
+                    <div className="relative inline-block h-2 w-3 shrink-0 align-middle">
+                        <div
+                            className="absolute inset-0 rounded-sm"
+                            style={{ backgroundColor: team.bgColourSolid }}
+                        />
+                        <div
+                            className="absolute left-1/2 top-1/2 h-1 w-1 -translate-x-1/2 -translate-y-1/2"
+                            style={{ backgroundColor: team.iconColour }}
+                        />
+                    </div>
+                    <span className="truncate" title={`${team.name}`}>{team.name}</span>
                 </div>
             );
             })}
