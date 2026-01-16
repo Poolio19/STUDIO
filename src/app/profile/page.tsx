@@ -114,6 +114,14 @@ export default function ProfilePage() {
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      dob: new Date('1990-01-01'),
+      country: 'United Kingdom',
+      favouriteTeam: 'team_1',
+      championshipWins: 0,
+    },
     mode: 'onChange',
   });
 
