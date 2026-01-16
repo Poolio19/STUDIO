@@ -455,11 +455,11 @@ export default function AdminPage() {
         { id: 'feb', month: 'February', year: 2026, startWeek: 25, endWeek: 29 },
         { id: 'mar', month: 'March', year: 2026, startWeek: 29, endWeek: 33 },
         { id: 'apr', month: 'April', year: 2026, startWeek: 33, endWeek: 36 },
-        { id: 'may', month: 'May', year: 2026, startWeek: 36, endWeek: 38 },
+        { id: 'may', month: 'May', year: 2026, startWeek: 36, endWeek: 39 },
       ];
       
       const specialAwards = [
-          { id: 'xmas', special: 'Christmas No. 1', year: 2025, week: 18 },
+          { id: 'xmas', special: 'Christmas No. 1', year: 2025, startWeek: 14, endWeek: 18 },
       ];
 
       const nonProUsers = users.filter(u => !u.isPro);
@@ -488,66 +488,79 @@ export default function AdminPage() {
             monthlyImprovements.sort((a, b) => b.improvement - a.improvement || b.endScore - a.endScore);
             
             const bestImprovement = monthlyImprovements[0].improvement;
-            const winners = monthlyImprovements.filter(u => u.improvement === bestImprovement);
+            if (bestImprovement > 0) {
+              const winners = monthlyImprovements.filter(u => u.improvement === bestImprovement);
 
-            winners.forEach(winner => {
-              const awardId = `${period.id}-${winner.userId}`;
-              mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
-                month: period.month,
-                year: period.year,
-                userId: winner.userId,
-                type: 'winner',
-              });
-            });
-
-            if (winners.length === 1) {
-              const remainingPlayers = monthlyImprovements.filter(u => u.improvement < bestImprovement);
-              if (remainingPlayers.length > 0) {
-                const secondBestImprovement = remainingPlayers[0].improvement;
-                const runnersUp = remainingPlayers.filter(u => u.improvement === secondBestImprovement);
-                runnersUp.forEach(runnerUp => {
-                   const awardId = `${period.id}-ru-${runnerUp.userId}`;
-                   mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
-                    month: period.month,
-                    year: period.year,
-                    userId: runnerUp.userId,
-                    type: 'runner-up',
-                  });
+              winners.forEach(winner => {
+                const awardId = `${period.id}-${winner.userId}`;
+                mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
+                  month: period.month,
+                  year: period.year,
+                  userId: winner.userId,
+                  type: 'winner',
                 });
+              });
+
+              if (winners.length === 1) {
+                const remainingPlayers = monthlyImprovements.filter(u => u.improvement < bestImprovement);
+                if (remainingPlayers.length > 0) {
+                  const secondBestImprovement = remainingPlayers[0].improvement;
+                  if (secondBestImprovement > 0) {
+                    const runnersUp = remainingPlayers.filter(u => u.improvement === secondBestImprovement);
+                    runnersUp.forEach(runnerUp => {
+                      const awardId = `${period.id}-ru-${runnerUp.userId}`;
+                      mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
+                        month: period.month,
+                        year: period.year,
+                        userId: runnerUp.userId,
+                        type: 'runner-up',
+                      });
+                    });
+                  }
+                }
               }
             }
           }
         }
       }
 
-      // --- 6B. Special Christmas Award (Rank #1 at Christmas) ---
+      // --- 6B. Special Christmas Award (by score improvement) ---
       for (const award of specialAwards) {
-        const xmasWeek = award.week; 
-
-        if (playedWeeks.includes(xmasWeek)) {
-          const xmasLeaders: { userId: string }[] = [];
+         if (playedWeeks.includes(award.endWeek)) {
+          const monthlyImprovements: { userId: string; improvement: number; endScore: number }[] = [];
           
           nonProUsers.forEach(user => {
             const userHistory = allUserHistories[user.id];
             if (userHistory) {
-              const xmasWeekData = userHistory.weeklyScores.find(ws => ws.week === xmasWeek);
-              if (xmasWeekData && xmasWeekData.rank === 1) {
-                xmasLeaders.push({ userId: user.id });
+              const startWeekData = userHistory.weeklyScores.find(ws => ws.week === award.startWeek);
+              const endWeekData = userHistory.weeklyScores.find(ws => ws.week === award.endWeek);
+              
+              const startScore = startWeekData?.score ?? 0;
+              
+              if (endWeekData) {
+                const improvement = endWeekData.score - startScore;
+                monthlyImprovements.push({ userId: user.id, improvement, endScore: endWeekData.score });
               }
             }
           });
 
-          if (xmasLeaders.length > 0) {
-            xmasLeaders.forEach(winner => {
-              const awardId = `${award.id}-${winner.userId}`;
-              mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
-                month: '', 
-                year: award.year,
-                userId: winner.userId,
-                special: award.special,
-                type: 'winner',
-              });
-            });
+          if (monthlyImprovements.length > 0) {
+            monthlyImprovements.sort((a, b) => b.improvement - a.improvement || b.endScore - a.endScore);
+            
+            const bestImprovement = monthlyImprovements[0].improvement;
+             if (bestImprovement > 0) {
+                const winners = monthlyImprovements.filter(u => u.improvement === bestImprovement);
+                winners.forEach(winner => {
+                const awardId = `${award.id}-${winner.userId}`;
+                mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
+                    month: '', 
+                    year: award.year,
+                    userId: winner.userId,
+                    special: award.special,
+                    type: 'winner',
+                });
+                });
+            }
           }
         }
       }
@@ -745,5 +758,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
