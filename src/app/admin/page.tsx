@@ -447,19 +447,19 @@ export default function AdminPage() {
 
       const awardPeriods = [
         { id: 'aug', month: 'August', year: 2025, startWeek: 0, endWeek: 4 },
-        { id: 'sep', month: 'September', year: 2025, startWeek: 4, endWeek: 7 },
-        { id: 'oct', month: 'October', year: 2025, startWeek: 7, endWeek: 10 },
-        { id: 'nov', month: 'November', year: 2025, startWeek: 10, endWeek: 14 },
+        { id: 'sep', month: 'September', year: 2025, startWeek: 4, endWeek: 8 },
+        { id: 'oct', month: 'October', year: 2025, startWeek: 8, endWeek: 11 },
+        { id: 'nov', month: 'November', year: 2025, startWeek: 11, endWeek: 14 },
         { id: 'dec', month: 'December', year: 2025, startWeek: 14, endWeek: 20 },
         { id: 'jan', month: 'January', year: 2026, startWeek: 20, endWeek: 25 },
         { id: 'feb', month: 'February', year: 2026, startWeek: 25, endWeek: 29 },
-        { id: 'mar', month: 'March', year: 2026, startWeek: 29, endWeek: 32 },
-        { id: 'apr', month: 'April', year: 2026, startWeek: 32, endWeek: 35 },
-        { id: 'may', month: 'May', year: 2026, startWeek: 35, endWeek: 38 },
+        { id: 'mar', month: 'March', year: 2026, startWeek: 29, endWeek: 33 },
+        { id: 'apr', month: 'April', year: 2026, startWeek: 33, endWeek: 36 },
+        { id: 'may', month: 'May', year: 2026, startWeek: 36, endWeek: 38 },
       ];
       
       const specialAwards = [
-          { id: 'xmas', special: 'Christmas No. 1', year: 2025, week: 17 },
+          { id: 'xmas', special: 'Christmas No. 1', year: 2025, week: 18 },
       ];
 
       const nonProUsers = users.filter(u => !u.isPro);
@@ -520,46 +520,34 @@ export default function AdminPage() {
         }
       }
 
-      // --- 6B. Special Christmas Award (by score improvement in Dec up to week 17) ---
+      // --- 6B. Special Christmas Award (Rank #1 at Christmas) ---
       for (const award of specialAwards) {
-        const startWeekForXmas = 14; 
-        const endWeekForXmas = award.week; // which is 17
+        const xmasWeek = award.week; 
 
-        if (playedWeeks.includes(endWeekForXmas)) {
-          const xmasImprovements: { userId: string; improvement: number; endScore: number }[] = [];
+        if (playedWeeks.includes(xmasWeek)) {
+          const xmasLeaders: { userId: string }[] = [];
           
           nonProUsers.forEach(user => {
             const userHistory = allUserHistories[user.id];
             if (userHistory) {
-              const startWeekData = userHistory.weeklyScores.find(ws => ws.week === startWeekForXmas);
-              const endWeekData = userHistory.weeklyScores.find(ws => ws.week === endWeekForXmas);
-              
-              const startScore = startWeekData?.score ?? 0;
-              
-              if (endWeekData) {
-                const improvement = endWeekData.score - startScore;
-                xmasImprovements.push({ userId: user.id, improvement, endScore: endWeekData.score });
+              const xmasWeekData = userHistory.weeklyScores.find(ws => ws.week === xmasWeek);
+              if (xmasWeekData && xmasWeekData.rank === 1) {
+                xmasLeaders.push({ userId: user.id });
               }
             }
           });
 
-          if (xmasImprovements.length > 0) {
-            xmasImprovements.sort((a, b) => b.improvement - a.improvement || b.endScore - a.endScore);
-            
-            const bestImprovement = xmasImprovements[0].improvement;
-            if (bestImprovement > 0) { // Only award if there's actual improvement
-                const winners = xmasImprovements.filter(u => u.improvement === bestImprovement);
-                winners.forEach(winner => {
-                const awardId = `${award.id}-${winner.userId}`;
-                mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
-                    month: '', // No month for special award
-                    year: award.year,
-                    userId: winner.userId,
-                    special: award.special,
-                    type: 'winner',
-                });
-                });
-            }
+          if (xmasLeaders.length > 0) {
+            xmasLeaders.forEach(winner => {
+              const awardId = `${award.id}-${winner.userId}`;
+              mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
+                month: '', 
+                year: award.year,
+                userId: winner.userId,
+                special: award.special,
+                type: 'winner',
+              });
+            });
           }
         }
       }
@@ -757,3 +745,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
