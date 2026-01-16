@@ -264,24 +264,15 @@ export default function AdminPage() {
       // --- 2. Calculate Week 0 scores based on previous season's finish ---
       toast({ title: 'Recalculation: Calculating Week 0 starting scores...' });
 
-      const currentTeamIds = new Set(teams.map(t => t.id));
       const prevStandingsMap = new Map(previousSeasonStandings.map(s => [s.teamId, s.rank]));
-      
-      const promotedTeamIds: string[] = [];
-      const continuingTeamIds: string[] = [];
+      const promotedTeamIds = teams.filter(t => !prevStandingsMap.has(t.id)).map(t => t.id);
+
+      const week0RankMap = new Map<string, number>();
       teams.forEach(team => {
         if (prevStandingsMap.has(team.id)) {
-          continuingTeamIds.push(team.id);
-        } else {
-          promotedTeamIds.push(team.id);
+          week0RankMap.set(team.id, prevStandingsMap.get(team.id)!);
         }
       });
-      
-      const week0RankMap = new Map<string, number>();
-      continuingTeamIds.forEach(teamId => {
-        week0RankMap.set(teamId, prevStandingsMap.get(teamId)!);
-      });
-      // Assign promoted teams to the bottom 3 ranks
       promotedTeamIds.forEach((teamId, index) => {
         week0RankMap.set(teamId, 18 + index);
       });
@@ -320,7 +311,7 @@ export default function AdminPage() {
 
       // --- 3. Clear all derived data collections ---
       toast({ title: 'Recalculation: Clearing old derived data...' });
-      const collectionsToClear = ['standings', 'playerTeamScores', 'teamRecentResults', 'weeklyTeamStandings', 'userHistories', 'monthlyMimoM'];
+      const collectionsToClear = ['standings', 'playerTeamScores', 'teamRecentResults', 'weeklyTeamStandings', 'userHistories', 'monthlyMimoM', 'seasonMonths'];
       const deletionBatch = writeBatch(firestore);
       for (const collectionName of collectionsToClear) {
         const snap = await getDocs(query(collection(firestore, collectionName)));
@@ -329,8 +320,49 @@ export default function AdminPage() {
       await deletionBatch.commit();
       
       const mainBatch = writeBatch(firestore);
+      
+      const awardPeriods = [
+        { id: 'aug', month: 'August', year: 2025, startWeek: 0, endWeek: 4 },
+        { id: 'sep', month: 'September', year: 2025, startWeek: 4, endWeek: 8 },
+        { id: 'oct', month: 'October', year: 2025, startWeek: 8, endWeek: 11 },
+        { id: 'nov', month: 'November', year: 2025, startWeek: 11, endWeek: 14 },
+        { id: 'dec', month: 'December', year: 2025, startWeek: 14, endWeek: 20 },
+        { id: 'jan', month: 'January', year: 2026, startWeek: 20, endWeek: 25 },
+        { id: 'feb', month: 'February', year: 2026, startWeek: 25, endWeek: 29 },
+        { id: 'mar', month: 'March', year: 2026, startWeek: 29, endWeek: 33 },
+        { id: 'apr', month: 'April', year: 2026, startWeek: 33, endWeek: 36 },
+        { id: 'may', month: 'May', year: 2026, startWeek: 36, endWeek: 39 },
+      ];
+      
+      const specialAwards = [
+          { id: 'xmas', special: 'Christmas No. 1', year: 2025, startWeek: 14, endWeek: 18 },
+      ];
+
+      // --- 4. Populate Season Months for the Hall of Fame page ---
+      toast({ title: 'Recalculation: Setting up season months...' });
+      const allAwardPeriods = [
+          ...awardPeriods.map(p => ({...p, special: ''})),
+          ...specialAwards.map(s => ({...s, month: ''}))
+      ];
+      allAwardPeriods.forEach(period => {
+          let abbreviation = '';
+          if (period.special) {
+              abbreviation = 'XMAS';
+          } else if (period.month === 'September') {
+              abbreviation = 'SEPT';
+          } else {
+              abbreviation = period.month.slice(0, 3).toUpperCase();
+          }
+            mainBatch.set(doc(firestore, 'seasonMonths', period.id), {
+              id: period.id,
+              month: period.month,
+              year: period.year,
+              special: period.special,
+              abbreviation: abbreviation,
+          });
+      });
   
-      // --- 4. Build history week by week from played matches ---
+      // --- 5. Build history week by week from played matches ---
       const playedMatches = allMatches.filter(m => m.homeScore > -1 && m.awayScore > -1);
       const playedWeeks = [...new Set(playedMatches.map(m => m.week))].sort((a, b) => a - b);
   
@@ -412,7 +444,7 @@ export default function AdminPage() {
         });
       }
   
-      // --- 5. Process final user states and write histories ---
+      // --- 6. Process final user states and write histories ---
       toast({ title: 'Recalculation: Finalizing user profiles...' });
       for (const user of users) {
         const userHistory = allUserHistories[user.id];
@@ -442,29 +474,11 @@ export default function AdminPage() {
         mainBatch.set(doc(firestore, 'userHistories', user.id), userHistory);
       }
 
-      // --- 6. Calculate and store Monthly MimoM awards ---
+      // --- 7. Calculate and store Monthly MimoM awards ---
       toast({ title: 'Recalculation: Calculating monthly awards...' });
-
-      const awardPeriods = [
-        { id: 'aug', month: 'August', year: 2025, startWeek: 0, endWeek: 4 },
-        { id: 'sep', month: 'September', year: 2025, startWeek: 4, endWeek: 8 },
-        { id: 'oct', month: 'October', year: 2025, startWeek: 8, endWeek: 11 },
-        { id: 'nov', month: 'November', year: 2025, startWeek: 11, endWeek: 14 },
-        { id: 'dec', month: 'December', year: 2025, startWeek: 14, endWeek: 20 },
-        { id: 'jan', month: 'January', year: 2026, startWeek: 20, endWeek: 25 },
-        { id: 'feb', month: 'February', year: 2026, startWeek: 25, endWeek: 29 },
-        { id: 'mar', month: 'March', year: 2026, startWeek: 29, endWeek: 33 },
-        { id: 'apr', month: 'April', year: 2026, startWeek: 33, endWeek: 36 },
-        { id: 'may', month: 'May', year: 2026, startWeek: 36, endWeek: 39 },
-      ];
-      
-      const specialAwards = [
-          { id: 'xmas', special: 'Christmas No. 1', year: 2025, startWeek: 14, endWeek: 18 },
-      ];
-
       const nonProUsers = users.filter(u => !u.isPro);
 
-      // --- 6A. Regular Monthly Awards (by score improvement) ---
+      // 7A. Regular Monthly Awards (by score improvement)
       for (const period of awardPeriods) {
         if (playedWeeks.includes(period.endWeek)) {
           const monthlyImprovements: { userId: string; improvement: number; endScore: number }[] = [];
@@ -475,10 +489,8 @@ export default function AdminPage() {
               const startWeekData = userHistory.weeklyScores.find(ws => ws.week === period.startWeek);
               const endWeekData = userHistory.weeklyScores.find(ws => ws.week === period.endWeek);
               
-              const startScore = startWeekData?.score ?? 0;
-              
-              if (endWeekData) {
-                const improvement = endWeekData.score - startScore;
+              if (startWeekData && endWeekData) {
+                const improvement = endWeekData.score - startWeekData.score;
                 monthlyImprovements.push({ userId: user.id, improvement, endScore: endWeekData.score });
               }
             }
@@ -499,6 +511,7 @@ export default function AdminPage() {
                   userId: winner.userId,
                   type: 'winner',
                   improvement: winner.improvement,
+                  special: '',
                 });
               });
 
@@ -516,6 +529,7 @@ export default function AdminPage() {
                         userId: runnerUp.userId,
                         type: 'runner-up',
                         improvement: runnerUp.improvement,
+                        special: '',
                       });
                     });
                   }
@@ -526,7 +540,7 @@ export default function AdminPage() {
         }
       }
 
-      // --- 6B. Special Christmas Award (by score improvement) ---
+      // 7B. Special Christmas Award (by score improvement)
       for (const award of specialAwards) {
          if (playedWeeks.includes(award.endWeek)) {
           const monthlyImprovements: { userId: string; improvement: number; endScore: number }[] = [];
@@ -537,10 +551,8 @@ export default function AdminPage() {
               const startWeekData = userHistory.weeklyScores.find(ws => ws.week === award.startWeek);
               const endWeekData = userHistory.weeklyScores.find(ws => ws.week === award.endWeek);
               
-              const startScore = startWeekData?.score ?? 0;
-              
-              if (endWeekData) {
-                const improvement = endWeekData.score - startScore;
+              if (startWeekData && endWeekData) {
+                const improvement = endWeekData.score - startWeekData.score;
                 monthlyImprovements.push({ userId: user.id, improvement, endScore: endWeekData.score });
               }
             }
@@ -568,7 +580,7 @@ export default function AdminPage() {
         }
       }
 
-      // --- 7. Generate final league standings and recent results ---
+      // --- 8. Generate final league standings and recent results ---
       toast({ title: 'Recalculation: Generating final standings...' });
       const finalMatches = allMatches.filter(m => m.week <= (playedWeeks[playedWeeks.length -1] || 0) && m.homeScore > -1 && m.awayScore > -1);
       const finalTeamStats: { [teamId: string]: Omit<CurrentStanding, 'teamId' | 'rank'> } = {};
@@ -624,7 +636,7 @@ export default function AdminPage() {
         mainBatch.set(doc(firestore, 'teamRecentResults', team.id), { teamId: team.id, results: results.reverse() });
       });
 
-      // --- 8. Commit all changes ---
+      // --- 9. Commit all changes ---
       toast({ title: 'Recalculation: Committing all updates...' });
       await mainBatch.commit();
   
