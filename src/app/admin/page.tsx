@@ -409,12 +409,11 @@ export default function AdminPage() {
       ];
 
       const nonProUsers = users.filter(u => !u.isPro);
-      const maxRank = nonProUsers.length > 0 ? nonProUsers.length : 50;
 
-
+      // --- 5A. Regular Monthly Awards (by score improvement) ---
       for (const period of awardPeriods) {
         if (playedWeeks.includes(period.endWeek)) {
-          const monthlyImprovements: { userId: string; improvement: number; endRank: number }[] = [];
+          const monthlyImprovements: { userId: string; improvement: number; endScore: number }[] = [];
           
           nonProUsers.forEach(user => {
             const userHistory = allUserHistories[user.id];
@@ -422,17 +421,17 @@ export default function AdminPage() {
               const startWeekData = userHistory.weeklyScores.find(ws => ws.week === period.startWeek);
               const endWeekData = userHistory.weeklyScores.find(ws => ws.week === period.endWeek);
               
-              const startRank = startWeekData && startWeekData.rank > 0 ? startWeekData.rank : maxRank;
+              const startScore = startWeekData?.score ?? 0;
               
-              if (endWeekData && endWeekData.rank > 0) {
-                const improvement = startRank - endWeekData.rank;
-                monthlyImprovements.push({ userId: user.id, improvement, endRank: endWeekData.rank });
+              if (endWeekData) {
+                const improvement = endWeekData.score - startScore;
+                monthlyImprovements.push({ userId: user.id, improvement, endScore: endWeekData.score });
               }
             }
           });
 
           if (monthlyImprovements.length > 0) {
-            monthlyImprovements.sort((a, b) => b.improvement - a.improvement || a.endRank - b.endRank);
+            monthlyImprovements.sort((a, b) => b.improvement - a.improvement || b.endScore - a.endScore);
             
             const bestImprovement = monthlyImprovements[0].improvement;
             const winners = monthlyImprovements.filter(u => u.improvement === bestImprovement);
@@ -467,25 +466,48 @@ export default function AdminPage() {
         }
       }
 
+      // --- 5B. Special Christmas Award (by score improvement in Dec up to week 17) ---
       for (const award of specialAwards) {
-          if (playedWeeks.includes(award.week)) {
-              nonProUsers.forEach(user => {
-                  const userHistory = allUserHistories[user.id];
-                  if (userHistory) {
-                      const awardWeekData = userHistory.weeklyScores.find(ws => ws.week === award.week);
-                      if (awardWeekData && awardWeekData.rank === 1) {
-                          const awardId = `${award.id}-${user.id}`;
-                          mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
-                              month: '',
-                              year: award.year,
-                              userId: user.id,
-                              special: award.special,
-                              type: 'winner'
-                          });
-                      }
-                  }
-              });
+        const startWeekForXmas = 14; 
+        const endWeekForXmas = award.week; // which is 17
+
+        if (playedWeeks.includes(endWeekForXmas)) {
+          const xmasImprovements: { userId: string; improvement: number; endScore: number }[] = [];
+          
+          nonProUsers.forEach(user => {
+            const userHistory = allUserHistories[user.id];
+            if (userHistory) {
+              const startWeekData = userHistory.weeklyScores.find(ws => ws.week === startWeekForXmas);
+              const endWeekData = userHistory.weeklyScores.find(ws => ws.week === endWeekForXmas);
+              
+              const startScore = startWeekData?.score ?? 0;
+              
+              if (endWeekData) {
+                const improvement = endWeekData.score - startScore;
+                xmasImprovements.push({ userId: user.id, improvement, endScore: endWeekData.score });
+              }
+            }
+          });
+
+          if (xmasImprovements.length > 0) {
+            xmasImprovements.sort((a, b) => b.improvement - a.improvement || b.endScore - a.endScore);
+            
+            const bestImprovement = xmasImprovements[0].improvement;
+            if (bestImprovement > 0) { // Only award if there's actual improvement
+                const winners = xmasImprovements.filter(u => u.improvement === bestImprovement);
+                winners.forEach(winner => {
+                const awardId = `${award.id}-${winner.userId}`;
+                mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
+                    month: '', // No month for special award
+                    year: award.year,
+                    userId: winner.userId,
+                    special: award.special,
+                    type: 'winner',
+                });
+                });
+            }
           }
+        }
       }
 
       // --- 6. Generate final league standings and recent results ---
