@@ -98,6 +98,7 @@ export default function ProfilePage() {
     return doc(firestore, 'userHistories', resolvedUserId);
   }, [firestore, resolvedUserId]);
 
+  const allUserHistoriesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'userHistories') : null, [firestore]);
   const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
   
   const mimoMQuery = useMemoFirebase(() => {
@@ -107,10 +108,11 @@ export default function ProfilePage() {
 
   const { data: user, isLoading: userLoading } = useDoc<User>(userDocRef);
   const { data: userHistory, isLoading: historyLoading } = useDoc<UserHistory>(userHistoryDocRef);
+  const { data: allUserHistories, isLoading: allHistoriesLoading } = useCollection<UserHistory>(allUserHistoriesQuery);
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
   const { data: monthlyMimoM, isLoading: mimoMLoading } = useCollection<MonthlyMimoM>(mimoMQuery);
 
-  const isLoading = isAuthUserLoading || userLoading || historyLoading || teamsLoading || mimoMLoading;
+  const isLoading = isAuthUserLoading || userLoading || historyLoading || teamsLoading || mimoMLoading || allHistoriesLoading;
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -170,30 +172,37 @@ export default function ProfilePage() {
   const defaultAvatarUrl = user ? PlaceHolderImages.find(img => img.id === user.avatar)?.imageUrl || '' : '';
 
   const { chartData, yAxisDomain } = React.useMemo(() => {
-    if (!userHistory || !userHistory.weeklyScores) return { chartData: [], yAxisDomain: [0,0] };
+    if (!allUserHistories || !userHistory || !userHistory.weeklyScores) {
+      return { chartData: [], yAxisDomain: [0, 0] };
+    }
+
+    const allWeeks = [...new Set(allUserHistories.flatMap(h => h.weeklyScores.map(w => w.week)))].filter(w => w > 0).sort((a, b) => a - b);
     
-    const allScores = userHistory.weeklyScores.filter(w => w.week > 0).map(w => w.score);
-    if (allScores.length === 0) return { chartData: [], yAxisDomain: [0,10] };
-    const minScore = Math.min(...allScores);
-    const maxScore = Math.max(...allScores);
-    const yAxisDomain: [number, number] = [minScore - 5, maxScore + 5];
+    const allScores = allUserHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.score));
+    if (allScores.length === 0) {
+        return { chartData: [], yAxisDomain: [0, 10] };
+    }
+    const overallMinScore = Math.min(...allScores);
+    const overallMaxScore = Math.max(...allScores);
+    const yAxisDomain: [number, number] = [overallMinScore - 5, overallMaxScore + 5];
 
-    const weeks = [...new Set(userHistory.weeklyScores.map(w => w.week))].sort((a, b) => a - b);
+    const transformedData = allWeeks.map(week => {
+      const scoresThisWeek = allUserHistories
+        .map(h => h.weeklyScores.find(w => w.week === week)?.score)
+        .filter((score): score is number => score !== undefined);
 
-    const transformedData = weeks.map(week => {
-      const weekData: { [key: string]: number | string } = { week: `Wk ${week}` };
-      const weekInfo = userHistory.weeklyScores.find(w => w.week === week);
+      const currentUserWeekInfo = userHistory.weeklyScores.find(w => w.week === week);
 
-      if (weekInfo) {
-        weekData['Min Score'] = weekInfo.score - (Math.random() * 10);
-        weekData['Max Score'] = weekInfo.score + (Math.random() * 10);
-        weekData['Your Score'] = weekInfo.score;
-      }
-      return weekData;
+      return {
+        week: `Wk ${week}`,
+        'Your Score': currentUserWeekInfo?.score,
+        'Max Score': scoresThisWeek.length > 0 ? Math.max(...scoresThisWeek) : undefined,
+        'Min Score': scoresThisWeek.length > 0 ? Math.min(...scoresThisWeek) : undefined,
+      };
     });
 
     return { chartData: transformedData, yAxisDomain };
-  }, [userHistory]);
+  }, [allUserHistories, userHistory]);
 
   const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
