@@ -265,7 +265,9 @@ export default function AdminPage() {
       toast({ title: 'Recalculation: Calculating Week 0 starting scores...' });
 
       const prevStandingsMap = new Map(previousSeasonStandings.map(s => [s.teamId, s.rank]));
-      const promotedTeamIds = teams.filter(t => !prevStandingsMap.has(t.id)).map(t => t.id);
+      const promotedTeams = teams
+        .filter(t => !prevStandingsMap.has(t.id))
+        .sort((a, b) => a.name.localeCompare(b.name));
 
       const week0RankMap = new Map<string, number>();
       teams.forEach(team => {
@@ -273,8 +275,8 @@ export default function AdminPage() {
           week0RankMap.set(team.id, prevStandingsMap.get(team.id)!);
         }
       });
-      promotedTeamIds.forEach((teamId, index) => {
-        week0RankMap.set(teamId, 18 + index);
+      promotedTeams.forEach((team, index) => {
+        week0RankMap.set(team.id, 18 + index);
       });
 
       const userScoresForWeek0: { [userId: string]: number } = {};
@@ -543,40 +545,32 @@ export default function AdminPage() {
       // 7B. Special Christmas Award (by score improvement)
       for (const award of specialAwards) {
          if (playedWeeks.includes(award.endWeek)) {
-          const monthlyImprovements: { userId: string; improvement: number; endScore: number }[] = [];
-          
-          nonProUsers.forEach(user => {
-            const userHistory = allUserHistories[user.id];
-            if (userHistory) {
-              const startWeekData = userHistory.weeklyScores.find(ws => ws.week === award.startWeek);
-              const endWeekData = userHistory.weeklyScores.find(ws => ws.week === award.endWeek);
-              
-              if (startWeekData && endWeekData) {
-                const improvement = endWeekData.score - startWeekData.score;
-                monthlyImprovements.push({ userId: user.id, improvement, endScore: endWeekData.score });
-              }
-            }
-          });
+            const nonProUsers = users.filter(u => !u.isPro);
+            const userRanksForWeek = nonProUsers.map(user => {
+                const history = allUserHistories[user.id];
+                const weekData = history?.weeklyScores.find(ws => ws.week === award.endWeek);
+                return {
+                    userId: user.id,
+                    rank: weekData?.rank ?? Infinity,
+                    score: weekData?.score ?? -Infinity,
+                }
+            }).sort((a,b) => a.rank - b.rank || b.score - a.score);
 
-          if (monthlyImprovements.length > 0) {
-            monthlyImprovements.sort((a, b) => b.improvement - a.improvement || b.endScore - a.endScore);
-            
-            const bestImprovement = monthlyImprovements[0].improvement;
-             if (bestImprovement > 0) {
-                const winners = monthlyImprovements.filter(u => u.improvement === bestImprovement);
+            if (userRanksForWeek.length > 0) {
+                const topRank = userRanksForWeek[0].rank;
+                const winners = userRanksForWeek.filter(u => u.rank === topRank);
+                
                 winners.forEach(winner => {
-                const awardId = `${award.id}-${winner.userId}`;
-                mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
-                    month: '', 
-                    year: award.year,
-                    userId: winner.userId,
-                    special: award.special,
-                    type: 'winner',
-                    improvement: winner.improvement,
-                });
+                    const awardId = `${award.id}-${winner.userId}`;
+                    mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
+                        month: '',
+                        year: award.year,
+                        userId: winner.userId,
+                        special: award.special,
+                        type: 'winner',
+                    });
                 });
             }
-          }
         }
       }
 
