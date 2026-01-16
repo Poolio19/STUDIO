@@ -28,7 +28,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-import type { Match, Team, Prediction, User as UserProfile, UserHistory, CurrentStanding, WeekResults } from '@/lib/types';
+import type { Match, Team, Prediction, User as UserProfile, UserHistory, CurrentStanding, WeekResults, PreviousSeasonStanding } from '@/lib/types';
 import { createResultsFile } from '@/ai/flows/create-results-file-flow';
 import { updateScoresFromJson } from '@/ai/flows/update-scores-from-json-flow';
 
@@ -246,11 +246,12 @@ export default function AdminPage() {
       toast({ title: 'Recalculation: Fetching base data...' });
   
       // --- 1. Fetch all base data ---
-      const [teamsSnap, matchesSnap, usersSnap, predictionsSnap] = await Promise.all([
+      const [teamsSnap, matchesSnap, usersSnap, predictionsSnap, prevStandingsSnap] = await Promise.all([
         getDocs(query(collection(firestore, 'teams'))),
         getDocs(query(collection(firestore, 'matches'))),
         getDocs(query(collection(firestore, 'users'))),
         getDocs(query(collection(firestore, 'predictions'))),
+        getDocs(query(collection(firestore, 'previousSeasonStandings'))),
       ]);
   
       const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
@@ -258,8 +259,66 @@ export default function AdminPage() {
       const allMatches = matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match));
       const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
       const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
-  
-      // --- 2. Clear all derived data collections ---
+      const previousSeasonStandings = prevStandingsSnap.docs.map(doc => ({ teamId: doc.id, ...doc.data() } as PreviousSeasonStanding));
+
+      // --- 2. Calculate Week 0 scores based on previous season's finish ---
+      toast({ title: 'Recalculation: Calculating Week 0 starting scores...' });
+
+      const currentTeamIds = new Set(teams.map(t => t.id));
+      const prevStandingsMap = new Map(previousSeasonStandings.map(s => [s.teamId, s.rank]));
+      
+      const promotedTeamIds: string[] = [];
+      const continuingTeamIds: string[] = [];
+      teams.forEach(team => {
+        if (prevStandingsMap.has(team.id)) {
+          continuingTeamIds.push(team.id);
+        } else {
+          promotedTeamIds.push(team.id);
+        }
+      });
+      
+      const week0RankMap = new Map<string, number>();
+      continuingTeamIds.forEach(teamId => {
+        week0RankMap.set(teamId, prevStandingsMap.get(teamId)!);
+      });
+      // Assign promoted teams to the bottom 3 ranks
+      promotedTeamIds.forEach((teamId, index) => {
+        week0RankMap.set(teamId, 18 + index);
+      });
+
+      const userScoresForWeek0: { [userId: string]: number } = {};
+      predictions.forEach(prediction => {
+        if (!prediction.rankings) return;
+        let totalScore = 0;
+        prediction.rankings.forEach((teamId, index) => {
+          const predictedRank = index + 1;
+          const actualRank = week0RankMap.get(teamId);
+          if (actualRank !== undefined) {
+            totalScore += 5 - Math.abs(predictedRank - actualRank);
+          }
+        });
+        userScoresForWeek0[prediction.userId] = totalScore;
+      });
+
+      const rankedUsersForWeek0 = users
+        .map(user => ({ ...user, score: userScoresForWeek0[user.id] ?? 0 }))
+        .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+        
+      const allUserHistories: { [userId: string]: UserHistory } = {};
+      let currentRank_w0 = 0;
+      let lastScore_w0 = Infinity;
+      rankedUsersForWeek0.forEach((user, index) => {
+        if (user.score < lastScore_w0) {
+          currentRank_w0 = index + 1;
+          lastScore_w0 = user.score;
+        }
+        allUserHistories[user.id] = { 
+            userId: user.id, 
+            weeklyScores: [{ week: 0, score: user.score, rank: currentRank_w0 }] 
+        };
+      });
+
+      // --- 3. Clear all derived data collections ---
       toast({ title: 'Recalculation: Clearing old derived data...' });
       const collectionsToClear = ['standings', 'playerTeamScores', 'teamRecentResults', 'weeklyTeamStandings', 'userHistories', 'monthlyMimoM'];
       const deletionBatch = writeBatch(firestore);
@@ -271,14 +330,9 @@ export default function AdminPage() {
       
       const mainBatch = writeBatch(firestore);
   
-      // --- 3. Build history week by week ---
+      // --- 4. Build history week by week from played matches ---
       const playedMatches = allMatches.filter(m => m.homeScore > -1 && m.awayScore > -1);
       const playedWeeks = [...new Set(playedMatches.map(m => m.week))].sort((a, b) => a - b);
-  
-      const allUserHistories: { [userId: string]: UserHistory } = {};
-      users.forEach(u => {
-        allUserHistories[u.id] = { userId: u.id, weeklyScores: [] };
-      });
   
       for (const week of playedWeeks) {
         toast({ title: `Recalculation: Processing Week ${week}...` });
@@ -358,7 +412,7 @@ export default function AdminPage() {
         });
       }
   
-      // --- 4. Process final user states and write histories ---
+      // --- 5. Process final user states and write histories ---
       toast({ title: 'Recalculation: Finalizing user profiles...' });
       for (const user of users) {
         const userHistory = allUserHistories[user.id];
@@ -388,11 +442,11 @@ export default function AdminPage() {
         mainBatch.set(doc(firestore, 'userHistories', user.id), userHistory);
       }
 
-      // --- 5. Calculate and store Monthly MimoM awards ---
+      // --- 6. Calculate and store Monthly MimoM awards ---
       toast({ title: 'Recalculation: Calculating monthly awards...' });
 
       const awardPeriods = [
-        { id: 'aug', month: 'August', year: 2025, startWeek: 1, endWeek: 4 },
+        { id: 'aug', month: 'August', year: 2025, startWeek: 0, endWeek: 4 },
         { id: 'sep', month: 'September', year: 2025, startWeek: 4, endWeek: 7 },
         { id: 'oct', month: 'October', year: 2025, startWeek: 7, endWeek: 10 },
         { id: 'nov', month: 'November', year: 2025, startWeek: 10, endWeek: 14 },
@@ -410,7 +464,7 @@ export default function AdminPage() {
 
       const nonProUsers = users.filter(u => !u.isPro);
 
-      // --- 5A. Regular Monthly Awards (by score improvement) ---
+      // --- 6A. Regular Monthly Awards (by score improvement) ---
       for (const period of awardPeriods) {
         if (playedWeeks.includes(period.endWeek)) {
           const monthlyImprovements: { userId: string; improvement: number; endScore: number }[] = [];
@@ -466,7 +520,7 @@ export default function AdminPage() {
         }
       }
 
-      // --- 5B. Special Christmas Award (by score improvement in Dec up to week 17) ---
+      // --- 6B. Special Christmas Award (by score improvement in Dec up to week 17) ---
       for (const award of specialAwards) {
         const startWeekForXmas = 14; 
         const endWeekForXmas = award.week; // which is 17
@@ -510,7 +564,7 @@ export default function AdminPage() {
         }
       }
 
-      // --- 6. Generate final league standings and recent results ---
+      // --- 7. Generate final league standings and recent results ---
       toast({ title: 'Recalculation: Generating final standings...' });
       const finalMatches = allMatches.filter(m => m.week <= (playedWeeks[playedWeeks.length -1] || 0) && m.homeScore > -1 && m.awayScore > -1);
       const finalTeamStats: { [teamId: string]: Omit<CurrentStanding, 'teamId' | 'rank'> } = {};
@@ -566,7 +620,7 @@ export default function AdminPage() {
         mainBatch.set(doc(firestore, 'teamRecentResults', team.id), { teamId: team.id, results: results.reverse() });
       });
 
-      // --- 7. Commit all changes ---
+      // --- 8. Commit all changes ---
       toast({ title: 'Recalculation: Committing all updates...' });
       await mainBatch.commit();
   
