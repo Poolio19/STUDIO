@@ -479,9 +479,9 @@ export default function AdminPage() {
       // --- 7. Calculate and store Monthly MimoM awards ---
       toast({ title: 'Recalculation: Calculating monthly awards...' });
       const nonProUsers = users.filter(u => !u.isPro);
+      const allAwardPeriodsForCalc = [...awardPeriods, ...specialAwards];
 
-      // 7A. Regular Monthly Awards (by score improvement)
-      for (const period of awardPeriods) {
+      for (const period of allAwardPeriodsForCalc) {
         if (playedWeeks.includes(period.endWeek)) {
           const monthlyImprovements: { userId: string; improvement: number; endScore: number }[] = [];
           
@@ -502,75 +502,39 @@ export default function AdminPage() {
             monthlyImprovements.sort((a, b) => b.improvement - a.improvement || b.endScore - a.endScore);
             
             const bestImprovement = monthlyImprovements[0].improvement;
-            if (bestImprovement > 0) {
-              const winners = monthlyImprovements.filter(u => u.improvement === bestImprovement);
+            const winners = monthlyImprovements.filter(u => u.improvement === bestImprovement);
 
-              winners.forEach(winner => {
-                const awardId = `${period.id}-${winner.userId}`;
-                mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
-                  month: period.month,
-                  year: period.year,
-                  userId: winner.userId,
-                  type: 'winner',
-                  improvement: winner.improvement,
-                  special: '',
-                });
+            winners.forEach(winner => {
+              const awardId = `${period.id}-${winner.userId}`;
+              mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
+                month: 'month' in period ? period.month : '',
+                year: period.year,
+                userId: winner.userId,
+                type: 'winner',
+                improvement: winner.improvement,
+                special: 'special' in period ? period.special : '',
               });
+            });
 
-              if (winners.length === 1) {
-                const remainingPlayers = monthlyImprovements.filter(u => u.improvement < bestImprovement);
-                if (remainingPlayers.length > 0) {
-                  const secondBestImprovement = remainingPlayers[0].improvement;
-                  if (secondBestImprovement > 0) {
-                    const runnersUp = remainingPlayers.filter(u => u.improvement === secondBestImprovement);
-                    runnersUp.forEach(runnerUp => {
-                      const awardId = `${period.id}-ru-${runnerUp.userId}`;
-                      mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
-                        month: period.month,
-                        year: period.year,
-                        userId: runnerUp.userId,
-                        type: 'runner-up',
-                        improvement: runnerUp.improvement,
-                        special: '',
-                      });
-                    });
-                  }
-                }
+            if (winners.length === 1 && !('special' in period)) {
+              const remainingPlayers = monthlyImprovements.filter(u => u.improvement < bestImprovement);
+              if (remainingPlayers.length > 0) {
+                const secondBestImprovement = remainingPlayers[0].improvement;
+                const runnersUp = remainingPlayers.filter(u => u.improvement === secondBestImprovement);
+                runnersUp.forEach(runnerUp => {
+                  const awardId = `${period.id}-ru-${runnerUp.userId}`;
+                  mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
+                    month: 'month' in period ? period.month : '',
+                    year: period.year,
+                    userId: runnerUp.userId,
+                    type: 'runner-up',
+                    improvement: runnerUp.improvement,
+                    special: '',
+                  });
+                });
               }
             }
           }
-        }
-      }
-
-      // 7B. Special Christmas Award (by score improvement)
-      for (const award of specialAwards) {
-         if (playedWeeks.includes(award.endWeek)) {
-            const nonProUsers = users.filter(u => !u.isPro);
-            const userRanksForWeek = nonProUsers.map(user => {
-                const history = allUserHistories[user.id];
-                const weekData = history?.weeklyScores.find(ws => ws.week === award.endWeek);
-                return {
-                    userId: user.id,
-                    rank: weekData?.rank ?? Infinity,
-                    score: weekData?.score ?? -Infinity,
-                }
-            }).sort((a,b) => a.rank - b.rank || b.score - a.score);
-
-            if (userRanksForWeek.length > 0) {
-                const topRank = userRanksForWeek[0].rank;
-                const winners = userRanksForWeek.filter(u => u.rank === topRank);
-                
-                winners.forEach(winner => {
-                    const awardId = `${award.id}-${winner.userId}`;
-                    mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
-                        month: '',
-                        year: award.year,
-                        userId: winner.userId,
-                        special: award.special,
-                        type: 'winner',
-                    });
-                });
-            }
         }
       }
 
