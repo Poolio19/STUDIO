@@ -93,6 +93,7 @@ export type MonthlyMimoM = {
   userId: string;
   special?: string;
   type: 'winner' | 'runner-up';
+  improvement?: number;
 };
 
 export type SeasonMonth = {

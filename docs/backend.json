@@ -149,7 +149,8 @@
             "year": { "type": "number" },
             "userId": { "type": "string" },
             "special": { "type": "string" },
-            "type": { "type": "string", "enum": ["winner", "runner-up"] }
+            "type": { "type": "string", "enum": ["winner", "runner-up"] },
+            "improvement": { "type": "number", "description": "The score improvement that led to the award." }
         },
         "required": ["id", "month", "year", "userId", "type"]
     },

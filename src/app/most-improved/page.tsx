@@ -309,7 +309,9 @@ export default function MostImprovedPage() {
                                                     <AvatarFallback>{winner.name?.charAt(0)}</AvatarFallback>
                                                 </Avatar>
                                                 <div className="text-left">
-                                                    <p className="text-sm font-bold">{winner.name} - £{winnerPrize % 1 === 0 ? winnerPrize : winnerPrize.toFixed(2)}</p>
+                                                    <p className="text-sm font-bold">{winner.name} - £{winnerPrize % 1 === 0 ? winnerPrize : winnerPrize.toFixed(2)}
+                                                        {winner.improvement && <span className="font-normal text-muted-foreground"> (+{winner.improvement}pts)</span>}
+                                                    </p>
                                                     {monthlyAward.winners && <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">{isTie ? 'JoMiMoM' : 'MiMoM'}</p>}
                                                     {monthlyAward.currentLeaders && <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">{isTie ? 'Current JoMiMoM' : 'Current Leader'}</p>}
                                                 </div>
@@ -323,7 +325,9 @@ export default function MostImprovedPage() {
                                                     <AvatarFallback>{runnerUp.name?.charAt(0)}</AvatarFallback>
                                                 </Avatar>
                                                 <div className="text-left">
-                                                    <p className="text-sm font-bold">{runnerUp.name} - £{runnerUpPrize % 1 === 0 ? runnerUpPrize : runnerUpPrize.toFixed(2)}</p>
+                                                    <p className="text-sm font-bold">{runnerUp.name} - £{runnerUpPrize % 1 === 0 ? runnerUpPrize : runnerUpPrize.toFixed(2)}
+                                                        {runnerUp.improvement && <span className="font-normal text-muted-foreground"> (+{runnerUp.improvement}pts)</span>}
+                                                    </p>
                                                     <p className="text-xs font-semibold text-slate-800/80 dark:text-slate-200/80">{(runnersUp.length > 1 ? 'JoRuMiMoM' : 'RuMiMoM')}</p>
                                                 </div>
                                             </div>

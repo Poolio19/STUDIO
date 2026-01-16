@@ -498,6 +498,7 @@ export default function AdminPage() {
                   year: period.year,
                   userId: winner.userId,
                   type: 'winner',
+                  improvement: winner.improvement,
                 });
               });
 
@@ -514,6 +515,7 @@ export default function AdminPage() {
                         year: period.year,
                         userId: runnerUp.userId,
                         type: 'runner-up',
+                        improvement: runnerUp.improvement,
                       });
                     });
                   }
@@ -558,6 +560,7 @@ export default function AdminPage() {
                     userId: winner.userId,
                     special: award.special,
                     type: 'winner',
+                    improvement: winner.improvement,
                 });
                 });
             }
