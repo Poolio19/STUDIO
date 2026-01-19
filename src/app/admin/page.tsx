@@ -32,7 +32,6 @@ import type { Match, Team, Prediction, User as UserProfile, UserHistory, Current
 import { createResultsFile } from '@/ai/flows/create-results-file-flow';
 import { updateScoresFromJson } from '@/ai/flows/update-scores-from-json-flow';
 
-import allFixtures from '@/lib/past-fixtures.json';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -82,28 +81,16 @@ export default function AdminPage() {
   const [latestFilePath, setLatestFilePath] = React.useState<string | null>(null);
   const [latestFileContent, setLatestFileContent] = React.useState<string | null>(null);
 
-
+  const [allMatches, setAllMatches] = React.useState<Match[]>([]);
   const [teamsMap, setTeamsMap] = React.useState<Map<string, Team>>(new Map());
   
-  const lastPlayedWeek = React.useMemo(() => {
-    const playedFixtures = allFixtures.filter(fixture => fixture.homeScore > -1 && fixture.awayScore > -1);
-    if (playedFixtures.length === 0) return 0;
-    return Math.max(...playedFixtures.map(fixture => fixture.week));
-  }, []);
+  const fetchAllMatches = React.useCallback(async () => {
+    if (!firestore) return;
+    const matchesSnap = await getDocs(query(collection(firestore, 'matches')));
+    const matches = matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match));
+    setAllMatches(matches);
+  }, [firestore]);
   
-  const nextUnplayedWeek = lastPlayedWeek < 38 ? lastPlayedWeek + 1 : 38;
-
-  const scoresForm = useForm<ScoresFormValues>({
-    resolver: zodResolver(scoresFormSchema),
-    defaultValues: {
-      week: nextUnplayedWeek,
-      results: [],
-    },
-  });
-
-  const selectedWeek = scoresForm.watch('week');
-  const weekFixtures = React.useMemo(() => allFixtures.filter(fixture => fixture.week === selectedWeek), [selectedWeek]);
-
   React.useEffect(() => {
     async function fetchTeams() {
       if (!firestore) return;
@@ -111,17 +98,50 @@ export default function AdminPage() {
       const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
       setTeamsMap(new Map(teams.map(t => [t.id, t])));
     }
+    fetchAllMatches();
     fetchTeams();
-  }, [firestore]);
+  }, [firestore, fetchAllMatches]);
+
+  const lastPlayedWeek = React.useMemo(() => {
+    const playedFixtures = allMatches.filter(fixture => fixture.homeScore > -1 && fixture.awayScore > -1);
+    if (playedFixtures.length === 0) return 0;
+    return Math.max(...playedFixtures.map(fixture => fixture.week));
+  }, [allMatches]);
   
+  const nextUnplayedWeek = lastPlayedWeek < 38 ? lastPlayedWeek + 1 : 38;
+
+  const scoresForm = useForm<ScoresFormValues>({
+    resolver: zodResolver(scoresFormSchema),
+    defaultValues: {
+      week: 1,
+      results: [],
+    },
+  });
+
   React.useEffect(() => {
-    const results = weekFixtures.map(fixture => ({
-      id: fixture.id,
-      homeScore: fixture.homeScore,
-      awayScore: fixture.awayScore,
-    }));
-    scoresForm.setValue('results', results);
-  }, [selectedWeek, weekFixtures, scoresForm]);
+    if (nextUnplayedWeek > 0) {
+      scoresForm.setValue('week', nextUnplayedWeek);
+    }
+  }, [nextUnplayedWeek, scoresForm]);
+
+
+  const selectedWeek = scoresForm.watch('week');
+  const weekFixtures = React.useMemo(() => {
+    return allMatches
+      .filter(fixture => fixture.week === selectedWeek)
+      .sort((a,b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime());
+  }, [selectedWeek, allMatches]);
+
+  React.useEffect(() => {
+    if (weekFixtures.length > 0) {
+      const results = weekFixtures.map(fixture => ({
+        id: fixture.id,
+        homeScore: fixture.homeScore,
+        awayScore: fixture.awayScore,
+      }));
+      scoresForm.setValue('results', results, { shouldDirty: false });
+    }
+  }, [weekFixtures, scoresForm]);
 
 
   const onWriteResultsFileSubmit = async (data: ScoresFormValues) => {
@@ -193,6 +213,9 @@ export default function AdminPage() {
 
       await batch.commit();
 
+      // Refetch the matches to update the form with the new scores
+      await fetchAllMatches();
+
       toast({
         title: 'Import Complete!',
         description: `Updated ${updatedCount} matches for Week ${weekData.week}. You can now run the full recalculation.`,
@@ -261,33 +284,22 @@ export default function AdminPage() {
 
       // --- 2. Calculate Week 0 scores based on the definitive final standings from last season ---
       toast({ title: 'Recalculation: Calculating Week 0 starting scores...' });
-
-      // Use the definitive user-provided order for the Week 0 table.
-      const teamNameToIdMap = new Map(teams.map(t => [t.name, t.id]));
-      const nameMapping: { [key: string]: string } = {
-          "Liverpool": "Liverpool", "Arsenal": "Arsenal", "Man City": "Manchester City", "Chelsea": "Chelsea",
-          "Newcastle": "Newcastle United", "Aston Villa": "Aston Villa", "Notts Forest": "Nottingham Forest",
-          "Brighton": "Brighton & Hove Albion", "Bournemouth": "AFC Bournemouth", "Brentford": "Brentford",
-          "Fulham": "Fulham", "Crystal Palace": "Crystal Palace", "Everton": "Everton", "West Ham": "West Ham United",
-          "Man Utd": "Manchester United", "Wolves": "Wolverhampton Wanderers", "Tottenham": "Tottenham Hotspur",
-          "Leeds": "Leeds United", "Burnley": "Burnley", "Sunderland": "Sunderland"
-      };
       const userProvidedOrder = [
-        "Liverpool", "Arsenal", "Man City", "Chelsea", "Newcastle", "Aston Villa", "Notts Forest", "Brighton",
-        "Bournemouth", "Brentford", "Fulham", "Crystal Palace", "Everton", "West Ham", "Man Utd", "Wolves",
-        "Tottenham", "Leeds", "Burnley", "Sunderland"
+        "Liverpool", "Arsenal", "Manchester City", "Chelsea", "Newcastle United", "Aston Villa", "Nottingham Forest", "Brighton & Hove Albion",
+        "AFC Bournemouth", "Brentford", "Fulham", "Crystal Palace", "Everton", "West Ham United",
+        "Manchester United", "Wolverhampton Wanderers", "Tottenham Hotspur", "Leeds United", "Burnley", "Sunderland"
       ];
-
+      const teamNameToIdMap = new Map(teams.map(t => [t.name, t.id]));
       const week0RankMap = new Map<string, number>();
-      userProvidedOrder.forEach((shortName, index) => {
-          const fullName = nameMapping[shortName];
-          const teamId = teamNameToIdMap.get(fullName);
+      userProvidedOrder.forEach((teamName, index) => {
+          const teamId = teamNameToIdMap.get(teamName);
           if (teamId) {
               week0RankMap.set(teamId, index + 1);
           } else {
-              console.warn(`Week 0 Rank Calc: Could not find team ID for "${fullName}" (from short name "${shortName}").`);
+              console.warn(`Week 0 Rank Calc: Could not find team ID for "${teamName}".`);
           }
       });
+
 
       const userScoresForWeek0: { [userId: string]: number } = {};
       predictions.forEach(prediction => {
@@ -731,5 +743,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
