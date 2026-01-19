@@ -133,18 +133,16 @@ export default function AdminPage() {
   }, [selectedWeek, allMatches]);
 
   React.useEffect(() => {
-    if (weekFixtures.length > 0) {
-      const results = weekFixtures.map(fixture => ({
-        id: fixture.id,
-        homeScore: fixture.homeScore,
-        awayScore: fixture.awayScore,
-      }));
-      // Check if form is dirty to avoid overwriting user input
-      if (!scoresForm.formState.isDirty) {
-        scoresForm.setValue('results', results, { shouldDirty: false });
-      }
-    }
-  }, [weekFixtures, scoresForm]);
+    const results = weekFixtures.map(fixture => ({
+      id: fixture.id,
+      homeScore: fixture.homeScore,
+      awayScore: fixture.awayScore,
+    }));
+    // Reset the form values when the week changes. This ensures that the
+    // displayed scores are always for the currently selected week.
+    // Using reset is better than setValue because it also resets the form's "dirty" state.
+    scoresForm.reset({ week: selectedWeek, results: results });
+  }, [selectedWeek, weekFixtures, scoresForm]);
 
 
   const onWriteResultsFileSubmit = async (data: ScoresFormValues) => {
@@ -201,9 +199,10 @@ export default function AdminPage() {
     try {
       const weekData: WeekResults = JSON.parse(latestFileContent);
       const batch = writeBatch(firestore);
-      let updatedCount = 0;
+      
+      const scoredResults = weekData.results.filter(r => r.homeScore >= -2 && r.awayScore >= -2);
 
-      for (const result of weekData.results) {
+      for (const result of scoredResults) {
         if (!result.id) {
           console.warn('Skipping result with no ID:', result);
           continue;
@@ -214,7 +213,6 @@ export default function AdminPage() {
           homeScore: result.homeScore,
           awayScore: result.awayScore,
         });
-        updatedCount++;
       }
 
       await batch.commit();
@@ -224,7 +222,7 @@ export default function AdminPage() {
 
       toast({
         title: 'Import Complete!',
-        description: `Updated ${updatedCount} matches for Week ${weekData.week}. You can now run the full recalculation.`,
+        description: `Updated ${scoredResults.length} matches for Week ${weekData.week}. You can now run the full recalculation.`,
       });
 
     } catch (error: any) {
@@ -293,16 +291,14 @@ export default function AdminPage() {
       // --- 2. Calculate Week 0 scores based on a definitive final table from last season ---
       toast({ title: 'Recalculation: Calculating Week 0 starting scores...' });
       
-      const prevStandingsMap = new Map(previousSeasonStandings.map(s => [s.teamId, s.rank]));
-      const teamIdToNameMap = new Map(teams.map(t => [t.id, t.name]));
-
+      const teamNameToIdMap = new Map(teams.map(t => [t.name, t.id]));
+      
       const week0RankOrder = [
         "Liverpool", "Arsenal", "Manchester City", "Chelsea", "Newcastle United", "Aston Villa", "Nottingham Forest", "Brighton & Hove Albion",
         "AFC Bournemouth", "Brentford", "Fulham", "Crystal Palace", "Everton", "West Ham United",
         "Manchester United", "Wolverhampton Wanderers", "Tottenham Hotspur", "Leeds United", "Burnley", "Sunderland"
       ];
       
-      const teamNameToIdMap = new Map(teams.map(t => [t.name, t.id]));
       const week0RankMap = new Map<string, number>();
       week0RankOrder.forEach((teamName, index) => {
           const teamId = teamNameToIdMap.get(teamName);
@@ -613,22 +609,22 @@ export default function AdminPage() {
         .map(([teamId, stats]) => ({ teamId, ...stats, teamName: teamMap.get(teamId)?.name || 'Unknown' }))
         .sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.teamName.localeCompare(b.teamName));
       
-      let currentRank = 0;
+      let finalRank = 0;
       let lastPoints = Infinity;
       let lastGD = Infinity;
       let lastGF = Infinity;
       newStandings.forEach((s, index) => {
           if (s.points < lastPoints || (s.points === lastPoints && s.goalDifference < lastGD) || (s.points === lastPoints && s.goalDifference === lastGD && s.goalsFor < lastGF)) {
-              currentRank = index + 1;
+              finalRank = index + 1;
           } else if (index === 0) {
-              currentRank = 1;
+              finalRank = 1;
           }
           lastPoints = s.points;
           lastGD = s.goalDifference;
           lastGF = s.goalsFor;
 
           const { teamName, ...rest } = s;
-          mainBatch.set(doc(firestore, 'standings', s.teamId), { ...rest, rank: currentRank });
+          mainBatch.set(doc(firestore, 'standings', s.teamId), { ...rest, rank: finalRank });
       });
 
       teams.forEach(team => {
