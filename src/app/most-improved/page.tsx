@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -86,28 +85,55 @@ export default function MostImprovedPage() {
   const currentYear = currentAwardPeriod?.year;
 
   const ladderData = useMemo(() => {
-    if (!users) return { ladderWithRanks: [], firstPlaceRankChange: undefined, secondPlaceRankChange: undefined };
-    const regularPlayersSorted = users
-      .filter(u => !u.isPro)
-      .sort((a, b) => b.rankChange - a.rankChange || (a.rank || 0) - (b.rank || 0));
-      
+    if (!users || !userHistories || !currentAwardPeriod || currentWeek < currentAwardPeriod.startWeek) {
+      return { ladderWithRanks: [], firstPlaceImprovement: undefined, secondPlaceImprovement: undefined };
+    }
+
+    const startWeek = currentAwardPeriod.startWeek;
+    const endWeek = currentWeek;
+
+    const monthlyImprovements: (User & { improvement: number, rankChangeInMonth: number })[] = [];
+
+    const nonProUsers = users.filter(u => !u.isPro);
+    nonProUsers.forEach(user => {
+        const history = userHistories.find(h => h.userId === user.id);
+        if (history && history.weeklyScores) {
+            const startWeekData = history.weeklyScores.find(ws => ws.week === startWeek);
+            const endWeekData = history.weeklyScores.find(ws => ws.week === endWeek);
+
+            if (startWeekData && endWeekData) {
+                const improvement = endWeekData.score - startWeekData.score;
+                const rankChangeInMonth = (startWeekData.rank > 0 && endWeekData.rank > 0) ? startWeekData.rank - endWeekData.rank : 0;
+                monthlyImprovements.push({ ...user, improvement, rankChangeInMonth, score: endWeekData.score });
+            }
+        }
+    });
+
+    if (monthlyImprovements.length === 0) {
+      return { ladderWithRanks: [], firstPlaceImprovement: undefined, secondPlaceImprovement: undefined };
+    }
+
+    monthlyImprovements.sort((a, b) => b.improvement - a.improvement || b.score - a.score);
+    
     let rank = 0;
-    let lastRankChange = Infinity;
-    const rankedUsers = regularPlayersSorted.map((user, index) => {
-      if (user.rankChange < lastRankChange) {
+    let lastImprovement = Infinity;
+    const ladderWithRanks = monthlyImprovements.map((user, index) => {
+      if (user.improvement < lastImprovement) {
         rank = index + 1;
-        lastRankChange = user.rankChange;
+      } else if (index === 0) {
+        rank = 1;
       }
+      lastImprovement = user.improvement;
       return { ...user, displayRank: rank };
     });
 
-    const allRankChanges = [...new Set(rankedUsers.map(u => u.rankChange))].sort((a, b) => b - a);
-    const firstPlaceRankChange = allRankChanges.length > 0 ? allRankChanges[0] : undefined;
-    const secondPlaceRankChange = allRankChanges.length > 1 ? allRankChanges[1] : undefined;
+    const allImprovements = [...new Set(ladderWithRanks.map(u => u.improvement))].sort((a, b) => b - a);
+    const firstPlaceImprovement = allImprovements.length > 0 ? allImprovements[0] : undefined;
+    const secondPlaceImprovement = allImprovements.length > 1 ? allImprovements[1] : undefined;
 
-    return { ladderWithRanks: rankedUsers, firstPlaceRankChange, secondPlaceRankChange };
-  }, [users]);
-  
+    return { ladderWithRanks, firstPlaceImprovement, secondPlaceImprovement };
+  }, [users, userHistories, currentAwardPeriod, currentWeek]);
+
   const seasonMonths = useMemo(() => {
     if (!seasonMonthsData) return [];
     return [...seasonMonthsData].sort((a, b) => {
@@ -224,8 +250,8 @@ export default function MostImprovedPage() {
   }, [users, monthlyMimoM, seasonMonths, currentAwardPeriod, userHistories, currentWeek]);
 
   const getLadderRankColour = (user: (typeof ladderData.ladderWithRanks)[0]) => {
-    if (ladderData.firstPlaceRankChange !== undefined && user.rankChange === ladderData.firstPlaceRankChange) return 'bg-yellow-400/20';
-    if (ladderData.secondPlaceRankChange !== undefined && user.rankChange === ladderData.secondPlaceRankChange && ladderData.secondPlaceRankChange !== ladderData.firstPlaceRankChange) return 'bg-slate-400/20';
+    if (ladderData.firstPlaceImprovement !== undefined && user.improvement === ladderData.firstPlaceImprovement) return 'bg-yellow-400/20';
+    if (ladderData.secondPlaceImprovement !== undefined && user.improvement === ladderData.secondPlaceImprovement && ladderData.secondPlaceImprovement !== ladderData.firstPlaceImprovement) return 'bg-slate-400/20';
     return '';
   };
 
@@ -268,7 +294,7 @@ export default function MostImprovedPage() {
                         </TableHeader>
                         <TableBody>
                         {ladderData.ladderWithRanks.map((user) => {
-                            const RankIcon = getRankChangeIcon(user.rankChange);
+                            const RankIcon = getRankChangeIcon(user.rankChangeInMonth);
                             const rankColour = getLadderRankColour(user);
                             return (
                                 <TableRow key={user.id} className="border-b-4 border-transparent">
@@ -282,13 +308,13 @@ export default function MostImprovedPage() {
                                         <span>{user.name}</span>
                                     </div>
                                     </TableCell>
-                                    <TableCell className={cn("p-2 text-center font-bold text-lg", rankColour, getRankChangeColour(user.rankChange))}>
+                                    <TableCell className={cn("p-2 text-center font-bold text-lg", rankColour, getRankChangeColour(user.rankChangeInMonth))}>
                                         <div className="flex items-center justify-center gap-1">
                                             <RankIcon className="size-5" />
-                                            <span>{Math.abs(user.rankChange)}</span>
+                                            <span>{Math.abs(user.rankChangeInMonth)}</span>
                                         </div>
                                     </TableCell>
-                                    <TableCell className={cn("p-2 text-center font-medium", rankColour)}>{formatPointsChange(user.scoreChange)}</TableCell>
+                                    <TableCell className={cn("p-2 text-center font-medium", rankColour)}>{formatPointsChange(user.improvement)}</TableCell>
                                     <TableCell className={cn("p-2 text-center font-bold", rankColour, rankColour && 'rounded-r-md')}>{user.score}</TableCell>
                                 </TableRow>
                             );
