@@ -284,17 +284,22 @@ export default function MostImprovedPage() {
                     <CardContent>
                     <Table className="border-separate border-spacing-y-1">
                         <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[50px] text-center">Rank</TableHead>
-                            <TableHead>Player</TableHead>
-                            <TableHead className="text-center">Position Change</TableHead>
-                            <TableHead className="text-center">Points Change</TableHead>
-                            <TableHead className="text-center">Current Score</TableHead>
-                        </TableRow>
+                            <TableRow>
+                                <TableHead rowSpan={2} className="w-[50px] text-center align-bottom">Rank</TableHead>
+                                <TableHead rowSpan={2} className="align-bottom">Player</TableHead>
+                                <TableHead colSpan={2} className="text-center border-l">Change</TableHead>
+                                <TableHead colSpan={2} className="text-center border-l">Current</TableHead>
+                            </TableRow>
+                            <TableRow>
+                                <TableHead className="text-center border-l">Points</TableHead>
+                                <TableHead className="text-center">Position</TableHead>
+                                <TableHead className="text-center border-l">Points</TableHead>
+                                <TableHead className="text-center">Position</TableHead>
+                            </TableRow>
                         </TableHeader>
                         <TableBody>
                         {ladderData.ladderWithRanks.map((user) => {
-                            const RankIcon = getRankChangeIcon(user.rankChangeInMonth);
+                            const PositionChangeIcon = getRankChangeIcon(user.rankChangeInMonth);
                             const rankColour = getLadderRankColour(user);
                             return (
                                 <TableRow key={user.id} className="border-b-4 border-transparent">
@@ -308,14 +313,15 @@ export default function MostImprovedPage() {
                                         <span>{user.name}</span>
                                     </div>
                                     </TableCell>
+                                    <TableCell className={cn("p-2 text-center font-medium border-l", rankColour)}>{formatPointsChange(user.improvement)}</TableCell>
                                     <TableCell className={cn("p-2 text-center font-bold text-lg", rankColour, getRankChangeColour(user.rankChangeInMonth))}>
                                         <div className="flex items-center justify-center gap-1">
-                                            <RankIcon className="size-5" />
+                                            <PositionChangeIcon className="size-5" />
                                             <span>{Math.abs(user.rankChangeInMonth)}</span>
                                         </div>
                                     </TableCell>
-                                    <TableCell className={cn("p-2 text-center font-medium", rankColour)}>{formatPointsChange(user.improvement)}</TableCell>
-                                    <TableCell className={cn("p-2 text-center font-bold", rankColour, rankColour && 'rounded-r-md')}>{user.score}</TableCell>
+                                    <TableCell className={cn("p-2 text-center font-bold border-l", rankColour)}>{user.score}</TableCell>
+                                    <TableCell className={cn("p-2 text-center font-bold", rankColour, rankColour && 'rounded-r-md')}>{user.rank}</TableCell>
                                 </TableRow>
                             );
                         })}
