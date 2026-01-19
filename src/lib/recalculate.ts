@@ -1,71 +1,43 @@
 
-'use server';
-/**
- * @fileOverview A master flow to recalculate all derived data in the application.
- */
+'use client';
 
-import { ai } from '@/ai/genkit';
-import { z } from 'zod';
-import * as admin from 'firebase-admin';
-import type { Team, Prediction, User as UserProfile, UserHistory, CurrentStanding, WeekResults, PreviousSeasonStanding, Match } from '@/lib/types';
+import {
+  collection,
+  doc,
+  getDocs,
+  writeBatch,
+  type Firestore,
+  type WriteBatch,
+} from 'firebase/firestore';
+import type { Team, Prediction, User as UserProfile, UserHistory, CurrentStanding, PreviousSeasonStanding, Match } from '@/lib/types';
 import { allAwardPeriods } from '@/lib/award-periods';
 
 
-const RecalculateOutputSchema = z.object({
-  success: z.boolean(),
-  message: z.string().optional(),
-});
-export type RecalculateOutput = z.infer<typeof RecalculateOutputSchema>;
-
-/**
- * Gets a Firestore admin instance, initializing the app if needed.
- */
-function getDb() {
-    if (admin.apps.length === 0) {
-        admin.initializeApp();
-    }
-    return admin.firestore();
-}
-
-/**
- * Exported wrapper function to be called from the client.
- */
-export async function recalculateAllData(): Promise<RecalculateOutput> {
-  return recalculateAllDataFlow();
-}
-
-
-const recalculateAllDataFlow = ai.defineFlow(
-  {
-    name: 'recalculateAllDataFlow',
-    inputSchema: z.void(),
-    outputSchema: RecalculateOutputSchema,
-  },
-  async (input, context) => {
-    const db = getDb();
-    context.logger.info("Starting full data recalculation...");
-
+export async function recalculateAllDataClientSide(
+  firestore: Firestore,
+  progressCallback: (message: string) => void
+) {
     try {
-        context.logger.info('Recalculation: Fetching base data...');
-    
-        // --- 1. Fetch all base data ---
-        const [teamsSnap, matchesSnap, usersSnap, predictionsSnap, prevStandingsSnap] = await Promise.all([
-          db.collection('teams').get(),
-          db.collection('matches').get(),
-          db.collection('users').get(),
-          db.collection('predictions').get(),
-          db.collection('previousSeasonStandings').get()
-        ]);
-    
-        const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
-        const teamMap = new Map(teams.map(t => [t.id, t]));
-        const allMatches = matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match));
-        const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
-        const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
-        
+      progressCallback("Starting full data recalculation...");
   
+      // --- 1. Fetch all base data ---
+      progressCallback('Fetching base data...');
+      const [teamsSnap, matchesSnap, usersSnap, predictionsSnap, prevStandingsSnap] = await Promise.all([
+        getDocs(collection(firestore, 'teams')),
+        getDocs(collection(firestore, 'matches')),
+        getDocs(collection(firestore, 'users')),
+        getDocs(collection(firestore, 'predictions')),
+        getDocs(collection(firestore, 'previousSeasonStandings'))
+      ]);
+  
+      const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
+      const teamMap = new Map(teams.map(t => [t.id, t]));
+      const allMatches = matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match));
+      const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
+      const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
+      
         // --- 2. Calculate Week 0 scores based on a definitive final table from last season ---
-        context.logger.info('Recalculation: Calculating Week 0 starting scores...');
+        progressCallback('Calculating Week 0 starting scores...');
         
         const teamNameToIdMap = new Map(teams.map(t => [t.name, t.id]));
         
@@ -81,10 +53,9 @@ const recalculateAllDataFlow = ai.defineFlow(
             if (teamId) {
                 week0RankMap.set(teamId, index + 1);
             } else {
-                context.logger.warn(`Week 0 Rank Calc: Could not find team ID for "${teamName}".`);
+                console.warn(`Week 0 Rank Calc: Could not find team ID for "${teamName}".`);
             }
         });
-  
   
         const userScoresForWeek0: { [userId: string]: number } = {};
         predictions.forEach(prediction => {
@@ -121,30 +92,55 @@ const recalculateAllDataFlow = ai.defineFlow(
         });
   
         // --- 3. Clear all derived data collections ---
-        context.logger.info('Recalculation: Clearing old derived data...');
+        progressCallback('Clearing old derived data...');
         const collectionsToClear = ['standings', 'playerTeamScores', 'teamRecentResults', 'weeklyTeamStandings', 'userHistories', 'monthlyMimoM', 'seasonMonths'];
         
         for (const collectionName of collectionsToClear) {
-          const snapshot = await db.collection(collectionName).get();
-          const batch = db.batch();
-          snapshot.docs.forEach(doc => batch.delete(doc.ref));
-          await batch.commit();
+            progressCallback(`Clearing ${collectionName}...`);
+            const snapshot = await getDocs(collection(firestore, collectionName));
+            if (snapshot.empty) continue;
+            
+            let deleteBatch = writeBatch(firestore);
+            let deleteCount = 0;
+            for (const docSnapshot of snapshot.docs) {
+                deleteBatch.delete(docSnapshot.ref);
+                deleteCount++;
+                if (deleteCount === 499) {
+                    await deleteBatch.commit();
+                    deleteBatch = writeBatch(firestore);
+                    deleteCount = 0;
+                }
+            }
+            if (deleteCount > 0) {
+                await deleteBatch.commit();
+            }
         }
         
-        const mainBatch = db.batch();
+        let mainBatches: WriteBatch[] = [writeBatch(firestore)];
+        let currentBatchIndex = 0;
+        let operationCount = 0;
+        const addOperation = (op: (b: WriteBatch) => void) => {
+            op(mainBatches[currentBatchIndex]);
+            operationCount++;
+            if (operationCount >= 499) {
+                mainBatches.push(writeBatch(firestore));
+                currentBatchIndex++;
+                operationCount = 0;
+            }
+        };
         
         // --- 4. Populate Season Months for the Hall of Fame page ---
-        context.logger.info('Recalculation: Setting up season months...');
+        progressCallback('Setting up season months...');
         
         allAwardPeriods.forEach(period => {
-            const docRef = db.collection('seasonMonths').doc(period.id);
-            mainBatch.set(docRef, {
+            const docRef = doc(firestore, 'seasonMonths', period.id);
+            addOperation(b => b.set(docRef, {
                 id: period.id,
                 month: period.month || '',
                 year: period.year,
                 special: period.special || '',
                 abbreviation: period.abbreviation,
-            });
+            }));
         });
     
         // --- 5. Build history week by week from played matches ---
@@ -152,7 +148,7 @@ const recalculateAllDataFlow = ai.defineFlow(
         const playedWeeks = [...new Set(playedMatches.map(m => m.week))].sort((a, b) => a - b);
     
         for (const week of playedWeeks) {
-            context.logger.info(`Recalculation: Processing Week ${week}...`);
+            progressCallback(`Processing Week ${week}...`);
     
           // A. Calculate team standings up to the current week
           const matchesUpToWeek = allMatches.filter(m => m.week <= week && m.homeScore > -1 && m.awayScore > -1);
@@ -206,12 +202,12 @@ const recalculateAllDataFlow = ai.defineFlow(
           const actualTeamRanksForWeek = new Map(rankedTeamsForWeek.map(s => [s.teamId, s.rank]));
   
           rankedTeamsForWeek.forEach(standing => {
-            const docRef = db.collection('weeklyTeamStandings').doc(`${week}-${standing.teamId}`);
-            mainBatch.set(docRef, {
+            const docRef = doc(firestore, 'weeklyTeamStandings', `${week}-${standing.teamId}`);
+            addOperation(b => b.set(docRef, {
                 week: week,
                 teamId: standing.teamId,
                 rank: standing.rank
-            });
+            }));
           });
   
           // B. Calculate user scores for the week
@@ -226,8 +222,8 @@ const recalculateAllDataFlow = ai.defineFlow(
                 const score = 5 - Math.abs(predictedRank - actualRank);
                 totalScore += score;
                 if (week === playedWeeks[playedWeeks.length -1]) { // Only write final player scores
-                  const docRef = db.collection('playerTeamScores').doc(`${prediction.userId}_${teamId}`);
-                  mainBatch.set(docRef, { userId: prediction.userId, teamId, score });
+                  const docRef = doc(firestore, 'playerTeamScores', `${prediction.userId}_${teamId}`);
+                  addOperation(b => b.set(docRef, { userId: prediction.userId, teamId, score }));
                 }
               }
             });
@@ -253,7 +249,7 @@ const recalculateAllDataFlow = ai.defineFlow(
         }
     
         // --- 6. Process final user states and write histories ---
-        context.logger.info('Recalculation: Finalizing user profiles...');
+        progressCallback('Finalizing user profiles...');
         for (const user of users) {
           const userHistory = allUserHistories[user.id];
           if (!userHistory || userHistory.weeklyScores.length === 0) continue;
@@ -278,12 +274,15 @@ const recalculateAllDataFlow = ai.defineFlow(
               minRank: allRanks.length > 0 ? Math.min(...allRanks) : 0, // Best rank
               maxRank: allRanks.length > 0 ? Math.max(...allRanks) : 0,  // Worst rank
           };
-          mainBatch.set(db.collection('users').doc(user.id), finalUserData, { merge: true });
-          mainBatch.set(db.collection('userHistories').doc(user.id), userHistory);
+          const userDocRef = doc(firestore, 'users', user.id);
+          addOperation(b => b.set(userDocRef, finalUserData, { merge: true }));
+          
+          const historyDocRef = doc(firestore, 'userHistories', user.id);
+          addOperation(b => b.set(historyDocRef, userHistory));
         }
   
         // --- 7. Calculate and store Monthly MimoM awards ---
-        context.logger.info('Recalculation: Calculating monthly awards...');
+        progressCallback('Calculating monthly awards...');
         const nonProUsers = users.filter(u => !u.isPro);
   
         for (const period of allAwardPeriods) {
@@ -311,14 +310,15 @@ const recalculateAllDataFlow = ai.defineFlow(
   
               winners.forEach(winner => {
                 const awardId = `${period.id}-${winner.userId}`;
-                mainBatch.set(db.collection('monthlyMimoM').doc(awardId), {
+                const awardDocRef = doc(firestore, 'monthlyMimoM', awardId);
+                addOperation(b => b.set(awardDocRef, {
                   month: period.month || '',
                   year: period.year,
                   userId: winner.userId,
                   type: 'winner',
                   improvement: winner.improvement,
                   special: period.special || '',
-                });
+                }));
               });
   
               if (winners.length === 1 && !period.special) {
@@ -328,14 +328,15 @@ const recalculateAllDataFlow = ai.defineFlow(
                   const runnersUp = remainingPlayers.filter(u => u.improvement === secondBestImprovement);
                   runnersUp.forEach(runnerUp => {
                     const awardId = `${period.id}-ru-${runnerUp.userId}`;
-                    mainBatch.set(db.collection('monthlyMimoM').doc(awardId), {
+                    const awardDocRef = doc(firestore, 'monthlyMimoM', awardId);
+                    addOperation(b => b.set(awardDocRef, {
                       month: period.month || '',
                       year: period.year,
                       userId: runnerUp.userId,
                       type: 'runner-up',
                       improvement: runnerUp.improvement,
                       special: '',
-                    });
+                    }));
                   });
                 }
               }
@@ -344,7 +345,7 @@ const recalculateAllDataFlow = ai.defineFlow(
         }
   
         // --- 8. Generate final league standings and recent results ---
-        context.logger.info('Recalculation: Generating final standings...');
+        progressCallback('Generating final standings...');
         const finalMatches = allMatches.filter(m => m.week <= (playedWeeks[playedWeeks.length -1] || 0) && m.homeScore > -1 && m.awayScore > -1);
         const finalTeamStats: { [teamId: string]: Omit<CurrentStanding, 'teamId' | 'rank'> } = {};
         teams.forEach(team => {
@@ -385,7 +386,8 @@ const recalculateAllDataFlow = ai.defineFlow(
             lastGF = s.goalsFor;
   
             const { teamName, ...rest } = s;
-            mainBatch.set(db.collection('standings').doc(s.teamId), { ...rest, rank: finalRank });
+            const standingDocRef = doc(firestore, 'standings', s.teamId);
+            addOperation(b => b.set(standingDocRef, { ...rest, rank: finalRank }));
         });
   
         teams.forEach(team => {
@@ -398,22 +400,22 @@ const recalculateAllDataFlow = ai.defineFlow(
                   else results[i] = 'L';
               }
           });
-          mainBatch.set(db.collection('teamRecentResults').doc(team.id), { teamId: team.id, results: results.reverse() });
+          const recentResultDocRef = doc(firestore, 'teamRecentResults', team.id);
+          addOperation(b => b.set(recentResultDocRef, { teamId: team.id, results: results.reverse() }));
         });
   
         // --- 9. Commit all changes ---
-        context.logger.info('Recalculation: Committing all updates...');
-        await mainBatch.commit();
-        context.logger.info('Full data recalculation completed successfully.');
-
-        return {
-            success: true,
-            message: 'Full data recalculation completed successfully.'
-        };
+        progressCallback(`Committing ${mainBatches.length} batch(es) of updates...`);
+        await Promise.all(mainBatches.map(b => b.commit()));
+        progressCallback('Full data recalculation completed successfully.');
     
-      } catch (error: any) {
-          context.logger.error('Error during data recalculation:', error);
-          throw new Error(`Flow failed during recalculation: ${error.message}`);
-      }
-  }
-);
+    } catch (error) {
+        console.error("Full data recalculation failed:", error);
+        if (error instanceof Error) {
+            progressCallback(`Error: ${error.message}`);
+        } else {
+            progressCallback('An unknown error occurred during recalculation.');
+        }
+        throw error;
+    }
+}

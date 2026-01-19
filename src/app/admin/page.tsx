@@ -30,7 +30,7 @@ import {
 
 import type { Match, Team, WeekResults } from '@/lib/types';
 import { createResultsFile } from '@/ai/flows/create-results-file-flow';
-import { recalculateAllData } from '@/ai/flows/recalculate-all-data-flow';
+import { recalculateAllDataClientSide } from '@/lib/recalculate';
 
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -148,11 +148,10 @@ export default function AdminPage() {
   });
 
   React.useEffect(() => {
-    // Set the default week only if the form hasn't been touched by the user.
-    if (defaultWeek > 0 && !scoresForm.formState.isDirty) {
+    if (defaultWeek > 0) {
       scoresForm.setValue('week', defaultWeek);
     }
-  }, [defaultWeek, scoresForm.formState.isDirty, scoresForm]);
+  }, [defaultWeek, scoresForm]);
 
 
   const selectedWeek = scoresForm.watch('week');
@@ -263,22 +262,24 @@ export default function AdminPage() {
 
 
  const handleFullUpdateAndRecalculate = async () => {
+    if (!firestore) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Firestore is not available.' });
+      return;
+    }
+
     setIsUpdating(true);
     toast({ title: 'Starting Full Recalculation...', description: 'This will recalculate all league data based on the current scores in the database. This might take a minute.' });
 
     try {
-        const result = await recalculateAllData();
-        
-        if (result.success) {
-          toast({
-              title: 'Full Data Recalculation Complete!',
-              description: 'All application data has been successfully updated.',
-          });
-          // Optionally, refresh data on the page
-          await fetchAllMatches();
-        } else {
-          throw new Error(result.message || 'The recalculation flow failed.');
-        }
+      await recalculateAllDataClientSide(firestore, (message) => {
+        toast({ title: 'Recalculation Progress', description: message });
+      });
+      
+      toast({
+          title: 'Full Data Recalculation Complete!',
+          description: 'All application data has been successfully updated.',
+      });
+      await fetchAllMatches();
 
     } catch (error: any) {
         console.error('Error during full update process:', error);

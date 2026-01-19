@@ -25,7 +25,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
-import { recalculateAllData } from '@/ai/flows/recalculate-all-data-flow';
+import { recalculateAllDataClientSide } from '@/lib/recalculate';
 
 const pageInfoMap: { [key: string]: { title: string; description: string | ((seasonStarted: boolean) => string) } } = {
   '/standings': { title: 'Premier League', description: 'Official league standings, results, and form guide for the 2025-26 season.' },
@@ -80,16 +80,18 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   }
   
   const handleRecalculate = async () => {
+    if (!firestore) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Firestore is not available.' });
+      return;
+    }
     setIsRecalculating(true);
     toast({ title: 'Kicking off master recalculation...', description: 'This may take a minute. The page will refresh upon completion.' });
     try {
-      const result = await recalculateAllData();
-      if (result.success) {
-        toast({ title: 'Recalculation Complete!', description: 'All data has been updated. Refreshing page...' });
-        window.location.reload();
-      } else {
-        throw new Error(result.message || 'The recalculation flow failed.');
-      }
+      await recalculateAllDataClientSide(firestore, (message: string) => {
+        toast({ title: 'Recalculation Progress', description: message });
+      });
+      toast({ title: 'Recalculation Complete!', description: 'All data has been updated. Refreshing page...' });
+      window.location.reload();
     } catch (error: any) {
       console.error('Recalculation failed:', error);
       toast({
