@@ -152,8 +152,8 @@ export default function AdminPage() {
     setLatestFilePath(null);
     setLatestFileContent(null);
     
-    // Filter out results where scores are not entered
-    const validResults = data.results.filter(r => r.homeScore >= -1 && r.awayScore >= -1);
+    // Filter out results where scores are not entered but count postponed
+    const validResults = data.results.filter(r => r.homeScore >= -2 && r.awayScore >= -2);
     
     toast({ title: `Creating results file for Week ${data.week}...` });
     try {
@@ -171,7 +171,7 @@ export default function AdminPage() {
 
       toast({
         title: 'File Created!',
-        description: `Results file for ${validResults.length} matches created locally and is ready for import.`,
+        description: `Results file for ${validResults.length} matches created and is ready for import.`,
       });
   
     } catch (error: any) {
@@ -293,7 +293,10 @@ export default function AdminPage() {
       // --- 2. Calculate Week 0 scores based on a definitive final table from last season ---
       toast({ title: 'Recalculation: Calculating Week 0 starting scores...' });
       
-      const userProvidedOrder = [
+      const prevStandingsMap = new Map(previousSeasonStandings.map(s => [s.teamId, s.rank]));
+      const teamIdToNameMap = new Map(teams.map(t => [t.id, t.name]));
+
+      const week0RankOrder = [
         "Liverpool", "Arsenal", "Manchester City", "Chelsea", "Newcastle United", "Aston Villa", "Nottingham Forest", "Brighton & Hove Albion",
         "AFC Bournemouth", "Brentford", "Fulham", "Crystal Palace", "Everton", "West Ham United",
         "Manchester United", "Wolverhampton Wanderers", "Tottenham Hotspur", "Leeds United", "Burnley", "Sunderland"
@@ -301,7 +304,7 @@ export default function AdminPage() {
       
       const teamNameToIdMap = new Map(teams.map(t => [t.name, t.id]));
       const week0RankMap = new Map<string, number>();
-      userProvidedOrder.forEach((teamName, index) => {
+      week0RankOrder.forEach((teamName, index) => {
           const teamId = teamNameToIdMap.get(teamName);
           if (teamId) {
               week0RankMap.set(teamId, index + 1);
@@ -335,6 +338,8 @@ export default function AdminPage() {
       rankedUsersForWeek0.forEach((user, index) => {
         if (user.score < lastScore_w0) {
           currentRank_w0 = index + 1;
+        } else if (index === 0) {
+            currentRank_w0 = 1;
         }
         lastScore_w0 = user.score;
         allUserHistories[user.id] = { 
@@ -356,20 +361,20 @@ export default function AdminPage() {
       const mainBatch = writeBatch(firestore);
       
       const awardPeriods = [
-        { id: 'aug', month: 'August', year: 2025, startWeek: 0, endWeek: 4, abbreviation: 'AUG' },
-        { id: 'sep', month: 'September', year: 2025, startWeek: 4, endWeek: 8, abbreviation: 'SEPT' },
-        { id: 'oct', month: 'October', year: 2025, startWeek: 8, endWeek: 11, abbreviation: 'OCT' },
-        { id: 'nov', month: 'November', year: 2025, startWeek: 11, endWeek: 14, abbreviation: 'NOV' },
-        { id: 'dec', month: 'December', year: 2025, startWeek: 14, endWeek: 20, abbreviation: 'DEC' },
-        { id: 'jan', month: 'January', year: 2026, startWeek: 20, endWeek: 25, abbreviation: 'JAN' },
-        { id: 'feb', month: 'February', year: 2026, startWeek: 25, endWeek: 29, abbreviation: 'FEB' },
-        { id: 'mar', month: 'March', year: 2026, startWeek: 29, endWeek: 33, abbreviation: 'MAR' },
-        { id: 'apr', month: 'April', year: 2026, startWeek: 33, endWeek: 36, abbreviation: 'APR' },
-        { id: 'may', month: 'May', year: 2026, startWeek: 36, endWeek: 38, abbreviation: 'MAY' },
+        { id: 'aug', month: 'August', year: 2025, startWeek: 0, endWeek: 3, abbreviation: 'AUG' },
+        { id: 'sep', month: 'September', year: 2025, startWeek: 3, endWeek: 7, abbreviation: 'SEPT' },
+        { id: 'oct', month: 'October', year: 2025, startWeek: 7, endWeek: 10, abbreviation: 'OCT' },
+        { id: 'nov', month: 'November', year: 2025, startWeek: 10, endWeek: 13, abbreviation: 'NOV' },
+        { id: 'dec', month: 'December', year: 2025, startWeek: 13, endWeek: 19, abbreviation: 'DEC' },
+        { id: 'jan', month: 'January', year: 2026, startWeek: 19, endWeek: 24, abbreviation: 'JAN' },
+        { id: 'feb', month: 'February', year: 2026, startWeek: 24, endWeek: 28, abbreviation: 'FEB' },
+        { id: 'mar', month: 'March', year: 2026, startWeek: 28, endWeek: 32, abbreviation: 'MAR' },
+        { id: 'apr', month: 'April', year: 2026, startWeek: 32, endWeek: 35, abbreviation: 'APR' },
+        { id: 'may', month: 'May', year: 2026, startWeek: 35, endWeek: 38, abbreviation: 'MAY' },
       ];
       
       const specialAwards = [
-          { id: 'xmas', special: 'Christmas No. 1', year: 2025, startWeek: 14, endWeek: 18, abbreviation: 'XMAS'},
+          { id: 'xmas', special: 'Christmas No. 1', year: 2025, startWeek: 13, endWeek: 17, abbreviation: 'XMAS'},
       ];
 
       const allAwardPeriods = [...awardPeriods, ...specialAwards];
@@ -482,6 +487,8 @@ export default function AdminPage() {
         rankedUsersForWeek.forEach((user, index) => {
             if (user.scoreForWeek < lastScore) {
                 currentRank = index + 1;
+            } else if (index === 0) {
+                currentRank = 1;
             }
             lastScore = user.scoreForWeek;
             allUserHistories[user.id].weeklyScores.push({ week: week, score: user.scoreForWeek, rank: currentRank });
