@@ -259,7 +259,7 @@ export default function AdminPage() {
       const allMatches = matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match));
       const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
       const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
-      const previousSeasonStandings = prevStandingsSnap.docs.map(doc => ({ teamId: doc.id, ...doc.data() } as PreviousSeasonStanding));
+      const previousSeasonStandings = prevStandingsSnap.docs.map(doc => doc.data() as PreviousSeasonStanding);
 
       // --- 2. Calculate Week 0 scores based on previous season's finish ---
       toast({ title: 'Recalculation: Calculating Week 0 starting scores...' });
@@ -324,43 +324,34 @@ export default function AdminPage() {
       const mainBatch = writeBatch(firestore);
       
       const awardPeriods = [
-        { id: 'aug', month: 'August', year: 2025, startWeek: 0, endWeek: 4 },
-        { id: 'sep', month: 'September', year: 2025, startWeek: 4, endWeek: 8 },
-        { id: 'oct', month: 'October', year: 2025, startWeek: 8, endWeek: 11 },
-        { id: 'nov', month: 'November', year: 2025, startWeek: 11, endWeek: 14 },
-        { id: 'dec', month: 'December', year: 2025, startWeek: 14, endWeek: 20 },
-        { id: 'jan', month: 'January', year: 2026, startWeek: 20, endWeek: 25 },
-        { id: 'feb', month: 'February', year: 2026, startWeek: 25, endWeek: 29 },
-        { id: 'mar', month: 'March', year: 2026, startWeek: 29, endWeek: 33 },
-        { id: 'apr', month: 'April', year: 2026, startWeek: 33, endWeek: 36 },
-        { id: 'may', month: 'May', year: 2026, startWeek: 36, endWeek: 39 },
+        { id: 'aug', month: 'August', year: 2025, startWeek: 0, endWeek: 4, abbreviation: 'AUG' },
+        { id: 'sep', month: 'September', year: 2025, startWeek: 4, endWeek: 8, abbreviation: 'SEPT' },
+        { id: 'oct', month: 'October', year: 2025, startWeek: 8, endWeek: 11, abbreviation: 'OCT' },
+        { id: 'nov', month: 'November', year: 2025, startWeek: 11, endWeek: 14, abbreviation: 'NOV' },
+        { id: 'dec', month: 'December', year: 2025, startWeek: 14, endWeek: 20, abbreviation: 'DEC' },
+        { id: 'jan', month: 'January', year: 2026, startWeek: 20, endWeek: 25, abbreviation: 'JAN' },
+        { id: 'feb', month: 'February', year: 2026, startWeek: 25, endWeek: 29, abbreviation: 'FEB' },
+        { id: 'mar', month: 'March', year: 2026, startWeek: 29, endWeek: 33, abbreviation: 'MAR' },
+        { id: 'apr', month: 'April', year: 2026, startWeek: 33, endWeek: 36, abbreviation: 'APR' },
+        { id: 'may', month: 'May', year: 2026, startWeek: 36, endWeek: 39, abbreviation: 'MAY' },
       ];
       
       const specialAwards = [
-          { id: 'xmas', special: 'Christmas No. 1', year: 2025, startWeek: 14, endWeek: 18 },
+          { id: 'xmas', special: 'Christmas No. 1', year: 2025, startWeek: 14, endWeek: 18, abbreviation: 'XMAS'},
       ];
+
+      const allAwardPeriods = [...awardPeriods, ...specialAwards];
 
       // --- 4. Populate Season Months for the Hall of Fame page ---
       toast({ title: 'Recalculation: Setting up season months...' });
-      const allAwardPeriods = [
-          ...awardPeriods.map(p => ({...p, special: ''})),
-          ...specialAwards.map(s => ({...s, month: ''}))
-      ];
+      
       allAwardPeriods.forEach(period => {
-          let abbreviation = '';
-          if (period.special) {
-              abbreviation = 'XMAS';
-          } else if (period.month === 'September') {
-              abbreviation = 'SEPT';
-          } else {
-              abbreviation = period.month.slice(0, 3).toUpperCase();
-          }
-            mainBatch.set(doc(firestore, 'seasonMonths', period.id), {
+          mainBatch.set(doc(firestore, 'seasonMonths', period.id), {
               id: period.id,
-              month: period.month,
+              month: period.month || '',
               year: period.year,
-              special: period.special,
-              abbreviation: abbreviation,
+              special: period.special || '',
+              abbreviation: period.abbreviation,
           });
       });
   
@@ -479,9 +470,8 @@ export default function AdminPage() {
       // --- 7. Calculate and store Monthly MimoM awards ---
       toast({ title: 'Recalculation: Calculating monthly awards...' });
       const nonProUsers = users.filter(u => !u.isPro);
-      const allAwardPeriodsForCalc = [...awardPeriods, ...specialAwards];
 
-      for (const period of allAwardPeriodsForCalc) {
+      for (const period of allAwardPeriods) {
         if (playedWeeks.includes(period.endWeek)) {
           const monthlyImprovements: { userId: string; improvement: number; endScore: number }[] = [];
           
@@ -507,16 +497,16 @@ export default function AdminPage() {
             winners.forEach(winner => {
               const awardId = `${period.id}-${winner.userId}`;
               mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
-                month: 'month' in period ? period.month : '',
+                month: period.month || '',
                 year: period.year,
                 userId: winner.userId,
                 type: 'winner',
                 improvement: winner.improvement,
-                special: 'special' in period ? period.special : '',
+                special: period.special || '',
               });
             });
 
-            if (winners.length === 1 && !('special' in period)) {
+            if (winners.length === 1 && !period.special) {
               const remainingPlayers = monthlyImprovements.filter(u => u.improvement < bestImprovement);
               if (remainingPlayers.length > 0) {
                 const secondBestImprovement = remainingPlayers[0].improvement;
@@ -524,7 +514,7 @@ export default function AdminPage() {
                 runnersUp.forEach(runnerUp => {
                   const awardId = `${period.id}-ru-${runnerUp.userId}`;
                   mainBatch.set(doc(firestore, 'monthlyMimoM', awardId), {
-                    month: 'month' in period ? period.month : '',
+                    month: period.month || '',
                     year: period.year,
                     userId: runnerUp.userId,
                     type: 'runner-up',
@@ -731,3 +721,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
