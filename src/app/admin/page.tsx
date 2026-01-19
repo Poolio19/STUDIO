@@ -246,12 +246,11 @@ export default function AdminPage() {
       toast({ title: 'Recalculation: Fetching base data...' });
   
       // --- 1. Fetch all base data ---
-      const [teamsSnap, matchesSnap, usersSnap, predictionsSnap, prevStandingsSnap] = await Promise.all([
+      const [teamsSnap, matchesSnap, usersSnap, predictionsSnap] = await Promise.all([
         getDocs(query(collection(firestore, 'teams'))),
         getDocs(query(collection(firestore, 'matches'))),
         getDocs(query(collection(firestore, 'users'))),
         getDocs(query(collection(firestore, 'predictions'))),
-        getDocs(query(collection(firestore, 'previousSeasonStandings'))),
       ]);
   
       const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
@@ -259,24 +258,35 @@ export default function AdminPage() {
       const allMatches = matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match));
       const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
       const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
-      const previousSeasonStandings = prevStandingsSnap.docs.map(doc => doc.data() as PreviousSeasonStanding);
 
-      // --- 2. Calculate Week 0 scores based on previous season's finish ---
+      // --- 2. Calculate Week 0 scores based on the definitive final standings from last season ---
       toast({ title: 'Recalculation: Calculating Week 0 starting scores...' });
 
-      const prevStandingsMap = new Map(previousSeasonStandings.map(s => [s.teamId, s.rank]));
-      const promotedTeams = teams
-        .filter(t => !prevStandingsMap.has(t.id))
-        .sort((a, b) => a.name.localeCompare(b.name));
+      // Use the definitive user-provided order for the Week 0 table.
+      const teamNameToIdMap = new Map(teams.map(t => [t.name, t.id]));
+      const nameMapping: { [key: string]: string } = {
+          "Liverpool": "Liverpool", "Arsenal": "Arsenal", "Man City": "Manchester City", "Chelsea": "Chelsea",
+          "Newcastle": "Newcastle United", "Aston Villa": "Aston Villa", "Notts Forest": "Nottingham Forest",
+          "Brighton": "Brighton & Hove Albion", "Bournemouth": "AFC Bournemouth", "Brentford": "Brentford",
+          "Fulham": "Fulham", "Crystal Palace": "Crystal Palace", "Everton": "Everton", "West Ham": "West Ham United",
+          "Man Utd": "Manchester United", "Wolves": "Wolverhampton Wanderers", "Tottenham": "Tottenham Hotspur",
+          "Leeds": "Leeds United", "Burnley": "Burnley", "Sunderland": "Sunderland"
+      };
+      const userProvidedOrder = [
+        "Liverpool", "Arsenal", "Man City", "Chelsea", "Newcastle", "Aston Villa", "Notts Forest", "Brighton",
+        "Bournemouth", "Brentford", "Fulham", "Crystal Palace", "Everton", "West Ham", "Man Utd", "Wolves",
+        "Tottenham", "Leeds", "Burnley", "Sunderland"
+      ];
 
       const week0RankMap = new Map<string, number>();
-      teams.forEach(team => {
-        if (prevStandingsMap.has(team.id)) {
-          week0RankMap.set(team.id, prevStandingsMap.get(team.id)!);
-        }
-      });
-      promotedTeams.forEach((team, index) => {
-        week0RankMap.set(team.id, 18 + index);
+      userProvidedOrder.forEach((shortName, index) => {
+          const fullName = nameMapping[shortName];
+          const teamId = teamNameToIdMap.get(fullName);
+          if (teamId) {
+              week0RankMap.set(teamId, index + 1);
+          } else {
+              console.warn(`Week 0 Rank Calc: Could not find team ID for "${fullName}" (from short name "${shortName}").`);
+          }
       });
 
       const userScoresForWeek0: { [userId: string]: number } = {};
