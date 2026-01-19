@@ -28,6 +28,7 @@ import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
+import { allAwardPeriods } from '@/lib/award-periods';
 
 
 const getAvatarUrl = (avatarId: string) => {
@@ -51,21 +52,6 @@ const formatPointsChange = (change: number) => {
     if (change < 0) return <span className="text-red-500">{change}</span>;
     return <span>{change}</span>;
 }
-
-const getMonthForWeek = (week: number): { month: string; year: number } => {
-    if (week <= 4) return { month: 'August', year: 2025 };
-    if (week <= 8) return { month: 'September', year: 2025 };
-    if (week <= 11) return { month: 'October', year: 2025 };
-    if (week <= 14) return { month: 'November', year: 2025 };
-    if (week <= 19) return { month: 'December', year: 2025 };
-    if (week <= 23) return { month: 'January', year: 2026 };
-    if (week <= 27) return { month: 'February', year: 2026 };
-    if (week <= 31) return { month: 'March', year: 2026 };
-    if (week <= 35) return { month: 'April', year: 2026 };
-    if (week >= 36) return { month: 'May', year: 2026 };
-    return { month: 'August', year: 2025 }; // Default case
-};
-
 
 export default function MostImprovedPage() {
   const firestore = useFirestore();
@@ -92,7 +78,12 @@ export default function MostImprovedPage() {
     return 0;
   }, [matchesData]);
 
-  const { month: currentMonthName, year: currentYear } = getMonthForWeek(currentWeek);
+  const currentAwardPeriod = useMemo(() => {
+    return allAwardPeriods.find(p => currentWeek >= p.startWeek && currentWeek < p.endWeek);
+  }, [currentWeek]);
+  
+  const currentMonthName = currentAwardPeriod?.month || currentAwardPeriod?.special || '';
+  const currentYear = currentAwardPeriod?.year;
 
   const ladderData = useMemo(() => {
     if (!users) return { ladderWithRanks: [], firstPlaceRankChange: undefined, secondPlaceRankChange: undefined };
@@ -133,8 +124,6 @@ export default function MostImprovedPage() {
   const mimoMWithDetails = useMemo(() => {
     if (!users || !monthlyMimoM || !seasonMonths || !userHistories) return [];
     const awardsByMonth: { [key: string]: { winners: any[], runnersUp: any[] } } = {};
-    const monthOrder = ['August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
-    const currentMonthIndex = monthOrder.indexOf(currentMonthName);
 
     monthlyMimoM.forEach(m => {
       const key = m.special ? m.special : `${m.month}-${m.year}`;
@@ -154,17 +143,18 @@ export default function MostImprovedPage() {
     return seasonMonths.map(seasonMonth => {
         const key = seasonMonth.special ? seasonMonth.special : `${seasonMonth.month}-${seasonMonth.year}`;
         const awards = awardsByMonth[key];
-        const isCurrentMonth = seasonMonth.month === currentMonthName && seasonMonth.year === currentYear;
+        const isCurrentPeriod = currentAwardPeriod?.id === seasonMonth.id;
         
-        const monthIndex = monthOrder.indexOf(seasonMonth.month);
-        const isFuture = seasonMonth.year > currentYear || (seasonMonth.year === currentYear && monthIndex > currentMonthIndex);
+        let isFuture = false;
+        const period = allAwardPeriods.find(p => p.id === seasonMonth.id);
+        if (period) {
+          isFuture = currentWeek < period.startWeek;
+        }
 
         let currentLeaders: (User & { improvement: number })[] | null = null;
         let currentRunnersUp: (User & { improvement: number })[] | null = null;
         
-        if (isCurrentMonth && (!awards || awards.winners.length === 0) && userHistories) {
-            const currentAwardPeriod = seasonMonths.find(sm => sm.month === seasonMonth.month && sm.year === seasonMonth.year);
-
+        if (isCurrentPeriod && (!awards || awards.winners.length === 0) && userHistories) {
             if (currentAwardPeriod && currentWeek >= currentAwardPeriod.startWeek) {
                 const startWeek = currentAwardPeriod.startWeek;
                 const endWeek = currentWeek;
@@ -207,7 +197,7 @@ export default function MostImprovedPage() {
         
         return {
             ...seasonMonth,
-            isCurrentMonth,
+            isCurrentMonth: isCurrentPeriod,
             isFuture,
             currentLeaders,
             currentRunnersUp,
@@ -215,14 +205,14 @@ export default function MostImprovedPage() {
             runnersUp: awards?.runnersUp.length > 0 ? awards.runnersUp : null
         }
     }).sort((a, b) => {
-      const monthOrderSort = ['August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
+      const monthOrder = ['August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
       
       const aYear = a.special === 'Christmas No. 1' ? a.year + 0.1 : a.year;
       const bYear = b.special === 'Christmas No. 1' ? b.year + 0.1 : b.year;
       if (aYear !== bYear) return aYear - bYear;
       
-      const aIndex = monthOrderSort.indexOf(a.month);
-      const bIndex = monthOrderSort.indexOf(b.month);
+      const aIndex = monthOrder.indexOf(a.month);
+      const bIndex = monthOrder.indexOf(b.month);
 
       if (aIndex !== bIndex) return aIndex - bIndex;
 
@@ -231,7 +221,7 @@ export default function MostImprovedPage() {
       
       return 0;
     });
-  }, [users, monthlyMimoM, seasonMonths, currentMonthName, currentYear, userHistories, currentWeek]);
+  }, [users, monthlyMimoM, seasonMonths, currentAwardPeriod, userHistories, currentWeek]);
 
   const getLadderRankColour = (user: (typeof ladderData.ladderWithRanks)[0]) => {
     if (ladderData.firstPlaceRankChange !== undefined && user.rankChange === ladderData.firstPlaceRankChange) return 'bg-yellow-400/20';
@@ -240,9 +230,8 @@ export default function MostImprovedPage() {
   };
 
   const currentMonthAbbreviation = useMemo(() => {
-    if (!seasonMonths) return currentMonthName.slice(0, 4).toUpperCase();
-    return seasonMonths.find(sm => sm.month === currentMonthName && sm.year === currentYear)?.abbreviation || currentMonthName.slice(0, 4).toUpperCase();
-  }, [currentMonthName, currentYear, seasonMonths]);
+    return currentAwardPeriod?.abbreviation || currentMonthName.slice(0, 4).toUpperCase();
+  }, [currentAwardPeriod, currentMonthName]);
 
   if (isLoading) {
     return (
