@@ -102,14 +102,43 @@ export default function AdminPage() {
     fetchTeams();
   }, [firestore, fetchAllMatches]);
 
-  const lastPlayedWeek = React.useMemo(() => {
-    const playedFixtures = allMatches.filter(fixture => fixture.homeScore > -1 && fixture.awayScore > -1);
-    if (playedFixtures.length === 0) return 0;
-    return Math.max(...playedFixtures.map(fixture => fixture.week));
+  const defaultWeek = React.useMemo(() => {
+    if (!allMatches || allMatches.length === 0) return 1;
+
+    const matchesByWeek: { [week: number]: Match[] } = {};
+    allMatches.forEach(match => {
+        if (!matchesByWeek[match.week]) matchesByWeek[match.week] = [];
+        matchesByWeek[match.week].push(match);
+    });
+
+    // Find the first incomplete week
+    for (let week = 1; week <= 38; week++) {
+      const weekMatches = matchesByWeek[week];
+      if (!weekMatches || weekMatches.length === 0) continue;
+
+      // A match is considered entered if both scores are not -1 (i.e. have values or are postponed)
+      const enteredCount = weekMatches.filter(m => m.homeScore !== -1 && m.awayScore !== -1).length;
+      
+      if (enteredCount > 0 && enteredCount < weekMatches.length) {
+        return week; // Found an incomplete week
+      }
+    }
+
+    // If no incomplete week, find the first fully unplayed week
+    for (let week = 1; week <= 38; week++) {
+        const weekMatches = matchesByWeek[week];
+        if (!weekMatches || weekMatches.length === 0) continue;
+
+        const enteredCount = weekMatches.filter(m => m.homeScore !== -1 && m.awayScore !== -1).length;
+        if (enteredCount === 0) {
+            return week; // Found the first unplayed week
+        }
+    }
+    
+    // If all weeks are fully played, default to the last week
+    return 38;
   }, [allMatches]);
   
-  const nextUnplayedWeek = lastPlayedWeek < 38 ? lastPlayedWeek + 1 : 38;
-
   const scoresForm = useForm<ScoresFormValues>({
     resolver: zodResolver(scoresFormSchema),
     defaultValues: {
@@ -119,10 +148,12 @@ export default function AdminPage() {
   });
 
   React.useEffect(() => {
-    if (nextUnplayedWeek > 0) {
-      scoresForm.setValue('week', nextUnplayedWeek);
+    // Set the default week only if the form hasn't been touched by the user.
+    // This prevents overriding the user's selection.
+    if (defaultWeek > 0 && !scoresForm.formState.isDirty) {
+      scoresForm.setValue('week', defaultWeek);
     }
-  }, [nextUnplayedWeek, scoresForm]);
+  }, [defaultWeek, scoresForm.formState.isDirty, scoresForm]);
 
 
   const selectedWeek = scoresForm.watch('week');
@@ -151,7 +182,7 @@ export default function AdminPage() {
     setLatestFileContent(null);
     
     // Filter out results where scores are not entered but count postponed
-    const validResults = data.results.filter(r => r.homeScore >= -2 && r.awayScore >= -2);
+    const validResults = data.results.filter(r => (r.homeScore >= 0 && r.awayScore >= 0) || (r.homeScore === -2 && r.awayScore === -2));
     
     toast({ title: `Creating results file for Week ${data.week}...` });
     try {
@@ -200,7 +231,7 @@ export default function AdminPage() {
       const weekData: WeekResults = JSON.parse(latestFileContent);
       const batch = writeBatch(firestore);
       
-      const scoredResults = weekData.results.filter(r => r.homeScore >= -2 && r.awayScore >= -2);
+      const scoredResults = weekData.results.filter(r => (r.homeScore >= 0 && r.awayScore >= 0) || (r.homeScore === -2 && r.awayScore === -2));
 
       for (const result of scoredResults) {
         if (!result.id) {
