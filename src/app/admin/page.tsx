@@ -139,7 +139,10 @@ export default function AdminPage() {
         homeScore: fixture.homeScore,
         awayScore: fixture.awayScore,
       }));
-      scoresForm.setValue('results', results, { shouldDirty: false });
+      // Check if form is dirty to avoid overwriting user input
+      if (!scoresForm.formState.isDirty) {
+        scoresForm.setValue('results', results, { shouldDirty: false });
+      }
     }
   }, [weekFixtures, scoresForm]);
 
@@ -148,11 +151,15 @@ export default function AdminPage() {
     setIsWritingFile(true);
     setLatestFilePath(null);
     setLatestFileContent(null);
+    
+    // Filter out results where scores are not entered
+    const validResults = data.results.filter(r => r.homeScore >= -1 && r.awayScore >= -1);
+    
     toast({ title: `Creating results file for Week ${data.week}...` });
     try {
       const result = await createResultsFile({
         week: data.week,
-        results: data.results.map(r => ({ id: r.id, homeScore: r.homeScore, awayScore: r.awayScore })),
+        results: validResults.map(r => ({ id: r.id, homeScore: r.homeScore, awayScore: r.awayScore })),
       });
   
       if (!result.success || !result.filePath || !result.fileContent) {
@@ -164,7 +171,7 @@ export default function AdminPage() {
 
       toast({
         title: 'File Created!',
-        description: `Results file created locally and is ready for import.`,
+        description: `Results file for ${validResults.length} matches created locally and is ready for import.`,
       });
   
     } catch (error: any) {
@@ -190,8 +197,7 @@ export default function AdminPage() {
     }
 
     setIsImportingFile(true);
-    toast({ title: `Writing Week ${selectedWeek} results to database...` });
-
+    
     try {
       const weekData: WeekResults = JSON.parse(latestFileContent);
       const batch = writeBatch(firestore);
@@ -269,11 +275,12 @@ export default function AdminPage() {
       toast({ title: 'Recalculation: Fetching base data...' });
   
       // --- 1. Fetch all base data ---
-      const [teamsSnap, matchesSnap, usersSnap, predictionsSnap] = await Promise.all([
+      const [teamsSnap, matchesSnap, usersSnap, predictionsSnap, prevStandingsSnap] = await Promise.all([
         getDocs(query(collection(firestore, 'teams'))),
         getDocs(query(collection(firestore, 'matches'))),
         getDocs(query(collection(firestore, 'users'))),
         getDocs(query(collection(firestore, 'predictions'))),
+        getDocs(query(collection(firestore, 'previousSeasonStandings')))
       ]);
   
       const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
@@ -281,14 +288,17 @@ export default function AdminPage() {
       const allMatches = matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match));
       const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
       const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
+      const previousSeasonStandings = prevStandingsSnap.docs.map(doc => doc.data() as PreviousSeasonStanding);
 
-      // --- 2. Calculate Week 0 scores based on the definitive final standings from last season ---
+      // --- 2. Calculate Week 0 scores based on a definitive final table from last season ---
       toast({ title: 'Recalculation: Calculating Week 0 starting scores...' });
+      
       const userProvidedOrder = [
         "Liverpool", "Arsenal", "Manchester City", "Chelsea", "Newcastle United", "Aston Villa", "Nottingham Forest", "Brighton & Hove Albion",
         "AFC Bournemouth", "Brentford", "Fulham", "Crystal Palace", "Everton", "West Ham United",
         "Manchester United", "Wolverhampton Wanderers", "Tottenham Hotspur", "Leeds United", "Burnley", "Sunderland"
       ];
+      
       const teamNameToIdMap = new Map(teams.map(t => [t.name, t.id]));
       const week0RankMap = new Map<string, number>();
       userProvidedOrder.forEach((teamName, index) => {
@@ -325,8 +335,8 @@ export default function AdminPage() {
       rankedUsersForWeek0.forEach((user, index) => {
         if (user.score < lastScore_w0) {
           currentRank_w0 = index + 1;
-          lastScore_w0 = user.score;
         }
+        lastScore_w0 = user.score;
         allUserHistories[user.id] = { 
             userId: user.id, 
             weeklyScores: [{ week: 0, score: user.score, rank: currentRank_w0 }] 
@@ -355,7 +365,7 @@ export default function AdminPage() {
         { id: 'feb', month: 'February', year: 2026, startWeek: 25, endWeek: 29, abbreviation: 'FEB' },
         { id: 'mar', month: 'March', year: 2026, startWeek: 29, endWeek: 33, abbreviation: 'MAR' },
         { id: 'apr', month: 'April', year: 2026, startWeek: 33, endWeek: 36, abbreviation: 'APR' },
-        { id: 'may', month: 'May', year: 2026, startWeek: 36, endWeek: 39, abbreviation: 'MAY' },
+        { id: 'may', month: 'May', year: 2026, startWeek: 36, endWeek: 38, abbreviation: 'MAY' },
       ];
       
       const specialAwards = [
@@ -413,7 +423,26 @@ export default function AdminPage() {
             .map(([teamId, stats]) => ({ teamId, ...stats, teamName: teamMap.get(teamId)?.name || 'Unknown' }))
             .sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.teamName.localeCompare(b.teamName));
         
-        const rankedTeamsForWeek = weeklyStandingsRanked.map((s, i) => ({ ...s, rank: i + 1 }));
+        const rankedTeamsForWeek: (typeof weeklyStandingsRanked[0] & { rank: number })[] = [];
+        let currentTeamRank = 0;
+        let lastTeamPoints = Infinity;
+        let lastTeamGD = Infinity;
+        let lastTeamGF = Infinity;
+
+        weeklyStandingsRanked.forEach((standing, index) => {
+            if (standing.points < lastTeamPoints || 
+                (standing.points === lastTeamPoints && standing.goalDifference < lastTeamGD) ||
+                (standing.points === lastTeamPoints && standing.goalDifference === lastTeamGD && standing.goalsFor < lastTeamGF)) {
+                currentTeamRank = index + 1;
+            } else if (index === 0) {
+                currentTeamRank = 1;
+            }
+            rankedTeamsForWeek.push({ ...standing, rank: currentTeamRank });
+            lastTeamPoints = standing.points;
+            lastTeamGD = standing.goalDifference;
+            lastTeamGF = standing.goalsFor;
+        });
+        
         const actualTeamRanksForWeek = new Map(rankedTeamsForWeek.map(s => [s.teamId, s.rank]));
 
         rankedTeamsForWeek.forEach(standing => {
@@ -453,8 +482,8 @@ export default function AdminPage() {
         rankedUsersForWeek.forEach((user, index) => {
             if (user.scoreForWeek < lastScore) {
                 currentRank = index + 1;
-                lastScore = user.scoreForWeek;
             }
+            lastScore = user.scoreForWeek;
             allUserHistories[user.id].weeklyScores.push({ week: week, score: user.scoreForWeek, rank: currentRank });
         });
       }
@@ -584,6 +613,8 @@ export default function AdminPage() {
       newStandings.forEach((s, index) => {
           if (s.points < lastPoints || (s.points === lastPoints && s.goalDifference < lastGD) || (s.points === lastPoints && s.goalDifference === lastGD && s.goalsFor < lastGF)) {
               currentRank = index + 1;
+          } else if (index === 0) {
+              currentRank = 1;
           }
           lastPoints = s.points;
           lastGD = s.goalDifference;
