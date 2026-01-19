@@ -36,39 +36,22 @@ export async function recalculateAllDataClientSide(
       const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
       const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
       
-        // --- 2. Calculate Week 0 scores based on a definitive final table from last season ---
-        progressCallback('Calculating Week 0 starting scores...');
+        // --- 2. Use definitive Week 0 scores ---
+        progressCallback('Applying definitive Week 0 scores...');
         
-        const teamNameToIdMap = new Map(teams.map(t => [t.name, t.id]));
-        
-        const week0RankOrder = [
-          "Liverpool", "Arsenal", "Manchester City", "Chelsea", "Newcastle United", "Aston Villa", "Nottingham Forest", "Brighton & Hove Albion",
-          "AFC Bournemouth", "Brentford", "Fulham", "Crystal Palace", "Everton", "West Ham United",
-          "Manchester United", "Wolverhampton Wanderers", "Tottenham Hotspur", "Leeds United", "Burnley", "Sunderland"
-        ];
-        
-        const week0RankMap = new Map<string, number>();
-        week0RankOrder.forEach((teamName, index) => {
-            const teamId = teamNameToIdMap.get(teamName);
-            if (teamId) {
-                week0RankMap.set(teamId, index + 1);
-            } else {
-                console.warn(`Week 0 Rank Calc: Could not find team ID for "${teamName}".`);
-            }
-        });
+        const week0ScoresByName: { [name: string]: number } = {
+          "Tom Wright": 48, "Barrie Cross": 62, "Dave Nightingale": 62, "Pip Stokes": 62, "Alex Anderson": 46, "Nat Walsh": 26, "Patrick Meese": 50, "Lee Harte": 46, "Jim Poole": 52, "Lyndon Padmore": 30, "Alf Wroldsen": 38, "Steve Wroldsen": 68, "Roger Wymer": 32, "Mike Wymer": 36, "Andy Belton": 38, "Ernest Belton": 54, "Tim Birchall": 34, "Nathan Hyatt": 58, "Rory Hyatt": 72, "Gaz Littlewood": 60, "Fazil Sediqi": 52, "Shuhra Sediqi": 62, "Ilyas Taj Sediqi": 32, "Eshwa Sediqi": 66, "Ben Fellows": 46, "Michelle Duffy-Turner": 46, "Nicola Spears": 40, "Jamie Spears": 44, "Jonny Taylor": 58, "John J Taylor": 50, "Sam Dixon": 46, "Doug Potter": 56, "Finlay Sinclair": 44, "Bart Ainsworth": 44, "Aidan Kehoe": 40, "Ben Patey": 54, "Theo Gresson": 40, "Adam Barclay": 60, "James Eldred": 58, "Otis Eldred": 20, "Dan Coles": 34, "Daniel Crick": 48, "Sheila McKenzie": 56, "Chris Dodds": 46, "Rich Seddon": 34, "Ross Allatt": 50, "Neville Johnson": 36, "Julian Spears": 38, "Andrew Spears": 44, "Danny Broom": 46, "Paul Hammett": 74, "Tom Gill": 24, "Ronnie Bain": 44, "Matthew Bain": 30, "Sam Bain": 62, "Andy Barnes": 50, "Pascal Walls": 50, "Steve Lawrence": 54, "Gill Butler": 42, "Tom Coles": 60, "Tom Poole": 66, "Eddie Spencer": 48, "Rory Poole": 66, "Scott Emmett": 46, "Craig Temporal": 34, "Andy Senior": 56, "Dan Brown": 56, "Rupert Massey": 52, "Matt Howard": 52, "Justin Downing": 66, "Sam Burgess": 42, "George Roberts": 50, "Leyton Collings": 56, "Ben Cox": 44, "Adam F Bain": 14, "Amy Parkinson": 76, "Steven Bain": 36, "Ian Scotland": 46, "Ben Dawes": 42, "Tom Bywater": 50, "Jack Murray": 38, "Rob Mabon": 50, "Andrew Trafford": 48, "Luca Trafford": 50, "Craig Stevens": 46, "George Butterworth": 70, "Ashley Davies": 56, "Duncan Holder": 30, "Arthur Gwyn-Davies": 58, "Paul Stonier": 18, "Jember Weekes": 12, "Thomas Kehoe": 58, "Chris Burston": 60, "Malcolm Sinclair": 46, "Dan Parkinson": 48, "Alfie Skingley": 38, "Bev Skingley": 38, "Dan Skingley": 30, "Ken Skingley": 56, "Lyndsey Preece": 28, "Kane Sullivan": 38, "Graeme Bailie": 16, "Daniel Dawson": 40, "Alix Nicholls": 58, "Alistair Whitfield": 32, "THE PREM-MEM": 56, "THE A.I": 62, "THE SUPERCOMPUTER": 28, "Alex Liston": 46
+        };
   
         const userScoresForWeek0: { [userId: string]: number } = {};
-        predictions.forEach(prediction => {
-          if (!prediction.rankings) return;
-          let totalScore = 0;
-          prediction.rankings.forEach((teamId, index) => {
-            const predictedRank = index + 1;
-            const actualRank = week0RankMap.get(teamId);
-            if (actualRank !== undefined) {
-              totalScore += 5 - Math.abs(predictedRank - actualRank);
+        users.forEach(user => {
+            const score = week0ScoresByName[user.name];
+            if (score !== undefined) {
+                userScoresForWeek0[user.id] = score;
+            } else {
+                console.warn(`Week 0 Score: Could not find score for user "${user.name}" (ID: ${user.id}). Defaulting to 0.`);
+                userScoresForWeek0[user.id] = 0;
             }
-          });
-          userScoresForWeek0[prediction.userId] = totalScore;
         });
   
         const rankedUsersForWeek0 = users
