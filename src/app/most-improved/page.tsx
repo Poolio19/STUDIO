@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -313,8 +314,8 @@ export default function MostImprovedPage() {
                                         <span>{user.name}</span>
                                     </div>
                                     </TableCell>
-                                    <TableCell className={cn("p-2 text-center font-medium border-l", rankColour)}>{formatPointsChange(user.improvement)}</TableCell>
-                                    <TableCell className={cn("p-2 text-center font-bold text-lg", rankColour, getRankChangeColour(user.rankChangeInMonth))}>
+                                    <TableCell className={cn("p-2 text-center font-bold border-l", rankColour)}>{formatPointsChange(user.improvement)}</TableCell>
+                                    <TableCell className={cn("p-2 text-center font-bold", rankColour, getRankChangeColour(user.rankChangeInMonth))}>
                                         <div className="flex items-center justify-center gap-1">
                                             <PositionChangeIcon className="size-5" />
                                             <span>{Math.abs(user.rankChangeInMonth)}</span>
@@ -408,3 +409,5 @@ export default function MostImprovedPage() {
     </div>
   );
 }
+
+    
