@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Upload, Trophy, Award, ShieldCheck, Loader2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Upload, Trophy, Award, ShieldCheck, Loader2, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -152,7 +152,7 @@ export default function ProfilePage() {
         joinDate: data.dob.toISOString(),
         country: data.country,
         favouriteTeam: data.favouriteTeam,
-        championshipWins: data.championshipWins,
+        // championshipWins is now admin-controlled
     };
 
     setDocumentNonBlocking(userDocRef, updatedData, { merge: true });
@@ -290,43 +290,52 @@ export default function ProfilePage() {
                 </div>
               </div>
               <Separator className="my-4" />
-              <div className="w-full text-center">
+               <div className="w-full text-center">
                 <h3 className="text-lg font-semibold mb-2">Trophy Cabinet</h3>
-                <div className="flex justify-center gap-4 text-muted-foreground">
+                <div className="flex justify-around text-muted-foreground">
                   <TooltipProvider>
-                    {pastChampionships > 0 && (
-                      <Tooltip>
+                     <Tooltip>
                         <TooltipTrigger>
-                          <div className="flex flex-col items-center">
-                            <Trophy className="text-yellow-500" />
-                            <span className="text-xs font-bold">{pastChampionships}</span>
+                          <div className="flex flex-col items-center gap-1">
+                            <Users className="size-5 text-gray-500" />
+                            <span className="text-xs font-bold">{user?.seasonsPlayed || 0}</span>
                           </div>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>{pastChampionships}x Past Champion</p>
+                          <p>{user?.seasonsPlayed || 0} Seasons Played</p>
                         </TooltipContent>
                       </Tooltip>
-                    )}
-                    <Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <div className="flex flex-col items-center gap-1">
+                            <Trophy className={cn((user?.championshipWins || 0) > 0 ? "text-yellow-500" : "text-gray-400")} />
+                            <span className="text-xs font-bold">{user?.championshipWins || 0}</span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{user?.championshipWins || 0}x League Champion</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <div className="flex flex-col items-center gap-1">
+                            <ShieldCheck className={cn((user?.topTenFinishes || 0) > 0 ? "text-blue-500" : "text-gray-400")} />
+                            <span className="text-xs font-bold">{user?.topTenFinishes || 0}</span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{user?.topTenFinishes || 0}x Top 10 Finishes</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
                       <TooltipTrigger>
-                        <div className="flex flex-col items-center">
+                        <div className="flex flex-col items-center gap-1">
                           <Award className={cn(mimoMWins > 0 ? "text-yellow-600" : "text-gray-400")} />
                           <span className="text-xs font-bold">{mimoMWins}</span>
                         </div>
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>{mimoMWins}x MiMoM Winner</p>
-                      </TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <div className="flex flex-col items-center">
-                          <ShieldCheck className="text-gray-400" />
-                          <span className="text-xs font-bold">0</span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Past Glories - TBC</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -465,7 +474,7 @@ export default function ProfilePage() {
                       <FormItem>
                         <FormLabel>Past Championships</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} onChange={event => field.onChange(+event.target.value)} />
+                          <Input type="number" {...field} onChange={event => field.onChange(+event.target.value)} disabled />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

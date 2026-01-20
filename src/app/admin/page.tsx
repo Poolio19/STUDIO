@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useFirestore } from '@/firebase';
 
-import { collection, doc, writeBatch, getDocs, query } from 'firebase/firestore';
+import { collection, doc, writeBatch, getDocs, query, orderBy } from 'firebase/firestore';
 import { Icons } from '@/components/icons';
 import {
   AlertDialog,
@@ -28,11 +28,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-import type { Match, Team, WeekResults } from '@/lib/types';
+import type { Match, Team, WeekResults, User } from '@/lib/types';
 import { createResultsFile } from '@/ai/flows/create-results-file-flow';
 import { recalculateAllDataClientSide } from '@/lib/recalculate';
 
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {
@@ -73,6 +73,17 @@ const scoresFormSchema = z.object({
 
 type ScoresFormValues = z.infer<typeof scoresFormSchema>;
 
+const historicalDataFormSchema = z.object({
+  users: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    seasonsPlayed: z.coerce.number().int().min(0),
+    championshipWins: z.coerce.number().int().min(0),
+    topTenFinishes: z.coerce.number().int().min(0),
+  }))
+});
+type HistoricalDataFormValues = z.infer<typeof historicalDataFormSchema>;
+
 
 export default function AdminPage() {
   const { toast } = useToast();
@@ -83,11 +94,13 @@ export default function AdminPage() {
   const [isImportingFile, setIsImportingFile] = React.useState(false);
   const [isImportingFixtures, setIsImportingFixtures] = React.useState(false);
   const [isImportingStandings, setIsImportingStandings] = React.useState(false);
+  const [isUpdatingHistoricalData, setIsUpdatingHistoricalData] = React.useState(false);
 
   const [latestFilePath, setLatestFilePath] = React.useState<string | null>(null);
   const [latestFileContent, setLatestFileContent] = React.useState<string | null>(null);
 
   const [allMatches, setAllMatches] = React.useState<Match[]>([]);
+  const [allUsers, setAllUsers] = React.useState<User[]>([]);
   const [teamsMap, setTeamsMap] = React.useState<Map<string, Team>>(new Map());
   
   const fetchAllMatches = React.useCallback(async () => {
@@ -98,14 +111,19 @@ export default function AdminPage() {
   }, [firestore]);
   
   React.useEffect(() => {
-    async function fetchTeams() {
+    async function fetchAllData() {
       if (!firestore) return;
       const teamsSnap = await getDocs(query(collection(firestore, 'teams')));
       const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
       setTeamsMap(new Map(teams.map(t => [t.id, t])));
+
+      const usersSnap = await getDocs(query(collection(firestore, 'users'), orderBy('name', 'asc')));
+      const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+      setAllUsers(users);
+
+      fetchAllMatches();
     }
-    fetchAllMatches();
-    fetchTeams();
+    fetchAllData();
   }, [firestore, fetchAllMatches]);
 
   const defaultWeek = React.useMemo(() => {
@@ -151,6 +169,30 @@ export default function AdminPage() {
       results: [],
     },
   });
+
+  const historicalForm = useForm<HistoricalDataFormValues>({
+    resolver: zodResolver(historicalDataFormSchema),
+    defaultValues: {
+      users: [],
+    },
+  });
+  const { fields, replace } = useFieldArray({
+    control: historicalForm.control,
+    name: "users"
+  });
+
+  React.useEffect(() => {
+    if (allUsers.length > 0) {
+        replace(allUsers.map(u => ({
+            id: u.id,
+            name: u.name,
+            seasonsPlayed: u.seasonsPlayed || 0,
+            championshipWins: u.championshipWins || 0,
+            topTenFinishes: u.topTenFinishes || 0,
+        })));
+    }
+}, [allUsers, replace]);
+
 
   React.useEffect(() => {
     if (defaultWeek > 0 && !scoresForm.formState.isDirty) {
@@ -406,6 +448,29 @@ export default function AdminPage() {
     }
   }
 
+  const onHistoricalSubmit = async (data: HistoricalDataFormValues) => {
+    if (!firestore) return;
+    setIsUpdatingHistoricalData(true);
+    toast({ title: 'Updating historical data...' });
+    try {
+        const batch = writeBatch(firestore);
+        data.users.forEach(user => {
+            const userRef = doc(firestore, 'users', user.id);
+            batch.update(userRef, {
+                seasonsPlayed: user.seasonsPlayed,
+                championshipWins: user.championshipWins,
+                topTenFinishes: user.topTenFinishes,
+            });
+        });
+        await batch.commit();
+        toast({ title: 'Success!', description: 'Historical data updated for all players.' });
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
+    } finally {
+        setIsUpdatingHistoricalData(false);
+    }
+  };
+
 
   const weekOptions = Array.from({ length: 38 }, (_, i) => i + 1);
 
@@ -577,6 +642,66 @@ export default function AdminPage() {
             </Card>
         </div>
       </div>
+      <Card className="lg:col-span-3">
+          <CardHeader>
+            <CardTitle>Historical Player Data</CardTitle>
+            <CardDescription>Manage players' historical achievements and trophy cabinet.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={historicalForm.handleSubmit(onHistoricalSubmit)} className="space-y-4">
+              <div className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 mb-2 font-medium text-muted-foreground px-4">
+                <span>Player</span>
+                <span className="text-center">Seasons Played</span>
+                <span className="text-center">Championships</span>
+                <span className="text-center">Top 10s</span>
+              </div>
+              <div className="space-y-2">
+              {fields.map((field, index) => (
+                <div key={field.id} className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 items-center p-2 rounded-md hover:bg-muted/50">
+                    <span className="font-medium">{field.name}</span>
+                    <Controller
+                        control={historicalForm.control}
+                        name={`users.${index}.seasonsPlayed`}
+                        render={({ field }) => (
+                            <Input
+                                {...field}
+                                type="number"
+                                className="w-24 text-center mx-auto"
+                            />
+                        )}
+                    />
+                     <Controller
+                        control={historicalForm.control}
+                        name={`users.${index}.championshipWins`}
+                        render={({ field }) => (
+                            <Input
+                                {...field}
+                                type="number"
+                                className="w-24 text-center mx-auto"
+                            />
+                        )}
+                    />
+                     <Controller
+                        control={historicalForm.control}
+                        name={`users.${index}.topTenFinishes`}
+                        render={({ field }) => (
+                            <Input
+                                {...field}
+                                type="number"
+                                className="w-24 text-center mx-auto"
+                            />
+                        )}
+                    />
+                </div>
+              ))}
+              </div>
+              <Button type="submit" disabled={isUpdatingHistoricalData}>
+                {isUpdatingHistoricalData ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+                Save Historical Data
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
     </div>
   );
 }

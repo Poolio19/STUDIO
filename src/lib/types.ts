@@ -20,6 +20,8 @@ export type User = {
   country?: string;
   favouriteTeam?: string;
   championshipWins?: number;
+  seasonsPlayed?: number;
+  topTenFinishes?: number;
 };
 
 export type Team = {

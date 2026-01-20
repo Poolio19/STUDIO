@@ -24,7 +24,9 @@
         "joinDate": { "type": "string", "description": "The date and time the user joined.", "format": "date-time" },
         "country": { "type": "string", "description": "The user's country of residence." },
         "favouriteTeam": { "type": "string", "description": "The ID of the user's favourite team." },
-        "championshipWins": { "type": "number", "description": "The number of past championships won." }
+        "championshipWins": { "type": "number", "description": "The number of past championships won." },
+        "seasonsPlayed": { "type": "number", "description": "The number of seasons the user has played." },
+        "topTenFinishes": { "type": "number", "description": "The number of times the user has finished in the top 10." }
       },
       "required": ["id", "name", "email"]
     },
