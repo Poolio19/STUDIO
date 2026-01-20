@@ -66,18 +66,10 @@ export async function recalculateAllDataClientSide(
         .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
           
       const allUserHistories: { [userId: string]: UserHistory } = {};
-      let currentRank_w0 = 0;
-      let lastScore_w0 = Infinity;
       rankedUsersForWeek0.forEach((user, index) => {
-        if (user.score < lastScore_w0) {
-          currentRank_w0 = index + 1;
-        } else if (index === 0) {
-            currentRank_w0 = 1;
-        }
-        lastScore_w0 = user.score;
         allUserHistories[user.id] = { 
             userId: user.id, 
-            weeklyScores: [{ week: 0, score: user.score, rank: currentRank_w0 }] 
+            weeklyScores: [{ week: 0, score: user.score, rank: index + 1 }] 
         };
       });
   
@@ -216,16 +208,9 @@ export async function recalculateAllDataClientSide(
             .map(user => ({ ...user, scoreForWeek: userScoresForWeek[user.id] ?? 0 }))
             .sort((a, b) => b.scoreForWeek - a.scoreForWeek || a.name.localeCompare(b.name));
             
-        let currentRank = 0;
-        let lastScore = Infinity;
         rankedUsersForWeek.forEach((user, index) => {
-            if (user.scoreForWeek < lastScore) {
-                currentRank = index + 1;
-            } else if (index === 0) {
-                currentRank = 1;
-            }
-            lastScore = user.scoreForWeek;
-            allUserHistories[user.id].weeklyScores.push({ week: week, score: user.scoreForWeek, rank: currentRank });
+            const rank = index + 1;
+            allUserHistories[user.id].weeklyScores.push({ week: week, score: user.scoreForWeek, rank: rank });
         });
       }
   
