@@ -11,6 +11,7 @@ import {
 } from 'firebase/firestore';
 import type { Team, Prediction, User as UserProfile, UserHistory, CurrentStanding, PreviousSeasonStanding, Match } from '@/lib/types';
 import { allAwardPeriods } from '@/lib/award-periods';
+import prevStandingsData from './previous-season-standings-24-25.json';
 
 
 export async function recalculateAllDataClientSide(
@@ -22,12 +23,11 @@ export async function recalculateAllDataClientSide(
   
       // --- 1. Fetch all base data ---
       progressCallback('Fetching base data...');
-      const [teamsSnap, matchesSnap, usersSnap, predictionsSnap, prevStandingsSnap] = await Promise.all([
+      const [teamsSnap, matchesSnap, usersSnap, predictionsSnap] = await Promise.all([
         getDocs(collection(firestore, 'teams')),
         getDocs(collection(firestore, 'matches')),
         getDocs(collection(firestore, 'users')),
         getDocs(collection(firestore, 'predictions')),
-        getDocs(collection(firestore, 'previousSeasonStandings'))
       ]);
   
       const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
@@ -35,11 +35,10 @@ export async function recalculateAllDataClientSide(
       const allMatches = matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match));
       const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
       const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
-      const prevStandings = prevStandingsSnap.docs.map(doc => ({ teamId: doc.id, ...doc.data() } as PreviousSeasonStanding));
       
       // --- 2. Calculate definitive Week 0 scores from previous season standings ---
       progressCallback('Calculating definitive Week 0 scores...');
-
+      const prevStandings: PreviousSeasonStanding[] = prevStandingsData.map(d => ({...d, teamId: d.teamId || ''}));
       const prevStandingsRankMap = new Map(prevStandings.map(s => [s.teamId, s.rank]));
       
       const userScoresForWeek0: { [userId: string]: number } = {};
