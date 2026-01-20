@@ -30,6 +30,8 @@ import {
 
 import type { Match, Team, WeekResults } from '@/lib/types';
 import { createResultsFile } from '@/ai/flows/create-results-file-flow';
+import { importPastFixtures } from '@/ai/flows/import-past-fixtures-flow';
+import { importPreviousStandings } from '@/ai/flows/import-previous-standings-flow';
 import { recalculateAllDataClientSide } from '@/lib/recalculate';
 
 import { useForm, Controller } from 'react-hook-form';
@@ -78,6 +80,9 @@ export default function AdminPage() {
   const [isUpdating, setIsUpdating] = React.useState(false);
   const [isWritingFile, setIsWritingFile] = React.useState(false);
   const [isImportingFile, setIsImportingFile] = React.useState(false);
+  const [isImportingFixtures, setIsImportingFixtures] = React.useState(false);
+  const [isImportingStandings, setIsImportingStandings] = React.useState(false);
+
   const [latestFilePath, setLatestFilePath] = React.useState<string | null>(null);
   const [latestFileContent, setLatestFileContent] = React.useState<string | null>(null);
 
@@ -116,11 +121,10 @@ export default function AdminPage() {
       const weekMatches = matchesByWeek[week];
       if (!weekMatches || weekMatches.length === 0) continue;
 
-      // A match is considered entered if both scores are not -1 (i.e. have values or are postponed)
       const enteredCount = weekMatches.filter(m => m.homeScore !== -1 && m.awayScore !== -1).length;
       
       if (enteredCount > 0 && enteredCount < weekMatches.length) {
-        return week; // Found an incomplete week
+        return week;
       }
     }
 
@@ -131,7 +135,7 @@ export default function AdminPage() {
 
         const enteredCount = weekMatches.filter(m => m.homeScore !== -1 && m.awayScore !== -1).length;
         if (enteredCount === 0) {
-            return week; // Found the first unplayed week
+            return week;
         }
     }
     
@@ -148,7 +152,7 @@ export default function AdminPage() {
   });
 
   React.useEffect(() => {
-    if (defaultWeek > 0) {
+    if (defaultWeek > 0 && !scoresForm.formState.isDirty) {
       scoresForm.setValue('week', defaultWeek);
     }
   }, [defaultWeek, scoresForm]);
@@ -293,12 +297,48 @@ export default function AdminPage() {
     }
   };
 
+  const handleImportPastFixtures = async () => {
+    setIsImportingFixtures(true);
+    toast({ title: 'Importing Past Fixtures...', description: 'This will delete all existing matches and import from the backup file.' });
+    try {
+      const result = await importPastFixtures();
+      if (result.success) {
+        toast({ title: 'Success!', description: `Deleted ${result.deletedCount}, imported ${result.importedCount} fixtures.` });
+        await fetchAllMatches(); // Refresh data
+      } else {
+        throw new Error(result.message || 'An unknown error occurred.');
+      }
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Fixture Import Failed', description: error.message });
+    } finally {
+      setIsImportingFixtures(false);
+    }
+  };
+
+  const handleImportPreviousStandings = async () => {
+    setIsImportingStandings(true);
+    toast({ title: 'Importing Previous Standings...', description: 'This will clear and repopulate the 24-25 season standings.' });
+    try {
+      const result = await importPreviousStandings();
+      if (result.success) {
+        toast({ title: 'Success!', description: `Deleted ${result.deletedCount}, imported ${result.importedCount} standings.` });
+      } else {
+        throw new Error(result.message || 'An unknown error occurred.');
+      }
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Standings Import Failed', description: error.message });
+    } finally {
+      setIsImportingStandings(false);
+    }
+  }
+
+
   const weekOptions = Array.from({ length: 38 }, (_, i) => i + 1);
 
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <Card className="lg:col-span-2">
             <CardHeader>
                 <CardTitle>Step 1 & 2: Enter & Write Results</CardTitle>
                 <CardDescription>
@@ -378,38 +418,90 @@ export default function AdminPage() {
                 </form>
             </CardContent>
         </Card>
+        <div className="space-y-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Step 3: Master Data Control</CardTitle>
+                    <CardDescription>
+                        After writing new results to the database, run this to recalculate all scores and standings.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    
+                    <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="lg" className="text-lg" disabled={isUpdating}>
+                            {isUpdating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+                            3. Update & Recalculate All Data
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will recalculate standings, scores, and histories based on the current data in the database. This is a long-running operation.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleFullUpdateAndRecalculate}>Yes, Run Full Recalculation</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                    </AlertDialog>
+                </CardContent>
+            </Card>
 
-        <Card>
-            <CardHeader>
-                <CardTitle>Step 3: Master Data Control</CardTitle>
-                <CardDescription>
-                    After writing new results to the database, run this to recalculate all scores and standings.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                
-                <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="lg" className="text-lg" disabled={isUpdating}>
-                        {isUpdating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                        3. Update & Recalculate All Data
-                    </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        This will recalculate standings, scores, and histories based on the current data in the database. This is a long-running operation.
-                    </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleFullUpdateAndRecalculate}>Yes, Run Full Recalculation</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-                </AlertDialog>
-            </CardContent>
-        </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Definitive Data Imports</CardTitle>
+                    <CardDescription>
+                        Use these actions to reset collections from their JSON backup files.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                           <Button variant="outline" disabled={isImportingFixtures}>
+                                {isImportingFixtures ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Icons.database className="mr-2 h-4 w-4" />}
+                                Import Definitive Past Fixtures
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will delete all matches in the database and re-import them from `past-fixtures.json`.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleImportPastFixtures}>Yes, Import Fixtures</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                           <Button variant="outline" disabled={isImportingStandings}>
+                                {isImportingStandings ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Icons.database className="mr-2 h-4 w-4" />}
+                                Import Previous Season Standings
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                               This will clear and repopulate the previous season standings. This is the foundation for the Week 0 user scores.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleImportPreviousStandings}>Yes, Import Standings</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </CardContent>
+            </Card>
+        </div>
       </div>
     </div>
   );
