@@ -172,28 +172,13 @@ export async function recalculateAllDataClientSide(
                 b.points - a.points || 
                 b.goalDifference - a.goalDifference || 
                 b.goalsFor - a.goalsFor || 
-                (prevStandingsRankMap.get(a.teamId) ?? 99) - (prevStandingsRankMap.get(b.teamId) ?? 99)
+                a.teamName.localeCompare(b.teamName)
             );
         
-        const rankedTeamsForWeek: (typeof weeklyStandingsRanked[0] & { rank: number })[] = [];
-        let currentTeamRank = 0;
-        let lastTeamPoints = Infinity;
-        let lastTeamGD = Infinity;
-        let lastTeamGF = Infinity;
-
-        weeklyStandingsRanked.forEach((standing, index) => {
-            if (standing.points < lastTeamPoints || 
-                (standing.points === lastTeamPoints && standing.goalDifference < lastTeamGD) ||
-                (standing.points === lastTeamPoints && standing.goalDifference === lastTeamGD && standing.goalsFor < lastTeamGF)) {
-                currentTeamRank = index + 1;
-            } else if (index === 0) {
-                currentTeamRank = 1;
-            }
-            rankedTeamsForWeek.push({ ...standing, rank: currentTeamRank });
-            lastTeamPoints = standing.points;
-            lastTeamGD = standing.goalDifference;
-            lastTeamGF = standing.goalsFor;
-        });
+        const rankedTeamsForWeek = weeklyStandingsRanked.map((standing, index) => ({
+            ...standing,
+            rank: index + 1
+        }));
         
         const actualTeamRanksForWeek = new Map(rankedTeamsForWeek.map(s => [s.teamId, s.rank]));
 
@@ -363,24 +348,13 @@ export async function recalculateAllDataClientSide(
       Object.keys(finalTeamStats).forEach(teamId => {
           finalTeamStats[teamId].goalDifference = finalTeamStats[teamId].goalsFor - finalTeamStats[teamId].goalsAgainst;
       });
+      
       const newStandings = Object.entries(finalTeamStats)
         .map(([teamId, stats]) => ({ teamId, ...stats, teamName: teamMap.get(teamId)?.name || 'Unknown' }))
-        .sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.teamName.localeCompare(b.name));
+        .sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.teamName.localeCompare(b.teamName));
       
-      let finalRank = 0;
-      let lastPoints = Infinity;
-      let lastGD = Infinity;
-      let lastGF = Infinity;
       newStandings.forEach((s, index) => {
-          if (s.points < lastPoints || (s.points === lastPoints && s.goalDifference < lastGD) || (s.points === lastPoints && s.goalDifference === lastGD && s.goalsFor < lastGF)) {
-              finalRank = index + 1;
-          } else if (index === 0) {
-              finalRank = 1;
-          }
-          lastPoints = s.points;
-          lastGD = s.goalDifference;
-          lastGF = s.goalsFor;
-
+          const finalRank = index + 1;
           const { teamName, ...rest } = s;
           const standingDocRef = doc(firestore, 'standings', s.teamId);
           addOperation(b => b.set(standingDocRef, { ...rest, rank: finalRank }));
