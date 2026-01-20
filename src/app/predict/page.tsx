@@ -7,7 +7,6 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
-import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { Icons, IconName } from '@/components/icons';
 import { Reorder } from 'framer-motion';
@@ -42,33 +41,10 @@ const RankDifference = ({ diff }: { diff: number }) => {
   const color = diff > 0 ? 'text-red-500' : diff < 0 ? 'text-green-500' : 'text-gray-400';
 
   return (
-    <div className={cn("flex flex-col items-center justify-center h-[53px]", color)}>
+    <div className={cn("flex flex-col items-center justify-center h-full w-full", color)}>
       <Icon className="size-4" />
       <span className="text-xs font-bold">{Math.abs(diff)}</span>
     </div>
-  );
-};
-
-const TeamRow = ({ team, rank, children }: { team: any; rank: number, children?: React.ReactNode }) => {
-  const TeamIcon = Icons[team.teamLogo as IconName] || Icons.match;
-  const isLiverpool = team.id === 'team_12';
-  return (
-    <TableRow
-      key={team.id}
-      className="h-[53px]"
-      style={{ backgroundColor: team.bgColourFaint, color: team.textColour }}
-    >
-      <TableCell className="font-medium w-[50px] opacity-80 rounded-l-md">{rank}</TableCell>
-      <TableCell className="w-[48px] p-0">
-        <div className="flex items-center justify-center h-full">
-          <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}>
-            <TeamIcon className={cn("size-5", isLiverpool && "scale-x-[-1]")} style={{ color: team.iconColour }} />
-          </div>
-        </div>
-      </TableCell>
-      <TableCell className="font-medium">{team.name || team.teamName}</TableCell>
-      {children}
-    </TableRow>
   );
 };
 
@@ -257,37 +233,57 @@ export default function PredictPage() {
                               <Link href="/profile">Sign In to Predict</Link>
                           </Button>
                       </div>
-                  ) : seasonStarted ? (
-                    <Table>
-                      <TableBody>
-                        {items.map((item, index) => <TeamRow key={item.teamId} team={item} rank={index + 1} />)}
-                      </TableBody>
-                    </Table>
                   ) : (
-                    <Reorder.Group axis="y" values={items} onReorder={handleReorder} className="flex-1 p-1">
-                      {items.map((item, index) => {
-                        const TeamIcon = Icons[item.teamLogo as IconName] || Icons.match;
-                        const isLiverpool = item.id === 'team_12';
-                        return (
-                          <Reorder.Item
-                            key={item.teamId}
-                            value={item}
-                            className={cn("flex items-center h-[53px] cursor-grab active:cursor-grabbing rounded-md mb-1 shadow-sm")}
-                            style={{ backgroundColor: item.bgColourFaint, color: item.textColour }}
-                          >
-                            <div className={cn("text-base font-medium w-12 text-center opacity-80")}>{index + 1}</div>
-                            <div className="w-12 h-full p-0">
-                              <div className="flex items-center justify-center h-full">
-                                <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: item.bgColourSolid }}>
-                                  <TeamIcon className={cn("size-5", isLiverpool && "scale-x-[-1]")} style={{ color: item.iconColour }} />
+                    <div className='p-1'>
+                      {seasonStarted ? (
+                        items.map((item, index) => {
+                          const TeamIcon = Icons[item.teamLogo as IconName] || Icons.match;
+                          const isLiverpool = item.id === 'team_12';
+                          return (
+                            <div
+                              key={item.teamId}
+                              className={cn("flex items-center h-[53px] rounded-md mb-1 shadow-sm")}
+                              style={{ backgroundColor: item.bgColourFaint, color: item.textColour }}
+                            >
+                              <div className={cn("text-base font-medium w-12 text-center opacity-80")}>{index + 1}</div>
+                              <div className="w-12 h-full p-0">
+                                <div className="flex items-center justify-center h-full">
+                                  <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: item.bgColourSolid }}>
+                                    <TeamIcon className={cn("size-5", isLiverpool && "scale-x-[-1]")} style={{ color: item.iconColour }} />
+                                  </div>
                                 </div>
                               </div>
+                              <span className="font-medium text-sm pl-4">{item.teamName}</span>
                             </div>
-                            <span className="font-medium text-sm pl-4">{item.teamName}</span>
-                          </Reorder.Item>
-                        );
-                      })}
-                    </Reorder.Group>
+                          );
+                        })
+                      ) : (
+                        <Reorder.Group axis="y" values={items} onReorder={handleReorder}>
+                          {items.map((item, index) => {
+                            const TeamIcon = Icons[item.teamLogo as IconName] || Icons.match;
+                            const isLiverpool = item.id === 'team_12';
+                            return (
+                              <Reorder.Item
+                                key={item.teamId}
+                                value={item}
+                                className={cn("flex items-center h-[53px] cursor-grab active:cursor-grabbing rounded-md mb-1 shadow-sm")}
+                                style={{ backgroundColor: item.bgColourFaint, color: item.textColour }}
+                              >
+                                <div className={cn("text-base font-medium w-12 text-center opacity-80")}>{index + 1}</div>
+                                <div className="w-12 h-full p-0">
+                                  <div className="flex items-center justify-center h-full">
+                                    <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: item.bgColourSolid }}>
+                                      <TeamIcon className={cn("size-5", isLiverpool && "scale-x-[-1]")} style={{ color: item.iconColour }} />
+                                    </div>
+                                  </div>
+                                </div>
+                                <span className="font-medium text-sm pl-4">{item.teamName}</span>
+                              </Reorder.Item>
+                            );
+                          })}
+                        </Reorder.Group>
+                      )}
+                    </div>
                   )}
                 </CardContent>
               </Card>
@@ -296,12 +292,12 @@ export default function PredictPage() {
             {/* Difference 1 */}
             <div className="flex flex-col">
               <div className="font-medium pb-2 text-muted-foreground invisible">Diff</div>
-              <div className="relative">
+              <div className="relative p-1">
                 {items.map((item) => {
                   const predRank = predRankMap.get(item.teamId);
                   const currentRank = currentRankMap.get(item.teamId);
                   const diff = (predRank !== undefined && currentRank !== undefined) ? currentRank - predRank : 0;
-                  return <RankDifference key={item.teamId} diff={diff} />;
+                  return <div key={`${item.teamId}-diff1`} className="h-[53px] mb-1"><RankDifference diff={diff} /></div>;
                 })}
               </div>
             </div>
@@ -317,16 +313,31 @@ export default function PredictPage() {
               </div>
               <Card>
                 <CardContent className="p-0">
-                  <Table>
-                    <TableBody>
-                      {currentStandingsWithTeamData.map(team => (
-                        <TeamRow key={team.id} team={team} rank={team.rank}>
-                           <TableCell className="text-right font-semibold w-16">{team.points}</TableCell>
-                           <TableCell className="text-right w-16 rounded-r-md">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
-                        </TeamRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                   <div className="p-1">
+                      {currentStandingsWithTeamData.map(team => {
+                        const TeamIcon = Icons[team.teamLogo as IconName] || Icons.match;
+                        const isLiverpool = team.id === 'team_12';
+                        return (
+                          <div
+                            key={team.id}
+                            className={cn("flex items-center h-[53px] rounded-md mb-1 shadow-sm")}
+                            style={{ backgroundColor: team.bgColourFaint, color: team.textColour }}
+                          >
+                            <div className={cn("text-base font-medium w-12 text-center opacity-80")}>{team.rank}</div>
+                            <div className="w-12 h-full p-0">
+                              <div className="flex items-center justify-center h-full">
+                                <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}>
+                                  <TeamIcon className={cn("size-5", isLiverpool && "scale-x-[-1]")} style={{ color: team.iconColour }} />
+                                </div>
+                              </div>
+                            </div>
+                            <span className="font-medium text-sm pl-4 flex-grow">{team.name}</span>
+                            <span className="text-right font-semibold w-16 pr-2 tabular-nums">{team.points}</span>
+                            <span className="text-right w-16 pr-4 tabular-nums">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
                 </CardContent>
               </Card>
             </div>
@@ -334,12 +345,12 @@ export default function PredictPage() {
             {/* Difference 2 */}
              <div className="flex flex-col">
               <div className="font-medium pb-2 text-muted-foreground invisible">Diff</div>
-              <div className="relative">
+              <div className="relative p-1">
                 {currentStandingsWithTeamData.map((team) => {
                   const currentRank = currentRankMap.get(team.teamId);
                   const prevRank = prevRankMap.get(team.teamId);
                   const diff = (currentRank !== undefined && prevRank !== undefined) ? prevRank - currentRank : 0;
-                  return <RankDifference key={team.teamId} diff={diff} />;
+                  return <div key={`${team.teamId}-diff2`} className="h-[53px] mb-1"><RankDifference diff={diff} /></div>;
                 })}
               </div>
             </div>
@@ -355,16 +366,31 @@ export default function PredictPage() {
               </div>
               <Card>
                 <CardContent className="p-0">
-                  <Table>
-                    <TableBody>
-                      {sortedPreviousStandings.map(team => (
-                         <TeamRow key={team.id} team={team} rank={team.rank}>
-                           <TableCell className="text-right font-semibold w-16">{team.points}</TableCell>
-                           <TableCell className="text-right w-16 rounded-r-md">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
-                         </TeamRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                  <div className="p-1">
+                      {sortedPreviousStandings.map(team => {
+                        const TeamIcon = Icons[team.teamLogo as IconName] || Icons.match;
+                        const isLiverpool = team.id === 'team_12';
+                        return (
+                          <div
+                            key={team.id}
+                            className={cn("flex items-center h-[53px] rounded-md mb-1 shadow-sm")}
+                            style={{ backgroundColor: team.bgColourFaint, color: team.textColour }}
+                          >
+                            <div className={cn("text-base font-medium w-12 text-center opacity-80")}>{team.rank}</div>
+                            <div className="w-12 h-full p-0">
+                              <div className="flex items-center justify-center h-full">
+                                <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}>
+                                  <TeamIcon className={cn("size-5", isLiverpool && "scale-x-[-1]")} style={{ color: team.iconColour }} />
+                                </div>
+                              </div>
+                            </div>
+                            <span className="font-medium text-sm pl-4 flex-grow">{team.name}</span>
+                            <span className="text-right font-semibold w-16 pr-2 tabular-nums">{team.points}</span>
+                            <span className="text-right w-16 pr-4 tabular-nums">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</span>
+                          </div>
+                        );
+                      })}
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -378,5 +404,3 @@ export default function PredictPage() {
     </div>
   );
 }
-
-    
