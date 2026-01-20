@@ -167,7 +167,7 @@ export async function recalculateAllDataClientSide(
         });
         const weeklyStandingsRanked = Object.entries(weeklyTeamStats)
             .map(([teamId, stats]) => ({ teamId, ...stats, teamName: teamMap.get(teamId)?.name || 'Unknown' }))
-            .sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.teamName.localeCompare(b.teamName));
+            .sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.teamName.localeCompare(b.name));
         
         const rankedTeamsForWeek: (typeof weeklyStandingsRanked[0] & { rank: number })[] = [];
         let currentTeamRank = 0;
@@ -224,6 +224,33 @@ export async function recalculateAllDataClientSide(
         const rankedUsersForWeek = users
             .map(user => ({ ...user, scoreForWeek: userScoresForWeek[user.id] ?? 0 }))
             .sort((a, b) => b.scoreForWeek - a.scoreForWeek || a.name.localeCompare(b.name));
+
+        if (week === 3) {
+            progressCallback("--- [DIAGNOSTIC] Week 3 Team Standings ---");
+            rankedTeamsForWeek.forEach(standing => {
+                progressCallback(`${standing.rank}. ${standing.teamName} (Pts: ${standing.points}, GD: ${standing.goalDifference})`);
+            });
+
+            progressCallback("--- [DIAGNOSTIC] MiMoM Scores ---");
+            const usersToDiagnose = ["Adam F Bain", "Graeme Bailie", "Dan Skingley"];
+            const diagnosedUsers = users.filter(u => usersToDiagnose.includes(u.name));
+            
+            diagnosedUsers.forEach(user => {
+                const userHistory = allUserHistories[user.id];
+                if (userHistory) {
+                    const wk0 = userHistory.weeklyScores.find(s => s.week === 0);
+                    const wk3Score = userScoresForWeek[user.id] ?? 0;
+                    
+                    if (wk0) {
+                        const improvement = wk3Score - wk0.score;
+                        progressCallback(`MiMoM Check (${user.name}): Wk0: ${wk0.score}, Wk3: ${wk3Score}, Improvement: ${improvement}`);
+                    } else {
+                      progressCallback(`MiMoM Check (${user.name}): Wk0 score not found!`);
+                    }
+                }
+            });
+            progressCallback("--- [DIAGNOSTIC] End ---");
+        }
             
         let currentRank = 0;
         let lastScore = Infinity;
