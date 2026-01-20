@@ -367,7 +367,7 @@ export async function recalculateAllDataClientSide(
         });
         const newStandings = Object.entries(finalTeamStats)
           .map(([teamId, stats]) => ({ teamId, ...stats, teamName: teamMap.get(teamId)?.name || 'Unknown' }))
-          .sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.teamName.localeCompare(b.teamName));
+          .sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.teamName.localeCompare(b.name));
         
         let finalRank = 0;
         let lastPoints = Infinity;
@@ -418,4 +418,3 @@ export async function recalculateAllDataClientSide(
     }
 }
 
-    
