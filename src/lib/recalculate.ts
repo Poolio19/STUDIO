@@ -235,7 +235,7 @@ export async function recalculateAllDataClientSide(
         const userHistory = allUserHistories[user.id];
         if (!userHistory || userHistory.weeklyScores.length === 0) continue;
   
-        userHistory.weeklyScores.sort((a,b) => a.week - b.week);
+        userHistory.weeklyScores.sort((a,b) => a.week - a.week);
         const latestWeekIndex = userHistory.weeklyScores.length - 1;
         const latestWeekData = userHistory.weeklyScores[latestWeekIndex];
         const previousWeekData = userHistory.weeklyScores[latestWeekIndex - 1];
