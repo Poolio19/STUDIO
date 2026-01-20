@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Upload, Trophy, Award, ShieldCheck, Loader2, Users } from 'lucide-react';
+import { Calendar as CalendarIcon, Upload, Trophy, Award, ShieldCheck, Loader2, Users, Medal, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -75,7 +75,6 @@ const profileFormSchema = z.object({
   favouriteTeam: z.string({
     required_error: 'Please select a team.',
   }),
-  championshipWins: z.number().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -122,7 +121,6 @@ export default function ProfilePage() {
       dob: new Date('1990-01-01'),
       country: 'United Kingdom',
       favouriteTeam: 'team_1',
-      championshipWins: 0,
     },
     mode: 'onChange',
   });
@@ -135,7 +133,6 @@ export default function ProfilePage() {
         dob: user.joinDate ? new Date(user.joinDate) : new Date('1990-01-01'),
         country: user.country || 'United Kingdom',
         favouriteTeam: user.favouriteTeam || 'team_1',
-        championshipWins: user.championshipWins || 0,
       });
     }
   }, [user, form]);
@@ -152,7 +149,6 @@ export default function ProfilePage() {
         joinDate: data.dob.toISOString(),
         country: data.country,
         favouriteTeam: data.favouriteTeam,
-        // championshipWins is now admin-controlled
     };
 
     setDocumentNonBlocking(userDocRef, updatedData, { merge: true });
@@ -161,13 +157,6 @@ export default function ProfilePage() {
       description: 'Your profile information has been saved.',
     });
   }
-
-  const mimoMWins = React.useMemo(() => {
-    if (!user || !monthlyMimoM) return 0;
-    return monthlyMimoM.filter(m => m.userId === user.id && m.type === 'winner').length;
-  }, [user, monthlyMimoM]);
-
-  const pastChampionships = user?.championshipWins || 0;
 
   const { chartData, yAxisDomain } = React.useMemo(() => {
     if (!allUserHistories || !userHistory || !userHistory.weeklyScores) {
@@ -245,6 +234,7 @@ export default function ProfilePage() {
     );
   }
 
+  const totalMiMoMs = (user?.mimoM || 0) + (user?.joMimoM || 0) + (user?.ruMimoM || 0) + (user?.joRuMimoM || 0);
 
   return (
     <div className="space-y-8">
@@ -308,35 +298,68 @@ export default function ProfilePage() {
                       <Tooltip>
                         <TooltipTrigger>
                           <div className="flex flex-col items-center gap-1">
-                            <Trophy className={cn((user?.championshipWins || 0) > 0 ? "text-yellow-500" : "text-gray-400")} />
-                            <span className="text-xs font-bold">{user?.championshipWins || 0}</span>
+                            <Trophy className={cn((user?.first || 0) > 0 ? "text-yellow-500" : "text-gray-400")} />
+                            <span className="text-xs font-bold">{user?.first || 0}</span>
                           </div>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>{user?.championshipWins || 0}x League Champion</p>
+                          <p>{user?.first || 0}x League Champion</p>
                         </TooltipContent>
                       </Tooltip>
                       <Tooltip>
                         <TooltipTrigger>
                           <div className="flex flex-col items-center gap-1">
-                            <ShieldCheck className={cn((user?.topTenFinishes || 0) > 0 ? "text-blue-500" : "text-gray-400")} />
-                            <span className="text-xs font-bold">{user?.topTenFinishes || 0}</span>
+                            <Medal className={cn((user?.second || 0) > 0 ? "text-slate-500" : "text-gray-400")} />
+                            <span className="text-xs font-bold">{user?.second || 0}</span>
                           </div>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>{user?.topTenFinishes || 0}x Top 10 Finishes</p>
+                          <p>{user?.second || 0}x Runner Up</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <div className="flex flex-col items-center gap-1">
+                            <Medal className={cn((user?.third || 0) > 0 ? "text-orange-600" : "text-gray-400")} />
+                            <span className="text-xs font-bold">{user?.third || 0}</span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{user?.third || 0}x 3rd Place</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <div className="flex flex-col items-center gap-1">
+                            <ShieldCheck className={cn(((user?.first || 0) + (user?.second || 0) + (user?.third || 0) + (user?.fourth || 0) + (user?.fifth || 0) + (user?.sixth || 0) + (user?.seventh || 0) + (user?.eighth || 0) + (user?.ninth || 0) + (user?.tenth || 0)) > 0 ? "text-blue-500" : "text-gray-400")} />
+                            <span className="text-xs font-bold">{(user?.first || 0) + (user?.second || 0) + (user?.third || 0) + (user?.fourth || 0) + (user?.fifth || 0) + (user?.sixth || 0) + (user?.seventh || 0) + (user?.eighth || 0) + (user?.ninth || 0) + (user?.tenth || 0)}</span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Top 10 Finishes</p>
                         </TooltipContent>
                       </Tooltip>
                       <Tooltip>
                       <TooltipTrigger>
                         <div className="flex flex-col items-center gap-1">
-                          <Award className={cn(mimoMWins > 0 ? "text-yellow-600" : "text-gray-400")} />
-                          <span className="text-xs font-bold">{mimoMWins}</span>
+                          <Award className={cn(totalMiMoMs > 0 ? "text-yellow-600" : "text-gray-400")} />
+                          <span className="text-xs font-bold">{totalMiMoMs}</span>
                         </div>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>{mimoMWins}x MiMoM Winner</p>
+                        <p>{totalMiMoMs}x MiMoM Awards</p>
                       </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger>
+                            <div className="flex flex-col items-center gap-1">
+                                <DollarSign className={cn((user?.cashWinnings || 0) > 0 ? "text-green-600" : "text-gray-400")} />
+                                <span className="text-xs font-bold">£{user?.cashWinnings || 0}</span>
+                            </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Total Cash Winnings: £{user?.cashWinnings || 0}</p>
+                        </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </div>
@@ -463,19 +486,6 @@ export default function ProfilePage() {
                             ))}
                           </SelectContent>
                         </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                   <FormField
-                    control={form.control}
-                    name="championshipWins"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Past Championships</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} onChange={event => field.onChange(+event.target.value)} disabled />
-                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}

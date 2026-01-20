@@ -13,6 +13,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useFirestore } from '@/firebase';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 import { collection, doc, writeBatch, getDocs, query, orderBy } from 'firebase/firestore';
 import { Icons } from '@/components/icons';
@@ -78,8 +79,21 @@ const historicalDataFormSchema = z.object({
     id: z.string(),
     name: z.string(),
     seasonsPlayed: z.coerce.number().int().min(0),
-    championshipWins: z.coerce.number().int().min(0),
-    topTenFinishes: z.coerce.number().int().min(0),
+    first: z.coerce.number().int().min(0),
+    second: z.coerce.number().int().min(0),
+    third: z.coerce.number().int().min(0),
+    fourth: z.coerce.number().int().min(0),
+    fifth: z.coerce.number().int().min(0),
+    sixth: z.coerce.number().int().min(0),
+    seventh: z.coerce.number().int().min(0),
+    eighth: z.coerce.number().int().min(0),
+    ninth: z.coerce.number().int().min(0),
+    tenth: z.coerce.number().int().min(0),
+    mimoM: z.coerce.number().int().min(0),
+    ruMimoM: z.coerce.number().int().min(0),
+    joMimoM: z.coerce.number().int().min(0),
+    joRuMimoM: z.coerce.number().int().min(0),
+    cashWinnings: z.coerce.number().min(0),
   }))
 });
 type HistoricalDataFormValues = z.infer<typeof historicalDataFormSchema>;
@@ -187,8 +201,21 @@ export default function AdminPage() {
             id: u.id,
             name: u.name,
             seasonsPlayed: u.seasonsPlayed || 0,
-            championshipWins: u.championshipWins || 0,
-            topTenFinishes: u.topTenFinishes || 0,
+            first: u.first || 0,
+            second: u.second || 0,
+            third: u.third || 0,
+            fourth: u.fourth || 0,
+            fifth: u.fifth || 0,
+            sixth: u.sixth || 0,
+            seventh: u.seventh || 0,
+            eighth: u.eighth || 0,
+            ninth: u.ninth || 0,
+            tenth: u.tenth || 0,
+            mimoM: u.mimoM || 0,
+            ruMimoM: u.ruMimoM || 0,
+            joMimoM: u.joMimoM || 0,
+            joRuMimoM: u.joRuMimoM || 0,
+            cashWinnings: u.cashWinnings || 0,
         })));
     }
 }, [allUsers, replace]);
@@ -458,8 +485,21 @@ export default function AdminPage() {
             const userRef = doc(firestore, 'users', user.id);
             batch.update(userRef, {
                 seasonsPlayed: user.seasonsPlayed,
-                championshipWins: user.championshipWins,
-                topTenFinishes: user.topTenFinishes,
+                first: user.first,
+                second: user.second,
+                third: user.third,
+                fourth: user.fourth,
+                fifth: user.fifth,
+                sixth: user.sixth,
+                seventh: user.seventh,
+                eighth: user.eighth,
+                ninth: user.ninth,
+                tenth: user.tenth,
+                mimoM: user.mimoM,
+                ruMimoM: user.ruMimoM,
+                joMimoM: user.joMimoM,
+                joRuMimoM: user.joRuMimoM,
+                cashWinnings: user.cashWinnings,
             });
         });
         await batch.commit();
@@ -473,6 +513,25 @@ export default function AdminPage() {
 
 
   const weekOptions = Array.from({ length: 38 }, (_, i) => i + 1);
+
+  const historicalDataHeaders = [
+    { key: 'seasonsPlayed', label: 'S', tooltip: 'Seasons Played' },
+    { key: 'first', label: '1', tooltip: '1st Place Finishes' },
+    { key: 'second', label: '2', tooltip: '2nd Place Finishes' },
+    { key: 'third', label: '3', tooltip: '3rd Place Finishes' },
+    { key: 'fourth', label: '4', tooltip: '4th Place Finishes' },
+    { key: 'fifth', label: '5', tooltip: '5th Place Finishes' },
+    { key: 'sixth', label: '6', tooltip: '6th Place Finishes' },
+    { key: 'seventh', label: '7', tooltip: '7th Place Finishes' },
+    { key: 'eighth', label: '8', tooltip: '8th Place Finishes' },
+    { key: 'ninth', label: '9', tooltip: '9th Place Finishes' },
+    { key: 'tenth', label: '10', tooltip: '10th Place Finishes' },
+    { key: 'mimoM', label: 'M', tooltip: 'MiMoM Wins' },
+    { key: 'ruMimoM', label: 'R', tooltip: 'RuMiMoM Wins' },
+    { key: 'joMimoM', label: 'J', tooltip: 'JoMiMoM Wins' },
+    { key: 'joRuMimoM', label: 'JR', tooltip: 'JoRuMiMoM Wins' },
+    { key: 'cashWinnings', label: '£', tooltip: 'Total Cash Winnings' },
+  ];
 
   return (
     <div className="space-y-8">
@@ -645,57 +704,50 @@ export default function AdminPage() {
       <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle>Historical Player Data</CardTitle>
-            <CardDescription>Manage players' historical achievements and trophy cabinet.</CardDescription>
+            <CardDescription>Manage players' historical achievements and trophy cabinet. Scroll right for more stats.</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={historicalForm.handleSubmit(onHistoricalSubmit)} className="space-y-4">
-              <div className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 mb-2 font-medium text-muted-foreground px-4">
-                <span>Player</span>
-                <span className="text-center">Seasons Played</span>
-                <span className="text-center">Championships</span>
-                <span className="text-center">Top 10s</span>
-              </div>
-              <div className="space-y-2">
-              {fields.map((field, index) => (
-                <div key={field.id} className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 items-center p-2 rounded-md hover:bg-muted/50">
-                    <span className="font-medium">{field.name}</span>
-                    <Controller
-                        control={historicalForm.control}
-                        name={`users.${index}.seasonsPlayed`}
-                        render={({ field }) => (
-                            <Input
-                                {...field}
-                                type="number"
-                                className="w-24 text-center mx-auto"
-                            />
-                        )}
-                    />
-                     <Controller
-                        control={historicalForm.control}
-                        name={`users.${index}.championshipWins`}
-                        render={({ field }) => (
-                            <Input
-                                {...field}
-                                type="number"
-                                className="w-24 text-center mx-auto"
-                            />
-                        )}
-                    />
-                     <Controller
-                        control={historicalForm.control}
-                        name={`users.${index}.topTenFinishes`}
-                        render={({ field }) => (
-                            <Input
-                                {...field}
-                                type="number"
-                                className="w-24 text-center mx-auto"
-                            />
-                        )}
-                    />
+              <div className="overflow-x-auto">
+                <div className="grid grid-cols-[2fr_repeat(17,1fr)] gap-1 pb-2 min-w-[1000px]">
+                  <span className="font-medium text-muted-foreground text-sm sticky left-0 bg-card pr-2">Player</span>
+                  <TooltipProvider>
+                    {historicalDataHeaders.map(header => (
+                      <Tooltip key={header.key}>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="sm" className="p-1 h-auto font-medium text-muted-foreground text-xs">{header.label}</Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{header.tooltip}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ))}
+                  </TooltipProvider>
                 </div>
-              ))}
+                <div className="space-y-1 min-w-[1000px]">
+                {fields.map((field, index) => (
+                  <div key={field.id} className="grid grid-cols-[2fr_repeat(17,1fr)] gap-1 items-center hover:bg-muted/50 rounded-md">
+                      <span className="font-medium text-sm truncate sticky left-0 bg-card pr-2 py-1">{field.name}</span>
+                       {historicalDataHeaders.map(header => (
+                          <Controller
+                              key={`${field.id}-${header.key}`}
+                              control={historicalForm.control}
+                              name={`users.${index}.${header.key as any}`}
+                              render={({ field }) => (
+                                  <Input
+                                      {...field}
+                                      type="number"
+                                      className="w-full text-center h-8 text-xs px-1"
+                                      onChange={e => field.onChange(e.target.valueAsNumber)}
+                                  />
+                              )}
+                          />
+                       ))}
+                  </div>
+                ))}
+                </div>
               </div>
-              <Button type="submit" disabled={isUpdatingHistoricalData}>
+              <Button type="submit" disabled={isUpdatingHistoricalData} className="mt-4">
                 {isUpdatingHistoricalData ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
                 Save Historical Data
               </Button>

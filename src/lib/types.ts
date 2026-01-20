@@ -19,9 +19,22 @@ export type User = {
   joinDate?: string;
   country?: string;
   favouriteTeam?: string;
-  championshipWins?: number;
   seasonsPlayed?: number;
-  topTenFinishes?: number;
+  first?: number;
+  second?: number;
+  third?: number;
+  fourth?: number;
+  fifth?: number;
+  sixth?: number;
+  seventh?: number;
+  eighth?: number;
+  ninth?: number;
+  tenth?: number;
+  mimoM?: number;
+  ruMimoM?: number;
+  joMimoM?: number;
+  joRuMimoM?: number;
+  cashWinnings?: number;
 };
 
 export type Team = {
