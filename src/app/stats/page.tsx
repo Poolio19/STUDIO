@@ -91,7 +91,7 @@ export default function StatsPage() {
                                 </TableHead>
                                 <TableHead className="text-center p-0 border-l border-dashed border-border w-[40px]">
                                      <div
-                                        className="[writing-mode:vertical-rl] transform-gpu rotate-180 flex justify-center items-start font-bold h-full w-full pb-1 whitespace-nowrap"
+                                        className="[writing-mode:vertical-rl] transform-gpu rotate-180 flex justify-start items-center font-bold h-full w-full pb-1 whitespace-nowrap"
                                     >
                                         TOTAL
                                     </div>
@@ -100,7 +100,7 @@ export default function StatsPage() {
                                     return (
                                     <TableHead key={team.id} className="text-left p-0 border-l border-dashed border-border w-[40px]">
                                         <div
-                                            className="[writing-mode:vertical-rl] transform-gpu rotate-180 flex justify-end items-center font-medium h-full w-full pb-1 whitespace-nowrap"
+                                            className="[writing-mode:vertical-rl] transform-gpu rotate-180 flex justify-start items-center font-medium h-full w-full pb-1 whitespace-nowrap"
                                         >
                                             {team.name}
                                         </div>
