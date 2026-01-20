@@ -36,11 +36,11 @@ export async function recalculateAllDataClientSide(
       const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
       const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
       
-      // --- 2. Calculate definitive Week 0 scores from previous season standings ---
-      progressCallback('Calculating definitive Week 0 scores...');
       const prevStandings: PreviousSeasonStanding[] = prevStandingsData.map(d => ({...d, teamId: d.teamId || ''}));
       const prevStandingsRankMap = new Map(prevStandings.map(s => [s.teamId, s.rank]));
-      
+
+      // --- 2. Calculate definitive Week 0 user scores from DEFINITIVE previous season standings ---
+      progressCallback('Calculating definitive Week 0 scores...');
       const userScoresForWeek0: { [userId: string]: number } = {};
       predictions.forEach(prediction => {
           if (!prediction.rankings) {
@@ -112,7 +112,6 @@ export async function recalculateAllDataClientSide(
       
       // --- 4. Populate Season Months for the Hall of Fame page ---
       progressCallback('Setting up season months...');
-      
       allAwardPeriods.forEach(period => {
           const docRef = doc(firestore, 'seasonMonths', period.id);
           addOperation(b => b.set(docRef, {
@@ -123,8 +122,20 @@ export async function recalculateAllDataClientSide(
               abbreviation: period.abbreviation,
           }));
       });
+
+      // --- 5. Write Week 0 Team Standings from definitive source ---
+      progressCallback('Writing definitive Week 0 team standings...');
+      prevStandings.forEach(standing => {
+        if (!standing.teamId) return;
+        const docRef = doc(firestore, 'weeklyTeamStandings', `0-${standing.teamId}`);
+        addOperation(b => b.set(docRef, {
+            week: 0,
+            teamId: standing.teamId,
+            rank: standing.rank
+        }));
+      });
   
-      // --- 5. Build history week by week from played matches ---
+      // --- 6. Build history week by week from played matches ---
       const playedMatches = allMatches.filter(m => m.homeScore > -1 && m.awayScore > -1);
       const playedWeeks = [...new Set(playedMatches.map(m => m.week))].sort((a, b) => a - b);
   
@@ -157,7 +168,7 @@ export async function recalculateAllDataClientSide(
             weeklyTeamStats[teamId].goalDifference = weeklyTeamStats[teamId].goalsFor - weeklyTeamStats[teamId].goalsAgainst;
         });
 
-        const weeklyStandingsRanked = Object.entries(weeklyTeamStats)
+        const weeklyStandingsSorted = Object.entries(weeklyTeamStats)
             .map(([teamId, stats]) => ({ teamId, ...stats, teamName: teamMap.get(teamId)?.name || 'Unknown' }))
             .sort((a, b) => 
                 b.points - a.points || 
@@ -166,7 +177,7 @@ export async function recalculateAllDataClientSide(
                 a.teamName.localeCompare(b.teamName)
             );
         
-        const rankedTeamsForWeek = weeklyStandingsRanked.map((standing, index) => ({
+        const rankedTeamsForWeek = weeklyStandingsSorted.map((standing, index) => ({
             ...standing,
             rank: index + 1
         }));
@@ -213,7 +224,7 @@ export async function recalculateAllDataClientSide(
         });
       }
   
-      // --- 6. Process final user states and write histories ---
+      // --- 7. Process final user states and write histories ---
       progressCallback('Finalizing user profiles...');
       for (const user of users) {
         const userHistory = allUserHistories[user.id];
@@ -246,7 +257,7 @@ export async function recalculateAllDataClientSide(
         addOperation(b => b.set(historyDocRef, userHistory));
       }
 
-      // --- 7. Calculate and store Monthly MimoM awards ---
+      // --- 8. Calculate and store Monthly MimoM awards ---
       progressCallback('Calculating monthly awards...');
       const nonProUsers = users.filter(u => !u.isPro);
 
@@ -309,7 +320,7 @@ export async function recalculateAllDataClientSide(
         }
       }
 
-      // --- 8. Generate final league standings and recent results ---
+      // --- 9. Generate final league standings and recent results ---
       progressCallback('Generating final standings...');
       const finalMatches = allMatches.filter(m => m.week <= (playedWeeks[playedWeeks.length -1] || 0) && m.homeScore > -1 && m.awayScore > -1);
       const finalTeamStats: { [teamId: string]: Omit<CurrentStanding, 'teamId' | 'rank'> } = {};
@@ -358,7 +369,7 @@ export async function recalculateAllDataClientSide(
         addOperation(b => b.set(recentResultDocRef, { teamId: team.id, results: results.reverse() }));
       });
 
-      // --- 9. Commit all changes ---
+      // --- 10. Commit all changes ---
       progressCallback(`Committing ${mainBatches.length} batch(es) of updates...`);
       await Promise.all(mainBatches.map(b => b.commit()));
       progressCallback('Full data recalculation completed successfully.');
