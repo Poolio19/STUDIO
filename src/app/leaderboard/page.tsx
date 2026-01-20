@@ -19,18 +19,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import type { User, CurrentStanding, MonthlyMimoM, Match } from '@/lib/types';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { getAvatarUrl } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { ArrowUp, ArrowDown, Minus, Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 
-
-const getAvatarUrl = (avatarId: string) => {
-  const image = PlaceHolderImages.find((img) => img.id === avatarId);
-  return image ? image.imageUrl : '';
-};
 
 const getRankChangeIcon = (change: number) => {
   if (change > 0) return ArrowUp;

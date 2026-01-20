@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { getAvatarUrl } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
 import type { User, Team, PlayerTeamScore, CurrentStanding } from '@/lib/types';
@@ -19,9 +19,6 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 
-const getAvatarUrl = (avatarId: string) => {
-  return PlaceHolderImages.find((img) => img.id === avatarId)?.imageUrl || '';
-};
 
 export default function StatsPage() {
   const firestore = useFirestore();
@@ -91,7 +88,7 @@ export default function StatsPage() {
                                 </TableHead>
                                 <TableHead className="text-center p-0 border-l border-dashed border-border w-[40px]">
                                      <div
-                                        className="[writing-mode:vertical-rl] transform-gpu rotate-180 flex justify-start items-center font-bold h-full w-full pb-1 whitespace-nowrap"
+                                        className="[writing-mode:vertical-rl] transform-gpu rotate-180 flex justify-end items-center font-bold h-full w-full pb-1 whitespace-nowrap"
                                     >
                                         TOTAL
                                     </div>
@@ -100,7 +97,7 @@ export default function StatsPage() {
                                     return (
                                     <TableHead key={team.id} className="text-left p-0 border-l border-dashed border-border w-[40px]">
                                         <div
-                                            className="[writing-mode:vertical-rl] transform-gpu rotate-180 flex justify-start items-center font-medium h-full w-full pb-1 whitespace-nowrap"
+                                            className="[writing-mode:vertical-rl] transform-gpu rotate-180 flex justify-end items-center font-medium h-full w-full pb-1 whitespace-nowrap"
                                         >
                                             {team.name}
                                         </div>

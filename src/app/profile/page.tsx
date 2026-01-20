@@ -40,7 +40,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { getAvatarUrl } from '@/lib/placeholder-images';
 import type { Team, User, UserHistory, MonthlyMimoM } from '@/lib/types';
 import { ProfilePerformanceChart } from '@/components/charts/profile-performance-chart';
 import React from 'react';
@@ -169,8 +169,6 @@ export default function ProfilePage() {
 
   const pastChampionships = user?.championshipWins || 0;
 
-  const defaultAvatarUrl = user ? PlaceHolderImages.find(img => img.id === user.avatar)?.imageUrl || '' : '';
-
   const { chartData, yAxisDomain } = React.useMemo(() => {
     if (!allUserHistories || !userHistory || !userHistory.weeklyScores) {
       return { chartData: [], yAxisDomain: [0, 0] };
@@ -256,7 +254,7 @@ export default function ProfilePage() {
             <CardContent className="pt-6 flex flex-col items-center gap-4">
               <Avatar className="h-24 w-24 border-4 border-primary">
                 <AvatarImage
-                  src={avatarPreview || user?.avatar?.startsWith('data:') ? user.avatar : defaultAvatarUrl}
+                  src={avatarPreview || getAvatarUrl(user?.avatar)}
                   alt={user?.name}
                   data-ai-hint="person portrait"
                 />

@@ -22,7 +22,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import type { User, UserHistory, MonthlyMimoM, SeasonMonth, Match } from '@/lib/types';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { getAvatarUrl } from '@/lib/placeholder-images';
 import { ArrowUp, ArrowDown, Minus, Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
@@ -30,10 +30,6 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { allAwardPeriods } from '@/lib/award-periods';
 
-
-const getAvatarUrl = (avatarId: string) => {
-  return PlaceHolderImages.find((img) => img.id === avatarId)?.imageUrl || '';
-};
 
 const getRankChangeIcon = (change: number) => {
   if (change > 0) return ArrowUp;

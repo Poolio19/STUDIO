@@ -16,7 +16,7 @@ import { Icons } from '@/components/icons';
 import Link from 'next/link';
 import { Award, Database, LogOut } from 'lucide-react';
 import { useUser, useAuth, useDoc, useFirestore, useMemoFirebase, useResolvedUserId } from '@/firebase';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { getAvatarUrl } from '@/lib/placeholder-images';
 import { Button } from '../ui/button';
 import { doc } from 'firebase/firestore';
 import type { User } from '@/lib/types';
@@ -55,13 +55,6 @@ export function SidebarNav() {
     }
   };
 
-  const getAvatarUrl = (avatarId: string | undefined, photoURL: string | null | undefined) => {
-    if (photoURL) return photoURL;
-    if (!avatarId) return '';
-    const image = PlaceHolderImages.find(img => img.id === avatarId);
-    return image ? image.imageUrl : `https://picsum.photos/seed/${avatarId}/100/100`;
-  };
-
   const getInitials = (name: string | null | undefined) => {
     if (!name) return '';
     const parts = name.split(' ');
@@ -70,6 +63,8 @@ export function SidebarNav() {
     }
     return name.substring(0, 2).toUpperCase();
   };
+  
+  const avatarSrc = authUser?.photoURL || getAvatarUrl(userProfile?.avatar);
   
   return (
     <>
@@ -117,7 +112,7 @@ export function SidebarNav() {
         ) : authUser ? (
             <div className="flex items-center gap-3 p-2">
                 <Avatar>
-                    <AvatarImage src={getAvatarUrl(userProfile?.avatar, authUser.photoURL)} alt={userProfile?.name || 'User'} />
+                    <AvatarImage src={avatarSrc} alt={userProfile?.name || 'User'} />
                     <AvatarFallback>{getInitials(userProfile?.name)}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col overflow-hidden">
