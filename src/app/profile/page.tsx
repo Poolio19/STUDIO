@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -309,7 +308,7 @@ export default function ProfilePage() {
                       <Tooltip>
                         <TooltipTrigger>
                           <div className="flex flex-col items-center gap-1">
-                            <Medal className={cn((user?.second || 0) > 0 ? "text-slate-500" : "text-gray-400")} />
+                            <Medal className={cn((user?.second || 0) > 0 ? "text-slate-400" : "text-gray-400")} />
                             <span className="text-xs font-bold">{user?.second || 0}</span>
                           </div>
                         </TooltipTrigger>
@@ -320,7 +319,7 @@ export default function ProfilePage() {
                       <Tooltip>
                         <TooltipTrigger>
                           <div className="flex flex-col items-center gap-1">
-                            <Medal className={cn((user?.third || 0) > 0 ? "text-orange-600" : "text-gray-400")} />
+                            <Medal className={cn((user?.third || 0) > 0 ? "text-amber-800" : "text-gray-400")} />
                             <span className="text-xs font-bold">{user?.third || 0}</span>
                           </div>
                         </TooltipTrigger>
