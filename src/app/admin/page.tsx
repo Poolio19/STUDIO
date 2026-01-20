@@ -30,8 +30,6 @@ import {
 
 import type { Match, Team, WeekResults } from '@/lib/types';
 import { createResultsFile } from '@/ai/flows/create-results-file-flow';
-import { importPastFixtures } from '@/ai/flows/import-past-fixtures-flow';
-import { importPreviousStandings } from '@/ai/flows/import-previous-standings-flow';
 import { recalculateAllDataClientSide } from '@/lib/recalculate';
 
 import { useForm, Controller } from 'react-hook-form';
@@ -45,6 +43,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
+
+import pastFixtures from '@/lib/past-fixtures.json';
+import previousSeasonData from '@/lib/previous-season-standings-24-25.json';
 
 const scoreSchema = z.union([z.literal('P'), z.literal('p'), z.coerce.number().int()]);
 
@@ -298,37 +299,110 @@ export default function AdminPage() {
   };
 
   const handleImportPastFixtures = async () => {
+    if (!firestore) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Firestore is not available.' });
+        return;
+    }
     setIsImportingFixtures(true);
     toast({ title: 'Importing Past Fixtures...', description: 'This will delete all existing matches and import from the backup file.' });
     try {
-      const result = await importPastFixtures();
-      if (result.success) {
-        toast({ title: 'Success!', description: `Deleted ${result.deletedCount}, imported ${result.importedCount} fixtures.` });
-        await fetchAllMatches(); // Refresh data
-      } else {
-        throw new Error(result.message || 'An unknown error occurred.');
-      }
+        const matchesCollection = collection(firestore, 'matches');
+        const batch = writeBatch(firestore);
+
+        const snapshot = await getDocs(matchesCollection);
+        const deletedCount = snapshot.size;
+        snapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+
+        const importedCount = pastFixtures.length;
+        pastFixtures.forEach(fixture => {
+            const { id, ...fixtureData } = fixture;
+            if (!id) return;
+            const docRef = doc(matchesCollection, id);
+            batch.set(docRef, fixtureData);
+        });
+
+        await batch.commit();
+        
+        toast({ title: 'Success!', description: `Deleted ${deletedCount}, imported ${importedCount} fixtures.` });
+        await fetchAllMatches();
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Fixture Import Failed', description: error.message });
+        toast({ variant: 'destructive', title: 'Fixture Import Failed', description: error.message });
     } finally {
-      setIsImportingFixtures(false);
+        setIsImportingFixtures(false);
     }
   };
 
   const handleImportPreviousStandings = async () => {
+    if (!firestore) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Firestore is not available.' });
+        return;
+    }
     setIsImportingStandings(true);
     toast({ title: 'Importing Previous Standings...', description: 'This will clear and repopulate the 24-25 season standings.' });
     try {
-      const result = await importPreviousStandings();
-      if (result.success) {
-        toast({ title: 'Success!', description: `Deleted ${result.deletedCount}, imported ${result.importedCount} standings.` });
-      } else {
-        throw new Error(result.message || 'An unknown error occurred.');
-      }
+        const standingsCollection = collection(firestore, 'previousSeasonStandings');
+        const teamsCollection = collection(firestore, 'teams');
+
+        const batch = writeBatch(firestore);
+
+        const teamsSnap = await getDocs(teamsCollection);
+        const allCurrentTeams = teamsSnap.docs.map(doc => ({ id: doc.id, name: doc.data().name as string }));
+        const teamNameToIdMap = new Map(allCurrentTeams.map(t => [t.name, t.id]));
+
+        const nameMapping: { [key: string]: string } = {
+          "Man City": "Manchester City",
+          "Notts Forest": "Nottingham Forest",
+          "Man United": "Manchester United"
+        };
+        const standingsTeamNames = new Set(previousSeasonData.map(s => nameMapping[s.name] || s.name));
+        
+        const promotedTeams = allCurrentTeams
+            .filter(t => !standingsTeamNames.has(t.name))
+            .sort((a, b) => a.name.localeCompare(b.name));
+
+        const snapshot = await getDocs(standingsCollection);
+        const deletedCount = snapshot.size;
+        snapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        
+        let importedCount = 0;
+
+        previousSeasonData.forEach(standing => {
+            const teamName = nameMapping[standing.name] || standing.name;
+            const teamId = teamNameToIdMap.get(teamName);
+            if (teamId) {
+                const docRef = doc(standingsCollection, teamId);
+                batch.set(docRef, {
+                    teamId: teamId,
+                    rank: standing.rank,
+                    points: standing.points,
+                    goalDifference: standing.goalDifference
+                });
+                importedCount++;
+            }
+        });
+        
+        promotedTeams.forEach((team, index) => {
+            const docRef = doc(standingsCollection, team.id);
+            batch.set(docRef, {
+                teamId: team.id,
+                rank: 18 + index,
+                points: 0,
+                goalDifference: 0
+            });
+            importedCount++;
+        });
+
+        await batch.commit();
+
+        toast({ title: 'Success!', description: `Deleted ${deletedCount}, imported ${importedCount} standings.` });
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Standings Import Failed', description: error.message });
+        toast({ variant: 'destructive', title: 'Standings Import Failed', description: error.message });
     } finally {
-      setIsImportingStandings(false);
+        setIsImportingStandings(false);
     }
   }
 
