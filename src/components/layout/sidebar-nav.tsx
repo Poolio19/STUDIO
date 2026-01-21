@@ -1,4 +1,3 @@
-
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -14,7 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Icons } from '@/components/icons';
 import Link from 'next/link';
-import { Award, Database, LogOut } from 'lucide-react';
+import { Award, LogOut } from 'lucide-react';
 import { useUser, useAuth, useDoc, useFirestore, useMemoFirebase, useResolvedUserId } from '@/firebase';
 import { getAvatarUrl } from '@/lib/placeholder-images';
 import { Button } from '../ui/button';
@@ -22,17 +21,17 @@ import { doc } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 
 const navItems = [
-  { href: '/standings', icon: 'standings', label: 'Premier League' },
   { href: '/leaderboard', icon: 'leaderboard', label: 'PremPred League' },
+  { href: '/predict', icon: 'predict', label: 'YourPred' },
   { href: '/most-improved', icon: 'award', label: 'MiMoM' },
+  { href: '/standings', icon: 'standings', label: 'Premier League' },
   { href: '/stats', icon: 'stats', label: 'PredStats' },
-  { href: '/consensus', icon: 'consensus', label: 'Consensus' },
-  { href: '/performance', icon: 'performance', label: 'Player Score Graph' },
-  { href: '/rankings', icon: 'rankings', label: 'Player Position Graph' },
-  { href: '/scoring', icon: 'scoring', label: 'Rules & Scoring' },
-  { href: '/predict', icon: 'predict', label: 'Your Prediction' },
-  { href: '/profile', icon: 'profile', label: 'Your Pred Profile' },
-  { href: '/admin', icon: 'database', label: 'Data Admin' },
+  { href: '/consensus', icon: 'consensus', label: 'PredConsensus' },
+  { href: '/performance', icon: 'performance', label: 'PredScore Graph' },
+  { href: '/rankings', icon: 'rankings', label: 'PredPosition Graph' },
+  { href: '/profile', icon: 'profile', label: 'PredProfile' },
+  { href: '/scoring', icon: 'scoring', label: 'PredRules' },
+  { href: '/legends', icon: 'leaderboard', label: 'PredLegends' },
 ];
 
 export function SidebarNav() {

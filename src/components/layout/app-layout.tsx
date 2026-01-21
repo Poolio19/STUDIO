@@ -1,4 +1,3 @@
-
 'use client';
 
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
@@ -28,22 +27,23 @@ import { useToast } from '@/hooks/use-toast';
 import { recalculateAllDataClientSide } from '@/lib/recalculate';
 
 const pageInfoMap: { [key: string]: { title: string; description: string | ((seasonStarted: boolean) => string) } } = {
-  '/standings': { title: 'Premier League', description: 'Official league standings, results, and form guide for the 2025-26 season.' },
-  '/leaderboard': { title: 'Leaderboard', description: 'See who\'s winning the prediction game.' },
-  '/most-improved': { title: 'Most Improved Manager Of The Month', description: 'Celebrating the meek, rarely-vaunted, mid-season heroes of the PremPred - with cash!' },
-  '/stats': { title: 'Prediction Stats Matrix', description: 'A detailed breakdown of each player\'s prediction scores for every team.' },
-  '/consensus': { title: 'Prediction Consensus', description: 'See how the community predicts the final league standings.' },
-  '/performance': { title: 'Player Score Graph', description: 'Track player score progression over the season.' },
-  '/rankings': { title: 'Player Position Graph', description: 'Track player rank progression over the season.' },
-  '/scoring': { title: 'Rules & Scoring', description: 'Understand how scores are calculated and other important rules.' },
+  '/leaderboard': { title: 'PremPred League', description: "See who's winning the prediction game." },
   '/predict': { 
-      title: 'Your Pred Your Choice!', 
+      title: 'YourPred', 
       description: (seasonStarted: boolean) => seasonStarted
           ? 'The season has started. Your predictions are locked in.'
           : 'Drag and drop the teams to create your PremPred entry; then sit back and pray for glory'
   },
-  '/profile': { title: 'Personal Pred Profile', description: 'Pred Performance and Personal Particulars' },
-  '/admin': { title: 'Data Administration', description: 'Manage your application\'s data sources and imports.' },
+  '/most-improved': { title: 'MiMoM', description: 'Celebrating the meek, rarely-vaunted, mid-season heroes of the PremPred - with cash!' },
+  '/standings': { title: 'Premier League', description: 'Official league standings, results, and form guide for the 2025-26 season.' },
+  '/stats': { title: 'PredStats', description: "A detailed breakdown of each player's prediction scores for every team." },
+  '/consensus': { title: 'PredConsensus', description: 'See how the community predicts the final league standings.' },
+  '/performance': { title: 'PredScore Graph', description: 'Track player score progression over the season.' },
+  '/rankings': { title: 'PredPosition Graph', description: 'Track player rank progression over the season.' },
+  '/profile': { title: 'PredProfile', description: 'Pred Performance and Personal Particulars' },
+  '/scoring': { title: 'PredRules', description: 'Understand how scores are calculated and other important rules.' },
+  '/legends': { title: 'PredLegends', description: 'A hall of fame for past champions.'},
+  '/admin': { title: 'Data Administration', description: "Manage your application's data sources and imports." },
 };
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
