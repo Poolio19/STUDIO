@@ -81,7 +81,6 @@ export function AuthForm() {
       joinDate: new Date().toISOString(),
       country: '',
       favouriteTeam: '',
-      championshipWins: 0
     };
 
     setDocumentNonBlocking(userDocRef, newUserProfile);

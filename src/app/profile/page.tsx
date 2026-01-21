@@ -207,6 +207,16 @@ export default function ProfilePage() {
       reader.readAsDataURL(file);
     }
   };
+  
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return '';
+    const parts = name.split(' ');
+    if (parts.length > 1) {
+      return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
 
   if (isAuthUserLoading) {
     return (
@@ -233,7 +243,8 @@ export default function ProfilePage() {
     );
   }
 
-  const totalMiMoMs = (user?.mimoM || 0) + (user?.joMimoM || 0) + (user?.ruMimoM || 0) + (user?.joRuMimoM || 0);
+  const totalMimoM = (user?.mimoM || 0) + (user?.joMimoM || 0);
+  const totalRuMimoM = (user?.ruMimoM || 0) + (user?.joRuMimoM || 0);
 
   return (
     <div className="space-y-8">
@@ -247,121 +258,101 @@ export default function ProfilePage() {
                   alt={user?.name}
                   data-ai-hint="person portrait"
                 />
-                <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
+                <AvatarFallback>{getInitials(user?.name)}</AvatarFallback>
               </Avatar>
               <div className="text-center">
-                <h2 className="text-2xl font-bold">{form.watch('name')}</h2>
-                <p className="text-muted-foreground font-semibold">Rank: #{user?.rank}</p>
+                 <h2 className="text-2xl font-bold">{user?.name}</h2>
+                 <p className="text-sm text-muted-foreground">Seasons Played: {user?.seasonsPlayed || 0}</p>
+                 <p className="text-sm text-muted-foreground">Total Winnings: £{(user?.cashWinnings || 0).toFixed(2)}</p>
               </div>
-              <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                <Upload className="mr-2 h-4 w-4" />
-                Upload Image
-              </Button>
-              <Input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept="image/*"
-                onChange={handleAvatarUpload}
-              />
-              <Separator className="my-4" />
+
+              <Separator className="my-2" />
+              
               <div className="w-full text-center">
                 <h3 className="text-lg font-semibold mb-2">Season Stats</h3>
-                <div className="flex justify-around text-sm">
-                  <div className="flex flex-col">
-                    <span className="font-bold text-lg">{user?.maxRank}</span>
-                    <span className="text-muted-foreground">High</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="font-bold text-lg">{user?.minRank}</span>
-                    <span className="text-muted-foreground">Low</span>
-                  </div>
+                <div className="grid grid-cols-4 gap-x-2 text-center text-sm px-2">
+                    <div />
+                    <div className="font-medium text-muted-foreground">High</div>
+                    <div className="font-medium text-muted-foreground">Low</div>
+                    <div className="font-medium text-muted-foreground">Current</div>
+
+                    <div className="font-medium text-muted-foreground text-left">Position</div>
+                    <div className="font-bold">{user?.minRank}</div>
+                    <div className="font-bold">{user?.maxRank}</div>
+                    <div className="font-bold">{user?.rank}</div>
+
+                    <div className="font-medium text-muted-foreground text-left">Points</div>
+                    <div className="font-bold">{user?.maxScore}</div>
+                    <div className="font-bold">{user?.minScore}</div>
+                    <div className="font-bold">{user?.score}</div>
                 </div>
               </div>
-              <Separator className="my-4" />
-               <div className="w-full text-center">
-                <h3 className="text-lg font-semibold mb-2">Trophy Cabinet</h3>
-                <div className="flex justify-around text-muted-foreground">
-                  <TooltipProvider>
-                     <Tooltip>
-                        <TooltipTrigger>
-                          <div className="flex flex-col items-center gap-1">
-                            <Users className="size-5 text-gray-500" />
-                            <span className="text-xs font-bold">{user?.seasonsPlayed || 0}</span>
+
+              <Separator className="my-2" />
+              
+              <div className="w-full text-center">
+                  <h3 className="text-lg font-semibold mb-2">Trophy Cabinet</h3>
+                  <div className="space-y-3">
+                      <div>
+                          <p className="text-xs font-semibold text-muted-foreground text-center mb-2 uppercase">Best Finishes</p>
+                          <div className="flex justify-around">
+                              <TooltipProvider>
+                                  <Tooltip>
+                                      <TooltipTrigger>
+                                          <div className="flex flex-col items-center gap-1">
+                                              <Trophy className={cn("size-6", (user?.first || 0) > 0 ? "text-yellow-500" : "text-gray-400")} />
+                                              <span className="text-xs font-bold">{user?.first || 0}</span>
+                                          </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent><p>{user?.first || 0}x League Champion</p></TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                      <TooltipTrigger>
+                                          <div className="flex flex-col items-center gap-1">
+                                              <Medal className={cn("size-6", (user?.second || 0) > 0 ? "text-slate-400" : "text-gray-400")} />
+                                              <span className="text-xs font-bold">{user?.second || 0}</span>
+                                          </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent><p>{user?.second || 0}x Runner Up</p></TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                      <TooltipTrigger>
+                                          <div className="flex flex-col items-center gap-1">
+                                              <Medal className={cn("size-6", (user?.third || 0) > 0 ? "text-amber-800" : "text-gray-400")} />
+                                              <span className="text-xs font-bold">{user?.third || 0}</span>
+                                          </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent><p>{user?.third || 0}x 3rd Place</p></TooltipContent>
+                                  </Tooltip>
+                              </TooltipProvider>
                           </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{user?.seasonsPlayed || 0} Seasons Played</p>
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <div className="flex flex-col items-center gap-1">
-                            <Trophy className={cn((user?.first || 0) > 0 ? "text-yellow-500" : "text-gray-400")} />
-                            <span className="text-xs font-bold">{user?.first || 0}</span>
+                      </div>
+                      <div>
+                          <p className="text-xs font-semibold text-muted-foreground text-center mb-2 uppercase">Monthly Awards</p>
+                          <div className="flex justify-around">
+                              <TooltipProvider>
+                                  <Tooltip>
+                                      <TooltipTrigger>
+                                          <div className="flex flex-col items-center gap-1">
+                                              <Award className={cn("size-6", totalMimoM > 0 ? "text-yellow-600" : "text-gray-400")} />
+                                              <span className="text-xs font-bold">{totalMimoM}</span>
+                                          </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent><p>{totalMimoM}x Winner Awards</p></TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                      <TooltipTrigger>
+                                          <div className="flex flex-col items-center gap-1">
+                                              <ShieldCheck className={cn("size-6", totalRuMimoM > 0 ? "text-blue-500" : "text-gray-400")} />
+                                              <span className="text-xs font-bold">{totalRuMimoM}</span>
+                                          </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent><p>{totalRuMimoM}x Runner-Up Awards</p></TooltipContent>
+                                  </Tooltip>
+                              </TooltipProvider>
                           </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{user?.first || 0}x League Champion</p>
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <div className="flex flex-col items-center gap-1">
-                            <Medal className={cn((user?.second || 0) > 0 ? "text-slate-400" : "text-gray-400")} />
-                            <span className="text-xs font-bold">{user?.second || 0}</span>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{user?.second || 0}x Runner Up</p>
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <div className="flex flex-col items-center gap-1">
-                            <Medal className={cn((user?.third || 0) > 0 ? "text-amber-800" : "text-gray-400")} />
-                            <span className="text-xs font-bold">{user?.third || 0}</span>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{user?.third || 0}x 3rd Place</p>
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <div className="flex flex-col items-center gap-1">
-                            <ShieldCheck className={cn(((user?.first || 0) + (user?.second || 0) + (user?.third || 0) + (user?.fourth || 0) + (user?.fifth || 0) + (user?.sixth || 0) + (user?.seventh || 0) + (user?.eighth || 0) + (user?.ninth || 0) + (user?.tenth || 0)) > 0 ? "text-blue-500" : "text-gray-400")} />
-                            <span className="text-xs font-bold">{(user?.first || 0) + (user?.second || 0) + (user?.third || 0) + (user?.fourth || 0) + (user?.fifth || 0) + (user?.sixth || 0) + (user?.seventh || 0) + (user?.eighth || 0) + (user?.ninth || 0) + (user?.tenth || 0)}</span>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Top 10 Finishes</p>
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                      <TooltipTrigger>
-                        <div className="flex flex-col items-center gap-1">
-                          <Award className={cn(totalMiMoMs > 0 ? "text-yellow-600" : "text-gray-400")} />
-                          <span className="text-xs font-bold">{totalMiMoMs}</span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{totalMiMoMs}x MiMoM Awards</p>
-                      </TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                        <TooltipTrigger>
-                            <div className="flex flex-col items-center gap-1">
-                                <DollarSign className={cn((user?.cashWinnings || 0) > 0 ? "text-green-600" : "text-gray-400")} />
-                                <span className="text-xs font-bold">£{user?.cashWinnings || 0}</span>
-                            </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Total Cash Winnings: £{user?.cashWinnings || 0}</p>
-                        </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
+                      </div>
+                  </div>
               </div>
             </CardContent>
           </Card>
@@ -382,6 +373,22 @@ export default function ProfilePage() {
             <CardContent>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                    <div className="space-y-2">
+                        <Label>Avatar</Label>
+                        <div className="flex items-center gap-4">
+                             <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                                <Upload className="mr-2 h-4 w-4" />
+                                Upload Image
+                            </Button>
+                             <Input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                accept="image/*"
+                                onChange={handleAvatarUpload}
+                            />
+                        </div>
+                    </div>
                   <FormField
                     control={form.control}
                     name="name"
