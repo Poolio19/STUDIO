@@ -231,8 +231,6 @@ export default function ProfilePage() {
     );
   }
 
-  const totalMimoM = (user?.mimoM || 0) + (user?.joMimoM || 0);
-  const totalRuMimoM = (user?.ruMimoM || 0) + (user?.joRuMimoM || 0);
   const topTenFinishes = (user?.fourth || 0) + (user?.fifth || 0) + (user?.sixth || 0) + (user?.seventh || 0) + (user?.eighth || 0) + (user?.ninth || 0) + (user?.tenth || 0);
 
   return (
@@ -252,7 +250,7 @@ export default function ProfilePage() {
               <div className="text-center">
                  <h2 className="text-2xl font-bold">{user?.name}</h2>
                  <p className="text-sm text-muted-foreground">Seasons Played: {user?.seasonsPlayed || 0}</p>
-                 <p className="text-sm text-muted-foreground">Total Winnings: £{(user?.cashWinnings || 0).toFixed(2)}</p>
+                 <p className="text-sm text-muted-foreground">All Time Cashback: £{(user?.cashWinnings || 0).toFixed(2)}</p>
               </div>
 
               <Separator className="my-2" />
@@ -332,20 +330,38 @@ export default function ProfilePage() {
                                   <Tooltip>
                                       <TooltipTrigger>
                                           <div className="flex flex-col items-center gap-1">
-                                              <Award className={cn("size-6", totalMimoM > 0 ? "text-yellow-600" : "text-gray-400")} />
-                                              <span className="text-xs font-bold">{totalMimoM}</span>
+                                              <Award className={cn("size-6", (user?.mimoM || 0) > 0 ? "text-yellow-600" : "text-gray-400")} />
+                                              <span className="text-xs font-bold">{user?.mimoM || 0}</span>
                                           </div>
                                       </TooltipTrigger>
-                                      <TooltipContent><p>{totalMimoM}x Winner Awards</p></TooltipContent>
+                                      <TooltipContent><p>{user?.mimoM || 0}x MiMoM</p></TooltipContent>
                                   </Tooltip>
                                   <Tooltip>
                                       <TooltipTrigger>
                                           <div className="flex flex-col items-center gap-1">
-                                              <ShieldCheck className={cn("size-6", totalRuMimoM > 0 ? "text-blue-500" : "text-gray-400")} />
-                                              <span className="text-xs font-bold">{totalRuMimoM}</span>
+                                              <Users className={cn("size-6", (user?.joMimoM || 0) > 0 ? "text-yellow-600" : "text-gray-400")} />
+                                              <span className="text-xs font-bold">{user?.joMimoM || 0}</span>
                                           </div>
                                       </TooltipTrigger>
-                                      <TooltipContent><p>{totalRuMimoM}x Runner-Up Awards</p></TooltipContent>
+                                      <TooltipContent><p>{user?.joMimoM || 0}x JoMiMoM</p></TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                      <TooltipTrigger>
+                                          <div className="flex flex-col items-center gap-1">
+                                              <ShieldCheck className={cn("size-6", (user?.ruMimoM || 0) > 0 ? "text-blue-500" : "text-gray-400")} />
+                                              <span className="text-xs font-bold">{user?.ruMimoM || 0}</span>
+                                          </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent><p>{user?.ruMimoM || 0}x RuMiMoM</p></TooltipContent>
+                                  </Tooltip>
+                                   <Tooltip>
+                                      <TooltipTrigger>
+                                          <div className="flex flex-col items-center gap-1">
+                                              <Users className={cn("size-6", (user?.joRuMimoM || 0) > 0 ? "text-blue-500" : "text-gray-400")} />
+                                              <span className="text-xs font-bold">{user?.joRuMimoM || 0}</span>
+                                          </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent><p>{user?.joRuMimoM || 0}x JoRuMiMoM</p></TooltipContent>
                                   </Tooltip>
                               </TooltipProvider>
                           </div>
