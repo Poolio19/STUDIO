@@ -65,12 +65,6 @@ const profileFormSchema = z.object({
   email: z.string().email({
     message: 'Please enter a valid email address.',
   }),
-  dob: z.date({
-    required_error: 'A date of birth is required.',
-  }),
-  country: z.string().min(2, {
-    message: 'Country must be at least 2 characters.',
-  }),
   favouriteTeam: z.string({
     required_error: 'Please select a team.',
   }),
@@ -117,8 +111,6 @@ export default function ProfilePage() {
     defaultValues: {
       name: '',
       email: '',
-      dob: new Date('1990-01-01'),
-      country: 'United Kingdom',
       favouriteTeam: 'team_1',
     },
     mode: 'onChange',
@@ -129,9 +121,7 @@ export default function ProfilePage() {
       form.reset({
         name: user.name || '',
         email: user.email || '',
-        dob: user.joinDate ? new Date(user.joinDate) : new Date('1990-01-01'),
-        country: user.country || 'United Kingdom',
-        favouriteTeam: user.favouriteTeam || 'team_1',
+        favouriteTeam: user.favouriteTeam || 'none',
       });
     }
   }, [user, form]);
@@ -145,8 +135,6 @@ export default function ProfilePage() {
     const updatedData = {
         name: data.name,
         email: data.email,
-        joinDate: data.dob.toISOString(),
-        country: data.country,
         favouriteTeam: data.favouriteTeam,
     };
 
@@ -245,6 +233,7 @@ export default function ProfilePage() {
 
   const totalMimoM = (user?.mimoM || 0) + (user?.joMimoM || 0);
   const totalRuMimoM = (user?.ruMimoM || 0) + (user?.joRuMimoM || 0);
+  const topTenFinishes = (user?.fourth || 0) + (user?.fifth || 0) + (user?.sixth || 0) + (user?.seventh || 0) + (user?.eighth || 0) + (user?.ninth || 0) + (user?.tenth || 0);
 
   return (
     <div className="space-y-8">
@@ -295,7 +284,7 @@ export default function ProfilePage() {
                   <div className="space-y-3">
                       <div>
                           <p className="text-xs font-semibold text-muted-foreground text-center mb-2 uppercase">Best Finishes</p>
-                          <div className="flex justify-around">
+                           <div className="flex justify-around">
                               <TooltipProvider>
                                   <Tooltip>
                                       <TooltipTrigger>
@@ -323,6 +312,15 @@ export default function ProfilePage() {
                                           </div>
                                       </TooltipTrigger>
                                       <TooltipContent><p>{user?.third || 0}x 3rd Place</p></TooltipContent>
+                                  </Tooltip>
+                                   <Tooltip>
+                                      <TooltipTrigger>
+                                          <div className="flex flex-col items-center gap-1">
+                                              <ShieldCheck className={cn("size-6", topTenFinishes > 0 ? "text-blue-500" : "text-gray-400")} />
+                                              <span className="text-xs font-bold">{topTenFinishes}</span>
+                                          </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent><p>{topTenFinishes}x Top 10 Finishes</p></TooltipContent>
                                   </Tooltip>
                               </TooltipProvider>
                           </div>
@@ -372,7 +370,7 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <div className="space-y-2">
                         <Label>Avatar</Label>
                         <div className="flex items-center gap-4">
@@ -417,63 +415,6 @@ export default function ProfilePage() {
                   />
                   <FormField
                     control={form.control}
-                    name="dob"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Date of birth</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={'outline'}
-                                className={cn(
-                                  'w-[240px] pl-3 text-left font-normal',
-                                  !field.value && 'text-muted-foreground'
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, 'PPP')
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              captionLayout="dropdown-buttons"
-                              fromYear={1930}
-                              toYear={new Date().getFullYear() - 10}
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) =>
-                                date > new Date() || date < new Date('1900-01-01')
-                              }
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="country"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Country</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g. United Kingdom" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
                     name="favouriteTeam"
                     render={({ field }) => (
                       <FormItem>
@@ -485,6 +426,7 @@ export default function ProfilePage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
+                            <SelectItem value="none">None</SelectItem>
                             {teams && teams.map((team) => (
                               <SelectItem key={team.id} value={team.id}>
                                 {team.name}
