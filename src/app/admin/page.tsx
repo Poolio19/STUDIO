@@ -140,26 +140,38 @@ export default function AdminPage() {
   }, [firestore, fetchAllMatches]);
 
   const defaultWeek = React.useMemo(() => {
-    if (!allMatches || allMatches.length === 0) return 1;
+    if (!allMatches || allMatches.length === 0) {
+      return 1;
+    }
+    // Create a map of week -> {total: number, played: number}
+    const weekStats = allMatches.reduce((acc, match) => {
+      if (!acc[match.week]) {
+        acc[match.week] = { total: 0, played: 0 };
+      }
+      acc[match.week].total++;
+      if (match.homeScore !== -1 && match.awayScore !== -1) {
+        acc[match.week].played++;
+      }
+      return acc;
+    }, {} as Record<number, { total: number, played: number }>);
 
-    const playedMatches = allMatches.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
-    
-    // If no matches have been played at all, default to week 1.
-    if (playedMatches.length === 0) {
-        return 1;
+    const weeksWithPlayedMatches = Object.keys(weekStats)
+      .map(Number)
+      .filter(week => weekStats[week].played > 0);
+
+    if (weeksWithPlayedMatches.length === 0) {
+      return 1; // No matches played at all
     }
 
-    const latestPlayedWeek = Math.max(...playedMatches.map(m => m.week), 0);
+    const latestPlayedWeek = Math.max(...weeksWithPlayedMatches);
 
-    const matchesForLatestWeek = allMatches.filter(m => m.week === latestPlayedWeek);
-    const areAllResultsInForLatestWeek = matchesForLatestWeek.every(m => m.homeScore !== -1 && m.awayScore !== -1);
-
-    if (!areAllResultsInForLatestWeek && matchesForLatestWeek.length > 0) {
-        // If the latest week with results is incomplete, default to it.
-        return latestPlayedWeek;
+    const latestWeekStats = weekStats[latestPlayedWeek];
+    if (latestWeekStats.played < latestWeekStats.total) {
+      // Latest week with played matches is incomplete
+      return latestPlayedWeek;
     } else {
-        // If the latest week is complete, default to the next week (up to 38).
-        return Math.min(latestPlayedWeek + 1, 38);
+      // Latest week with played matches is complete, go to next week
+      return Math.min(latestPlayedWeek + 1, 38);
     }
   }, [allMatches]);
   
