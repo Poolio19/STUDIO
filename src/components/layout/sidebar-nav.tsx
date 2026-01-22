@@ -32,6 +32,7 @@ const navItems = [
   { href: '/profile', icon: 'profile', label: 'PredProfile' },
   { href: '/scoring', icon: 'scoring', label: 'PredRules' },
   { href: '/legends', icon: 'leaderboard', label: 'PredLegends' },
+  { href: '/admin', icon: 'database', label: 'Data Admin' },
 ];
 
 export function SidebarNav() {
