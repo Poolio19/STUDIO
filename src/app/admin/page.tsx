@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -143,37 +142,25 @@ export default function AdminPage() {
   const defaultWeek = React.useMemo(() => {
     if (!allMatches || allMatches.length === 0) return 1;
 
-    const matchesByWeek: { [week: number]: Match[] } = {};
-    allMatches.forEach(match => {
-        if (!matchesByWeek[match.week]) matchesByWeek[match.week] = [];
-        matchesByWeek[match.week].push(match);
-    });
-
-    // Find the first incomplete week
-    for (let week = 1; week <= 38; week++) {
-      const weekMatches = matchesByWeek[week];
-      if (!weekMatches || weekMatches.length === 0) continue;
-
-      const enteredCount = weekMatches.filter(m => m.homeScore !== -1 && m.awayScore !== -1).length;
-      
-      if (enteredCount > 0 && enteredCount < weekMatches.length) {
-        return week;
-      }
-    }
-
-    // If no incomplete week, find the first fully unplayed week
-    for (let week = 1; week <= 38; week++) {
-        const weekMatches = matchesByWeek[week];
-        if (!weekMatches || weekMatches.length === 0) continue;
-
-        const enteredCount = weekMatches.filter(m => m.homeScore !== -1 && m.awayScore !== -1).length;
-        if (enteredCount === 0) {
-            return week;
-        }
-    }
+    const playedMatches = allMatches.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
     
-    // If all weeks are fully played, default to the last week
-    return 38;
+    // If no matches have been played at all, default to week 1.
+    if (playedMatches.length === 0) {
+        return 1;
+    }
+
+    const latestPlayedWeek = Math.max(...playedMatches.map(m => m.week), 0);
+
+    const matchesForLatestWeek = allMatches.filter(m => m.week === latestPlayedWeek);
+    const areAllResultsInForLatestWeek = matchesForLatestWeek.every(m => m.homeScore !== -1 && m.awayScore !== -1);
+
+    if (!areAllResultsInForLatestWeek && matchesForLatestWeek.length > 0) {
+        // If the latest week with results is incomplete, default to it.
+        return latestPlayedWeek;
+    } else {
+        // If the latest week is complete, default to the next week (up to 38).
+        return Math.min(latestPlayedWeek + 1, 38);
+    }
   }, [allMatches]);
   
   const scoresForm = useForm<ScoresFormValues>({
