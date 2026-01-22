@@ -46,6 +46,7 @@ import { Input } from '@/components/ui/input';
 
 import pastFixtures from '@/lib/past-fixtures.json';
 import previousSeasonData from '@/lib/previous-season-standings-24-25.json';
+import historicalPlayersData from '@/lib/historical-players.json';
 
 const scoreSchema = z.union([z.literal('P'), z.literal('p'), z.coerce.number().int()]);
 
@@ -113,7 +114,6 @@ export default function AdminPage() {
   const [latestFileContent, setLatestFileContent] = React.useState<string | null>(null);
 
   const [allMatches, setAllMatches] = React.useState<Match[]>([]);
-  const [allUsers, setAllUsers] = React.useState<User[]>([]);
   const [teamsMap, setTeamsMap] = React.useState<Map<string, Team>>(new Map());
   
   const fetchAllMatches = React.useCallback(async () => {
@@ -129,11 +129,7 @@ export default function AdminPage() {
       const teamsSnap = await getDocs(query(collection(firestore, 'teams')));
       const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
       setTeamsMap(new Map(teams.map(t => [t.id, t])));
-
-      const usersSnap = await getDocs(query(collection(firestore, 'users'), orderBy('name', 'asc')));
-      const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-      setAllUsers(users);
-
+      
       fetchAllMatches();
     }
     fetchAllData();
@@ -195,8 +191,8 @@ export default function AdminPage() {
   });
 
   React.useEffect(() => {
-    if (allUsers.length > 0) {
-        replace(allUsers.map(u => ({
+    if (historicalPlayersData.length > 0) {
+        replace(historicalPlayersData.map(u => ({
             id: u.id,
             name: u.name,
             seasonsPlayed: u.seasonsPlayed || 0,
@@ -217,7 +213,7 @@ export default function AdminPage() {
             cashWinnings: u.cashWinnings || 0,
         })));
     }
-}, [allUsers, replace]);
+}, [replace]);
 
 
   React.useEffect(() => {
