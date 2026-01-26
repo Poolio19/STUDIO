@@ -139,36 +139,38 @@ export default function AdminPage() {
     if (!allMatches || allMatches.length === 0) {
       return 1;
     }
-    // Create a map of week -> {total: number, played: number}
-    const weekStats = allMatches.reduce((acc, match) => {
-      if (!acc[match.week]) {
-        acc[match.week] = { total: 0, played: 0 };
-      }
-      acc[match.week].total++;
-      if (match.homeScore !== -1 && match.awayScore !== -1) {
-        acc[match.week].played++;
-      }
-      return acc;
-    }, {} as Record<number, { total: number, played: number }>);
 
-    const weeksWithPlayedMatches = Object.keys(weekStats)
-      .map(Number)
-      .filter(week => weekStats[week].played > 0);
-
-    if (weeksWithPlayedMatches.length === 0) {
-      return 1; // No matches played at all
+    // Create a map of week -> { total: number, played: number }
+    const weekStats: Record<number, { total: number, played: number }> = {};
+    for (const match of allMatches) {
+        if (!weekStats[match.week]) {
+            weekStats[match.week] = { total: 0, played: 0 };
+        }
+        weekStats[match.week].total++;
+        // A match is 'played' if scores are not -1 (the 'not played' value)
+        if (match.homeScore !== -1 && match.awayScore !== -1) {
+            weekStats[match.week].played++;
+        }
     }
 
-    const latestPlayedWeek = Math.max(...weeksWithPlayedMatches);
+    const allWeeks = Object.keys(weekStats).map(Number).sort((a,b) => b-a); // sort descending
 
-    const latestWeekStats = weekStats[latestPlayedWeek];
-    if (latestWeekStats.played < latestWeekStats.total) {
-      // Latest week with played matches is incomplete
-      return latestPlayedWeek;
-    } else {
-      // Latest week with played matches is complete, go to next week
-      return Math.min(latestPlayedWeek + 1, 38);
+    for (const week of allWeeks) {
+        // Find the most recent week that has results but is incomplete
+        if (weekStats[week].played > 0 && weekStats[week].played < weekStats[week].total) {
+            return week;
+        }
     }
+
+    // If all weeks with results are complete, find the latest one and go to the next
+    const playedWeeks = allWeeks.filter(week => weekStats[week].played > 0);
+    if (playedWeeks.length > 0) {
+        const latestPlayedWeek = Math.max(...playedWeeks);
+        return Math.min(latestPlayedWeek + 1, 38);
+    }
+    
+    // If no weeks have any results, default to week 1
+    return 1;
   }, [allMatches]);
   
   const scoresForm = useForm<ScoresFormValues>({
