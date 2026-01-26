@@ -422,7 +422,7 @@ export default function AdminPage() {
 
         const teamsSnap = await getDocs(teamsCollection);
         const allCurrentTeams = teamsSnap.docs.map(doc => ({ id: doc.id, name: doc.data().name as string }));
-        const teamNameToIdMap = new Map(allCurrentTeams.map(t => [t.name, t.id]));
+        const teamNameToIdMap = new Map(allCurrentTeams.map(t => [t.id, t.name]));
 
         const nameMapping: { [key: string]: string } = {
           "Man City": "Manchester City",
@@ -487,7 +487,7 @@ export default function AdminPage() {
         const batch = writeBatch(firestore);
         data.users.forEach(user => {
             const userRef = doc(firestore, 'users', user.id);
-            batch.update(userRef, {
+            batch.set(userRef, {
                 seasonsPlayed: user.seasonsPlayed,
                 first: user.first,
                 second: user.second,
@@ -504,10 +504,10 @@ export default function AdminPage() {
                 joMimoM: user.joMimoM,
                 joRuMimoM: user.joRuMimoM,
                 cashWinnings: user.cashWinnings,
-            });
+            }, { merge: true });
         });
         await batch.commit();
-        toast({ title: 'Success!', description: 'Historical data updated for all players.' });
+        toast({ title: 'Success!', description: 'Historical data for all players has been saved.' });
     } catch (error: any) {
         toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
     } finally {
