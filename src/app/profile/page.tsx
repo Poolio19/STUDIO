@@ -250,7 +250,7 @@ export default function ProfilePage() {
               <div className="text-center">
                  <h2 className="text-2xl font-bold">{user?.name}</h2>
                  <p className="text-sm text-muted-foreground">Seasons Played: {user?.seasonsPlayed || 0}</p>
-                 <p className="text-sm text-muted-foreground">All Time Cashback: £{(user?.cashWinnings || 0).toFixed(2)}</p>
+                 <p className="text-sm text-muted-foreground">All Time Winnings: £{(user?.cashWinnings || 0).toFixed(2)}</p>
               </div>
 
               <Separator className="my-2" />
