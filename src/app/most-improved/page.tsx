@@ -302,7 +302,7 @@ export default function MostImprovedPage() {
                                     <div className="flex items-center gap-3">
                                         <Avatar className="h-9 w-9">
                                         <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
-                                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                        <AvatarFallback>{(user.name || '?').charAt(0)}</AvatarFallback>
                                         </Avatar>
                                         <span>{user.name}</span>
                                     </div>
@@ -356,7 +356,7 @@ export default function MostImprovedPage() {
                                             <div key={winner.userId || winner.id} className="bg-yellow-400/20 p-2 rounded-md flex items-center gap-3">
                                                 <Avatar className="h-10 w-10">
                                                     <AvatarImage src={getAvatarUrl(winner.avatar || '')} alt={winner.name} data-ai-hint="person portrait" />
-                                                    <AvatarFallback>{winner.name?.charAt(0)}</AvatarFallback>
+                                                    <AvatarFallback>{(winner.name || '?').charAt(0)}</AvatarFallback>
                                                 </Avatar>
                                                 <div className="text-left">
                                                     <p className="text-sm font-bold">{winner.name}
@@ -372,7 +372,7 @@ export default function MostImprovedPage() {
                                             <div key={runnerUp.userId || runnerUp.id} className="bg-slate-400/20 p-2 rounded-md flex items-center gap-3">
                                                 <Avatar className="h-10 w-10">
                                                     <AvatarImage src={getAvatarUrl(runnerUp.avatar || '')} alt={runnerUp.name} data-ai-hint="person portrait" />
-                                                    <AvatarFallback>{runnerUp.name?.charAt(0)}</AvatarFallback>
+                                                    <AvatarFallback>{(runnerUp.name || '?').charAt(0)}</AvatarFallback>
                                                 </Avatar>
                                                 <div className="text-left">
                                                     <p className="text-sm font-bold">{runnerUp.name}
@@ -402,4 +402,3 @@ export default function MostImprovedPage() {
     </div>
   );
 }
-

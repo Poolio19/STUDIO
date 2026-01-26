@@ -243,7 +243,7 @@ export default function LeaderboardPage() {
                             <div className="flex items-center gap-3">
                                 <Avatar className="h-8 w-8">
                                 <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
-                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                <AvatarFallback>{(user.name || '?').charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <span>{user.isPro ? user.name.toUpperCase() : user.name}</span>
                             </div>

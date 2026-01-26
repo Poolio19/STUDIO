@@ -113,7 +113,7 @@ export default function StatsPage() {
                                             <div className="flex items-center gap-3">
                                                 <Avatar className="h-8 w-8">
                                                     <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
-                                                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                                    <AvatarFallback>{(user.name || '?').charAt(0)}</AvatarFallback>
                                                 </Avatar>
                                                 <span className="font-medium">{user.name}</span>
                                             </div>
