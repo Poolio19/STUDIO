@@ -140,37 +140,44 @@ export default function AdminPage() {
       return 1;
     }
 
-    const weekStats: Record<number, { total: number, played: number }> = {};
+    const weekStats: Record<number, { total: number, played: number, missing: number }> = {};
     for (const match of allMatches) {
         if (!weekStats[match.week]) {
-            weekStats[match.week] = { total: 0, played: 0 };
+            weekStats[match.week] = { total: 0, played: 0, missing: 0 };
         }
         weekStats[match.week].total++;
-        if (match.homeScore !== -1 && match.awayScore !== -1) {
+        if (match.homeScore >= 0 && match.awayScore >= 0) {
             weekStats[match.week].played++;
+        } else {
+             weekStats[match.week].missing++;
         }
     }
     
-    // Find the latest week with at least one result
-    const playedWeeks = Object.keys(weekStats)
-        .map(Number)
-        .filter(week => weekStats[week].played > 0);
+    // Find the latest week that has at least one result entered
+    let latestWeekWithResults = 0;
+    for (let i = 38; i >= 1; i--) {
+        if (weekStats[i] && weekStats[i].played > 0) {
+            latestWeekWithResults = i;
+            break;
+        }
+    }
 
-    if (playedWeeks.length === 0) {
-        // No results entered for any week, default to 1
-        return 1;
+    if (latestWeekWithResults === 0) return 1; // No results at all, default to week 1
+
+    // Now find the most recent incomplete week, starting from the latest week with results
+    for (let i = latestWeekWithResults; i >= 1; i--) {
+        if (weekStats[i] && weekStats[i].missing > 0) {
+            return i;
+        }
     }
-    
-    const latestPlayedWeek = Math.max(...playedWeeks);
-    
-    // Check if the latest played week is fully complete
-    if (weekStats[latestPlayedWeek] && weekStats[latestPlayedWeek].played === weekStats[latestPlayedWeek].total) {
-        // It's complete, so move to the next week
-        return Math.min(latestPlayedWeek + 1, 38);
-    } else {
-        // It's incomplete, so this is the week we want
-        return latestPlayedWeek;
+
+    // If all weeks with results are complete, return the next week
+    if (latestWeekWithResults < 38) {
+        return latestWeekWithResults + 1;
     }
+
+    // Otherwise, all played weeks are complete, just return the latest one
+    return latestWeekWithResults;
   }, [allMatches]);
   
   const scoresForm = useForm<ScoresFormValues>({
@@ -215,7 +222,7 @@ export default function AdminPage() {
             cashWinnings: u.cashWinnings || 0,
         })));
     }
-}, [replace]);
+}, [replace, historicalPlayersData]);
 
 
   React.useEffect(() => {
