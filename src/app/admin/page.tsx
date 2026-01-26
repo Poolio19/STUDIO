@@ -140,37 +140,37 @@ export default function AdminPage() {
       return 1;
     }
 
-    // Create a map of week -> { total: number, played: number }
     const weekStats: Record<number, { total: number, played: number }> = {};
     for (const match of allMatches) {
         if (!weekStats[match.week]) {
             weekStats[match.week] = { total: 0, played: 0 };
         }
         weekStats[match.week].total++;
-        // A match is 'played' if scores are not -1 (the 'not played' value)
         if (match.homeScore !== -1 && match.awayScore !== -1) {
             weekStats[match.week].played++;
         }
     }
+    
+    // Find the latest week with at least one result
+    const playedWeeks = Object.keys(weekStats)
+        .map(Number)
+        .filter(week => weekStats[week].played > 0);
 
-    const allWeeks = Object.keys(weekStats).map(Number).sort((a,b) => b-a); // sort descending
-
-    for (const week of allWeeks) {
-        // Find the most recent week that has results but is incomplete
-        if (weekStats[week].played > 0 && weekStats[week].played < weekStats[week].total) {
-            return week;
-        }
-    }
-
-    // If all weeks with results are complete, find the latest one and go to the next
-    const playedWeeks = allWeeks.filter(week => weekStats[week].played > 0);
-    if (playedWeeks.length > 0) {
-        const latestPlayedWeek = Math.max(...playedWeeks);
-        return Math.min(latestPlayedWeek + 1, 38);
+    if (playedWeeks.length === 0) {
+        // No results entered for any week, default to 1
+        return 1;
     }
     
-    // If no weeks have any results, default to week 1
-    return 1;
+    const latestPlayedWeek = Math.max(...playedWeeks);
+    
+    // Check if the latest played week is fully complete
+    if (weekStats[latestPlayedWeek] && weekStats[latestPlayedWeek].played === weekStats[latestPlayedWeek].total) {
+        // It's complete, so move to the next week
+        return Math.min(latestPlayedWeek + 1, 38);
+    } else {
+        // It's incomplete, so this is the week we want
+        return latestPlayedWeek;
+    }
   }, [allMatches]);
   
   const scoresForm = useForm<ScoresFormValues>({
