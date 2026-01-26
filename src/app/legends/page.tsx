@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -108,7 +109,7 @@ export default function LegendsPage() {
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {accolades && <StatCard title="Highest Average Returns" icon={TrendingUp} winners={accolades.highestAverage} />}
-                {accolades && <StatCard title="MiMoM Master" icon={Gem} winners={accolades.mostMiMoMs} />}
+                {accolades && <StatCard title="Most Magnificent MiMoMMer" icon={Gem} winners={accolades.mostMiMoMs} />}
             </CardContent>
         </Card>
 

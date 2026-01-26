@@ -62,7 +62,7 @@ export async function recalculateAllDataClientSide(
   
       const rankedUsersForWeek0 = users
         .map(user => ({ ...user, score: userScoresForWeek0[user.id] ?? 0 }))
-        .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+        .sort((a, b) => b.score - a.score || (a.name || '').localeCompare(b.name || ''));
           
       const allUserHistories: { [userId: string]: UserHistory } = {};
       rankedUsersForWeek0.forEach((user, index) => {
@@ -174,7 +174,7 @@ export async function recalculateAllDataClientSide(
                 b.points - a.points || 
                 b.goalDifference - a.goalDifference || 
                 b.goalsFor - a.goalsFor || 
-                a.teamName.localeCompare(b.teamName)
+                (a.teamName || '').localeCompare(b.teamName || '')
             );
         
         const rankedTeamsForWeek = weeklyStandingsSorted.map((standing, index) => ({
@@ -216,7 +216,7 @@ export async function recalculateAllDataClientSide(
         // C. Rank users for the week, handling ties correctly.
         const rankedUsersForWeek = users
             .map(user => ({ ...user, scoreForWeek: userScoresForWeek[user.id] ?? 0 }))
-            .sort((a, b) => b.scoreForWeek - a.scoreForWeek || a.name.localeCompare(b.name));
+            .sort((a, b) => b.scoreForWeek - a.scoreForWeek || (a.name || '').localeCompare(b.name || ''));
             
         rankedUsersForWeek.forEach((user, index) => {
             const rank = index + 1;
