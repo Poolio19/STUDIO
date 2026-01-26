@@ -121,21 +121,33 @@ export default function LegendsPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[200px]">Season</TableHead>
-                            <TableHead>
+                            <TableHead className="w-[150px] py-2">Season</TableHead>
+                            <TableHead className="py-2">
                                 <div className="flex items-center gap-2"><Trophy className="text-yellow-500 size-5" /> Champion</div>
                             </TableHead>
-                            <TableHead>
-                                <div className="flex items-center gap-2"><ShieldCheck className="text-slate-500 size-5" /> Runner Up</div>
+                            <TableHead className="text-right py-2">Points</TableHead>
+                            <TableHead className="text-right py-2">Winnings</TableHead>
+                            <TableHead className="py-2 border-l">
+                                <div className="flex items-center gap-2 pl-4"><ShieldCheck className="text-slate-500 size-5" /> Runner Up</div>
                             </TableHead>
+                            <TableHead className="text-right py-2">Points</TableHead>
+                            <TableHead className="text-right py-2">Winnings</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {rollOfHonour.map((entry) => (
                             <TableRow key={entry.season}>
-                                <TableCell className="font-medium">{entry.season}</TableCell>
-                                <TableCell>{entry.winnerName}</TableCell>
-                                <TableCell>{entry.runnerUpName}</TableCell>
+                                <TableCell className="font-medium py-2">{entry.season}</TableCell>
+                                <TableCell className="py-2">{entry.winnerName}</TableCell>
+                                <TableCell className="text-right py-2 font-medium">{entry.winnerPoints || ''}</TableCell>
+                                <TableCell className="text-right py-2 font-medium">
+                                    {entry.winnerWinnings > 0 ? `£${entry.winnerWinnings.toFixed(2)}` : ''}
+                                </TableCell>
+                                <TableCell className="py-2 border-l pl-4">{entry.runnerUpName}</TableCell>
+                                <TableCell className="text-right py-2 font-medium">{entry.runnerUpPoints || ''}</TableCell>
+                                <TableCell className="text-right py-2 font-medium">
+                                    {entry.runnerUpWinnings > 0 ? `£${entry.runnerUpWinnings.toFixed(2)}`: ''}
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>

@@ -151,4 +151,8 @@ export type RollOfHonourEntry = {
     season: string;
     winnerName: string;
     runnerUpName: string;
+    winnerPoints: number;
+    winnerWinnings: number;
+    runnerUpPoints: number;
+    runnerUpWinnings: number;
 };
