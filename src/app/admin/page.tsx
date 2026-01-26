@@ -535,7 +535,7 @@ export default function AdminPage() {
     { key: 'tenth', label: '10', tooltip: '10th Place Finishes' },
     { key: 'mimoM', label: 'M', tooltip: 'MiMoM Wins' },
     { key: 'ruMimoM', label: 'R', tooltip: 'RuMiMoM Wins' },
-    { key: 'joMimoM', label: 'J', tooltip: 'JoMiMoM Wins' },
+    { key: 'joMimoM', label: 'JM', tooltip: 'JoMiMoM Wins' },
     { key: 'joRuMimoM', label: 'JR', tooltip: 'JoRuMiMoM Wins' },
     { key: 'xmasNo1', label: 'Xmas', tooltip: 'Christmas No. 1 Wins' },
     { key: 'cashWinnings', label: '£', tooltip: 'Total Cash Winnings' },
@@ -765,5 +765,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    

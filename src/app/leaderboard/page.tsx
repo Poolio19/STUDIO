@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { User, CurrentStanding, MonthlyMimoM, Match } from '@/lib/types';
+import type { User, CurrentStanding, MonthlyMimoM, Match, Prediction } from '@/lib/types';
 import { getAvatarUrl } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { ArrowUp, ArrowDown, Minus, Loader2 } from 'lucide-react';
@@ -54,12 +54,14 @@ export default function LeaderboardPage() {
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('rank', 'asc')) : null, [firestore]);
   const matchesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'matches')) : null, [firestore]);
   const mimoMQuery = useMemoFirebase(() => firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore]);
+  const predictionsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'predictions') : null, [firestore]);
 
   const { data: usersData, isLoading: usersLoading } = useCollection<User>(usersQuery);
   const { data: matchesData, isLoading: matchesLoading } = useCollection<Match>(matchesQuery);
   const { data: monthlyMimoM, isLoading: mimoMLoading } = useCollection<MonthlyMimoM>(mimoMQuery);
+  const { data: predictionsData, isLoading: predictionsLoading } = useCollection<Prediction>(predictionsQuery);
 
-  const isLoading = usersLoading || matchesLoading || mimoMLoading;
+  const isLoading = usersLoading || matchesLoading || mimoMLoading || predictionsLoading;
   
   const currentWeek = useMemo(() => {
     if (matchesData && matchesData.length > 0) {
@@ -70,9 +72,12 @@ export default function LeaderboardPage() {
   }, [matchesData]);
 
   const sortedUsers = useMemo(() => {
-    if (!usersData) return [];
-    return [...usersData].sort((a, b) => a.rank - b.rank);
-  }, [usersData]);
+    if (!usersData || !predictionsData) return [];
+    const activeUserIds = new Set(predictionsData.map(p => p.userId));
+    return [...usersData]
+        .filter(u => activeUserIds.has(u.id))
+        .sort((a, b) => a.rank - b.rank);
+  }, [usersData, predictionsData]);
   
   const proPlayers = useMemo(() => sortedUsers.filter(u => u.isPro), [sortedUsers]);
   const regularPlayers = useMemo(() => sortedUsers.filter(u => !u.isPro), [sortedUsers]);
