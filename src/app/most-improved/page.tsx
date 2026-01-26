@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { User, UserHistory, MonthlyMimoM, SeasonMonth, Match } from '@/lib/types';
+import type { User, UserHistory, SeasonMonth, Match } from '@/lib/types';
 import { getAvatarUrl } from '@/lib/placeholder-images';
 import { ArrowUp, ArrowDown, Minus, Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { allAwardPeriods } from '@/lib/award-periods';
+import historicalMimoAwards from '@/lib/historical-mimo-awards.json';
 
 
 const getRankChangeIcon = (change: number) => {
@@ -54,17 +55,15 @@ export default function MostImprovedPage() {
 
   const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
   const matchesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'matches') : null, [firestore]);
-  const mimoMQuery = useMemoFirebase(() => firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore]);
   const seasonMonthsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'seasonMonths') : null, [firestore]);
   const userHistoriesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'userHistories') : null, [firestore]);
 
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
   const { data: matchesData, isLoading: matchesLoading } = useCollection<Match>(matchesQuery);
-  const { data: monthlyMimoM, isLoading: mimoMLoading } = useCollection<MonthlyMimoM>(mimoMQuery);
   const { data: seasonMonthsData, isLoading: seasonMonthsLoading } = useCollection<SeasonMonth>(seasonMonthsQuery);
   const { data: userHistories, isLoading: historiesLoading } = useCollection<UserHistory>(userHistoriesQuery);
 
-  const isLoading = usersLoading || matchesLoading || mimoMLoading || seasonMonthsLoading || historiesLoading;
+  const isLoading = usersLoading || matchesLoading || seasonMonthsLoading || historiesLoading;
 
   const currentWeek = useMemo(() => {
     if (matchesData && matchesData.length > 0) {
@@ -79,7 +78,6 @@ export default function MostImprovedPage() {
   }, [currentWeek]);
   
   const currentMonthName = currentAwardPeriod?.month || currentAwardPeriod?.special || '';
-  const currentYear = currentAwardPeriod?.year;
 
   const ladderData = useMemo(() => {
     if (!users || !userHistories || !currentAwardPeriod || currentWeek < currentAwardPeriod.startWeek) {
@@ -134,85 +132,99 @@ export default function MostImprovedPage() {
   const seasonMonths = useMemo(() => {
     if (!seasonMonthsData) return [];
     return [...seasonMonthsData].sort((a, b) => {
-        const aSpecial = a.special === 'Christmas No. 1';
-        const bSpecial = b.special === 'Christmas No. 1';
         if (a.year !== b.year) return a.year - b.year;
-        if (aSpecial && !bSpecial) return 1;
-        if (!aSpecial && bSpecial) return -1;
         const monthOrder = ['August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
-        return monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month);
+        const aIndex = monthOrder.indexOf(a.month);
+        const bIndex = monthOrder.indexOf(b.month);
+        if (aIndex !== bIndex) return aIndex - bIndex;
+        if (a.special && !b.special) return 1;
+        if (!a.special && b.special) return -1;
+        return 0;
     });
   }, [seasonMonthsData]);
 
-  const mimoMWithDetails = useMemo(() => {
-    if (!users || !monthlyMimoM || !seasonMonths || !userHistories) return [];
-    const awardsByMonth: { [key: string]: { winners: any[], runnersUp: any[] } } = {};
+  const userNameMap = useMemo(() => {
+    if (!users) return new Map<string, User>();
+    return new Map(users.map(u => [u.name, u]));
+  }, [users]);
 
-    monthlyMimoM.forEach(m => {
-      const key = m.special ? m.special : `${m.month}-${m.year}`;
-      if (!awardsByMonth[key]) {
-        awardsByMonth[key] = { winners: [], runnersUp: [] };
-      }
-      const user = users.find(u => u.id === m.userId);
-      if (user && !user.isPro) { // Ensure user exists and is not a PRO
-        if (m.type === 'winner') {
-          awardsByMonth[key].winners.push({ ...m, ...user });
-        } else if (m.type === 'runner-up') {
-          awardsByMonth[key].runnersUp.push({ ...m, ...user });
-        }
-      }
-    });
+  const mimoMWithDetails = useMemo(() => {
+    if (!users || !seasonMonths || !userHistories || !userNameMap) return [];
     
     return seasonMonths.map(seasonMonth => {
-        const key = seasonMonth.special ? seasonMonth.special : `${seasonMonth.month}-${seasonMonth.year}`;
-        const awards = awardsByMonth[key];
-        const isCurrentPeriod = currentAwardPeriod?.id === seasonMonth.id;
-        
+        const seasonString = `${seasonMonth.year}-${seasonMonth.year + 1}`;
+        const historicalMonth = historicalMimoAwards.find(h => 
+            h.season === seasonString && 
+            (h.month.toUpperCase() === (seasonMonth.month?.toUpperCase() || ''))
+        );
+
         let isFuture = false;
         const period = allAwardPeriods.find(p => p.id === seasonMonth.id);
         if (period) {
           isFuture = currentWeek < period.startWeek;
         }
 
+        if (historicalMonth && !isFuture) {
+            const winners = historicalMonth.awards.filter(a => a.type === 'MiMoM' || a.type === 'JoMiMoM');
+            const runnersUp = historicalMonth.awards.filter(a => a.type === 'RuMiMoM' || a.type === 'JoRuMiMoM');
+
+            const mapAwardToUser = (award: (typeof historicalMonth.awards)[0]) => {
+                const user = userNameMap.get(award.name);
+                return {
+                    ...(user || { id: award.name, name: award.name, avatar: '' }),
+                    improvement: award.improvement,
+                };
+            };
+            
+            return {
+                ...seasonMonth,
+                isCurrentMonth: false,
+                isFuture: false,
+                winners: winners.map(mapAwardToUser),
+                runnersUp: runnersUp.map(mapAwardToUser),
+                currentLeaders: null,
+                currentRunnersUp: null,
+            };
+        }
+
+        // Live calculation for current/future periods
+        const isCurrentPeriod = currentAwardPeriod?.id === seasonMonth.id;
         let currentLeaders: (User & { improvement: number })[] | null = null;
         let currentRunnersUp: (User & { improvement: number })[] | null = null;
-        
-        if (isCurrentPeriod && (!awards || awards.winners.length === 0) && userHistories) {
-            if (currentAwardPeriod && currentWeek >= currentAwardPeriod.startWeek) {
-                const startWeek = currentAwardPeriod.startWeek;
-                const endWeek = currentWeek;
 
-                const monthlyImprovements: { userId: string; improvement: number; endScore: number; user: User }[] = [];
+        if (isCurrentPeriod && currentWeek >= currentAwardPeriod.startWeek) {
+            const startWeek = currentAwardPeriod.startWeek;
+            const endWeek = currentWeek;
 
-                const nonProUsers = users.filter(u => !u.isPro);
-                nonProUsers.forEach(user => {
-                    const history = userHistories.find(h => h.userId === user.id);
-                    if (history) {
-                        const startWeekData = history.weeklyScores.find(ws => ws.week === startWeek);
-                        const endWeekData = history.weeklyScores.find(ws => ws.week === endWeek);
+            const monthlyImprovements: { userId: string; improvement: number; endScore: number; user: User }[] = [];
 
-                        if (startWeekData && endWeekData) {
-                            const improvement = endWeekData.score - startWeekData.score;
-                            monthlyImprovements.push({ userId: user.id, improvement, endScore: endWeekData.score, user });
-                        }
+            const nonProUsers = users.filter(u => !u.isPro);
+            nonProUsers.forEach(user => {
+                const history = userHistories.find(h => h.userId === user.id);
+                if (history) {
+                    const startWeekData = history.weeklyScores.find(ws => ws.week === startWeek);
+                    const endWeekData = history.weeklyScores.find(ws => ws.week === endWeek);
+                    if (startWeekData && endWeekData) {
+                        const improvement = endWeekData.score - startWeekData.score;
+                        monthlyImprovements.push({ userId: user.id, improvement, endScore: endWeekData.score, user });
                     }
-                });
+                }
+            });
 
-                if (monthlyImprovements.length > 0) {
-                    monthlyImprovements.sort((a, b) => b.improvement - a.improvement || b.endScore - a.endScore);
-                    
-                    const bestImprovement = monthlyImprovements[0].improvement;
-                    const winners = monthlyImprovements.filter(u => u.improvement === bestImprovement);
+            if (monthlyImprovements.length > 0) {
+                monthlyImprovements.sort((a, b) => b.improvement - a.improvement || b.endScore - a.endScore);
+                
+                const bestImprovement = monthlyImprovements[0].improvement;
+                const winners = monthlyImprovements.filter(u => u.improvement === bestImprovement);
 
-                    currentLeaders = winners.map(w => ({ ...w.user, improvement: w.improvement }));
+                currentLeaders = winners.map(w => ({ ...w.user, improvement: w.improvement }));
 
-                    if (winners.length === 1) {
-                         const remainingPlayers = monthlyImprovements.filter(u => u.improvement < bestImprovement);
-                        if (remainingPlayers.length > 0) {
-                            const secondBestImprovement = remainingPlayers[0].improvement;
-                            const runnersUp = remainingPlayers.filter(u => u.improvement === secondBestImprovement);
-                            currentRunnersUp = runnersUp.map(r => ({ ...r.user, improvement: r.improvement }));
-                        }
+                if (winners.length === 1) {
+                     const remainingPlayers = monthlyImprovements.filter(u => u.improvement < bestImprovement);
+                    if (remainingPlayers.length > 0) {
+                        const secondBestImprovement = remainingPlayers[0].improvement;
+                        const runnersUp = remainingPlayers.filter(u => u.improvement === secondBestImprovement);
+                        currentRunnersUp = runnersUp.map(r => ({ ...r.user, improvement: r.improvement }));
                     }
                 }
             }
@@ -222,29 +234,14 @@ export default function MostImprovedPage() {
             ...seasonMonth,
             isCurrentMonth: isCurrentPeriod,
             isFuture,
+            winners: null,
+            runnersUp: null,
             currentLeaders,
             currentRunnersUp,
-            winners: awards?.winners.length > 0 ? awards.winners : null,
-            runnersUp: awards?.runnersUp.length > 0 ? awards.runnersUp : null
         }
-    }).sort((a, b) => {
-      const monthOrder = ['August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
-      
-      const aYear = a.special === 'Christmas No. 1' ? a.year + 0.1 : a.year;
-      const bYear = b.special === 'Christmas No. 1' ? b.year + 0.1 : b.year;
-      if (aYear !== bYear) return aYear - bYear;
-      
-      const aIndex = monthOrder.indexOf(a.month);
-      const bIndex = monthOrder.indexOf(b.month);
-
-      if (aIndex !== bIndex) return aIndex - bIndex;
-
-      if (a.special && !b.special) return 1;
-      if (!a.special && b.special) return -1;
-      
-      return 0;
     });
-  }, [users, monthlyMimoM, seasonMonths, currentAwardPeriod, userHistories, currentWeek]);
+  }, [users, seasonMonths, currentAwardPeriod, userHistories, currentWeek, userNameMap]);
+
 
   const getLadderRankColour = (user: (typeof ladderData.ladderWithRanks)[0]) => {
     if (ladderData.firstPlaceImprovement !== undefined && user.improvement === ladderData.firstPlaceImprovement) return 'bg-yellow-400/20';
@@ -362,7 +359,7 @@ export default function MostImprovedPage() {
                                                     <AvatarFallback>{winner.name?.charAt(0)}</AvatarFallback>
                                                 </Avatar>
                                                 <div className="text-left">
-                                                    <p className="text-sm font-bold">{winner.name} - £{winnerPrize % 1 === 0 ? winnerPrize : winnerPrize.toFixed(2)}
+                                                    <p className="text-sm font-bold">{winner.name}
                                                         {typeof winner.improvement === 'number' && <span className="font-normal text-muted-foreground"> ({winner.improvement >= 0 ? '+' : ''}{winner.improvement}pts)</span>}
                                                     </p>
                                                     {monthlyAward.winners && <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">{isTie ? 'JoMiMoM' : 'MiMoM'}</p>}
@@ -378,7 +375,7 @@ export default function MostImprovedPage() {
                                                     <AvatarFallback>{runnerUp.name?.charAt(0)}</AvatarFallback>
                                                 </Avatar>
                                                 <div className="text-left">
-                                                    <p className="text-sm font-bold">{runnerUp.name} - £{runnerUpPrize % 1 === 0 ? runnerUpPrize : runnerUpPrize.toFixed(2)}
+                                                    <p className="text-sm font-bold">{runnerUp.name}
                                                         {typeof runnerUp.improvement === 'number' && <span className="font-normal text-muted-foreground"> ({runnerUp.improvement >= 0 ? '+' : ''}{runnerUp.improvement}pts)</span>}
                                                     </p>
                                                     <p className="text-xs font-semibold text-slate-800/80 dark:text-slate-200/80">{(runnersUp.length > 1 ? 'JoRuMiMoM' : 'RuMiMoM')}</p>
@@ -406,4 +403,3 @@ export default function MostImprovedPage() {
   );
 }
 
-    

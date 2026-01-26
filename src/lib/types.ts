@@ -111,6 +111,18 @@ export type MonthlyMimoM = {
   improvement?: number;
 };
 
+export type HistoricalMimoAwardInfo = {
+  type: string;
+  name: string;
+  improvement: number | null;
+};
+
+export type HistoricalMimoMonth = {
+    season: string;
+    month: string;
+    awards: HistoricalMimoAwardInfo[];
+};
+
 export type SeasonMonth = {
     id: string;
     month: string;

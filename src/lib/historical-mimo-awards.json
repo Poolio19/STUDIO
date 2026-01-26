@@ -1,0 +1,915 @@
+
+[
+  {
+    "season": "2014-2015",
+    "month": "Aug",
+    "awards": [
+      { "type": "MiMoM", "name": "Nick Jakeman", "improvement": 32 },
+      { "type": "RuMiMoM", "name": "Chris Jones", "improvement": 30 }
+    ]
+  },
+  {
+    "season": "2014-2015",
+    "month": "Sep",
+    "awards": [
+      { "type": "MiMoM", "name": "Adam Bain", "improvement": 26 },
+      { "type": "RuMiMoM", "name": "Steve East", "improvement": 20 }
+    ]
+  },
+  {
+    "season": "2014-2015",
+    "month": "Oct",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Nick Jakeman", "improvement": 28 },
+      { "type": "JoMiMoM", "name": "Archie MacVicar", "improvement": 28 }
+    ]
+  },
+  {
+    "season": "2014-2015",
+    "month": "Nov",
+    "awards": [
+      { "type": "MiMoM", "name": "Paul Bancroft", "improvement": 24 },
+      { "type": "RuMiMoM", "name": "Amy Parkinson", "improvement": 22 }
+    ]
+  },
+  {
+    "season": "2014-2015",
+    "month": "Dec",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Steph Poole", "improvement": 16 },
+      { "type": "JoMiMoM", "name": "David Renwick", "improvement": 16 }
+    ]
+  },
+  {
+    "season": "2014-2015",
+    "month": "Jan",
+    "awards": [
+      { "type": "MiMoM", "name": "Matthew Bain", "improvement": 18 },
+      { "type": "RuMiMoM", "name": "Amy Parkinson", "improvement": 16 }
+    ]
+  },
+  {
+    "season": "2014-2015",
+    "month": "Feb",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Lee Harte", "improvement": 12 },
+      { "type": "JoMiMoM", "name": "Kevin MCManus", "improvement": 12 }
+    ]
+  },
+  {
+    "season": "2014-2015",
+    "month": "Mar",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Matthew Bain", "improvement": 8 },
+      { "type": "JoMiMoM", "name": "Iain Tulley", "improvement": 8 },
+      { "type": "JoMiMoM", "name": "Chak Li", "improvement": 8 }
+    ]
+  },
+  {
+    "season": "2014-2015",
+    "month": "Apr",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Jim Poole", "improvement": 8 },
+      { "type": "JoMiMoM", "name": "Ronnie Bain", "improvement": 8 },
+      { "type": "JoMiMoM", "name": "Ross Allatt", "improvement": 8 },
+      { "type": "JoMiMoM", "name": "James Hobbins", "improvement": 8 }
+    ]
+  },
+  {
+    "season": "2014-2015",
+    "month": "May",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Sam Bain", "improvement": 6 },
+      { "type": "JoMiMoM", "name": "Kevin MCManus", "improvement": 6 },
+      { "type": "JoMiMoM", "name": "Amy Parkinson", "improvement": 6 }
+    ]
+  },
+  {
+    "season": "2015-2016",
+    "month": "Aug",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Matt Bithell", "improvement": 12 },
+      { "type": "JoMiMoM", "name": "Joanne MacGillivray", "improvement": 12 }
+    ]
+  },
+  {
+    "season": "2015-2016",
+    "month": "Sep",
+    "awards": [
+      { "type": "MiMoM", "name": "Jo Walsh", "improvement": 30 },
+      { "type": "RuMiMoM", "name": "John Parkinson", "improvement": 26 }
+    ]
+  },
+  {
+    "season": "2015-2016",
+    "month": "Oct",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Stuart MacDonald", "improvement": 20 },
+      { "type": "JoMiMoM", "name": "Jember Weekes", "improvement": 20 },
+      { "type": "JoMiMoM", "name": "Ronnie Bain", "improvement": 20 }
+    ]
+  },
+  {
+    "season": "2015-2016",
+    "month": "Nov",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Pip Stokes", "improvement": 12 },
+      { "type": "JoMiMoM", "name": "Karen Garcia Diaz", "improvement": 12 }
+    ]
+  },
+  {
+    "season": "2015-2016",
+    "month": "Dec",
+    "awards": [
+      { "type": "MiMoM", "name": "Thomas Kirby", "improvement": null },
+      { "type": "JoRuMiMoM", "name": "Rob McKinneley", "improvement": -6 },
+      { "type": "JoRuMiMoM", "name": "George Roberts", "improvement": -6 },
+      { "type": "JoRuMiMoM", "name": "James Rathmell", "improvement": -6 },
+      { "type": "JoRuMiMoM", "name": "Chris Burston", "improvement": -6 }
+    ]
+  },
+  {
+    "season": "2015-2016",
+    "month": "Jan",
+    "awards": [
+      { "type": "MiMoM", "name": "Barry Munks", "improvement": 16 },
+      { "type": "JoRuMiMoM", "name": "Steve Wroldsen", "improvement": 14 },
+      { "type": "JoRuMiMoM", "name": "Sam East", "improvement": 14 },
+      { "type": "JoRuMiMoM", "name": "Steve East", "improvement": 14 },
+      { "type": "JoRuMiMoM", "name": "Liz Johnson", "improvement": 14 },
+      { "type": "JoRuMiMoM", "name": "Matthew Bain", "improvement": 14 },
+      { "type": "JoRuMiMoM", "name": "Jember Weekes", "improvement": 14 },
+      { "type": "JoRuMiMoM", "name": "Paul Bancroft", "improvement": 14 },
+      { "type": "JoRuMiMoM", "name": "Jim Poole", "improvement": 14 }
+    ]
+  },
+  {
+    "season": "2015-2016",
+    "month": "Feb",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Brian Gichanga", "improvement": 6 },
+      { "type": "JoMiMoM", "name": "Ronnie Bain", "improvement": 6 },
+      { "type": "JoMiMoM", "name": "Chris Howson", "improvement": 6 },
+      { "type": "JoMiMoM", "name": "Chak Li", "improvement": 6 }
+    ]
+  },
+  {
+    "season": "2015-2016",
+    "month": "Mar",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Kevin McManus", "improvement": 8 },
+      { "type": "JoMiMoM", "name": "Barry Munks", "improvement": 8 },
+      { "type": "JoMiMoM", "name": "Jim Poole", "improvement": 8 }
+    ]
+  },
+  {
+    "season": "2015-2016",
+    "month": "Apr",
+    "awards": [
+      { "type": "MiMoM", "name": "Matthew Bain", "improvement": 16 },
+      { "type": "JoRuMiMoM", "name": "Michael Fordyce", "improvement": 14 },
+      { "type": "JoRuMiMoM", "name": "Paul Bancroft", "improvement": 14 },
+      { "type": "JoRuMiMoM", "name": "Fazil Sediqi", "improvement": 14 },
+      { "type": "JoRuMiMoM", "name": "Matt Bithell", "improvement": 14 }
+    ]
+  },
+  {
+    "season": "2015-2016",
+    "month": "May",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Justin Downing", "improvement": 8 },
+      { "type": "JoMiMoM", "name": "Archie MacVicar", "improvement": 8 },
+      { "type": "JoMiMoM", "name": "Allan Wardrope", "improvement": 8 },
+      { "type": "JoMiMoM", "name": "Andy Banks", "improvement": 8 }
+    ]
+  },
+  {
+    "season": "2016-2017",
+    "month": "Aug",
+    "awards": [
+      { "type": "MiMoM", "name": "Steve Lawrence", "improvement": 22 },
+      { "type": "JoRuMiMoM", "name": "Chris Dodds", "improvement": 18 },
+      { "type": "JoRuMiMoM", "name": "Ross Allatt", "improvement": 18 },
+      { "type": "JoRuMiMoM", "name": "Chris Burston", "improvement": 18 },
+      { "type": "JoRuMiMoM", "name": "Ben Gorrill", "improvement": 18 }
+    ]
+  },
+  {
+    "season": "2016-2017",
+    "month": "Sep",
+    "awards": [
+      { "type": "MiMoM", "name": "Allan Brown", "improvement": 32 },
+      { "type": "RuMiMoM", "name": "Jim Poole", "improvement": 28 }
+    ]
+  },
+  {
+    "season": "2016-2017",
+    "month": "Oct",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Matt Bain", "improvement": 20 },
+      { "type": "JoMiMoM", "name": "Linus Gregoriadis", "improvement": 20 },
+      { "type": "JoMiMoM", "name": "Amy Parkinson", "improvement": 20 },
+      { "type": "JoMiMoM", "name": "Allan Wardrope", "improvement": 20 }
+    ]
+  },
+  {
+    "season": "2016-2017",
+    "month": "Nov",
+    "awards": [
+      { "type": "MiMoM", "name": "Ronnie Bain", "improvement": 14 },
+      { "type": "JoRuMiMoM", "name": "Kevin McManus", "improvement": 6 },
+      { "type": "JoRuMiMoM", "name": "Alf Wroldsen", "improvement": 6 }
+    ]
+  },
+  {
+    "season": "2016-2017",
+    "month": "Dec",
+    "awards": [
+      { "type": "MiMoM", "name": "George Bland", "improvement": 14 },
+      { "type": "RuMiMoM", "name": "Peter Joyce", "improvement": 12 }
+    ]
+  },
+  {
+    "season": "2016-2017",
+    "month": "Jan",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Steve Lawrence", "improvement": 14 },
+      { "type": "JoMiMoM", "name": "Chris Dodds", "improvement": 14 }
+    ]
+  },
+  {
+    "season": "2016-2017",
+    "month": "Feb",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Archie MacVicar", "improvement": 14 },
+      { "type": "JoMiMoM", "name": "Ed Barrett", "improvement": 14 }
+    ]
+  },
+  {
+    "season": "2016-2017",
+    "month": "Mar",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Adam Bain", "improvement": 2 },
+      { "type": "JoMiMoM", "name": "Paul Hammett", "improvement": 2 }
+    ]
+  },
+  {
+    "season": "2016-2017",
+    "month": "Apr",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Steven Bain", "improvement": 4 },
+      { "type": "JoMiMoM", "name": "John Poole", "improvement": 4 },
+      { "type": "JoMiMoM", "name": "George Bland", "improvement": 4 }
+    ]
+  },
+  {
+    "season": "2016-2017",
+    "month": "May",
+    "awards": [
+      { "type": "MiMoM", "name": "Mike Wymer", "improvement": 18 },
+      { "type": "JoRuMiMoM", "name": "Bryan Tait", "improvement": 16 },
+      { "type": "JoRuMiMoM", "name": "Bart Ainsworth", "improvement": 16 },
+      { "type": "JoRuMiMoM", "name": "Steve Wroldsen", "improvement": 16 },
+      { "type": "JoRuMiMoM", "name": "Stuart MacDonald", "improvement": 16 },
+      { "type": "JoRuMiMoM", "name": "Ross Allatt", "improvement": 16 },
+      { "type": "JoRuMiMoM", "name": "Ben Patey", "improvement": 16 },
+      { "type": "JoRuMiMoM", "name": "James Rathmell", "improvement": 16 },
+      { "type": "JoRuMiMoM", "name": "Tim Williams", "improvement": 16 },
+      { "type": "JoRuMiMoM", "name": "Nat Walsh", "improvement": 16 },
+      { "type": "JoRuMiMoM", "name": "Robert Johnson", "improvement": 16 }
+    ]
+  },
+  {
+    "season": "2017-2018",
+    "month": "Aug",
+    "awards": [
+      { "type": "MiMoM", "name": "George Roberts", "improvement": -38 }
+    ]
+  },
+  {
+    "season": "2017-2018",
+    "month": "Sep",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Steve Lawrence", "improvement": 26 },
+      { "type": "JoMiMoM", "name": "Mark Ryan", "improvement": 26 },
+      { "type": "JoMiMoM", "name": "Ross Allatt", "improvement": 26 }
+    ]
+  },
+  {
+    "season": "2017-2018",
+    "month": "Oct",
+    "awards": [
+      { "type": "JoMiMoM", "name": "George Roberts", "improvement": 8 },
+      { "type": "JoMiMoM", "name": "Ben Gorrill", "improvement": 8 },
+      { "type": "JoMiMoM", "name": "Kevin McManus", "improvement": 8 }
+    ]
+  },
+  {
+    "season": "2017-2018",
+    "month": "Nov",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Stuart MacDonald", "improvement": 30 },
+      { "type": "JoMiMoM", "name": "Ria Blackmore", "improvement": 30 }
+    ]
+  },
+  {
+    "season": "2017-2018",
+    "month": "Dec",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Malcolm Sinclair", "improvement": 4 },
+      { "type": "JoMiMoM", "name": "Craig Stevens", "improvement": 4 },
+      { "type": "JoMiMoM", "name": "Neil Appleton", "improvement": 4 }
+    ]
+  },
+  {
+    "season": "2017-2018",
+    "month": "Jan",
+    "awards": [
+      { "type": "MiMoM", "name": "Benson Frost", "improvement": 24 }
+    ]
+  },
+  {
+    "season": "2017-2018",
+    "month": "Feb",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Steve Lawrence", "improvement": null },
+      { "type": "JoMiMoM", "name": "Andrew Trafford", "improvement": null }
+    ]
+  },
+  {
+    "season": "2017-2018",
+    "month": "Mar",
+    "awards": [
+      { "type": "JoMiMoM", "name": "David Carey", "improvement": 16 },
+      { "type": "JoMiMoM", "name": "Alf Wroldsen", "improvement": 16 }
+    ]
+  },
+  {
+    "season": "2017-2018",
+    "month": "Apr",
+    "awards": [
+      { "type": "MiMoM", "name": "Sung Kang", "improvement": 14 }
+    ]
+  },
+  {
+    "season": "2017-2018",
+    "month": "May",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Matt Howard", "improvement": 8 },
+      { "type": "JoMiMoM", "name": "Mark Ryan", "improvement": 8 }
+    ]
+  },
+  {
+    "season": "2018-2019",
+    "month": "Aug",
+    "awards": [
+      { "type": "MiMoM", "name": "Adam Bain", "improvement": -2 }
+    ]
+  },
+  {
+    "season": "2018-2019",
+    "month": "Sep",
+    "awards": [
+      { "type": "MiMoM", "name": "Richard Harrison", "improvement": 36 }
+    ]
+  },
+  {
+    "season": "2018-2019",
+    "month": "Oct",
+    "awards": [
+      { "type": "MiMoM", "name": "Sam Bain", "improvement": 20 }
+    ]
+  },
+  {
+    "season": "2018-2019",
+    "month": "Nov",
+    "awards": [
+      { "type": "MiMoM", "name": "Ria Blackmore", "improvement": 14 }
+    ]
+  },
+  {
+    "season": "2018-2019",
+    "month": "Dec",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Craig Stevens", "improvement": 14 },
+      { "type": "JoMiMoM", "name": "Mike Pollard", "improvement": 14 },
+      { "type": "JoMiMoM", "name": "Julian Spears", "improvement": 14 },
+      { "type": "JoMiMoM", "name": "Andy Belton", "improvement": 14 }
+    ]
+  },
+  {
+    "season": "2018-2019",
+    "month": "Jan",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Ria Blackmore", "improvement": 10 },
+      { "type": "JoMiMoM", "name": "Ross Allatt", "improvement": 10 }
+    ]
+  },
+  {
+    "season": "2018-2019",
+    "month": "Feb",
+    "awards": [
+      { "type": "MiMoM", "name": "George Roberts", "improvement": 16 }
+    ]
+  },
+  {
+    "season": "2018-2019",
+    "month": "Mar",
+    "awards": [
+      { "type": "MiMoM", "name": "James Rathmell", "improvement": 18 }
+    ]
+  },
+  {
+    "season": "2018-2019",
+    "month": "Apr",
+    "awards": [
+      { "type": "MiMoM", "name": "Nat Walsh", "improvement": 20 }
+    ]
+  },
+  {
+    "season": "2018-2019",
+    "month": "May",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Sung Kang", "improvement": 16 },
+      { "type": "JoMiMoM", "name": "Ronnie Bain", "improvement": 16 }
+    ]
+  },
+  {
+    "season": "2019-2020",
+    "month": "Aug",
+    "awards": [
+      { "type": "MiMoM", "name": "Mike Wymer", "improvement": -9 }
+    ]
+  },
+  {
+    "season": "2019-2020",
+    "month": "Sep",
+    "awards": [
+      { "type": "MiMoM", "name": "Matt Loadwick", "improvement": 16 }
+    ]
+  },
+  {
+    "season": "2019-2020",
+    "month": "Oct",
+    "awards": [
+      { "type": "MiMoM", "name": "Rory Poole", "improvement": 10 }
+    ]
+  },
+  {
+    "season": "2019-2020",
+    "month": "Nov",
+    "awards": [
+      { "type": "MiMoM", "name": "Gaz Littlewood", "improvement": 28 }
+    ]
+  },
+  {
+    "season": "2019-2020",
+    "month": "Dec",
+    "awards": [
+      { "type": "MiMoM", "name": "Alf Wroldsen", "improvement": 18 }
+    ]
+  },
+  {
+    "season": "2019-2020",
+    "month": "Jan",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Andrew Trafford", "improvement": 14 },
+      { "type": "JoMiMoM", "name": "Andy Barnes", "improvement": 14 }
+    ]
+  },
+  {
+    "season": "2019-2020",
+    "month": "Feb",
+    "awards": [
+      { "type": "MiMoM", "name": "Fazil Sediqi", "improvement": 10 }
+    ]
+  },
+  {
+    "season": "2019-2020",
+    "month": "Mar",
+    "awards": [
+      { "type": "MiMoM", "name": "Ed Barrett", "improvement": 2 },
+      { "type": "JoRuMiMoM", "name": "Nat Walsh", "improvement": null }
+    ]
+  },
+  {
+    "season": "2019-2020",
+    "month": "Jun",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Ian Tulley", "improvement": 4 },
+      { "type": "JoMiMoM", "name": "Nat Walsh", "improvement": 4 },
+      { "type": "JoMiMoM", "name": "Tim Birchall", "improvement": 4 }
+    ]
+  },
+  {
+    "season": "2019-2020",
+    "month": "Jul",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Amy Parkinson", "improvement": 10 },
+      { "type": "JoMiMoM", "name": "Mike Pollard", "improvement": 10 },
+      { "type": "JoMiMoM", "name": "Barth Ainsworth", "improvement": 10 },
+      { "type": "JoMiMoM", "name": "George Roberts", "improvement": 10 }
+    ]
+  },
+  {
+    "season": "2020-2021",
+    "month": "Aug",
+    "awards": [
+      { "type": "MiMoM", "name": "Nat Walsh", "improvement": -32 }
+    ]
+  },
+  {
+    "season": "2020-2021",
+    "month": "Sep",
+    "awards": [
+      { "type": "MiMoM", "name": "Nat Walsh", "improvement": -32 }
+    ]
+  },
+  {
+    "season": "2020-2021",
+    "month": "Oct",
+    "awards": [
+      { "type": "MiMoM", "name": "Steve Lawrence", "improvement": 24 }
+    ]
+  },
+  {
+    "season": "2020-2021",
+    "month": "Nov",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Kumbi Kariwo", "improvement": 22 },
+      { "type": "JoMiMoM", "name": "Pip Stokes", "improvement": 22 }
+    ]
+  },
+  {
+    "season": "2020-2021",
+    "month": "Dec",
+    "awards": [
+      { "type": "JoMiMoM", "name": "John Poole", "improvement": 12 },
+      { "type": "JoMiMoM", "name": "Nicola Spears", "improvement": 12 },
+      { "type": "JoMiMoM", "name": "Alf Wroldsen", "improvement": 12 },
+      { "type": "XMAS NO1", "name": "Adrian Brown", "improvement": 4 }
+    ]
+  },
+  {
+    "season": "2020-2021",
+    "month": "Jan",
+    "awards": [
+      { "type": "MiMoM", "name": "Alex Anderson", "improvement": 18 }
+    ]
+  },
+  {
+    "season": "2020-2021",
+    "month": "Feb",
+    "awards": [
+      { "type": "MiMoM", "name": "Joan Poole", "improvement": 4 }
+    ]
+  },
+  {
+    "season": "2020-2021",
+    "month": "Mar",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Joanne MacGillivray", "improvement": 2 },
+      { "type": "JoMiMoM", "name": "Alex Anderson", "improvement": 2 }
+    ]
+  },
+  {
+    "season": "2020-2021",
+    "month": "Apr",
+    "awards": [
+      { "type": "MiMoM", "name": "Jamie Spears", "improvement": 12 }
+    ]
+  },
+  {
+    "season": "2020-2021",
+    "month": "May",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Joan Poole", "improvement": 16 },
+      { "type": "JoMiMoM", "name": "Ashley Davies", "improvement": 16 },
+      { "type": "JoMiMoM", "name": "Adam F Bain", "improvement": 16 }
+    ]
+  },
+  {
+    "season": "2021-2022",
+    "month": "Aug",
+    "awards": [
+      { "type": "MiMoM", "name": "Jamie Spears", "improvement": -12 }
+    ]
+  },
+  {
+    "season": "2021-2022",
+    "month": "Sep",
+    "awards": [
+      { "type": "MiMoM", "name": "Chris Burston", "improvement": 16 }
+    ]
+  },
+  {
+    "season": "2021-2022",
+    "month": "Oct",
+    "awards": [
+      { "type": "MiMoM", "name": "Rory Poole", "improvement": 22 }
+    ]
+  },
+  {
+    "season": "2021-2022",
+    "month": "Nov",
+    "awards": [
+      { "type": "MiMoM", "name": "Benji Dawes", "improvement": 10 }
+    ]
+  },
+  {
+    "season": "2021-2022",
+    "month": "Dec",
+    "awards": [
+      { "type": "JoMiMoM", "name": "George Roberts", "improvement": 4 },
+      { "type": "JoMiMoM", "name": "Andy Baker", "improvement": 4 },
+      { "type": "JoMiMoM", "name": "Fazil Sediqi", "improvement": 4 },
+      { "type": "JoMiMoM", "name": "Alex Anderson", "improvement": 4 },
+      { "type": "JoMiMoM", "name": "Roger Wymer", "improvement": 4 },
+      { "type": "JoMiMoM", "name": "Ross Allatt", "improvement": 4 },
+      { "type": "XMAS NO1", "name": "Steve Wroldsen", "improvement": 2 },
+      { "type": "XMAS NO1", "name": "Andy Baker", "improvement": null }
+    ]
+  },
+  {
+    "season": "2021-2022",
+    "month": "Jan",
+    "awards": [
+      { "type": "MiMoM", "name": "Max Spears", "improvement": 14 }
+    ]
+  },
+  {
+    "season": "2021-2022",
+    "month": "Feb",
+    "awards": [
+      { "type": "MiMoM", "name": "Roger Wymer", "improvement": 10 }
+    ]
+  },
+  {
+    "season": "2021-2022",
+    "month": "Mar",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Benji Dawes", "improvement": 6 },
+      { "type": "JoMiMoM", "name": "Alex Anderson", "improvement": 6 }
+    ]
+  },
+  {
+    "season": "2021-2022",
+    "month": "Apr",
+    "awards": [
+      { "type": "MiMoM", "name": "Andrew Trafford", "improvement": 10 }
+    ]
+  },
+  {
+    "season": "2021-2022",
+    "month": "May",
+    "awards": [
+      { "type": "MiMoM", "name": "Mike Wymer", "improvement": 10 }
+    ]
+  },
+  {
+    "season": "2022-2023",
+    "month": "Aug",
+    "awards": [
+      { "type": "MiMoM", "name": "Jamie Spears", "improvement": -18 }
+    ]
+  },
+  {
+    "season": "2022-2023",
+    "month": "Sep",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Owaiz Khan", "improvement": 28 },
+      { "type": "JoMiMoM", "name": "Alex Anderson", "improvement": 28 }
+    ]
+  },
+  {
+    "season": "2022-2023",
+    "month": "Oct",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Ben Dawes", "improvement": 20 },
+      { "type": "JoMiMoM", "name": "Neville Johnson", "improvement": 20 },
+      { "type": "JoMiMoM", "name": "Adam F Bain", "improvement": 20 },
+      { "type": "JoMiMoM", "name": "Tom Gill", "improvement": 20 },
+      { "type": "JoMiMoM", "name": "Gaz Littlewood", "improvement": 20 }
+    ]
+  },
+  {
+    "season": "2022-2023",
+    "month": "Nov",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Roger Wymer", "improvement": 6 },
+      { "type": "JoMiMoM", "name": "Finlay Sinclair", "improvement": 6 },
+      { "type": "JoMiMoM", "name": "Daro Clark", "improvement": 6 }
+    ]
+  },
+  {
+    "season": "2022-2023",
+    "month": "Dec",
+    "awards": [
+      { "type": "MiMoM", "name": "Nat Walsh", "improvement": 4 },
+      { "type": "XMAS NO1", "name": "Nat Walsh", "improvement": null }
+    ]
+  },
+  {
+    "season": "2022-2023",
+    "month": "Jan",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Paul Mavin", "improvement": 6 },
+      { "type": "JoMiMoM", "name": "Neville Johnson", "improvement": 6 }
+    ]
+  },
+  {
+    "season": "2022-2023",
+    "month": "Feb",
+    "awards": [
+      { "type": "MiMoM", "name": "Ashley Davies", "improvement": 18 }
+    ]
+  },
+  {
+    "season": "2022-2023",
+    "month": "Mar",
+    "awards": [
+      { "type": "MiMoM", "name": "Adam Barclay", "improvement": null }
+    ]
+  },
+  {
+    "season": "2022-2023",
+    "month": "Apr",
+    "awards": [
+      { "type": "MiMoM", "name": "Jamie Spears", "improvement": 16 }
+    ]
+  },
+  {
+    "season": "2022-2023",
+    "month": "May",
+    "awards": [
+      { "type": "MiMoM", "name": "Leyton Collings", "improvement": 6 }
+    ]
+  },
+  {
+    "season": "2023-2024",
+    "month": "Aug",
+    "awards": [
+      { "type": "MiMoM", "name": "Jamie Spears", "improvement": -2 }
+    ]
+  },
+  {
+    "season": "2023-2024",
+    "month": "Sep",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Mike Crowe", "improvement": 28 },
+      { "type": "JoMiMoM", "name": "Craig Stevens", "improvement": 28 },
+      { "type": "JoMiMoM", "name": "Andy Barnes", "improvement": 28 }
+    ]
+  },
+  {
+    "season": "2023-2024",
+    "month": "Oct",
+    "awards": [
+      { "type": "MiMoM", "name": "Lee Harte", "improvement": 18 }
+    ]
+  },
+  {
+    "season": "2023-2024",
+    "month": "Nov",
+    "awards": [
+      { "type": "MiMoM", "name": "Morgan Jordan", "improvement": 12 }
+    ]
+  },
+  {
+    "season": "2023-2024",
+    "month": "Dec",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Jamie Spears", "improvement": 2 },
+      { "type": "JoMiMoM", "name": "Sam Burgess", "improvement": 2 },
+      { "type": "XMAS NO1", "name": "Adam F Bain", "improvement": -2 }
+    ]
+  },
+  {
+    "season": "2023-2024",
+    "month": "Jan",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Gaz Littlewood", "improvement": 10 },
+      { "type": "JoMiMoM", "name": "Arthur Gwyn Davies", "improvement": 10 },
+      { "type": "JoMiMoM", "name": "Alex Anderson", "improvement": 10 }
+    ]
+  },
+  {
+    "season": "2023-2024",
+    "month": "Feb",
+    "awards": [
+      { "type": "MiMoM", "name": "Mike Wymer", "improvement": 8 }
+    ]
+  },
+  {
+    "season": "2023-2024",
+    "month": "Mar",
+    "awards": [
+      { "type": "MiMoM", "name": "Dan Skingley", "improvement": 2 }
+    ]
+  },
+  {
+    "season": "2023-2024",
+    "month": "Apr",
+    "awards": [
+      { "type": "MiMoM", "name": "Sam Burgess", "improvement": 16 }
+    ]
+  },
+  {
+    "season": "2023-2024",
+    "month": "May",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Nick Watson", "improvement": 12 },
+      { "type": "JoMiMoM", "name": "Tim Birchall", "improvement": 12 }
+    ]
+  },
+  {
+    "season": "2024-2025",
+    "month": "Aug",
+    "awards": [
+      { "type": "MiMoM", "name": "Theo Gresson", "improvement": -26 }
+    ]
+  },
+  {
+    "season": "2024-2025",
+    "month": "Sep",
+    "awards": [
+      { "type": "JoMiMoM", "name": "James Eldred", "improvement": 28 },
+      { "type": "JoMiMoM", "name": "Doug Potter", "improvement": 28 }
+    ]
+  },
+  {
+    "season": "2024-2025",
+    "month": "Oct",
+    "awards": [
+      { "type": "MiMoM", "name": "Ben Cox", "improvement": 2 }
+    ]
+  },
+  {
+    "season": "2024-2025",
+    "month": "Nov",
+    "awards": [
+      { "type": "MiMoM", "name": "Dave Nightingale", "improvement": 16 }
+    ]
+  },
+  {
+    "season": "2024-2025",
+    "month": "Dec",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Ash Davies", "improvement": 12 },
+      { "type": "JoMiMoM", "name": "Tom Wright", "improvement": 12 },
+      { "type": "XMAS NO1", "name": "Ash Davies", "improvement": null }
+    ]
+  },
+  {
+    "season": "2024-2025",
+    "month": "Jan",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Arthur Gwyn-Davies", "improvement": 8 },
+      { "type": "JoMiMoM", "name": "Theo Gresson", "improvement": 8 },
+      { "type": "JoMiMoM", "name": "Adam Bain", "improvement": 8 }
+    ]
+  },
+  {
+    "season": "2024-2025",
+    "month": "Feb",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Ken Skingley", "improvement": 4 },
+      { "type": "JoMiMoM", "name": "Nathan Hyatt", "improvement": 4 },
+      { "type": "JoMiMoM", "name": "Pascal Walls", "improvement": 4 },
+      { "type": "JoMiMoM", "name": "Alex Taylor", "improvement": 4 },
+      { "type": "JoMiMoM", "name": "Bart Ainsworth", "improvement": 4 },
+      { "type": "JoMiMoM", "name": "George Butterworth", "improvement": 4 },
+      { "type": "JoMiMoM", "name": "Barrie Cross", "improvement": 4 },
+      { "type": "JoMiMoM", "name": "George Roberts", "improvement": 4 },
+      { "type": "JoMiMoM", "name": "Otis Eldred", "improvement": 4 },
+      { "type": "JoMiMoM", "name": "Tom Bywater", "improvement": 4 },
+      { "type": "JoMiMoM", "name": "Finlay Sinclair", "improvement": 4 }
+    ]
+  },
+  {
+    "season": "2024-2025",
+    "month": "Mar",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Andy Senior", "improvement": 4 },
+      { "type": "JoMiMoM", "name": "James Eldred", "improvement": 4 },
+      { "type": "JoMiMoM", "name": "Paul Gillen", "improvement": 4 }
+    ]
+  },
+  {
+    "season": "2024-2025",
+    "month": "Apr",
+    "awards": [
+      { "type": "JoMiMoM", "name": "Steve Wroldsen", "improvement": 6 },
+      { "type": "JoMiMoM", "name": "Rory Hyatt", "improvement": 6 },
+      { "type": "JoMiMoM", "name": "Tim Carpenter", "improvement": 6 },
+      { "type": "JoMiMoM", "name": "Matt Lewtas", "improvement": 6 }
+    ]
+  },
+  {
+    "season": "2024-2025",
+    "month": "May",
+    "awards": [
+      { "type": "MiMoM", "name": "Ben Cox", "improvement": 14 }
+    ]
+  }
+]
