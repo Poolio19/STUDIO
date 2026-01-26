@@ -34,6 +34,7 @@ export type User = {
   ruMimoM?: number;
   joMimoM?: number;
   joRuMimoM?: number;
+  xmasNo1?: number;
   cashWinnings?: number;
 };
 
@@ -168,3 +169,5 @@ export type RollOfHonourEntry = {
     runnerUpPoints: number;
     runnerUpWinnings: number;
 };
+
+    

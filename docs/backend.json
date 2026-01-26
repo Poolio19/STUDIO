@@ -39,6 +39,7 @@
         "ruMimoM": { "type": "number", "description": "Number of RuMiMoM wins." },
         "joMimoM": { "type": "number", "description": "Number of JoMiMoM wins." },
         "joRuMimoM": { "type": "number", "description": "Number of JoRuMiMoM wins." },
+        "xmasNo1": { "type": "number", "description": "Number of Christmas No. 1 finishes." },
         "cashWinnings": { "type": "number", "description": "Total cash winnings for the user across all seasons." }
       },
       "required": ["id", "name", "email"]
@@ -279,4 +280,6 @@
     ]
   }
 }
+    
+
     

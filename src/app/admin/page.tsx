@@ -93,6 +93,7 @@ const historicalDataFormSchema = z.object({
     ruMimoM: z.coerce.number().int().min(0),
     joMimoM: z.coerce.number().int().min(0),
     joRuMimoM: z.coerce.number().int().min(0),
+    xmasNo1: z.coerce.number().int().min(0),
     cashWinnings: z.coerce.number().min(0),
   }))
 });
@@ -219,10 +220,11 @@ export default function AdminPage() {
             ruMimoM: u.ruMimoM || 0,
             joMimoM: u.joMimoM || 0,
             joRuMimoM: u.joRuMimoM || 0,
+            xmasNo1: u.xmasNo1 || 0,
             cashWinnings: u.cashWinnings || 0,
         })));
     }
-}, [replace, historicalPlayersData]);
+}, [replace]);
 
 
   React.useEffect(() => {
@@ -503,6 +505,7 @@ export default function AdminPage() {
                 ruMimoM: user.ruMimoM,
                 joMimoM: user.joMimoM,
                 joRuMimoM: user.joRuMimoM,
+                xmasNo1: user.xmasNo1,
                 cashWinnings: user.cashWinnings,
             }, { merge: true });
         });
@@ -534,6 +537,7 @@ export default function AdminPage() {
     { key: 'ruMimoM', label: 'R', tooltip: 'RuMiMoM Wins' },
     { key: 'joMimoM', label: 'J', tooltip: 'JoMiMoM Wins' },
     { key: 'joRuMimoM', label: 'JR', tooltip: 'JoRuMiMoM Wins' },
+    { key: 'xmasNo1', label: 'Xmas', tooltip: 'Christmas No. 1 Wins' },
     { key: 'cashWinnings', label: '£', tooltip: 'Total Cash Winnings' },
   ];
 
@@ -761,3 +765,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
