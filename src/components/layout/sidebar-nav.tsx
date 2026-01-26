@@ -49,6 +49,15 @@ export function SidebarNav() {
 
   const { data: userProfile } = useDoc<User>(userDocRef);
 
+  const isAdmin = authUser?.email === 'jim.poole@prempred.com';
+
+  const visibleNavItems = navItems.filter(item => {
+    if (item.href === '/admin') {
+      return isAdmin;
+    }
+    return true;
+  });
+
   const handleSignOut = () => {
     if (auth) {
       auth.signOut();
@@ -79,7 +88,7 @@ export function SidebarNav() {
       </SidebarHeader>
       <SidebarContent className="p-2">
         <SidebarMenu>
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const Icon = Icons[item.icon as keyof typeof Icons] || Award;
             return (
               <SidebarMenuItem key={item.href}>

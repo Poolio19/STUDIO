@@ -48,12 +48,14 @@ const pageInfoMap: { [key: string]: { title: string; description: string | ((sea
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
-  const { isUserLoading } = useUser();
+  const { user, isUserLoading } = useUser();
   const { isConfigured } = useFirebaseConfigStatus();
   const pathname = usePathname();
   const firestore = useFirestore();
   const { toast } = useToast();
   const [isRecalculating, setIsRecalculating] = React.useState(false);
+
+  const isAdmin = user?.email === 'jim.poole@prempred.com';
 
   const matchesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'matches') : null, [firestore]);
   const { data: matchesData } = useCollection<Match>(matchesQuery);
@@ -157,26 +159,28 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             {description && <p className="text-sm text-muted-foreground">{description}</p>}
           </div>
           <div className="ml-auto">
-            <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    <Button variant="outline" size="sm" disabled={isRecalculating}>
-                        {isRecalculating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                        Recalculate Data
-                    </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        This will run the full data recalculation process. This can take up to a minute.
-                    </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleRecalculate}>Yes, Recalculate</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            {isAdmin && (
+              <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm" disabled={isRecalculating}>
+                          {isRecalculating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                          Recalculate Data
+                      </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                      <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                          This will run the full data recalculation process. This can take up to a minute.
+                      </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleRecalculate}>Yes, Recalculate</AlertDialogAction>
+                      </AlertDialogFooter>
+                  </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
         </header>
         <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">{children}</main>
