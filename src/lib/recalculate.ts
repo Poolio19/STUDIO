@@ -33,9 +33,13 @@ export async function recalculateAllDataClientSide(
       const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
       const teamMap = new Map(teams.map(t => [t.id, t]));
       const allMatches = matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match));
-      const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
+      const allUsers = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
       const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
       
+      // Filter for active users who have made a prediction this season
+      const activeUserIds = new Set(predictions.map(p => p.userId));
+      const users = allUsers.filter(u => activeUserIds.has(u.id));
+
       const prevStandings: PreviousSeasonStanding[] = prevStandingsData.map(d => ({...d, teamId: d.teamId || ''}));
       const prevStandingsRankMap = new Map(prevStandings.map(s => [s.teamId, s.rank]));
 
@@ -65,11 +69,18 @@ export async function recalculateAllDataClientSide(
         .sort((a, b) => b.score - a.score || (a.name || '').localeCompare(b.name || ''));
           
       const allUserHistories: { [userId: string]: UserHistory } = {};
+
+      let rankForWeek0 = 0;
+      let lastScoreForWeek0 = Infinity;
       rankedUsersForWeek0.forEach((user, index) => {
-        allUserHistories[user.id] = { 
-            userId: user.id, 
-            weeklyScores: [{ week: 0, score: user.score, rank: index + 1 }] 
-        };
+          if (user.score < lastScoreForWeek0) {
+              rankForWeek0 = index + 1;
+          }
+          lastScoreForWeek0 = user.score;
+          allUserHistories[user.id] = { 
+              userId: user.id, 
+              weeklyScores: [{ week: 0, score: user.score, rank: rankForWeek0 }] 
+          };
       });
   
       // --- 3. Clear all derived data collections ---
@@ -218,9 +229,14 @@ export async function recalculateAllDataClientSide(
             .map(user => ({ ...user, scoreForWeek: userScoresForWeek[user.id] ?? 0 }))
             .sort((a, b) => b.scoreForWeek - a.scoreForWeek || (a.name || '').localeCompare(b.name || ''));
             
+        let rankForWeek = 0;
+        let lastScoreForWeek = Infinity;
         rankedUsersForWeek.forEach((user, index) => {
-            const rank = index + 1;
-            allUserHistories[user.id].weeklyScores.push({ week: week, score: user.scoreForWeek, rank: rank });
+            if (user.scoreForWeek < lastScoreForWeek) {
+                rankForWeek = index + 1;
+            }
+            lastScoreForWeek = user.scoreForWeek;
+            allUserHistories[user.id].weeklyScores.push({ week: week, score: user.scoreForWeek, rank: rankForWeek });
         });
       }
   
@@ -259,7 +275,7 @@ export async function recalculateAllDataClientSide(
 
       // --- 8. Calculate and store Monthly MimoM awards ---
       progressCallback('Calculating monthly awards...');
-      const nonProUsers = users.filter(u => !u.isPro);
+      const nonProUsers = allUsers.filter(u => !u.isPro);
 
       for (const period of allAwardPeriods) {
         if (playedWeeks.includes(period.endWeek)) {
