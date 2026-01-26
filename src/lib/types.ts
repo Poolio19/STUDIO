@@ -146,3 +146,9 @@ export type WeekResults = {
     week: number;
     results: MatchResult[];
 }
+
+export type RollOfHonourEntry = {
+    season: string;
+    winnerName: string;
+    runnerUpName: string;
+};
