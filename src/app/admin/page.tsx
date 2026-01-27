@@ -539,7 +539,7 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-2">
             <CardHeader>
-                <CardTitle>Step 1 &amp; 2: Enter &amp; Write Results</CardTitle>
+                <CardTitle>Step 1 & 2: Enter & Write Results</CardTitle>
                 <CardDescription>
                     Select a week, enter the scores, then create a temporary results file and write it to the database.
                 </CardDescription>
@@ -631,7 +631,7 @@ export default function AdminPage() {
                     <AlertDialogTrigger asChild>
                         <Button variant="destructive" size="lg" className="text-lg" disabled={isUpdating}>
                             {isUpdating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                            3. Update &amp; Recalculate All Data
+                            3. Update & Recalculate All Data
                         </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -709,6 +709,10 @@ export default function AdminPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={historicalForm.handleSubmit(onHistoricalSubmit)} className="space-y-4">
+              <Button type="submit" disabled={isUpdatingHistoricalData}>
+                {isUpdatingHistoricalData ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+                Save Historical Data
+              </Button>
               <div className="overflow-x-auto">
                 <div className="grid grid-cols-[2fr_repeat(17,1fr)] gap-1 pb-2 min-w-[1000px]">
                   <span className="font-medium text-muted-foreground text-sm sticky left-0 bg-card pr-2">Player</span>
@@ -750,10 +754,6 @@ export default function AdminPage() {
                 ))}
                 </div>
               </div>
-              <Button type="submit" disabled={isUpdatingHistoricalData} className="mt-4">
-                {isUpdatingHistoricalData ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                Save Historical Data
-              </Button>
             </form>
           </CardContent>
         </Card>
