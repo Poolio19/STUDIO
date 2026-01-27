@@ -60,9 +60,9 @@ export default function LegendsPage() {
             const values = validUsers.map(u => getValue(u));
             const maxValue = Math.max(...values);
             
-            // Only declare a winner if the max value is greater than zero,
-            // or in the case of averages, not the sentinel value.
-            if (maxValue <= 0) return [];
+            // Allow categories where the max value is 0 (e.g., no wins yet)
+            // but hide for categories where -1 is a sentinel value for "not applicable"
+            if (maxValue < 0) return [];
 
             return validUsers
                 .filter(u => getValue(u) === maxValue)
@@ -76,7 +76,7 @@ export default function LegendsPage() {
             mostWins: findWinners(u => u.first || 0, v => `${v} win${v !== 1 ? 's' : ''}`),
             highestWinnings: findWinners(u => u.cashWinnings || 0, v => `£${v.toFixed(2)}`),
             mostTopTens: findWinners(topTenFinishes, v => `${v} top 10 finishes`),
-            highestAverage: findWinners(u => (u.seasonsPlayed || 0) > 1 ? ((u.cashWinnings || 0) / u.seasonsPlayed) : -1, v => `£${v.toFixed(2)} / season`),
+            highestAverage: findWinners(u => (u.seasonsPlayed || 0) > 1 ? ((u.cashWinnings || 0) / (u.seasonsPlayed || 1)) : -1, v => `£${v.toFixed(2)} / season`),
             mostMiMoMs: findWinners(totalMiMoMs, v => `${v} monthly award${v !== 1 ? 's' : ''}`),
         };
     }, [users]);
