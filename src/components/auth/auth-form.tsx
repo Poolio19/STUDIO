@@ -65,6 +65,7 @@ export function AuthForm() {
     
     const newUserProfile: Omit<User, 'id'> = {
       name: email.split('@')[0] || 'New User',
+      nickname: '',
       email: email,
       avatar: String(Math.floor(Math.random() * 49) + 1),
       score: 0,
@@ -81,6 +82,7 @@ export function AuthForm() {
       joinDate: new Date().toISOString(),
       country: '',
       favouriteTeam: '',
+      phoneNumber: '',
     };
 
     setDocumentNonBlocking(userDocRef, newUserProfile);
@@ -178,3 +180,5 @@ export function AuthForm() {
     </Card>
   );
 }
+
+    

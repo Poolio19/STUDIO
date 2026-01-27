@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -62,6 +63,7 @@ const profileFormSchema = z.object({
   name: z.string().min(2, {
     message: 'Name must be at least 2 characters.',
   }),
+  nickname: z.string().optional(),
   email: z.string().email({
     message: 'Please enter a valid email address.',
   }),
@@ -111,6 +113,7 @@ export default function ProfilePage() {
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       name: '',
+      nickname: '',
       email: '',
       favouriteTeam: 'team_1',
       phoneNumber: '',
@@ -122,6 +125,7 @@ export default function ProfilePage() {
     if (user) {
       form.reset({
         name: user.name || '',
+        nickname: user.nickname || '',
         email: user.email || '',
         favouriteTeam: user.favouriteTeam || 'none',
         phoneNumber: user.phoneNumber || '',
@@ -137,6 +141,7 @@ export default function ProfilePage() {
 
     const updatedData = {
         name: data.name,
+        nickname: data.nickname,
         email: data.email,
         favouriteTeam: data.favouriteTeam,
         phoneNumber: data.phoneNumber,
@@ -257,6 +262,7 @@ export default function ProfilePage() {
                   </Avatar>
                   <div>
                       <h2 className="text-2xl font-bold">{user?.name}</h2>
+                      {user?.nickname && <p className="text-lg text-muted-foreground">"{user.nickname}"</p>}
                       <p className="text-sm text-muted-foreground">Seasons Played: {user?.seasonsPlayed || 0}</p>
                       <p className="text-sm text-muted-foreground">All Time Winnings: £{(user?.cashWinnings || 0).toFixed(2)}</p>
                   </div>
@@ -411,6 +417,19 @@ export default function ProfilePage() {
                       <FormLabel>Name</FormLabel>
                       <FormControl>
                         <Input placeholder="Your name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="nickname"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nickname</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Your nickname" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

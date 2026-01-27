@@ -3,6 +3,7 @@
 export type User = {
   id: string;
   name: string;
+  nickname?: string;
   avatar: string;
   score: number;
   rank: number;
@@ -36,6 +37,7 @@ export type User = {
   joRuMimoM?: number;
   xmasNo1?: number;
   cashWinnings?: number;
+  phoneNumber?: string;
 };
 
 export type Team = {
@@ -185,4 +187,4 @@ export type Message = {
 
     
 
-  
+    
