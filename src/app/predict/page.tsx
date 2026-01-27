@@ -37,8 +37,8 @@ const formSchema = z.object({
 type PredictionItem = z.infer<typeof predictionSchema>;
 
 const RankDifference = ({ diff }: { diff: number }) => {
-  const Icon = diff > 0 ? ArrowDown : diff < 0 ? ArrowUp : Minus;
-  const color = diff > 0 ? 'text-red-500' : diff < 0 ? 'text-green-500' : 'text-gray-400';
+  const Icon = diff > 0 ? ArrowUp : diff < 0 ? ArrowDown : Minus;
+  const color = diff > 0 ? 'text-green-500' : diff < 0 ? 'text-red-500' : 'text-gray-400';
 
   return (
     <div className={cn("flex flex-col items-center justify-center h-full w-full", color)}>
