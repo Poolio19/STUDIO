@@ -74,7 +74,7 @@ export default function LeaderboardPage() {
     if (!usersData || !predictionsData) return [];
     const activeUserIds = new Set(predictionsData.map(p => p.userId));
     return [...usersData]
-        .filter(u => activeUserIds.has(u.id))
+        .filter(u => u.name && activeUserIds.has(u.id))
         .sort((a, b) => a.rank - b.rank);
   }, [usersData, predictionsData]);
   
@@ -269,7 +269,7 @@ export default function LeaderboardPage() {
                                 <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name || 'User'} data-ai-hint="person" />
                                 <AvatarFallback>{(user.name || '?').charAt(0)}</AvatarFallback>
                                 </Avatar>
-                                <span>{user.isPro ? user.name.toUpperCase() : user.name}</span>
+                                <span>{user.isPro ? (user.name || '').toUpperCase() : user.name}</span>
                             </div>
                           </TableCell>
                           <TableCell className="text-center font-bold text-lg py-1">{user.score}</TableCell>

@@ -197,14 +197,13 @@ export default function ProfilePage() {
   };
   
   const getInitials = (name: string | null | undefined) => {
-    if (!name) return '';
+    if (!name) return '?';
     const parts = name.split(' ');
     if (parts.length > 1) {
       return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
   };
-
 
   if (isAuthUserLoading) {
     return (
@@ -230,6 +229,14 @@ export default function ProfilePage() {
       </div>
     );
   }
+
+  const firstPlaceClass = (user?.first ?? 0) > 0 ? "text-yellow-500" : "text-gray-300 dark:text-gray-600";
+  const secondPlaceClass = (user?.second ?? 0) > 0 ? "text-slate-400" : "text-gray-300 dark:text-gray-600";
+  const thirdPlaceClass = (user?.third ?? 0) > 0 ? "text-amber-700" : "text-gray-300 dark:text-gray-600";
+  const mimoMClass = (user?.mimoM ?? 0) > 0 ? "text-yellow-600" : "text-gray-300 dark:text-gray-600";
+  const joMimoMClass = (user?.joMimoM ?? 0) > 0 ? "text-yellow-600/80" : "text-gray-300 dark:text-gray-600";
+  const ruMimoMClass = (user?.ruMimoM ?? 0) > 0 ? "text-slate-400" : "text-gray-300 dark:text-gray-600";
+  const joRuMimoMClass = (user?.joRuMimoM ?? 0) > 0 ? "text-slate-400/80" : "text-gray-300 dark:text-gray-600";
 
   return (
     <div className="space-y-8">
@@ -286,7 +293,7 @@ export default function ProfilePage() {
                                     <TooltipTrigger>
                                         <div className="flex flex-col items-center gap-1 w-12">
                                             <span className="text-xs font-semibold">2nd</span>
-                                            <Medal className={cn("size-7", (user?.second ?? 0) > 0 ? "text-slate-400" : "text-gray-300 dark:text-gray-600")} />
+                                            <Medal className={cn("size-7", secondPlaceClass)} />
                                             <span className="text-sm font-bold">{user?.second || 0}</span>
                                         </div>
                                     </TooltipTrigger>
@@ -296,7 +303,7 @@ export default function ProfilePage() {
                                     <TooltipTrigger>
                                         <div className="flex flex-col items-center gap-1 w-12">
                                             <span className="text-sm font-bold">1st</span>
-                                            <Trophy className={cn("size-8", (user?.first ?? 0) > 0 ? "text-yellow-500" : "text-gray-300 dark:text-gray-600")} />
+                                            <Trophy className={cn("size-8", firstPlaceClass)} />
                                             <span className="text-base font-bold">{user?.first || 0}</span>
                                         </div>
                                     </TooltipTrigger>
@@ -306,7 +313,7 @@ export default function ProfilePage() {
                                     <TooltipTrigger>
                                         <div className="flex flex-col items-center gap-1 w-12">
                                             <span className="text-xs font-semibold">3rd</span>
-                                            <Medal className={cn("size-6", (user?.third ?? 0) > 0 ? "text-amber-700" : "text-gray-300 dark:text-gray-600")} />
+                                            <Medal className={cn("size-6", thirdPlaceClass)} />
                                             <span className="text-sm font-bold">{user?.third || 0}</span>
                                         </div>
                                     </TooltipTrigger>
@@ -322,7 +329,7 @@ export default function ProfilePage() {
                                 <Tooltip>
                                     <TooltipTrigger>
                                         <div className="flex flex-col items-center gap-1">
-                                            <Award className={cn("size-7", (user?.mimoM ?? 0) > 0 ? "text-yellow-600" : "text-gray-300 dark:text-gray-600")} />
+                                            <Award className={cn("size-7", mimoMClass)} />
                                             <span className="text-xs font-bold">{user?.mimoM || 0}</span>
                                         </div>
                                     </TooltipTrigger>
@@ -331,7 +338,7 @@ export default function ProfilePage() {
                                 <Tooltip>
                                     <TooltipTrigger>
                                         <div className="flex flex-col items-center gap-1">
-                                            <Award className={cn("size-6", (user?.joMimoM ?? 0) > 0 ? "text-yellow-600/80" : "text-gray-300 dark:text-gray-600")} />
+                                            <Award className={cn("size-6", joMimoMClass)} />
                                             <span className="text-xs font-bold">{user?.joMimoM || 0}</span>
                                         </div>
                                     </TooltipTrigger>
@@ -340,7 +347,7 @@ export default function ProfilePage() {
                                 <Tooltip>
                                     <TooltipTrigger>
                                         <div className="flex flex-col items-center gap-1">
-                                            <Award className={cn("size-7", (user?.ruMimoM ?? 0) > 0 ? "text-slate-400" : "text-gray-300 dark:text-gray-600")} />
+                                            <Award className={cn("size-7", ruMimoMClass)} />
                                             <span className="text-xs font-bold">{user?.ruMimoM || 0}</span>
                                         </div>
                                     </TooltipTrigger>
@@ -349,7 +356,7 @@ export default function ProfilePage() {
                                  <Tooltip>
                                     <TooltipTrigger>
                                         <div className="flex flex-col items-center gap-1">
-                                            <Award className={cn("size-6", (user?.joRuMimoM ?? 0) > 0 ? "text-slate-400/80" : "text-gray-300 dark:text-gray-600")} />
+                                            <Award className={cn("size-6", joRuMimoMClass)} />
                                             <span className="text-xs font-bold">{user?.joRuMimoM || 0}</span>
                                         </div>
                                     </TooltipTrigger>
@@ -359,6 +366,7 @@ export default function ProfilePage() {
                         </div>
                     </div>
                 </div>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -486,5 +494,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    

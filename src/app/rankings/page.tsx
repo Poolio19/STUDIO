@@ -93,7 +93,8 @@ export default function RankingsPage() {
     return counts;
   }, [sortedUsers]);
 
-  const formatNameForLegend = (name: string) => {
+  const formatNameForLegend = (name: string | null | undefined) => {
+    if (!name) return '';
     if (name.startsWith('THE ')) {
       return name.substring(4);
     }
