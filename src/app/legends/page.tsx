@@ -45,7 +45,6 @@ const StatCard = ({ title, icon: Icon, winners }: { title: string, icon: React.E
 export default function LegendsPage() {
     const firestore = useFirestore();
     
-    // We only need non-pro players for these calculations
     const usersQuery = useMemoFirebase(() => 
         firestore ? query(collection(firestore, 'users'), where('isPro', '==', false)) : null, 
     [firestore]);
@@ -59,7 +58,7 @@ export default function LegendsPage() {
             if (users.length === 0) return [];
             const values = users.map(u => getValue(u));
             const maxValue = Math.max(...values);
-            if (maxValue === -Infinity || maxValue === 0) return [];
+            if (maxValue === -Infinity || maxValue <= 0) return [];
             return users
                 .filter(u => getValue(u) === maxValue)
                 .map(user => ({ user, value: formatValue(maxValue) }));
@@ -72,7 +71,7 @@ export default function LegendsPage() {
             mostWins: findWinners(u => u.first || 0, v => `${v} win${v > 1 ? 's' : ''}`),
             highestWinnings: findWinners(u => u.cashWinnings || 0, v => `£${v.toFixed(2)}`),
             mostTopTens: findWinners(topTenFinishes, v => `${v} finishes`),
-            highestAverage: findWinners(u => u.seasonsPlayed && u.seasonsPlayed > 0 ? (u.cashWinnings || 0) / u.seasonsPlayed : 0, v => `£${v.toFixed(2)} / season`),
+            highestAverage: findWinners(u => u.seasonsPlayed && u.seasonsPlayed > 1 ? (u.cashWinnings || 0) / u.seasonsPlayed : 0, v => `£${v.toFixed(2)} / season`),
             mostMiMoMs: findWinners(totalMiMoMs, v => `${v} awards`),
         };
     }, [users]);
@@ -104,7 +103,7 @@ export default function LegendsPage() {
         
          <Card>
             <CardHeader>
-                <CardTitle>The Consistent & The Climbers</CardTitle>
+                <CardTitle>The Consistent &amp; The Climbers</CardTitle>
                 <CardDescription>Recognizing sustained excellence and monthly brilliance.</CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -166,3 +165,5 @@ export default function LegendsPage() {
     </div>
   );
 }
+
+    

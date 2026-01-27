@@ -519,9 +519,10 @@ export default function AdminPage() {
             };
             // Ensure no NaN values are sent to Firestore
             Object.keys(userData).forEach(key => {
-                const value = (userData as any)[key];
+                const typedKey = key as keyof typeof userData;
+                const value = userData[typedKey];
                 if (typeof value === 'number' && isNaN(value)) {
-                    (userData as any)[key] = 0;
+                    (userData as any)[typedKey] = 0;
                 }
             });
 
@@ -564,7 +565,7 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-2">
             <CardHeader>
-                <CardTitle>Step 1 & 2: Enter & Write Results</CardTitle>
+                <CardTitle>Step 1 &amp; 2: Enter &amp; Write Results</CardTitle>
                 <CardDescription>
                     Select a week, enter the scores, then create a temporary results file and write it to the database.
                 </CardDescription>
@@ -656,7 +657,7 @@ export default function AdminPage() {
                     <AlertDialogTrigger asChild>
                         <Button variant="destructive" size="lg" className="text-lg" disabled={isUpdating}>
                             {isUpdating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                            3. Update & Recalculate All Data
+                            3. Update &amp; Recalculate All Data
                         </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -730,7 +731,7 @@ export default function AdminPage() {
       <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle>Historical Player Data</CardTitle>
-            <CardDescription>Manage players' historical achievements and trophy cabinet. Scroll right for more stats.</CardDescription>
+            <CardDescription>Manage players&apos; historical achievements and trophy cabinet. Scroll right for more stats.</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={historicalForm.handleSubmit(onHistoricalSubmit)} className="space-y-4">
@@ -783,3 +784,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    

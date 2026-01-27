@@ -162,8 +162,8 @@ export type WeekResults = {
 
 export type HonoursPlayer = {
   name: string;
-  points: number;
-  winnings: number;
+  points?: number;
+  winnings?: number;
 };
 
 export type RollOfHonourEntry = {
@@ -171,5 +171,7 @@ export type RollOfHonourEntry = {
   winners: HonoursPlayer[];
   runnersUp: HonoursPlayer[];
 };
+
+    
 
     

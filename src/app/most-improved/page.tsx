@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { User, UserHistory, SeasonMonth, Match } from '@/lib/types';
+import type { User, UserHistory, SeasonMonth, Match, HistoricalMimoMonth } from '@/lib/types';
 import { getAvatarUrl } from '@/lib/placeholder-images';
 import { ArrowUp, ArrowDown, Minus, Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
@@ -142,7 +142,8 @@ export default function MostImprovedPage() {
         return 0;
     });
   }, [seasonMonthsData]);
-
+  
+  const historicalAwardsTyped: HistoricalMimoMonth[] = historicalMimoAwards;
   const userNameMap = useMemo(() => {
     if (!users) return new Map<string, User>();
     return new Map(users.map(u => [u.name, u]));
@@ -153,13 +154,11 @@ export default function MostImprovedPage() {
     
     return seasonMonths.map(seasonMonth => {
         const seasonString = `${seasonMonth.year}-${seasonMonth.year + 1}`;
-        const historicalMonth = historicalMimoAwards.find(h => {
-            const sameSeason = h.season === seasonString;
-            const historicalAbbr = h.month.toUpperCase();
-            const currentAbbr = seasonMonth.abbreviation.toUpperCase();
-            // Handle 'Sep' vs 'Sept'
-            const sameMonth = currentAbbr.startsWith(historicalAbbr) || historicalAbbr.startsWith(currentAbbr);
-            return sameSeason && sameMonth;
+        const historicalMonth = historicalAwardsTyped.find(h => {
+          if (h.season !== seasonString) return false;
+          const historicalAbbr = h.month.toUpperCase().substring(0,3);
+          const currentAbbr = seasonMonth.abbreviation.toUpperCase().substring(0,3);
+          return historicalAbbr === currentAbbr;
         });
 
         let isFuture = false;
@@ -167,12 +166,12 @@ export default function MostImprovedPage() {
         if (period) {
           isFuture = currentWeek < period.startWeek;
         }
-
+        
         if (historicalMonth && !isFuture) {
             const winners = historicalMonth.awards.filter(a => a.type === 'MiMoM' || a.type === 'JoMiMoM');
             const runnersUp = historicalMonth.awards.filter(a => a.type === 'RuMiMoM' || a.type === 'JoRuMiMoM');
 
-            const mapAwardToUser = (award: (typeof historicalMonth.awards)[0]) => {
+            const mapAwardToUser = (award: any) => {
                 const user = userNameMap.get(award.name);
                 return {
                     ...(user || { id: award.name, name: award.name, avatar: '' }),
@@ -244,7 +243,7 @@ export default function MostImprovedPage() {
             currentRunnersUp,
         }
     });
-  }, [users, seasonMonths, currentAwardPeriod, userHistories, currentWeek, userNameMap]);
+  }, [users, seasonMonths, currentAwardPeriod, userHistories, currentWeek, userNameMap, historicalAwardsTyped]);
 
 
   const getLadderRankColour = (user: (typeof ladderData.ladderWithRanks)[0]) => {
@@ -357,7 +356,7 @@ export default function MostImprovedPage() {
                                 {hasAwards ? (
                                     <div className="w-full space-y-2">
                                         {winners?.map(winner => (
-                                            <div key={winner.userId || winner.id} className="bg-yellow-400/20 p-2 rounded-md flex items-center gap-3">
+                                            <div key={winner.id} className="bg-yellow-400/20 p-2 rounded-md flex items-center gap-3">
                                                 <Avatar className="h-10 w-10">
                                                     <AvatarImage src={getAvatarUrl(winner.avatar || '')} alt={winner.name} data-ai-hint="person portrait" />
                                                     <AvatarFallback>{(winner.name || '?').charAt(0)}</AvatarFallback>
@@ -373,7 +372,7 @@ export default function MostImprovedPage() {
                                         ))}
 
                                         {runnerUpPrize > 0 && runnersUp?.map(runnerUp => (
-                                            <div key={runnerUp.userId || runnerUp.id} className="bg-slate-400/20 p-2 rounded-md flex items-center gap-3">
+                                            <div key={runnerUp.id} className="bg-slate-400/20 p-2 rounded-md flex items-center gap-3">
                                                 <Avatar className="h-10 w-10">
                                                     <AvatarImage src={getAvatarUrl(runnerUp.avatar || '')} alt={runnerUp.name} data-ai-hint="person portrait" />
                                                     <AvatarFallback>{(runnerUp.name || '?').charAt(0)}</AvatarFallback>
@@ -406,3 +405,5 @@ export default function MostImprovedPage() {
     </div>
   );
 }
+
+    
