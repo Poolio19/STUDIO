@@ -231,8 +231,6 @@ export default function ProfilePage() {
     );
   }
 
-  const topTenFinishes = (user?.fourth || 0) + (user?.fifth || 0) + (user?.sixth || 0) + (user?.seventh || 0) + (user?.eighth || 0) + (user?.ninth || 0) + (user?.tenth || 0);
-
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
@@ -278,96 +276,90 @@ export default function ProfilePage() {
               <Separator className="my-2" />
               
               <div className="w-full text-center">
-                  <h3 className="text-lg font-semibold mb-2">Trophy Cabinet</h3>
-                  <div className="space-y-3">
-                      <div>
-                          <p className="text-xs font-semibold text-muted-foreground text-center mb-2 uppercase">Best Finishes</p>
-                           <div className="flex justify-around">
-                              <TooltipProvider>
-                                  <Tooltip>
-                                      <TooltipTrigger>
-                                          <div className="flex flex-col items-center gap-1">
-                                              <Trophy className={cn("size-6", (user?.first || 0) > 0 ? "text-yellow-500" : "text-gray-400")} />
-                                              <span className="text-xs font-bold">{user?.first || 0}</span>
-                                          </div>
-                                      </TooltipTrigger>
-                                      <TooltipContent><p>{user?.first || 0}x League Champion</p></TooltipContent>
-                                  </Tooltip>
-                                  <Tooltip>
-                                      <TooltipTrigger>
-                                          <div className="flex flex-col items-center gap-1">
-                                              <Medal className={cn("size-6", (user?.second || 0) > 0 ? "text-slate-400" : "text-gray-400")} />
-                                              <span className="text-xs font-bold">{user?.second || 0}</span>
-                                          </div>
-                                      </TooltipTrigger>
-                                      <TooltipContent><p>{user?.second || 0}x Runner Up</p></TooltipContent>
-                                  </Tooltip>
-                                  <Tooltip>
-                                      <TooltipTrigger>
-                                          <div className="flex flex-col items-center gap-1">
-                                              <Medal className={cn("size-6", (user?.third || 0) > 0 ? "text-amber-800" : "text-gray-400")} />
-                                              <span className="text-xs font-bold">{user?.third || 0}</span>
-                                          </div>
-                                      </TooltipTrigger>
-                                      <TooltipContent><p>{user?.third || 0}x 3rd Place</p></TooltipContent>
-                                  </Tooltip>
-                                   <Tooltip>
-                                      <TooltipTrigger>
-                                          <div className="flex flex-col items-center gap-1">
-                                              <ShieldCheck className={cn("size-6", topTenFinishes > 0 ? "text-blue-500" : "text-gray-400")} />
-                                              <span className="text-xs font-bold">{topTenFinishes}</span>
-                                          </div>
-                                      </TooltipTrigger>
-                                      <TooltipContent><p>{topTenFinishes}x Top 10 Finishes</p></TooltipContent>
-                                  </Tooltip>
-                              </TooltipProvider>
-                          </div>
-                      </div>
-                      <div>
-                          <p className="text-xs font-semibold text-muted-foreground text-center mb-2 uppercase">Monthly Awards</p>
-                          <div className="flex justify-around">
-                              <TooltipProvider>
-                                  <Tooltip>
-                                      <TooltipTrigger>
-                                          <div className="flex flex-col items-center gap-1">
-                                              <Award className={cn("size-6", (user?.mimoM || 0) > 0 ? "text-yellow-600" : "text-gray-400")} />
-                                              <span className="text-xs font-bold">{user?.mimoM || 0}</span>
-                                          </div>
-                                      </TooltipTrigger>
-                                      <TooltipContent><p>{user?.mimoM || 0}x MiMoM</p></TooltipContent>
-                                  </Tooltip>
-                                  <Tooltip>
-                                      <TooltipTrigger>
-                                          <div className="flex flex-col items-center gap-1">
-                                              <Users className={cn("size-6", (user?.joMimoM || 0) > 0 ? "text-yellow-600" : "text-gray-400")} />
-                                              <span className="text-xs font-bold">{user?.joMimoM || 0}</span>
-                                          </div>
-                                      </TooltipTrigger>
-                                      <TooltipContent><p>{user?.joMimoM || 0}x JoMiMoM</p></TooltipContent>
-                                  </Tooltip>
-                                  <Tooltip>
-                                      <TooltipTrigger>
-                                          <div className="flex flex-col items-center gap-1">
-                                              <ShieldCheck className={cn("size-6", (user?.ruMimoM || 0) > 0 ? "text-blue-500" : "text-gray-400")} />
-                                              <span className="text-xs font-bold">{user?.ruMimoM || 0}</span>
-                                          </div>
-                                      </TooltipTrigger>
-                                      <TooltipContent><p>{user?.ruMimoM || 0}x RuMiMoM</p></TooltipContent>
-                                  </Tooltip>
-                                   <Tooltip>
-                                      <TooltipTrigger>
-                                          <div className="flex flex-col items-center gap-1">
-                                              <Users className={cn("size-6", (user?.joRuMimoM || 0) > 0 ? "text-blue-500" : "text-gray-400")} />
-                                              <span className="text-xs font-bold">{user?.joRuMimoM || 0}</span>
-                                          </div>
-                                      </TooltipTrigger>
-                                      <TooltipContent><p>{user?.joRuMimoM || 0}x JoRuMiMoM</p></TooltipContent>
-                                  </Tooltip>
-                              </TooltipProvider>
-                          </div>
-                      </div>
-                  </div>
-              </div>
+                <h3 className="text-lg font-semibold mb-2">Trophy Cabinet</h3>
+                <div className="space-y-4">
+                    <div>
+                        <p className="text-xs font-semibold text-muted-foreground text-center mb-2 uppercase">Best Finishes</p>
+                        <div className="flex justify-around items-end">
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <div className="flex flex-col items-center gap-1 w-12">
+                                            <span className="text-xs font-semibold">2nd</span>
+                                            <Medal className={cn("size-7", (user?.second || 0) > 0 ? "text-slate-400" : "text-gray-300 dark:text-gray-600")} />
+                                            <span className="text-sm font-bold">{user?.second || 0}</span>
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>{user?.second || 0}x Runner Up</p></TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <div className="flex flex-col items-center gap-1 w-12">
+                                            <span className="text-sm font-bold">1st</span>
+                                            <Trophy className={cn("size-8", (user?.first || 0) > 0 ? "text-yellow-500" : "text-gray-300 dark:text-gray-600")} />
+                                            <span className="text-base font-bold">{user?.first || 0}</span>
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>{user?.first || 0}x League Champion</p></TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <div className="flex flex-col items-center gap-1 w-12">
+                                            <span className="text-xs font-semibold">3rd</span>
+                                            <Medal className={cn("size-6", (user?.third || 0) > 0 ? "text-amber-700" : "text-gray-300 dark:text-gray-600")} />
+                                            <span className="text-sm font-bold">{user?.third || 0}</span>
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>{user?.third || 0}x 3rd Place</p></TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                    </div>
+                    <div>
+                        <p className="text-xs font-semibold text-muted-foreground text-center mb-2 uppercase">Monthly Awards</p>
+                        <div className="flex justify-around">
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <div className="flex flex-col items-center gap-1">
+                                            <Award className={cn("size-7", (user?.mimoM || 0) > 0 ? "text-yellow-600" : "text-gray-300 dark:text-gray-600")} />
+                                            <span className="text-xs font-bold">{user?.mimoM || 0}</span>
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>{user?.mimoM || 0}x MiMoM</p></TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <div className="flex flex-col items-center gap-1">
+                                            <Award className={cn("size-6", (user?.joMimoM || 0) > 0 ? "text-yellow-600/80" : "text-gray-300 dark:text-gray-600")} />
+                                            <span className="text-xs font-bold">{user?.joMimoM || 0}</span>
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>{user?.joMimoM || 0}x JoMiMoM</p></TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <div className="flex flex-col items-center gap-1">
+                                            <Award className={cn("size-7", (user?.ruMimoM || 0) > 0 ? "text-slate-400" : "text-gray-300 dark:text-gray-600")} />
+                                            <span className="text-xs font-bold">{user?.ruMimoM || 0}</span>
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>{user?.ruMimoM || 0}x RuMiMoM</p></TooltipContent>
+                                </Tooltip>
+                                 <Tooltip>
+                                    <TooltipTrigger>
+                                        <div className="flex flex-col items-center gap-1">
+                                            <Award className={cn("size-6", (user?.joRuMimoM || 0) > 0 ? "text-slate-400/80" : "text-gray-300 dark:text-gray-600")} />
+                                            <span className="text-xs font-bold">{user?.joRuMimoM || 0}</span>
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>{user?.joRuMimoM || 0}x JoRuMiMoM</p></TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                    </div>
+                </div>
+            </div>
             </CardContent>
           </Card>
         </div>

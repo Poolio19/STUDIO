@@ -110,6 +110,7 @@ export default function AdminPage() {
   const [isImportingFixtures, setIsImportingFixtures] = React.useState(false);
   const [isImportingStandings, setIsImportingStandings] = React.useState(false);
   const [isUpdatingHistoricalData, setIsUpdatingHistoricalData] = React.useState(false);
+  const [initialWeekSet, setInitialWeekSet] = React.useState(false);
 
   const [latestFilePath, setLatestFilePath] = React.useState<string | null>(null);
   const [latestFileContent, setLatestFileContent] = React.useState<string | null>(null);
@@ -232,14 +233,15 @@ export default function AdminPage() {
             cashWinnings: u.cashWinnings || 0,
         })));
     }
-}, [replace]);
+  }, [replace]);
 
 
   React.useEffect(() => {
-    if (defaultWeek > 0 && !scoresForm.formState.isDirty) {
+    if (defaultWeek > 0 && !initialWeekSet) {
       scoresForm.setValue('week', defaultWeek);
+      setInitialWeekSet(true);
     }
-  }, [defaultWeek, scoresForm]);
+  }, [defaultWeek, scoresForm, initialWeekSet]);
 
 
   const selectedWeek = scoresForm.watch('week');
