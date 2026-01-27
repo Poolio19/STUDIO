@@ -160,14 +160,16 @@ export type WeekResults = {
     results: MatchResult[];
 }
 
+export type HonoursPlayer = {
+  name: string;
+  points: number;
+  winnings: number;
+};
+
 export type RollOfHonourEntry = {
-    season: string;
-    winnerName: string;
-    runnerUpName: string;
-    winnerPoints: number;
-    winnerWinnings: number;
-    runnerUpPoints: number;
-    runnerUpWinnings: number;
+  season: string;
+  winners: HonoursPlayer[];
+  runnersUp: HonoursPlayer[];
 };
 
     

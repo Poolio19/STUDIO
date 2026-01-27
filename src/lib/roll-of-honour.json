@@ -1,200 +1,201 @@
+
 [
     {
-      "season": "2024-2025",
-      "winnerName": "TBC",
-      "runnerUpName": "TBC",
-      "winnerPoints": 0,
-      "winnerWinnings": 0,
-      "runnerUpPoints": 0,
-      "runnerUpWinnings": 0
+        "season": "2024-2025",
+        "winners": [
+            { "name": "TBC", "points": 0, "winnings": 0 }
+        ],
+        "runnersUp": [
+            { "name": "TBC", "points": 0, "winnings": 0 }
+        ]
     },
     {
-      "season": "2023-2024",
-      "winnerName": "Ronnie Bain",
-      "runnerUpName": "Theo Gresson",
-      "winnerPoints": 0,
-      "winnerWinnings": 0,
-      "runnerUpPoints": 0,
-      "runnerUpWinnings": 0
+        "season": "2023-2024",
+        "winners": [
+            { "name": "Ronnie Bain", "points": 0, "winnings": 0 }
+        ],
+        "runnersUp": [
+            { "name": "Theo Gresson", "points": 0, "winnings": 0 }
+        ]
     },
     {
         "season": "2022-2023",
-        "winnerName": "Ronnie Bain",
-        "runnerUpName": "Leyton Collings",
-        "winnerPoints": 0,
-        "winnerWinnings": 0,
-        "runnerUpPoints": 0,
-        "runnerUpWinnings": 0
+        "winners": [
+            { "name": "Ronnie Bain", "points": 0, "winnings": 0 }
+        ],
+        "runnersUp": [
+            { "name": "Leyton Collings", "points": 0, "winnings": 0 }
+        ]
     },
     {
         "season": "2021-2022",
-        "winnerName": "John Parkinson",
-        "runnerUpName": "Arthur Gwyn-Davies",
-        "winnerPoints": 0,
-        "winnerWinnings": 0,
-        "runnerUpPoints": 0,
-        "runnerUpWinnings": 0
+        "winners": [
+            { "name": "John Parkinson", "points": 0, "winnings": 0 }
+        ],
+        "runnersUp": [
+            { "name": "Arthur Gwyn-Davies", "points": 0, "winnings": 0 }
+        ]
     },
     {
         "season": "2020-2021",
-        "winnerName": "THE DAILY STAR",
-        "runnerUpName": "Chris Dodds",
-        "winnerPoints": 0,
-        "winnerWinnings": 0,
-        "runnerUpPoints": 0,
-        "runnerUpWinnings": 0
+        "winners": [
+            { "name": "THE DAILY STAR", "points": 0, "winnings": 0 }
+        ],
+        "runnersUp": [
+            { "name": "Chris Dodds", "points": 0, "winnings": 0 }
+        ]
     },
     {
         "season": "2019-2020",
-        "winnerName": "George Roberts",
-        "runnerUpName": "Craig Stevens",
-        "winnerPoints": 0,
-        "winnerWinnings": 0,
-        "runnerUpPoints": 0,
-        "runnerUpWinnings": 0
+        "winners": [
+            { "name": "George Roberts", "points": 0, "winnings": 0 }
+        ],
+        "runnersUp": [
+            { "name": "Craig Stevens", "points": 0, "winnings": 0 }
+        ]
     },
     {
         "season": "2018-2019",
-        "winnerName": "Andy Neill",
-        "runnerUpName": "Tom Kehoe",
-        "winnerPoints": 0,
-        "winnerWinnings": 0,
-        "runnerUpPoints": 0,
-        "runnerUpWinnings": 0
+        "winners": [
+            { "name": "Andy Neill", "points": 0, "winnings": 0 }
+        ],
+        "runnersUp": [
+            { "name": "Tom Kehoe", "points": 0, "winnings": 0 }
+        ]
     },
     {
         "season": "2017-2018",
-        "winnerName": "THE TELEGRAPH",
-        "runnerUpName": "Mick Brown",
-        "winnerPoints": 0,
-        "winnerWinnings": 0,
-        "runnerUpPoints": 0,
-        "runnerUpWinnings": 0
+        "winners": [
+            { "name": "THE TELEGRAPH", "points": 0, "winnings": 0 }
+        ],
+        "runnersUp": [
+            { "name": "Mick Brown", "points": 0, "winnings": 0 }
+        ]
     },
     {
         "season": "2016-2017",
-        "winnerName": "Tim Birchall",
-        "runnerUpName": "Mike Wymer",
-        "winnerPoints": 0,
-        "winnerWinnings": 0,
-        "runnerUpPoints": 0,
-        "runnerUpWinnings": 0
+        "winners": [
+            { "name": "Tim Birchall", "points": 0, "winnings": 0 }
+        ],
+        "runnersUp": [
+            { "name": "Mike Wymer", "points": 0, "winnings": 0 }
+        ]
     },
     {
         "season": "2015-2016",
-        "winnerName": "Mike Wymer",
-        "runnerUpName": "Dave Nightingale",
-        "winnerPoints": 0,
-        "winnerWinnings": 0,
-        "runnerUpPoints": 0,
-        "runnerUpWinnings": 0
+        "winners": [
+            { "name": "Mike Wymer", "points": 0, "winnings": 0 }
+        ],
+        "runnersUp": [
+            { "name": "Dave Nightingale", "points": 0, "winnings": 0 }
+        ]
     },
     {
         "season": "2014-2015",
-        "winnerName": "Tom Wright",
-        "runnerUpName": "Leyton Collings",
-        "winnerPoints": 0,
-        "winnerWinnings": 0,
-        "runnerUpPoints": 0,
-        "runnerUpWinnings": 0
+        "winners": [
+            { "name": "Tom Wright", "points": 0, "winnings": 0 }
+        ],
+        "runnersUp": [
+            { "name": "Leyton Collings", "points": 0, "winnings": 0 }
+        ]
     },
     {
         "season": "2013-2014",
-        "winnerName": "Archie MacVicar",
-        "runnerUpName": "Mick Brown",
-        "winnerPoints": 0,
-        "winnerWinnings": 0,
-        "runnerUpPoints": 0,
-        "runnerUpWinnings": 0
+        "winners": [
+            { "name": "Archie MacVicar", "points": 0, "winnings": 0 }
+        ],
+        "runnersUp": [
+            { "name": "Mick Brown", "points": 0, "winnings": 0 }
+        ]
     },
     {
         "season": "2012-2013",
-        "winnerName": "Mark Ryan",
-        "runnerUpName": "Barrie Cross",
-        "winnerPoints": 0,
-        "winnerWinnings": 0,
-        "runnerUpPoints": 0,
-        "runnerUpWinnings": 0
+        "winners": [
+            { "name": "Mark Ryan", "points": 0, "winnings": 0 }
+        ],
+        "runnersUp": [
+            { "name": "Barrie Cross", "points": 0, "winnings": 0 }
+        ]
     },
     {
         "season": "2011-2012",
-        "winnerName": "Steve Wroldsen",
-        "runnerUpName": "Nathan Hyatt",
-        "winnerPoints": 0,
-        "winnerWinnings": 0,
-        "runnerUpPoints": 0,
-        "runnerUpWinnings": 0
+        "winners": [
+            { "name": "Steve Wroldsen", "points": 0, "winnings": 0 }
+        ],
+        "runnersUp": [
+            { "name": "Nathan Hyatt", "points": 0, "winnings": 0 }
+        ]
     },
     {
         "season": "2010-2011",
-        "winnerName": "Archie MacVicar",
-        "runnerUpName": "Adam Barclay",
-        "winnerPoints": 0,
-        "winnerWinnings": 0,
-        "runnerUpPoints": 0,
-        "runnerUpWinnings": 0
+        "winners": [
+            { "name": "Archie MacVicar", "points": 0, "winnings": 0 }
+        ],
+        "runnersUp": [
+            { "name": "Adam Barclay", "points": 0, "winnings": 0 }
+        ]
     },
     {
         "season": "2009-2010",
-        "winnerName": "Fazil Sediqi",
-        "runnerUpName": "Jim Poole",
-        "winnerPoints": 0,
-        "winnerWinnings": 0,
-        "runnerUpPoints": 0,
-        "runnerUpWinnings": 0
+        "winners": [
+            { "name": "Fazil Sediqi", "points": 0, "winnings": 0 }
+        ],
+        "runnersUp": [
+            { "name": "Jim Poole", "points": 0, "winnings": 0 }
+        ]
     },
     {
         "season": "2008-2009",
-        "winnerName": "Amy Parkinson",
-        "runnerUpName": "Malcolm Sinclair",
-        "winnerPoints": 0,
-        "winnerWinnings": 0,
-        "runnerUpPoints": 0,
-        "runnerUpWinnings": 0
+        "winners": [
+            { "name": "Amy Parkinson", "points": 0, "winnings": 0 }
+        ],
+        "runnersUp": [
+            { "name": "Malcolm Sinclair", "points": 0, "winnings": 0 }
+        ]
     },
     {
         "season": "2007-2008",
-        "winnerName": "Paul Hammett",
-        "runnerUpName": "Alf Wroldsen",
-        "winnerPoints": 0,
-        "winnerWinnings": 0,
-        "runnerUpPoints": 0,
-        "runnerUpWinnings": 0
+        "winners": [
+            { "name": "Paul Hammett", "points": 0, "winnings": 0 }
+        ],
+        "runnersUp": [
+            { "name": "Alf Wroldsen", "points": 0, "winnings": 0 }
+        ]
     },
     {
         "season": "2006-2007",
-        "winnerName": "Lee Harte",
-        "runnerUpName": "Matthew Bain",
-        "winnerPoints": 0,
-        "winnerWinnings": 0,
-        "runnerUpPoints": 0,
-        "runnerUpWinnings": 0
+        "winners": [
+            { "name": "Lee Harte", "points": 0, "winnings": 0 }
+        ],
+        "runnersUp": [
+            { "name": "Matthew Bain", "points": 0, "winnings": 0 }
+        ]
     },
     {
         "season": "2005-2006",
-        "winnerName": "Sung Kang",
-        "runnerUpName": "Bart Ainsworth",
-        "winnerPoints": 0,
-        "winnerWinnings": 0,
-        "runnerUpPoints": 0,
-        "runnerUpWinnings": 0
+        "winners": [
+            { "name": "Sung Kang", "points": 0, "winnings": 0 }
+        ],
+        "runnersUp": [
+            { "name": "Bart Ainsworth", "points": 0, "winnings": 0 }
+        ]
     },
     {
         "season": "2004-2005",
-        "winnerName": "Liz Johnson",
-        "runnerUpName": "Chris Burston",
-        "winnerPoints": 0,
-        "winnerWinnings": 0,
-        "runnerUpPoints": 0,
-        "runnerUpWinnings": 0
+        "winners": [
+            { "name": "Liz Johnson", "points": 0, "winnings": 0 }
+        ],
+        "runnersUp": [
+            { "name": "Chris Burston", "points": 0, "winnings": 0 }
+        ]
     },
     {
         "season": "2003-2004",
-        "winnerName": "Tim Williams",
-        "runnerUpName": "Mike Fordyce",
-        "winnerPoints": 0,
-        "winnerWinnings": 0,
-        "runnerUpPoints": 0,
-        "runnerUpWinnings": 0
+        "winners": [
+            { "name": "Tim Williams", "points": 0, "winnings": 0 }
+        ],
+        "runnersUp": [
+            { "name": "Mike Fordyce", "points": 0, "winnings": 0 }
+        ]
     }
 ]

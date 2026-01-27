@@ -138,16 +138,24 @@ export default function LegendsPage() {
                     <TableBody>
                         {rollOfHonour.map((entry) => (
                             <TableRow key={entry.season}>
-                                <TableCell className="font-medium py-2">{entry.season}</TableCell>
-                                <TableCell className="py-2">{entry.winnerName}</TableCell>
-                                <TableCell className="text-right py-2 font-medium">{entry.winnerPoints || ''}</TableCell>
-                                <TableCell className="text-right py-2 font-medium">
-                                    {entry.winnerWinnings > 0 ? `£${entry.winnerWinnings.toFixed(2)}` : ''}
+                                <TableCell className="font-medium py-2 align-top">{entry.season}</TableCell>
+                                <TableCell className="py-2 align-top">
+                                    {entry.winners.map(p => <div key={p.name}>{p.name}</div>)}
                                 </TableCell>
-                                <TableCell className="py-2 border-l pl-4">{entry.runnerUpName}</TableCell>
-                                <TableCell className="text-right py-2 font-medium">{entry.runnerUpPoints || ''}</TableCell>
-                                <TableCell className="text-right py-2 font-medium">
-                                    {entry.runnerUpWinnings > 0 ? `£${entry.runnerUpWinnings.toFixed(2)}`: ''}
+                                <TableCell className="text-right py-2 font-medium align-top">
+                                    {entry.winners.map(p => <div key={p.name}>{p.points || ''}</div>)}
+                                </TableCell>
+                                <TableCell className="text-right py-2 font-medium align-top">
+                                    {entry.winners.map(p => <div key={p.name}>{p.winnings > 0 ? `£${p.winnings.toFixed(2)}` : ''}</div>)}
+                                </TableCell>
+                                <TableCell className="py-2 border-l pl-4 align-top">
+                                    {entry.runnersUp && entry.runnersUp.map(p => <div key={p.name}>{p.name}</div>)}
+                                </TableCell>
+                                <TableCell className="text-right py-2 font-medium align-top">
+                                    {entry.runnersUp && entry.runnersUp.map(p => <div key={p.name}>{p.points || ''}</div>)}
+                                </TableCell>
+                                <TableCell className="text-right py-2 font-medium align-top">
+                                    {entry.runnersUp && entry.runnersUp.map(p => <div key={p.name}>{p.winnings > 0 ? `£${p.winnings.toFixed(2)}`: ''}</div>)}
                                 </TableCell>
                             </TableRow>
                         ))}
