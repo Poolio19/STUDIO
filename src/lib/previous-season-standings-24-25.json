@@ -17,7 +17,7 @@
   { "rank": 15, "name": "Man Utd", "teamId": "team_14", "goalDifference": -10, "points": 42 },
   { "rank": 16, "name": "Wolves", "teamId": "team_20", "goalDifference": -15, "points": 42 },
   { "rank": 17, "name": "Tottenham", "teamId": "team_18", "goalDifference": -1, "points": 38 },
-  { "rank": 18, "name": "Burnley", "teamId": "", "goalDifference": 0, "points": 0 },
-  { "rank": 19, "name": "Leeds", "teamId": "", "goalDifference": 0, "points": 0 },
-  { "rank": 20, "name": "Sunderland", "teamId": "", "goalDifference": 0, "points": 0 }
+  { "rank": 18, "name": "Burnley", "teamId": "", "goalDifference": 52, "points": 98 },
+  { "rank": 19, "name": "Leeds", "teamId": "", "goalDifference": 41, "points": 90 },
+  { "rank": 20, "name": "Sunderland", "teamId": "", "goalDifference": 14, "points": 76 }
 ]
