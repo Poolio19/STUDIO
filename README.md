@@ -23,12 +23,4 @@ This is a Next.js application for the PremPred prediction league, built with Fir
 
 This application is deployed automatically via Firebase App Hosting. Every change approved in Firebase Studio is automatically pushed to the connected GitHub repository, which triggers a new build and deployment.
 
-## Getting Started Locally
-
-To run the development server:
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:9002](http://localhost:9002) with your browser to see the result.
+<!-- Triggering final push -->
