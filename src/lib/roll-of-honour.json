@@ -1,201 +1,155 @@
 
 [
     {
-        "season": "2024-2025",
+        "season": "2025-2026",
         "winners": [
             { "name": "TBC", "points": 0, "winnings": 0 }
         ],
         "runnersUp": [
             { "name": "TBC", "points": 0, "winnings": 0 }
+        ]
+    },
+    {
+        "season": "2024-2025",
+        "winners": [
+            { "name": "Amy Parkinson", "points": 46.0, "winnings": 73.35 }
+        ],
+        "runnersUp": [
+            { "name": "Theo Gresson", "points": 44.0, "winnings": 63.43 },
+            { "name": "Tom Kehoe", "points": 44.0, "winnings": 56.76 }
         ]
     },
     {
         "season": "2023-2024",
         "winners": [
-            { "name": "Ronnie Bain", "points": 0, "winnings": 0 }
+            { "name": "George Roberts", "points": 64.0, "winnings": 66.20 },
+            { "name": "Ronnie Bain", "points": 64.0, "winnings": 66.20 }
         ],
-        "runnersUp": [
-            { "name": "Theo Gresson", "points": 0, "winnings": 0 }
-        ]
+        "runnersUp": []
     },
     {
         "season": "2022-2023",
         "winners": [
-            { "name": "Ronnie Bain", "points": 0, "winnings": 0 }
+            { "name": "Paul Hammett", "points": 32.0, "winnings": 62.32 }
         ],
         "runnersUp": [
-            { "name": "Leyton Collings", "points": 0, "winnings": 0 }
+            { "name": "Arthur Gwyn-Davies", "points": 31.3, "winnings": 53.86 }
         ]
     },
     {
         "season": "2021-2022",
         "winners": [
-            { "name": "John Parkinson", "points": 0, "winnings": 0 }
+            { "name": "Mike Wymer", "points": 52.0, "winnings": 58.38 }
         ],
         "runnersUp": [
-            { "name": "Arthur Gwyn-Davies", "points": 0, "winnings": 0 }
+            { "name": "Leyton Collings", "points": 51.5, "winnings": 40.23 }
         ]
     },
     {
         "season": "2020-2021",
         "winners": [
-            { "name": "THE DAILY STAR", "points": 0, "winnings": 0 }
+            { "name": "Ronnie Bain", "points": 54.0, "winnings": 57.82 }
         ],
         "runnersUp": [
-            { "name": "Chris Dodds", "points": 0, "winnings": 0 }
+            { "name": "Leyton Collings", "points": 52.5, "winnings": 46.86 }
         ]
     },
     {
         "season": "2019-2020",
         "winners": [
-            { "name": "George Roberts", "points": 0, "winnings": 0 }
+            { "name": "Tim Birchall", "points": 48, "winnings": 42.01 },
+            { "name": "Fazil Sediqi", "points": 48, "winnings": 45.35 }
         ],
-        "runnersUp": [
-            { "name": "Craig Stevens", "points": 0, "winnings": 0 }
-        ]
+        "runnersUp": []
     },
     {
         "season": "2018-2019",
         "winners": [
-            { "name": "Andy Neill", "points": 0, "winnings": 0 }
+            { "name": "Lee Harte", "points": 72, "winnings": 51.09 },
+            { "name": "Sung Kang", "points": 72, "winnings": 56.09 }
         ],
-        "runnersUp": [
-            { "name": "Tom Kehoe", "points": 0, "winnings": 0 }
-        ]
+        "runnersUp": []
     },
     {
         "season": "2017-2018",
         "winners": [
-            { "name": "THE TELEGRAPH", "points": 0, "winnings": 0 }
+            { "name": "Mark Ryan", "points": 46, "winnings": 38.49 }
         ],
         "runnersUp": [
-            { "name": "Mick Brown", "points": 0, "winnings": 0 }
+            { "name": "Chris Dodds", "points": 44, "winnings": 20.98 },
+            { "name": "Bart Ainsworth", "points": 44, "winnings": 20.98 },
+            { "name": "Craig Stevens", "points": 44, "winnings": 22.65 },
+            { "name": "Malcolm Sinclair", "points": 44, "winnings": 22.65 },
+            { "name": "Alf Wroldsen", "points": 44, "winnings": 23.48 }
         ]
     },
     {
         "season": "2016-2017",
         "winners": [
-            { "name": "Tim Birchall", "points": 0, "winnings": 0 }
+            { "name": "Tim Williams", "points": 58, "winnings": 36.51 }
         ],
         "runnersUp": [
-            { "name": "Mike Wymer", "points": 0, "winnings": 0 }
+            { "name": "Jim Poole", "points": 56, "winnings": 27.83 },
+            { "name": "Mike Wymer", "points": 56, "winnings": 29.58 },
+            { "name": "Archie MacVicar", "points": 56, "winnings": 28.71 }
         ]
     },
     {
         "season": "2015-2016",
         "winners": [
-            { "name": "Mike Wymer", "points": 0, "winnings": 0 }
+            { "name": "John Parkinson", "points": 42, "winnings": 45.93 }
         ],
         "runnersUp": [
-            { "name": "Dave Nightingale", "points": 0, "winnings": 0 }
+            { "name": "Adam Barclay", "points": 38, "winnings": 31.68 },
+            { "name": "Chris Burston", "points": 38, "winnings": 31.80 },
+            { "name": "Matthew Bain", "points": 38, "winnings": 32.74 }
         ]
     },
     {
         "season": "2014-2015",
         "winners": [
-            { "name": "Tom Wright", "points": 0, "winnings": 0 }
+            { "name": "Steve Wroldsen", "points": 64, "winnings": 42.43 }
         ],
         "runnersUp": [
-            { "name": "Leyton Collings", "points": 0, "winnings": 0 }
+            { "name": "John McFadden", "points": 60, "winnings": 31.81 }
         ]
     },
     {
         "season": "2013-2014",
         "winners": [
-            { "name": "Archie MacVicar", "points": 0, "winnings": 0 }
+            { "name": "Liz Johnson", "points": 44, "winnings": 42.73 }
         ],
         "runnersUp": [
-            { "name": "Mick Brown", "points": 0, "winnings": 0 }
+            { "name": "Mick Brown", "points": 42, "winnings": 28.50 },
+            { "name": "Mike Fordyce", "points": 42, "winnings": 28.50 }
         ]
     },
     {
         "season": "2012-2013",
         "winners": [
-            { "name": "Mark Ryan", "points": 0, "winnings": 0 }
+            { "name": "Archie Macvicar", "points": 58, "winnings": 48.00 }
         ],
         "runnersUp": [
-            { "name": "Barrie Cross", "points": 0, "winnings": 0 }
+            { "name": "Mike Fordyce", "points": 56, "winnings": 26.50 },
+            { "name": "Mick Brown", "points": 56, "winnings": 26.50 }
         ]
     },
     {
         "season": "2011-2012",
         "winners": [
-            { "name": "Steve Wroldsen", "points": 0, "winnings": 0 }
+            { "name": "Andy Neill", "points": 42, "winnings": 40.00 }
         ],
         "runnersUp": [
-            { "name": "Nathan Hyatt", "points": 0, "winnings": 0 }
+            { "name": "Nathan Hyatt", "points": 40, "winnings": 25.00 }
         ]
     },
     {
         "season": "2010-2011",
         "winners": [
-            { "name": "Archie MacVicar", "points": 0, "winnings": 0 }
+            { "name": "Archie MacVicar", "points": 66, "winnings": 25.00 }
         ],
         "runnersUp": [
-            { "name": "Adam Barclay", "points": 0, "winnings": 0 }
-        ]
-    },
-    {
-        "season": "2009-2010",
-        "winners": [
-            { "name": "Fazil Sediqi", "points": 0, "winnings": 0 }
-        ],
-        "runnersUp": [
-            { "name": "Jim Poole", "points": 0, "winnings": 0 }
-        ]
-    },
-    {
-        "season": "2008-2009",
-        "winners": [
-            { "name": "Amy Parkinson", "points": 0, "winnings": 0 }
-        ],
-        "runnersUp": [
-            { "name": "Malcolm Sinclair", "points": 0, "winnings": 0 }
-        ]
-    },
-    {
-        "season": "2007-2008",
-        "winners": [
-            { "name": "Paul Hammett", "points": 0, "winnings": 0 }
-        ],
-        "runnersUp": [
-            { "name": "Alf Wroldsen", "points": 0, "winnings": 0 }
-        ]
-    },
-    {
-        "season": "2006-2007",
-        "winners": [
-            { "name": "Lee Harte", "points": 0, "winnings": 0 }
-        ],
-        "runnersUp": [
-            { "name": "Matthew Bain", "points": 0, "winnings": 0 }
-        ]
-    },
-    {
-        "season": "2005-2006",
-        "winners": [
-            { "name": "Sung Kang", "points": 0, "winnings": 0 }
-        ],
-        "runnersUp": [
-            { "name": "Bart Ainsworth", "points": 0, "winnings": 0 }
-        ]
-    },
-    {
-        "season": "2004-2005",
-        "winners": [
-            { "name": "Liz Johnson", "points": 0, "winnings": 0 }
-        ],
-        "runnersUp": [
-            { "name": "Chris Burston", "points": 0, "winnings": 0 }
-        ]
-    },
-    {
-        "season": "2003-2004",
-        "winners": [
-            { "name": "Tim Williams", "points": 0, "winnings": 0 }
-        ],
-        "runnersUp": [
-            { "name": "Mike Fordyce", "points": 0, "winnings": 0 }
+            { "name": "Rich Paulson", "points": 62, "winnings": 12.50 }
         ]
     }
 ]
