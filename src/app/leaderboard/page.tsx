@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -82,6 +81,11 @@ export default function LeaderboardPage() {
   const proPlayers = useMemo(() => sortedUsers.filter(u => u.isPro), [sortedUsers]);
   const regularPlayers = useMemo(() => sortedUsers.filter(u => !u.isPro), [sortedUsers]);
 
+  const bestProRank = useMemo(() => {
+    if (proPlayers.length === 0) return Infinity; // No pros, so no one can beat them.
+    return Math.min(...proPlayers.map(p => p.rank));
+  }, [proPlayers]);
+
   const localTotalWinningsMap = useMemo(() => {
     if (!usersData || !monthlyMimoM) return new Map();
     const mimoMWinnings = new Map<string, number>();
@@ -139,9 +143,9 @@ export default function LeaderboardPage() {
 
     const proWinnings = new Map<string, number>();
     if (proPlayers.length > 0) {
-      const bestProRank = Math.min(...proPlayers.map(p => p.rank));
+      const bestPro = Math.min(...proPlayers.map(p => p.rank));
       regularPlayers.forEach(player => {
-          if (player.rank > 0 && player.rank < bestProRank) {
+          if (player.rank > 0 && player.rank < bestPro) {
               proWinnings.set(player.id, 5);
           }
       });
@@ -168,29 +172,44 @@ export default function LeaderboardPage() {
   }, [regularPlayers, proPlayers, usersData, monthlyMimoM]);
 
     const getRankColour = (user: User) => {
-    const nonProUsers = sortedUsers.filter(u => !u.isPro);
-    const userNonProRank = nonProUsers.findIndex(u => u.id === user.id);
-    const tiedUsers = nonProUsers.filter(u => u.rank === user.rank);
-    const firstTiedUserIndex = nonProUsers.findIndex(u => u.id === tiedUsers[0]?.id);
-
+    // Pro players have a distinct style and are not part of the main prize ranking
     if (user.isPro) {
-        return 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-200/80 dark:hover:bg-gray-700/80';
+        return 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200/80 dark:hover:bg-gray-700/80';
     }
 
-    if (firstTiedUserIndex === 0) return 'bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-100/80 dark:hover:bg-yellow-900/40';
-    if (firstTiedUserIndex === 1) return 'bg-slate-100 dark:bg-slate-800/30 hover:bg-slate-100/80 dark:hover:bg-slate-800/40';
-    if (firstTiedUserIndex === 2) return 'bg-orange-100 dark:bg-orange-900/30 hover:bg-orange-100/80 dark:hover:bg-orange-900/40';
+    // Rank-based colors take precedence for non-pro players
+    // This now correctly uses the rank property which handles ties after recalculation
+    switch (user.rank) {
+        case 1: return 'bg-red-800 text-yellow-300 hover:bg-red-800/90 dark:bg-red-900 dark:text-yellow-300 dark:hover:bg-red-900/90'; // Crimson with yellow font
+        case 2: return 'bg-red-600 text-white hover:bg-red-600/90 dark:bg-red-700 dark:hover:bg-red-700/90'; // Red
+        case 3: return 'bg-orange-700 text-white hover:bg-orange-700/90 dark:bg-orange-800 dark:hover:bg-orange-800/90'; // Dark Orange
+        case 4: return 'bg-orange-500 text-white hover:bg-orange-500/90 dark:bg-orange-600 dark:hover:bg-orange-600/90'; // Mid Orange
+        case 5: return 'bg-orange-300 text-orange-900 hover:bg-orange-300/90 dark:bg-orange-500/50 dark:text-white'; // Light orange / peach
+        case 6: return 'bg-yellow-200 text-yellow-900 hover:bg-yellow-200/90 dark:bg-yellow-800/30 dark:text-yellow-200'; // Pale Yellow
+        case 7: return 'bg-green-200 text-green-900 hover:bg-green-200/90 dark:bg-green-800/30 dark:text-green-200'; // Pale Green
+        case 8: return 'bg-cyan-200 text-cyan-900 hover:bg-cyan-200/90 dark:bg-cyan-800/30 dark:text-cyan-200'; // Pale Cyan
+        case 9: return 'bg-cyan-400 text-cyan-900 hover:bg-cyan-400/90 dark:bg-cyan-500/50 dark:text-white'; // Cyan
+        case 10: return 'bg-teal-400 text-teal-900 hover:bg-teal-400/90 dark:bg-teal-600/50 dark:text-white'; // Deep cyan/teal
+        default:
+            // Fall through if not in top 10
+            break;
+    }
+
+    // "Beating The Pros" condition
+    // This includes players who are tied with the best pro player
+    if (user.rank <= bestProRank) {
+        return 'bg-blue-300 text-blue-900 hover:bg-blue-300/90 dark:bg-blue-800/40 dark:text-blue-200'; // Light Blue
+    }
     
-    if (userNonProRank < 5) {
-        return 'bg-green-100 dark:bg-green-900/30 hover:bg-green-100/80 dark:hover:bg-green-900/40';
+    // Winnings condition (for players outside the top 10 and not beating pros)
+    const totalWinnings = localTotalWinningsMap.get(user.id) || 0;
+    if (totalWinnings > 0) {
+        return 'bg-blue-100 text-blue-900 hover:bg-blue-100/90 dark:bg-blue-900/30 dark:text-blue-300'; // Very Pale Blue
     }
 
-    const totalWinnings = (totalWinningsMap.get(user.id) || 0);
-    if (totalWinnings > 0) {
-        return 'bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-100/80 dark:hover:bg-blue-900/40';
-    }
-    return '';
-}
+    // Default for everyone else
+    return ''; // white/transparent
+};
 
   return (
     <div className="flex flex-col gap-8">
@@ -247,7 +266,7 @@ export default function LeaderboardPage() {
                           <TableCell className="py-1">
                             <div className="flex items-center gap-3">
                                 <Avatar className="h-8 w-8">
-                                <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
+                                <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name || 'User'} data-ai-hint="person" />
                                 <AvatarFallback>{(user.name || '?').charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <span>{user.isPro ? user.name.toUpperCase() : user.name}</span>
