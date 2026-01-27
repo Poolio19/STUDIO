@@ -60,7 +60,9 @@ export default function LegendsPage() {
             const values = validUsers.map(u => getValue(u));
             const maxValue = Math.max(...values);
             
-            if (maxValue === -Infinity) return [];
+            // Only declare a winner if the max value is greater than zero,
+            // or in the case of averages, not the sentinel value.
+            if (maxValue <= 0) return [];
 
             return validUsers
                 .filter(u => getValue(u) === maxValue)
@@ -71,11 +73,11 @@ export default function LegendsPage() {
         const totalMiMoMs = (u: User) => (u.mimoM || 0) + (u.ruMimoM || 0) + (u.joMimoM || 0) + (u.joRuMimoM || 0);
 
         return {
-            mostWins: findWinners(u => u.first || 0, v => `${v} win${v > 1 ? 's' : ''}`),
+            mostWins: findWinners(u => u.first || 0, v => `${v} win${v !== 1 ? 's' : ''}`),
             highestWinnings: findWinners(u => u.cashWinnings || 0, v => `£${v.toFixed(2)}`),
-            mostTopTens: findWinners(topTenFinishes, v => `${v} finishes`),
-            highestAverage: findWinners(u => (u.seasonsPlayed || 0) > 1 ? (u.cashWinnings || 0) / u.seasonsPlayed : -1, v => `£${v.toFixed(2)} / season`),
-            mostMiMoMs: findWinners(totalMiMoMs, v => `${v} awards`),
+            mostTopTens: findWinners(topTenFinishes, v => `${v} top 10 finishes`),
+            highestAverage: findWinners(u => (u.seasonsPlayed || 0) > 1 ? ((u.cashWinnings || 0) / u.seasonsPlayed) : -1, v => `£${v.toFixed(2)} / season`),
+            mostMiMoMs: findWinners(totalMiMoMs, v => `${v} monthly award${v !== 1 ? 's' : ''}`),
         };
     }, [users]);
     
