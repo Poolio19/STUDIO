@@ -6,10 +6,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Crown, Trophy, Gem, ShieldCheck, TrendingUp, Star, DollarSign, Loader2 } from 'lucide-react';
 import type { User, RollOfHonourEntry } from '@/lib/types';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
 import { getAvatarUrl } from '@/lib/placeholder-images';
 import rollOfHonourData from '@/lib/roll-of-honour.json';
+import historicalPlayersData from '@/lib/historical-players.json';
 
 const StatCard = ({ title, icon: Icon, winners }: { title: string, icon: React.ElementType, winners: { user: User, value: string }[] }) => (
     <Card className="flex flex-col">
@@ -34,7 +33,7 @@ const StatCard = ({ title, icon: Icon, winners }: { title: string, icon: React.E
                     </div>
                 ))
             ) : (
-                <p className="text-muted-foreground pt-4">No winner found for this category yet.</p>
+                <p className="text-muted-foreground pt-4">No leader found for this category yet.</p>
             )}
         </CardContent>
     </Card>
@@ -42,27 +41,21 @@ const StatCard = ({ title, icon: Icon, winners }: { title: string, icon: React.E
 
 
 export default function LegendsPage() {
-    const firestore = useFirestore();
-    
-    const usersQuery = useMemoFirebase(() => 
-        firestore ? query(collection(firestore, 'users'), where('isPro', '==', false)) : null, 
-    [firestore]);
-
-    const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
+    const users = historicalPlayersData as User[];
     
     const accolades = React.useMemo(() => {
         if (!users || users.length === 0) return null;
 
         const findWinners = (getValue: (u: User) => number, formatValue: (v: number) => string) => {
-            const validUsers = users.filter(u => u.name);
+            const validUsers = users.filter(u => u.name && !u.isPro);
             if (validUsers.length === 0) return [];
             
-            const values = validUsers.map(u => getValue(u));
+            const values = validUsers.map(u => getValue(u)).filter(v => v !== undefined && v !== null && !isNaN(v));
+            if (values.length === 0) return [];
+            
             const maxValue = Math.max(...values);
             
-            // Allow categories where the max value is 0 (e.g., no wins yet)
-            // but hide for categories where -1 is a sentinel value for "not applicable"
-            if (maxValue < 0) return [];
+            if (maxValue < 0) return []; // For stats like 'highest average', don't show if max is negative.
 
             return validUsers
                 .filter(u => getValue(u) === maxValue)
@@ -82,15 +75,6 @@ export default function LegendsPage() {
     }, [users]);
     
     const rollOfHonour: RollOfHonourEntry[] = rollOfHonourData;
-
-
-    if (usersLoading) {
-      return (
-        <div className="flex items-center justify-center h-96">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      )
-    }
 
   return (
     <div className="space-y-8">
