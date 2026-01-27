@@ -85,12 +85,19 @@ export default function PredictPage() {
   const sortedPreviousStandings = React.useMemo(() => {
     if (!teams) return [];
     
-    const teamMap = new Map(teams.map(t => [t.id, t]));
     const nameMap = new Map(teams.map(t => [t.name, t]));
 
     return previousSeasonStandingsData
       .map(standing => {
-        const team = nameMap.get(standing.name);
+        // First, try a direct match
+        let team = nameMap.get(standing.name);
+
+        // If no direct match, it might be a promoted team like "Leeds C1"
+        if (!team) {
+          const coreName = standing.name.split(' C')[0]; // Simple split to get "Leeds" from "Leeds C1"
+          team = nameMap.get(coreName);
+        }
+        
         return team ? { ...standing, ...team, teamId: team.id, teamLogo: team.logo } : null;
       })
       .filter((item): item is NonNullable<typeof item> => item !== null)
@@ -424,4 +431,3 @@ export default function PredictPage() {
   );
 }
 
-    
