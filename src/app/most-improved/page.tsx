@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { User, UserHistory, SeasonMonth, Match, HistoricalMimoMonth, HistoricalMimoAwardInfo } from '@/lib/types';
+import type { User, UserHistory, SeasonMonth, Match, MonthlyMimoM } from '@/lib/types';
 import { getAvatarUrl } from '@/lib/placeholder-images';
 import { ArrowUp, ArrowDown, Minus, Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
@@ -28,7 +28,6 @@ import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { allAwardPeriods } from '@/lib/award-periods';
-import historicalMimoAwards from '@/lib/historical-mimo-awards.json';
 
 
 const getRankChangeIcon = (change: number) => {
@@ -55,12 +54,14 @@ export default function MostImprovedPage() {
   const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
   const matchesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'matches') : null, [firestore]);
   const userHistoriesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'userHistories') : null, [firestore]);
+  const mimoMQuery = useMemoFirebase(() => firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore]);
 
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
   const { data: matchesData, isLoading: matchesLoading } = useCollection<Match>(matchesQuery);
   const { data: userHistories, isLoading: historiesLoading } = useCollection<UserHistory>(userHistoriesQuery);
+  const { data: monthlyMimoMAwards, isLoading: mimoMLoading } = useCollection<MonthlyMimoM>(mimoMQuery);
 
-  const isLoading = usersLoading || matchesLoading || historiesLoading;
+  const isLoading = usersLoading || matchesLoading || historiesLoading || mimoMLoading;
 
   const currentWeek = useMemo(() => {
     if (matchesData && matchesData.length > 0) {
@@ -126,46 +127,56 @@ export default function MostImprovedPage() {
     return { ladderWithRanks, firstPlaceImprovement, secondPlaceImprovement };
   }, [users, userHistories, currentAwardPeriod, currentWeek]);
   
-  const userNameMap = useMemo(() => {
+  const userMap = useMemo(() => {
     if (!users) return new Map<string, User>();
-    return new Map(users.map(u => [u.name, u]));
+    return new Map(users.map(u => [u.id, u]));
   }, [users]);
+  
+  const hallOfFameData = useMemo(() => {
+    if (!userMap.size || !monthlyMimoMAwards) return [];
 
-  const mimoMWithDetails = useMemo(() => {
-    if (!users || !userNameMap) return [];
-    
-    const historicalAwardsTyped: HistoricalMimoMonth[] = historicalMimoAwards;
+    return allAwardPeriods.map(period => {
+        const isCurrentPeriod = currentAwardPeriod?.id === period.id;
+        const isPastPeriod = period.endWeek <= currentWeek && !isCurrentPeriod;
+        
+        let winners: (User & { improvement: number })[] = [];
+        let runnersUp: (User & { improvement: number })[] = [];
+        
+        if (isPastPeriod) {
+            const periodAwards = monthlyMimoMAwards.filter(a => a.id.startsWith(period.id));
+            const winnerAwards = periodAwards.filter(a => a.type === 'winner');
+            const runnerUpAwards = periodAwards.filter(a => a.type === 'runner-up');
+            
+            winners = winnerAwards.map(award => {
+                const user = userMap.get(award.userId);
+                return { ...user, improvement: award.improvement || 0 } as User & { improvement: number };
+            }).filter(u => u.id);
 
-    const mapAwardToUser = (award: HistoricalMimoAwardInfo) => {
-        const user = userNameMap.get(award.name);
+            runnersUp = runnerUpAwards.map(award => {
+                const user = userMap.get(award.userId);
+                return { ...user, improvement: award.improvement || 0 } as User & { improvement: number };
+            }).filter(u => u.id);
+        } else if (isCurrentPeriod) {
+            if (ladderData.firstPlaceImprovement !== undefined) {
+                winners = ladderData.ladderWithRanks
+                    .filter(u => u.improvement === ladderData.firstPlaceImprovement) as (User & { improvement: number })[];
+            }
+             if (ladderData.secondPlaceImprovement !== undefined && winners.length === 1) {
+                runnersUp = ladderData.ladderWithRanks
+                    .filter(u => u.improvement === ladderData.secondPlaceImprovement) as (User & { improvement: number })[];
+            }
+        }
+        
         return {
-            ...(user || { id: award.name, name: award.name, avatar: '' }),
-            improvement: award.improvement,
-        };
-    };
-
-    return historicalAwardsTyped.map(historicalMonth => {
-        const winners = historicalMonth.awards.filter(a => a.type === 'MiMoM' || a.type === 'JoMiMoM').map(mapAwardToUser);
-        const runnersUp = historicalMonth.awards.filter(a => a.type === 'RuMiMoM' || a.type === 'JoRuMiMoM').map(mapAwardToUser);
-
-        const periodForCurrentSeason = allAwardPeriods.find(p => 
-            p.abbreviation.toUpperCase().startsWith(historicalMonth.month.toUpperCase().substring(0,3)) &&
-            `${p.year}-${p.year+1}` === historicalMonth.season
-        );
-        const isCurrentPeriod = !!(currentAwardPeriod && periodForCurrentSeason && currentAwardPeriod.id === periodForCurrentSeason.id);
-
-        return {
-            id: `${historicalMonth.season}-${historicalMonth.month}`,
-            abbreviation: historicalMonth.month.toUpperCase().substring(0, 4),
+            id: period.id,
+            abbreviation: period.abbreviation,
             isCurrentMonth: isCurrentPeriod,
-            isFuture: false, // All historical records are past.
-            winners: winners,
-            runnersUp: runnersUp,
-            currentLeaders: null, 
-            currentRunnersUp: null,
+            isFuture: !isPastPeriod && !isCurrentPeriod,
+            winners,
+            runnersUp,
         };
     });
-  }, [users, userNameMap, currentAwardPeriod, historicalMimoAwards]);
+  }, [userMap, monthlyMimoMAwards, allAwardPeriods, currentWeek, currentAwardPeriod, ladderData]);
 
 
   const getLadderRankColour = (user: (typeof ladderData.ladderWithRanks)[0]) => {
@@ -253,31 +264,31 @@ export default function MostImprovedPage() {
                  <Card>
                     <CardHeader className="bg-gradient-to-r from-yellow-400/20 via-yellow-400/5 to-slate-400/20">
                         <CardTitle>MiMoM Hall Of Fame</CardTitle>
-                        <CardDescription>Previous winners and runners-up.</CardDescription>
+                        <CardDescription>This Season's Winners and Runners-up.</CardDescription>
                     </CardHeader>
                     <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {mimoMWithDetails.map((monthlyAward, index) => {
-                            const hasAwards = monthlyAward.winners || monthlyAward.runnersUp || monthlyAward.currentLeaders || monthlyAward.currentRunnersUp;
+                        {hallOfFameData.map((monthlyAward) => {
                             const isFuture = monthlyAward.isFuture;
-                            const isCurrent = monthlyAward.isCurrentMonth;
-                            
-                            const winners = monthlyAward.winners || monthlyAward.currentLeaders;
-                            const runnersUp = monthlyAward.runnersUp || monthlyAward.currentRunnersUp;
-
-                            const isTie = winners && winners.length > 1;
-                            const winnerPrize = isTie ? 15 / winners.length : 10 / (winners?.length || 1);
-                            const runnerUpPrize = isTie ? 0 : (winners?.length === 1 && runnersUp?.length ? 5 / runnersUp.length : 0);
+                            const isTie = monthlyAward.winners.length > 1;
 
                             return (
-                            <div key={index} className={cn("p-3 border rounded-lg flex flex-col items-center justify-start text-center", {
-                                'opacity-70': isCurrent,
-                                'opacity-50': isFuture && !isCurrent,
+                            <div key={monthlyAward.id} className={cn("p-3 border rounded-lg flex flex-col items-center justify-start text-center", {
+                                'opacity-50': isFuture,
                             })}>
                                 <p className="font-bold mb-2 text-sm">{monthlyAward.abbreviation}</p>
                                 
-                                {hasAwards ? (
+                                {isFuture ? (
+                                     <div className="w-full space-y-2">
+                                        <div className="bg-yellow-400/20 p-2 rounded-md flex items-center justify-center h-[60px]">
+                                            <p className="text-sm font-bold text-yellow-800/80 dark:text-yellow-200/80">MiMoM - TBC</p>
+                                        </div>
+                                        <div className="bg-slate-400/20 p-2 rounded-md flex items-center justify-center h-[60px]">
+                                            <p className="text-sm font-bold text-slate-800/80 dark:text-slate-200/80">RuMiMoM - TBC</p>
+                                        </div>
+                                    </div>
+                                ) : (
                                     <div className="w-full space-y-2">
-                                        {winners?.map(winner => (
+                                        {monthlyAward.winners?.map(winner => (
                                             <div key={winner.id} className="bg-yellow-400/20 p-2 rounded-md flex items-center gap-3">
                                                 <Avatar className="h-10 w-10">
                                                     <AvatarImage src={getAvatarUrl(winner.avatar || '')} alt={winner.name} data-ai-hint="person portrait" />
@@ -287,13 +298,14 @@ export default function MostImprovedPage() {
                                                     <p className="text-sm font-bold">{winner.name}
                                                         {typeof winner.improvement === 'number' && <span className="font-normal text-muted-foreground"> ({winner.improvement >= 0 ? '+' : ''}{winner.improvement}pts)</span>}
                                                     </p>
-                                                    {monthlyAward.winners && <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">{isTie ? 'JoMiMoM' : 'MiMoM'}</p>}
-                                                    {monthlyAward.currentLeaders && <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">{isTie ? 'Current JoMiMoM' : 'Current Leader'}</p>}
+                                                    <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">
+                                                        {monthlyAward.isCurrentMonth ? (isTie ? 'Current JoMiMoM' : 'Current Leader') : (isTie ? 'JoMiMoM' : 'MiMoM')}
+                                                    </p>
                                                 </div>
                                             </div>
                                         ))}
 
-                                        {runnerUpPrize > 0 && runnersUp?.map(runnerUp => (
+                                        {monthlyAward.runnersUp?.map(runnerUp => (
                                             <div key={runnerUp.id} className="bg-slate-400/20 p-2 rounded-md flex items-center gap-3">
                                                 <Avatar className="h-10 w-10">
                                                     <AvatarImage src={getAvatarUrl(runnerUp.avatar || '')} alt={runnerUp.name} data-ai-hint="person portrait" />
@@ -303,19 +315,12 @@ export default function MostImprovedPage() {
                                                     <p className="text-sm font-bold">{runnerUp.name}
                                                         {typeof runnerUp.improvement === 'number' && <span className="font-normal text-muted-foreground"> ({runnerUp.improvement >= 0 ? '+' : ''}{runnerUp.improvement}pts)</span>}
                                                     </p>
-                                                    <p className="text-xs font-semibold text-slate-800/80 dark:text-slate-200/80">{(runnersUp.length > 1 ? 'JoRuMiMoM' : 'RuMiMoM')}</p>
+                                                    <p className="text-xs font-semibold text-slate-800/80 dark:text-slate-200/80">
+                                                        {monthlyAward.isCurrentMonth ? 'Current Runner-Up' : (monthlyAward.runnersUp.length > 1 ? 'JoRuMiMoM' : 'RuMiMoM')}
+                                                    </p>
                                                 </div>
                                             </div>
                                         ))}
-                                    </div>
-                                ) : (
-                                    <div className="w-full space-y-2">
-                                        <div className="bg-yellow-400/20 p-2 rounded-md flex items-center justify-center h-[60px]">
-                                            <p className="text-sm font-bold text-yellow-800/80 dark:text-yellow-200/80">MiMoM - TBC</p>
-                                        </div>
-                                        <div className="bg-slate-400/20 p-2 rounded-md flex items-center justify-center h-[60px]">
-                                            <p className="text-sm font-bold text-slate-800/80 dark:text-slate-200/80">RuMiMoM - TBC</p>
-                                        </div>
                                     </div>
                                 )}
                             </div>

@@ -164,30 +164,27 @@ export default function AdminPage() {
         }
     }
 
-    // If no results entered, find the first week with missing results
-    if (latestWeekWithResults === 0) {
-        for (let i = 1; i <= 38; i++) {
-            if (weekStats[i] && weekStats[i].missing > 0) {
-                return i;
-            }
-        }
-        return 1; // Fallback
-    }
-
     // Now find the most recent incomplete week, starting from the latest week with results
     for (let i = latestWeekWithResults; i >= 1; i--) {
-        if (weekStats[i] && weekStats[i].missing > 0) {
-            return i;
-        }
+      if (weekStats[i] && weekStats[i].missing > 0) {
+        return i;
+      }
+    }
+    
+    // If all weeks with results are complete, return the next week if it exists
+    if (latestWeekWithResults > 0 && latestWeekWithResults < 38) {
+      return latestWeekWithResults + 1;
+    }
+    
+    // If no results are entered at all, find the first week with matches
+    for (let i = 1; i <= 38; i++) {
+      if (weekStats[i] && weekStats[i].total > 0) {
+        return i;
+      }
     }
 
-    // If all weeks with results are complete, return the next week
-    if (latestWeekWithResults < 38) {
-        return latestWeekWithResults + 1;
-    }
-
-    // Otherwise, all played weeks are complete, just return the latest one
-    return latestWeekWithResults;
+    // As a final fallback, return the latest week, or 1
+    return latestWeekWithResults > 0 ? latestWeekWithResults : 1;
   }, [allMatches]);
   
   const scoresForm = useForm<ScoresFormValues>({
@@ -201,40 +198,34 @@ export default function AdminPage() {
   const historicalForm = useForm<HistoricalDataFormValues>({
     resolver: zodResolver(historicalDataFormSchema),
     defaultValues: {
-      users: [],
+      users: historicalPlayersData.map(u => ({
+        id: u.id,
+        name: u.name,
+        seasonsPlayed: u.seasonsPlayed || 0,
+        first: u.first || 0,
+        second: u.second || 0,
+        third: u.third || 0,
+        fourth: u.fourth || 0,
+        fifth: u.fifth || 0,
+        sixth: u.sixth || 0,
+        seventh: u.seventh || 0,
+        eighth: u.eighth || 0,
+        ninth: u.ninth || 0,
+        tenth: u.tenth || 0,
+        mimoM: u.mimoM || 0,
+        ruMimoM: u.ruMimoM || 0,
+        joMimoM: u.joMimoM || 0,
+        joRuMimoM: u.joRuMimoM || 0,
+        xmasNo1: u.xmasNo1 || 0,
+        cashWinnings: u.cashWinnings || 0,
+      })),
     },
   });
-  const { fields, replace } = useFieldArray({
+  
+  const { fields } = useFieldArray({
     control: historicalForm.control,
     name: "users"
   });
-
-  React.useEffect(() => {
-    if (historicalPlayersData.length > 0 && fields.length === 0) {
-        replace(historicalPlayersData.map(u => ({
-            id: u.id,
-            name: u.name,
-            seasonsPlayed: u.seasonsPlayed || 0,
-            first: u.first || 0,
-            second: u.second || 0,
-            third: u.third || 0,
-            fourth: u.fourth || 0,
-            fifth: u.fifth || 0,
-            sixth: u.sixth || 0,
-            seventh: u.seventh || 0,
-            eighth: u.eighth || 0,
-            ninth: u.ninth || 0,
-            tenth: u.tenth || 0,
-            mimoM: u.mimoM || 0,
-            ruMimoM: u.ruMimoM || 0,
-            joMimoM: u.joMimoM || 0,
-            joRuMimoM: u.joRuMimoM || 0,
-            xmasNo1: u.xmasNo1 || 0,
-            cashWinnings: u.cashWinnings || 0,
-        })));
-    }
-  }, [replace, fields.length]);
-
 
   React.useEffect(() => {
     if (defaultWeek > 0 && !scoresForm.formState.isDirty) {
@@ -498,25 +489,8 @@ export default function AdminPage() {
         const batch = writeBatch(firestore);
         data.users.forEach(user => {
             const userRef = doc(firestore, 'users', user.id);
-            const userData = {
-                seasonsPlayed: user.seasonsPlayed,
-                first: user.first,
-                second: user.second,
-                third: user.third,
-                fourth: user.fourth,
-                fifth: user.fifth,
-                sixth: user.sixth,
-                seventh: user.seventh,
-                eighth: user.eighth,
-                ninth: user.ninth,
-                tenth: user.tenth,
-                mimoM: user.mimoM,
-                ruMimoM: user.ruMimoM,
-                joMimoM: user.joMimoM,
-                joRuMimoM: user.joRuMimoM,
-                xmasNo1: user.xmasNo1,
-                cashWinnings: user.cashWinnings,
-            };
+            const { id, name, ...userData } = user;
+
             // Ensure no NaN values are sent to Firestore
             Object.keys(userData).forEach(key => {
                 const typedKey = key as keyof typeof userData;
@@ -766,6 +740,8 @@ export default function AdminPage() {
                                       type="number"
                                       className="w-full text-center h-8 text-xs px-1"
                                       onChange={e => field.onChange(e.target.value === '' ? 0 : e.target.valueAsNumber)}
+                                      onBlur={field.onBlur}
+                                      value={field.value ?? 0}
                                   />
                               )}
                           />
@@ -784,5 +760,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    

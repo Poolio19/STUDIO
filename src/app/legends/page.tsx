@@ -26,7 +26,7 @@ const StatCard = ({ title, icon: Icon, winners }: { title: string, icon: React.E
                     <div key={user.id} className="flex items-center gap-4 mt-2">
                         <Avatar className="h-12 w-12 border-2 border-primary">
                             <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person portrait" />
-                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                            <AvatarFallback>{user.name ? user.name.charAt(0) : '?'}</AvatarFallback>
                         </Avatar>
                         <div>
                             <p className="font-bold text-lg">{user.name}</p>
@@ -35,7 +35,7 @@ const StatCard = ({ title, icon: Icon, winners }: { title: string, icon: React.E
                     </div>
                 ))
             ) : (
-                <p className="text-muted-foreground">No winner found.</p>
+                <p className="text-muted-foreground pt-4">No winner found for this category yet.</p>
             )}
         </CardContent>
     </Card>
@@ -56,10 +56,15 @@ export default function LegendsPage() {
 
         const findWinners = (getValue: (u: User) => number, formatValue: (v: number) => string) => {
             if (users.length === 0) return [];
-            const values = users.map(u => getValue(u));
+            
+            const validUsers = users.filter(u => u.name); // Ensure user has a name
+            if (validUsers.length === 0) return [];
+
+            const values = validUsers.map(u => getValue(u));
             const maxValue = Math.max(...values);
             if (maxValue === -Infinity || maxValue <= 0) return [];
-            return users
+
+            return validUsers
                 .filter(u => getValue(u) === maxValue)
                 .map(user => ({ user, value: formatValue(maxValue) }));
         };
@@ -166,4 +171,3 @@ export default function LegendsPage() {
   );
 }
 
-    
