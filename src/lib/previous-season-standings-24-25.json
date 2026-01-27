@@ -17,7 +17,7 @@
   { "rank": 15, "name": "Everton", "teamId": "team_08", "goalDifference": -11, "points": 40 },
   { "rank": 16, "name": "Brentford", "teamId": "team_04", "goalDifference": -9, "points": 39 },
   { "rank": 17, "name": "Notts Forest", "teamId": "team_16", "goalDifference": -18, "points": 32 },
-  { "rank": 18, "name": "Leeds C1", "teamId": "team_11", "goalDifference": 48, "points": 93 },
-  { "rank": 19, "name": "Burnley C2", "teamId": "", "goalDifference": 37, "points": 87 },
-  { "rank": 20, "name": "Sunderland C4", "teamId": "", "goalDifference": 16, "points": 81 }
+  { "rank": 18, "name": "Leeds C1", "teamId": "team_10", "goalDifference": 48, "points": 100 },
+  { "rank": 19, "name": "Burnley C2", "teamId": "team_11", "goalDifference": 37, "points": 100 },
+  { "rank": 20, "name": "Sunderland C4", "teamId": "team_17", "goalDifference": 16, "points": 76 }
 ]
