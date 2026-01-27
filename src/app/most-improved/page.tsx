@@ -25,7 +25,7 @@ import { getAvatarUrl } from '@/lib/placeholder-images';
 import { ArrowUp, ArrowDown, Minus, Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useResolvedUserId } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { allAwardPeriods } from '@/lib/award-periods';
 
@@ -50,6 +50,7 @@ const formatPointsChange = (change: number) => {
 
 export default function MostImprovedPage() {
   const firestore = useFirestore();
+  const resolvedUserId = useResolvedUserId();
 
   const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
   const matchesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'matches') : null, [firestore]);
@@ -231,8 +232,9 @@ export default function MostImprovedPage() {
                         {ladderData.ladderWithRanks.map((user) => {
                             const PositionChangeIcon = getRankChangeIcon(user.rankChangeInMonth);
                             const rankColour = getLadderRankColour(user);
+                            const isCurrentUser = user.id === resolvedUserId;
                             return (
-                                <TableRow key={user.id} className="border-b-4 border-transparent">
+                                <TableRow key={user.id} className={cn("border-b-4 border-transparent", { 'ring-2 ring-primary ring-inset': isCurrentUser })}>
                                     <TableCell className={cn("p-2 font-medium text-center", rankColour, rankColour && 'rounded-l-md')}>{user.displayRank}</TableCell>
                                     <TableCell className={cn("p-2", rankColour)}>
                                     <div className="flex items-center gap-3">
@@ -240,7 +242,7 @@ export default function MostImprovedPage() {
                                         <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
                                         <AvatarFallback>{(user.name || '?').charAt(0)}</AvatarFallback>
                                         </Avatar>
-                                        <span>{user.name}</span>
+                                        <span className={cn({ 'font-bold': isCurrentUser })}>{user.name}</span>
                                     </div>
                                     </TableCell>
                                     <TableCell className={cn("p-2 text-center font-bold border-l", rankColour)}>{formatPointsChange(user.improvement)}</TableCell>

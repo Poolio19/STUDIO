@@ -22,7 +22,7 @@ import { getAvatarUrl } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { ArrowUp, ArrowDown, Minus, Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useResolvedUserId } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 
 
@@ -49,6 +49,7 @@ const totalWinningsMap = new Map<string, number>();
 
 export default function LeaderboardPage() {
   const firestore = useFirestore();
+  const resolvedUserId = useResolvedUserId();
 
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('rank', 'asc')) : null, [firestore]);
   const matchesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'matches')) : null, [firestore]);
@@ -259,9 +260,10 @@ export default function LeaderboardPage() {
                   const RankIcon = getRankChangeIcon(user.rankChange);
                   const ScoreIcon = getRankChangeIcon(user.scoreChange);
                   const userWinnings = localTotalWinningsMap.get(user.id) || 0;
+                  const isCurrentUser = user.id === resolvedUserId;
                   
                   return (
-                      <TableRow key={user.id} className={cn(getRankColour(user))}>
+                      <TableRow key={user.id} className={cn(getRankColour(user), { 'font-bold ring-2 ring-inset ring-primary z-10 relative': isCurrentUser })}>
                           <TableCell className="font-medium text-center py-1">{user.rank}</TableCell>
                           <TableCell className="py-1">
                             <div className="flex items-center gap-3">

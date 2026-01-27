@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -15,13 +14,14 @@ import { getAvatarUrl } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
 import type { User, Team, PlayerTeamScore, CurrentStanding } from '@/lib/types';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useResolvedUserId } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 
 
 export default function StatsPage() {
   const firestore = useFirestore();
+  const resolvedUserId = useResolvedUserId();
 
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('rank', 'asc')) : null, [firestore]);
   const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
@@ -106,20 +106,22 @@ export default function StatsPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {sortedUsers.map((user) => (
-                                <TableRow key={user.id} className="h-10">
-                                    <TableCell className="sticky left-0 z-10 bg-card whitespace-nowrap font-medium p-0 w-[250px]">
+                            {sortedUsers.map((user) => {
+                                const isCurrentUser = user.id === resolvedUserId;
+                                return (
+                                <TableRow key={user.id} className={cn("h-10", { 'bg-accent': isCurrentUser })}>
+                                    <TableCell className={cn("sticky left-0 z-10 bg-card whitespace-nowrap font-medium p-0 w-[250px]", { 'bg-accent': isCurrentUser })}>
                                         <div className="flex items-center justify-between gap-3 h-full pl-2">
                                             <div className="flex items-center gap-3">
                                                 <Avatar className="h-8 w-8">
                                                     <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
                                                     <AvatarFallback>{(user.name || '?').charAt(0)}</AvatarFallback>
                                                 </Avatar>
-                                                <span className="font-medium">{user.name}</span>
+                                                <span className={cn("font-medium", { 'font-bold': isCurrentUser })}>{user.name}</span>
                                             </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell className="text-center font-bold text-lg border-l border-dashed border-border p-0">
+                                    <TableCell className={cn("text-center font-bold text-lg border-l border-dashed border-border p-0", { 'font-extrabold': isCurrentUser })}>
                                         {user.score}
                                     </TableCell>
                                     {sortedTeams.map((team) => {
@@ -133,7 +135,7 @@ export default function StatsPage() {
                                         );
                                     })}
                                 </TableRow>
-                            ))}
+                            )})}
                         </TableBody>
                     </Table>
                 )}

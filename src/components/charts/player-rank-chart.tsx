@@ -20,9 +20,10 @@ interface PlayerRankChartProps {
     yAxisDomain: [number, number];
     sortedUsers: User[];
     chartConfig: any;
+    currentUserId?: string | null;
 }
 
-export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers, chartConfig }: PlayerRankChartProps) {
+export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers, chartConfig, currentUserId }: PlayerRankChartProps) {
   
   const yAxisTicks = React.useMemo(() => {
     if (!yAxisDomain) return [];
@@ -63,16 +64,20 @@ export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers, chartConf
               domain={yAxisDomain}
               ticks={yAxisTicks}
             />
-              {sortedUsers.map((user) => (
-                  <Line
-                  key={user.id}
-                  dataKey={user.name}
-                  type="monotone"
-                  stroke={chartConfig[user.name]?.colour}
-                  strokeWidth={2}
-                  dot={false}
-                  />
-              ))}
+              {sortedUsers.map((user) => {
+                  const isCurrentUser = user.id === currentUserId;
+                  return (
+                    <Line
+                    key={user.id}
+                    dataKey={user.name}
+                    type="monotone"
+                    stroke={chartConfig[user.name]?.colour}
+                    strokeWidth={isCurrentUser ? 3.5 : 1.5}
+                    strokeOpacity={isCurrentUser ? 1 : 0.7}
+                    dot={false}
+                    />
+                  )
+              })}
           </LineChart>
         </ResponsiveContainer>
       </ChartContainer>

@@ -10,12 +10,13 @@ import {
 import { useMemo } from 'react';
 import { PlayerRankChart } from '@/components/charts/player-rank-chart';
 import type { User, UserHistory } from '@/lib/types';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useResolvedUserId } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 
 export default function RankingsPage() {
   const firestore = useFirestore();
+  const resolvedUserId = useResolvedUserId();
 
   const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
   const userHistoriesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'userHistories') : null, [firestore]);
@@ -146,7 +147,13 @@ export default function RankingsPage() {
                   );
                 })}
               </div>
-              <PlayerRankChart chartData={chartData} yAxisDomain={yAxisDomain} sortedUsers={sortedUsers} chartConfig={chartConfig} />
+              <PlayerRankChart 
+                chartData={chartData} 
+                yAxisDomain={yAxisDomain} 
+                sortedUsers={sortedUsers} 
+                chartConfig={chartConfig} 
+                currentUserId={resolvedUserId} 
+              />
             </>
           )}
         </CardContent>
