@@ -163,7 +163,15 @@ export default function AdminPage() {
         }
     }
 
-    if (latestWeekWithResults === 0) return 1; // No results at all, default to week 1
+    // If no results entered, find the first week with missing results
+    if (latestWeekWithResults === 0) {
+        for (let i = 1; i <= 38; i++) {
+            if (weekStats[i] && weekStats[i].missing > 0) {
+                return i;
+            }
+        }
+        return 1; // Fallback
+    }
 
     // Now find the most recent incomplete week, starting from the latest week with results
     for (let i = latestWeekWithResults; i >= 1; i--) {
