@@ -18,6 +18,7 @@ import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowDown, ArrowUp, Loader2, Minus, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
+import previousSeasonStandingsData from '@/lib/previous-season-standings-24-25.json';
 
 const predictionSchema = z.object({
   id: z.string(),
@@ -65,7 +66,7 @@ export default function PredictPage() {
   }, [firestore, resolvedUserId]);
 
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
-  const { data: previousSeasonStandings, isLoading: prevStandingsLoading } = useCollection<PreviousSeasonStanding>(prevStandingsQuery);
+  const { data: previousSeasonStandingsFromDB, isLoading: prevStandingsLoading } = useCollection<PreviousSeasonStanding>(prevStandingsQuery);
   const { data: currentStandings, isLoading: currentStandingsLoading } = useCollection<CurrentStanding>(currentStandingsQuery);
   const { data: matchesData, isLoading: matchesLoading } = useCollection<Match>(matchesQuery);
   const { data: userPrediction, isLoading: predictionLoading } = useDoc<PredictionType>(userPredictionDocRef);
@@ -81,8 +82,24 @@ export default function PredictPage() {
 
   const isLoading = isUserLoading || teamsLoading || prevStandingsLoading || predictionLoading || currentStandingsLoading || matchesLoading;
 
+  const sortedPreviousStandings = React.useMemo(() => {
+    if (!teams) return [];
+    
+    const teamMap = new Map(teams.map(t => [t.id, t]));
+    const nameMap = new Map(teams.map(t => [t.name, t]));
+
+    return previousSeasonStandingsData
+      .map(standing => {
+        const team = nameMap.get(standing.name);
+        return team ? { ...standing, ...team, teamId: team.id, teamLogo: team.logo } : null;
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null)
+      .sort((a, b) => a.rank - b.rank);
+  }, [teams]);
+
+
   React.useEffect(() => {
-    if (isLoading || !teams || !previousSeasonStandings) {
+    if (isLoading || !teams || !sortedPreviousStandings) {
       return;
     }
   
@@ -104,9 +121,7 @@ export default function PredictPage() {
         .filter((item): item is PredictionItem => !!item);
     } 
     else {
-      const prevStandingsMap = new Map(previousSeasonStandings.map(s => [s.teamId, s.rank]));
-      initialItems = [...teams]
-        .sort((a, b) => (prevStandingsMap.get(a.id) ?? 21) - (prevStandingsMap.get(b.id) ?? 21))
+      initialItems = sortedPreviousStandings
         .map(team => teamMap.get(team.id))
         .filter((item): item is PredictionItem => !!item);
     }
@@ -117,26 +132,12 @@ export default function PredictPage() {
         form.setValue('predictions', initialItems);
     }
 
-  }, [isLoading, teams, previousSeasonStandings, userPrediction, form, user]);
+  }, [isLoading, teams, sortedPreviousStandings, userPrediction, form, user]);
 
   const handleReorder = (newOrder: PredictionItem[]) => {
     setItems(newOrder);
     form.setValue('predictions', newOrder, { shouldDirty: true });
   }
-
-  const sortedPreviousStandings = React.useMemo(() => {
-    if (!teams || !previousSeasonStandings) return [];
-
-    const teamMap = new Map(teams.map(t => [t.id, t]));
-
-    return previousSeasonStandings
-      .map(standing => {
-        const team = teamMap.get(standing.teamId);
-        return team ? { ...standing, ...team, teamLogo: team.logo } : null;
-      })
-      .filter((item): item is NonNullable<typeof item> => item !== null)
-      .sort((a, b) => a.rank - b.rank);
-  }, [teams, previousSeasonStandings]);
 
   const currentStandingsWithTeamData = React.useMemo(() => {
     if (!teams || !currentStandings) return [];
@@ -240,33 +241,10 @@ export default function PredictPage() {
                           const TeamIcon = Icons[item.teamLogo as IconName] || Icons.match;
                           const isLiverpool = item.id === 'team_12';
                           return (
-                            <div
-                              key={item.teamId}
-                              className={cn("flex items-center h-[53px] rounded-md mb-1 shadow-sm")}
-                              style={{ backgroundColor: item.bgColourFaint, color: item.textColour }}
-                            >
-                              <div className={cn("text-base font-medium w-12 text-center opacity-80")}>{index + 1}</div>
-                              <div className="w-12 h-full p-0">
-                                <div className="flex items-center justify-center h-full">
-                                  <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: item.bgColourSolid }}>
-                                    <TeamIcon className={cn("size-5", isLiverpool && "scale-x-[-1]")} style={{ color: item.iconColour }} />
-                                  </div>
-                                </div>
-                              </div>
-                              <span className="font-medium text-sm pl-4">{item.teamName}</span>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <Reorder.Group axis="y" values={items} onReorder={handleReorder}>
-                          {items.map((item, index) => {
-                            const TeamIcon = Icons[item.teamLogo as IconName] || Icons.match;
-                            const isLiverpool = item.id === 'team_12';
-                            return (
-                              <Reorder.Item
-                                key={item.teamId}
-                                value={item}
-                                className={cn("flex items-center h-[53px] cursor-grab active:cursor-grabbing rounded-md mb-1 shadow-sm")}
+                            <React.Fragment key={item.teamId}>
+                              {index === 17 && <div className="my-1 border-t-2 border-dashed border-muted-foreground/30" />}
+                              <div
+                                className={cn("flex items-center h-[53px] rounded-md mb-1 shadow-sm")}
                                 style={{ backgroundColor: item.bgColourFaint, color: item.textColour }}
                               >
                                 <div className={cn("text-base font-medium w-12 text-center opacity-80")}>{index + 1}</div>
@@ -278,7 +256,34 @@ export default function PredictPage() {
                                   </div>
                                 </div>
                                 <span className="font-medium text-sm pl-4">{item.teamName}</span>
-                              </Reorder.Item>
+                              </div>
+                            </React.Fragment>
+                          );
+                        })
+                      ) : (
+                        <Reorder.Group axis="y" values={items} onReorder={handleReorder}>
+                          {items.map((item, index) => {
+                            const TeamIcon = Icons[item.teamLogo as IconName] || Icons.match;
+                            const isLiverpool = item.id === 'team_12';
+                            return (
+                               <React.Fragment key={item.teamId}>
+                                {index === 17 && <div className="my-1 border-t-2 border-dashed border-muted-foreground/30" />}
+                                <Reorder.Item
+                                    value={item}
+                                    className={cn("flex items-center h-[53px] cursor-grab active:cursor-grabbing rounded-md mb-1 shadow-sm")}
+                                    style={{ backgroundColor: item.bgColourFaint, color: item.textColour }}
+                                >
+                                    <div className={cn("text-base font-medium w-12 text-center opacity-80")}>{index + 1}</div>
+                                    <div className="w-12 h-full p-0">
+                                    <div className="flex items-center justify-center h-full">
+                                        <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: item.bgColourSolid }}>
+                                        <TeamIcon className={cn("size-5", isLiverpool && "scale-x-[-1]")} style={{ color: item.iconColour }} />
+                                        </div>
+                                    </div>
+                                    </div>
+                                    <span className="font-medium text-sm pl-4">{item.teamName}</span>
+                                </Reorder.Item>
+                                </React.Fragment>
                             );
                           })}
                         </Reorder.Group>
@@ -293,11 +298,16 @@ export default function PredictPage() {
             <div className="flex flex-col">
               <div className="font-medium pb-2 text-muted-foreground invisible">Diff</div>
               <div className="relative p-1">
-                {items.map((item) => {
+                {items.map((item, index) => {
                   const predRank = predRankMap.get(item.teamId);
                   const currentRank = currentRankMap.get(item.teamId);
                   const diff = (predRank !== undefined && currentRank !== undefined) ? currentRank - predRank : 0;
-                  return <div key={`${item.teamId}-diff1`} className="h-[53px] mb-1"><RankDifference diff={diff} /></div>;
+                  return (
+                     <React.Fragment key={`${item.teamId}-diff1`}>
+                        {index === 17 && <div className="my-1 border-t-2 border-dashed border-muted-foreground/30" />}
+                        <div className="h-[53px] mb-1"><RankDifference diff={diff} /></div>
+                     </React.Fragment>
+                  )
                 })}
               </div>
             </div>
@@ -314,27 +324,29 @@ export default function PredictPage() {
               <Card>
                 <CardContent className="p-0">
                    <div className="p-1">
-                      {currentStandingsWithTeamData.map(team => {
+                      {currentStandingsWithTeamData.map((team, index) => {
                         const TeamIcon = Icons[team.teamLogo as IconName] || Icons.match;
                         const isLiverpool = team.id === 'team_12';
                         return (
-                          <div
-                            key={team.id}
-                            className={cn("flex items-center h-[53px] rounded-md mb-1 shadow-sm")}
-                            style={{ backgroundColor: team.bgColourFaint, color: team.textColour }}
-                          >
-                            <div className={cn("text-base font-medium w-12 text-center opacity-80")}>{team.rank}</div>
-                            <div className="w-12 h-full p-0">
-                              <div className="flex items-center justify-center h-full">
-                                <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}>
-                                  <TeamIcon className={cn("size-5", isLiverpool && "scale-x-[-1]")} style={{ color: team.iconColour }} />
+                            <React.Fragment key={team.id}>
+                                {index === 17 && <div className="my-1 border-t-2 border-dashed border-muted-foreground/30" />}
+                                <div
+                                    className={cn("flex items-center h-[53px] rounded-md mb-1 shadow-sm")}
+                                    style={{ backgroundColor: team.bgColourFaint, color: team.textColour }}
+                                >
+                                    <div className={cn("text-base font-medium w-12 text-center opacity-80")}>{team.rank}</div>
+                                    <div className="w-12 h-full p-0">
+                                    <div className="flex items-center justify-center h-full">
+                                        <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}>
+                                        <TeamIcon className={cn("size-5", isLiverpool && "scale-x-[-1]")} style={{ color: team.iconColour }} />
+                                        </div>
+                                    </div>
+                                    </div>
+                                    <span className="font-medium text-sm pl-4 flex-grow">{team.name}</span>
+                                    <span className="text-right font-semibold w-16 pr-2 tabular-nums">{team.points}</span>
+                                    <span className="text-right w-16 pr-4 tabular-nums">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</span>
                                 </div>
-                              </div>
-                            </div>
-                            <span className="font-medium text-sm pl-4 flex-grow">{team.name}</span>
-                            <span className="text-right font-semibold w-16 pr-2 tabular-nums">{team.points}</span>
-                            <span className="text-right w-16 pr-4 tabular-nums">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</span>
-                          </div>
+                          </React.Fragment>
                         );
                       })}
                     </div>
@@ -346,11 +358,16 @@ export default function PredictPage() {
              <div className="flex flex-col">
               <div className="font-medium pb-2 text-muted-foreground invisible">Diff</div>
               <div className="relative p-1">
-                {currentStandingsWithTeamData.map((team) => {
+                {currentStandingsWithTeamData.map((team, index) => {
                   const currentRank = currentRankMap.get(team.teamId);
                   const prevRank = prevRankMap.get(team.teamId);
                   const diff = (currentRank !== undefined && prevRank !== undefined) ? prevRank - currentRank : 0;
-                  return <div key={`${team.teamId}-diff2`} className="h-[53px] mb-1"><RankDifference diff={diff} /></div>;
+                  return (
+                     <React.Fragment key={`${team.teamId}-diff2`}>
+                        {index === 17 && <div className="my-1 border-t-2 border-dashed border-muted-foreground/30" />}
+                        <div className="h-[53px] mb-1"><RankDifference diff={diff} /></div>
+                    </React.Fragment>
+                  );
                 })}
               </div>
             </div>
@@ -367,27 +384,29 @@ export default function PredictPage() {
               <Card>
                 <CardContent className="p-0">
                   <div className="p-1">
-                      {sortedPreviousStandings.map(team => {
+                      {sortedPreviousStandings.map((team, index) => {
                         const TeamIcon = Icons[team.teamLogo as IconName] || Icons.match;
                         const isLiverpool = team.id === 'team_12';
                         return (
-                          <div
-                            key={team.id}
-                            className={cn("flex items-center h-[53px] rounded-md mb-1 shadow-sm")}
-                            style={{ backgroundColor: team.bgColourFaint, color: team.textColour }}
-                          >
-                            <div className={cn("text-base font-medium w-12 text-center opacity-80")}>{team.rank}</div>
-                            <div className="w-12 h-full p-0">
-                              <div className="flex items-center justify-center h-full">
-                                <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}>
-                                  <TeamIcon className={cn("size-5", isLiverpool && "scale-x-[-1]")} style={{ color: team.iconColour }} />
+                            <React.Fragment key={team.id}>
+                                {index === 17 && <div className="my-1 border-t-2 border-dashed border-muted-foreground/30" />}
+                                <div
+                                    className={cn("flex items-center h-[53px] rounded-md mb-1 shadow-sm")}
+                                    style={{ backgroundColor: team.bgColourFaint, color: team.textColour }}
+                                >
+                                    <div className={cn("text-base font-medium w-12 text-center opacity-80")}>{team.rank}</div>
+                                    <div className="w-12 h-full p-0">
+                                    <div className="flex items-center justify-center h-full">
+                                        <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}>
+                                        <TeamIcon className={cn("size-5", isLiverpool && "scale-x-[-1]")} style={{ color: team.iconColour }} />
+                                        </div>
+                                    </div>
+                                    </div>
+                                    <span className="font-medium text-sm pl-4 flex-grow">{team.name}</span>
+                                    <span className="text-right font-semibold w-16 pr-2 tabular-nums">{team.points}</span>
+                                    <span className="text-right w-16 pr-4 tabular-nums">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</span>
                                 </div>
-                              </div>
-                            </div>
-                            <span className="font-medium text-sm pl-4 flex-grow">{team.name}</span>
-                            <span className="text-right font-semibold w-16 pr-2 tabular-nums">{team.points}</span>
-                            <span className="text-right w-16 pr-4 tabular-nums">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</span>
-                          </div>
+                            </React.Fragment>
                         );
                       })}
                   </div>
@@ -404,3 +423,5 @@ export default function PredictPage() {
     </div>
   );
 }
+
+    
