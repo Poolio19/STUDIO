@@ -95,6 +95,7 @@ const historicalDataFormSchema = z.object({
     joRuMimoM: z.coerce.number().int().min(0),
     xmasNo1: z.coerce.number().int().min(0),
     cashWinnings: z.coerce.number().min(0),
+    phoneNumber: z.string().optional(),
   }))
 });
 type HistoricalDataFormValues = z.infer<typeof historicalDataFormSchema>;
@@ -142,49 +143,33 @@ export default function AdminPage() {
       return 1;
     }
 
-    const weekStats: Record<number, { total: number, played: number, missing: number }> = {};
+    const matchesByWeek: Record<number, Match[]> = {};
     for (const match of allMatches) {
-        if (!weekStats[match.week]) {
-            weekStats[match.week] = { total: 0, played: 0, missing: 0 };
+        if (!matchesByWeek[match.week]) {
+            matchesByWeek[match.week] = [];
         }
-        weekStats[match.week].total++;
-        if (match.homeScore >= 0 && match.awayScore >= 0) {
-            weekStats[match.week].played++;
-        } else {
-             weekStats[match.week].missing++;
-        }
+        matchesByWeek[match.week].push(match);
     }
     
-    // Find the latest week that has at least one result entered
-    let latestWeekWithResults = 0;
-    for (let i = 38; i >= 1; i--) {
-        if (weekStats[i] && weekStats[i].played > 0) {
-            latestWeekWithResults = i;
-            break;
-        }
-    }
-
-    // Now find the most recent incomplete week, starting from the latest week with results
-    for (let i = latestWeekWithResults; i >= 1; i--) {
-      if (weekStats[i] && weekStats[i].missing > 0) {
-        return i;
-      }
-    }
-    
-    // If all weeks with results are complete, return the next week if it exists
-    if (latestWeekWithResults > 0 && latestWeekWithResults < 38) {
-      return latestWeekWithResults + 1;
-    }
-    
-    // If no results are entered at all, find the first week with matches
+    // Find the first week that is not fully complete (has at least one match with score -1)
     for (let i = 1; i <= 38; i++) {
-      if (weekStats[i] && weekStats[i].total > 0) {
-        return i;
-      }
+        const weekMatches = matchesByWeek[i];
+        if (weekMatches && weekMatches.length > 0) {
+            const isComplete = weekMatches.every(m => m.homeScore >= 0);
+            if (!isComplete) {
+                return i;
+            }
+        }
+    }
+    
+    // If all defined weeks are complete, find the highest week number and return the next one
+    const latestDefinedWeek = Math.max(...Object.keys(matchesByWeek).map(Number));
+    if (latestDefinedWeek > 0 && latestDefinedWeek < 38) {
+      return latestDefinedWeek + 1;
     }
 
-    // As a final fallback, return the latest week, or 1
-    return latestWeekWithResults > 0 ? latestWeekWithResults : 1;
+    // Fallback
+    return latestDefinedWeek > 0 ? latestDefinedWeek : 1;
   }, [allMatches]);
   
   const scoresForm = useForm<ScoresFormValues>({
@@ -218,6 +203,7 @@ export default function AdminPage() {
         joRuMimoM: u.joRuMimoM || 0,
         xmasNo1: u.xmasNo1 || 0,
         cashWinnings: u.cashWinnings || 0,
+        phoneNumber: u.phoneNumber || ''
       })),
     },
   });
@@ -539,7 +525,7 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-2">
             <CardHeader>
-                <CardTitle>Step 1 & 2: Enter & Write Results</CardTitle>
+                <CardTitle>Step 1 &amp; 2: Enter &amp; Write Results</CardTitle>
                 <CardDescription>
                     Select a week, enter the scores, then create a temporary results file and write it to the database.
                 </CardDescription>
@@ -631,7 +617,7 @@ export default function AdminPage() {
                     <AlertDialogTrigger asChild>
                         <Button variant="destructive" size="lg" className="text-lg" disabled={isUpdating}>
                             {isUpdating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                            3. Update & Recalculate All Data
+                            3. Update &amp; Recalculate All Data
                         </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -706,13 +692,14 @@ export default function AdminPage() {
           <CardHeader>
             <CardTitle>Historical Player Data</CardTitle>
             <CardDescription>Manage players&apos; historical achievements and trophy cabinet. Scroll right for more stats.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={historicalForm.handleSubmit(onHistoricalSubmit)} className="space-y-4">
+            <form onSubmit={historicalForm.handleSubmit(onHistoricalSubmit)} className="space-y-4 pt-4">
               <Button type="submit" disabled={isUpdatingHistoricalData}>
                 {isUpdatingHistoricalData ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
                 Save Historical Data
               </Button>
+            </form>
+          </CardHeader>
+          <CardContent>
               <div className="overflow-x-auto">
                 <div className="grid grid-cols-[2fr_repeat(17,1fr)] gap-1 pb-2 min-w-[1000px]">
                   <span className="font-medium text-muted-foreground text-sm sticky left-0 bg-card pr-2">Player</span>
@@ -754,9 +741,10 @@ export default function AdminPage() {
                 ))}
                 </div>
               </div>
-            </form>
           </CardContent>
         </Card>
     </div>
   );
 }
+
+    
