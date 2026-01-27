@@ -210,7 +210,7 @@ export default function AdminPage() {
   });
 
   React.useEffect(() => {
-    if (historicalPlayersData.length > 0) {
+    if (historicalPlayersData.length > 0 && fields.length === 0) {
         replace(historicalPlayersData.map(u => ({
             id: u.id,
             name: u.name,
@@ -233,15 +233,14 @@ export default function AdminPage() {
             cashWinnings: u.cashWinnings || 0,
         })));
     }
-  }, [replace]);
+  }, [replace, fields.length]);
 
 
   React.useEffect(() => {
-    if (defaultWeek > 0 && !initialWeekSet) {
-      scoresForm.setValue('week', defaultWeek);
-      setInitialWeekSet(true);
+    if (defaultWeek > 0 && !scoresForm.formState.isDirty) {
+      scoresForm.setValue('week', defaultWeek, { shouldDirty: false });
     }
-  }, [defaultWeek, scoresForm, initialWeekSet]);
+  }, [defaultWeek, scoresForm]);
 
 
   const selectedWeek = scoresForm.watch('week');
@@ -499,7 +498,7 @@ export default function AdminPage() {
         const batch = writeBatch(firestore);
         data.users.forEach(user => {
             const userRef = doc(firestore, 'users', user.id);
-            batch.set(userRef, {
+            const userData = {
                 seasonsPlayed: user.seasonsPlayed,
                 first: user.first,
                 second: user.second,
@@ -517,7 +516,16 @@ export default function AdminPage() {
                 joRuMimoM: user.joRuMimoM,
                 xmasNo1: user.xmasNo1,
                 cashWinnings: user.cashWinnings,
-            }, { merge: true });
+            };
+            // Ensure no NaN values are sent to Firestore
+            Object.keys(userData).forEach(key => {
+                const value = (userData as any)[key];
+                if (typeof value === 'number' && isNaN(value)) {
+                    (userData as any)[key] = 0;
+                }
+            });
+
+            batch.set(userRef, userData, { merge: true });
         });
         await batch.commit();
         toast({ title: 'Success!', description: 'Historical data for all players has been saved.' });
@@ -756,7 +764,7 @@ export default function AdminPage() {
                                       {...field}
                                       type="number"
                                       className="w-full text-center h-8 text-xs px-1"
-                                      onChange={e => field.onChange(e.target.valueAsNumber)}
+                                      onChange={e => field.onChange(e.target.value === '' ? 0 : e.target.valueAsNumber)}
                                   />
                               )}
                           />

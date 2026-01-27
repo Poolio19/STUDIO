@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -26,23 +25,30 @@ export default function RankingsPage() {
 
   const isLoading = usersLoading || historiesLoading;
 
-  const sortedUsers = useMemo(() => {
+  const activeUsers = useMemo(() => {
     if (!users) return [];
-    return [...users].sort((a, b) => a.rank - b.rank);
-  }, [users]);
+    const activeUserIds = new Set(userHistories?.map(h => h.userId) || []);
+    return users.filter(u => u.name && activeUserIds.has(u.id));
+  }, [users, userHistories]);
+
+  const sortedUsers = useMemo(() => {
+    if (!activeUsers) return [];
+    return [...activeUsers].sort((a, b) => a.rank - b.rank);
+  }, [activeUsers]);
 
 
   const { chartData, yAxisDomain, chartConfig, legendUsers } = useMemo(() => {
-    if (!users || !userHistories || !sortedUsers) return { chartData: [], yAxisDomain: [0, 110], chartConfig: {}, legendUsers: [] };
+    if (!activeUsers || !userHistories || !sortedUsers) return { chartData: [], yAxisDomain: [0, 0], chartConfig: {}, legendUsers: [] };
     
-    const yAxisDomain: [number, number] = [0, 110];
+    const activeUserHistories = userHistories.filter(h => activeUsers.some(u => u.id === h.userId));
+    const yAxisDomain: [number, number] = [0, activeUsers.length + 1];
 
-    const weeks = [...new Set(userHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.week)))].sort((a,b) => a-b);
+    const weeks = [...new Set(activeUserHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.week)))].sort((a,b) => a-b);
     
     const transformedData = weeks.map(week => {
       const weekData: { [key: string]: number | string } = { week: `Wk ${week}` };
-      userHistories.forEach(history => {
-        const user = users.find(u => u.id === history.userId); 
+      activeUserHistories.forEach(history => {
+        const user = activeUsers.find(u => u.id === history.userId); 
         if (user) {
           const weekScore = history.weeklyScores.find(w => w.week === week);
           if (weekScore && weekScore.rank > 0) {
@@ -73,7 +79,7 @@ export default function RankingsPage() {
     });
 
     return { chartData: transformedData, yAxisDomain, chartConfig: config, legendUsers: columnOrderedUsers };
-  }, [users, userHistories, sortedUsers]);
+  }, [activeUsers, userHistories, sortedUsers]);
 
   const surnameCounts = useMemo(() => {
     if (!sortedUsers) return new Map<string, number>();

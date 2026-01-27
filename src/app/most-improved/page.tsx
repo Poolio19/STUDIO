@@ -153,10 +153,14 @@ export default function MostImprovedPage() {
     
     return seasonMonths.map(seasonMonth => {
         const seasonString = `${seasonMonth.year}-${seasonMonth.year + 1}`;
-        const historicalMonth = historicalMimoAwards.find(h => 
-            h.season === seasonString && 
-            (h.month.toUpperCase() === (seasonMonth.month?.toUpperCase() || ''))
-        );
+        const historicalMonth = historicalMimoAwards.find(h => {
+            const sameSeason = h.season === seasonString;
+            const historicalAbbr = h.month.toUpperCase();
+            const currentAbbr = seasonMonth.abbreviation.toUpperCase();
+            // Handle 'Sep' vs 'Sept'
+            const sameMonth = currentAbbr.startsWith(historicalAbbr) || historicalAbbr.startsWith(currentAbbr);
+            return sameSeason && sameMonth;
+        });
 
         let isFuture = false;
         const period = allAwardPeriods.find(p => p.id === seasonMonth.id);
