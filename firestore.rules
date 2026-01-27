@@ -59,5 +59,11 @@ service cloud.firestore {
     match /matches/{matchId} {
       allow read, write: if true;
     }
+    match /messages/{messageId} {
+      allow read, create: if request.auth != null;
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
   }
 }
+
+  

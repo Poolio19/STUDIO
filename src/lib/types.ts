@@ -172,6 +172,17 @@ export type RollOfHonourEntry = {
   runnersUp: HonoursPlayer[];
 };
 
+export type Message = {
+    id: string;
+    userId: string;
+    userName: string;
+    userAvatar: string;
+    text: string;
+    createdAt: any; // Firestore Timestamp
+    mentions?: string[];
+};
     
 
     
+
+  

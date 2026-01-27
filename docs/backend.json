@@ -196,6 +196,23 @@
         "matchDate": { "type": "string", "format": "date-time" }
       },
       "required": ["week", "homeTeamId", "awayTeamId", "homeScore", "awayScore", "matchDate"]
+    },
+    "Message": {
+      "title": "Message",
+      "type": "object",
+      "description": "Represents a single message in the chat forum.",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userAvatar": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "mentions": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["userId", "userName", "text", "createdAt"]
     }
   },
   "auth": {
@@ -276,10 +293,16 @@
         "definition": {
           "schema": { "$ref": "#/backend/entities/Match" }
         }
+      },
+      {
+        "path": "/messages/{messageId}",
+        "definition": {
+          "schema": { "$ref": "#/backend/entities/Message" }
+        }
       }
     ]
   }
 }
     
 
-    
+  

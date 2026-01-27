@@ -23,6 +23,7 @@ import type { User } from '@/lib/types';
 const navItems = [
   { href: '/leaderboard', icon: 'leaderboard', label: 'PremPred League' },
   { href: '/predict', icon: 'predict', label: 'YourPred' },
+  { href: '/forum', icon: 'forum', label: 'Chat Forum' },
   { href: '/most-improved', icon: 'award', label: 'MiMoM' },
   { href: '/standings', icon: 'standings', label: 'Premier League' },
   { href: '/stats', icon: 'stats', label: 'PredStats' },
@@ -148,3 +149,5 @@ export function SidebarNav() {
     </>
   );
 }
+
+  

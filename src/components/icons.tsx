@@ -44,13 +44,15 @@ import {
   Volleyball,
   LineChart,
   Spline,
-  ShieldCheck
+  ShieldCheck,
+  MessageSquare
 } from 'lucide-react';
 
 export const Icons = {
   logo: Volleyball,
   leaderboard: Trophy,
   predict: PenSquare,
+  forum: MessageSquare,
   scoring: Calculator,
   standings: Shield,
   stats: BarChart,
@@ -97,3 +99,5 @@ export const Icons = {
 };
 
 export type IconName = keyof typeof Icons;
+
+  
