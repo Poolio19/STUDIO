@@ -1,7 +1,7 @@
-# Firebase Studio
+# PremPred 2025-2026
 
-This is a NextJS starter in Firebase Studio.
+This is a Next.js application for the PremPred prediction league, built with Firebase Studio.
 
-To get started, take a look at src/app/page.tsx.
+## Deployment
 
-Triggering the initial push to GitHub.
+This application is deployed automatically via Firebase App Hosting. Every push to the connected GitHub repository's `main` branch will trigger a new build and deployment.
