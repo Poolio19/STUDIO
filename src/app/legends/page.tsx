@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -61,11 +60,6 @@ export default function LegendsPage() {
             const values = validUsers.map(u => getValue(u));
             const maxValue = Math.max(...values);
             
-            // If the max value is <= 0 and all values are <= 0, there are no "winners".
-            if (maxValue <= 0 && values.every(v => v <= 0)) {
-                return [];
-            }
-
             if (maxValue === -Infinity) return [];
 
             return validUsers
@@ -174,4 +168,3 @@ export default function LegendsPage() {
     </div>
   );
 }
-
