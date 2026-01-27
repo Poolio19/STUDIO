@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -21,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { User, UserHistory, SeasonMonth, Match, HistoricalMimoMonth } from '@/lib/types';
+import type { User, UserHistory, SeasonMonth, Match, HistoricalMimoMonth, HistoricalMimoAwardInfo } from '@/lib/types';
 import { getAvatarUrl } from '@/lib/placeholder-images';
 import { ArrowUp, ArrowDown, Minus, Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
@@ -55,15 +54,13 @@ export default function MostImprovedPage() {
 
   const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
   const matchesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'matches') : null, [firestore]);
-  const seasonMonthsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'seasonMonths') : null, [firestore]);
   const userHistoriesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'userHistories') : null, [firestore]);
 
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
   const { data: matchesData, isLoading: matchesLoading } = useCollection<Match>(matchesQuery);
-  const { data: seasonMonthsData, isLoading: seasonMonthsLoading } = useCollection<SeasonMonth>(seasonMonthsQuery);
   const { data: userHistories, isLoading: historiesLoading } = useCollection<UserHistory>(userHistoriesQuery);
 
-  const isLoading = usersLoading || matchesLoading || seasonMonthsLoading || historiesLoading;
+  const isLoading = usersLoading || matchesLoading || historiesLoading;
 
   const currentWeek = useMemo(() => {
     if (matchesData && matchesData.length > 0) {
@@ -128,122 +125,47 @@ export default function MostImprovedPage() {
 
     return { ladderWithRanks, firstPlaceImprovement, secondPlaceImprovement };
   }, [users, userHistories, currentAwardPeriod, currentWeek]);
-
-  const seasonMonths = useMemo(() => {
-    if (!seasonMonthsData) return [];
-    return [...seasonMonthsData].sort((a, b) => {
-        if (a.year !== b.year) return a.year - b.year;
-        const monthOrder = ['August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'];
-        const aIndex = monthOrder.indexOf(a.month);
-        const bIndex = monthOrder.indexOf(b.month);
-        if (aIndex !== bIndex) return aIndex - bIndex;
-        if (a.special && !b.special) return 1;
-        if (!a.special && b.special) return -1;
-        return 0;
-    });
-  }, [seasonMonthsData]);
   
-  const historicalAwardsTyped: HistoricalMimoMonth[] = historicalMimoAwards;
   const userNameMap = useMemo(() => {
     if (!users) return new Map<string, User>();
     return new Map(users.map(u => [u.name, u]));
   }, [users]);
 
   const mimoMWithDetails = useMemo(() => {
-    if (!users || !seasonMonths || !userHistories || !userNameMap) return [];
+    if (!users || !userNameMap) return [];
     
-    return seasonMonths.map(seasonMonth => {
-        const seasonString = `${seasonMonth.year}-${seasonMonth.year + 1}`;
-        const historicalMonth = historicalAwardsTyped.find(h => {
-          if (h.season !== seasonString) return false;
-          const historicalAbbr = h.month.toUpperCase().substring(0,3);
-          const currentAbbr = seasonMonth.abbreviation.toUpperCase().substring(0,3);
-          return historicalAbbr === currentAbbr;
-        });
+    const historicalAwardsTyped: HistoricalMimoMonth[] = historicalMimoAwards;
 
-        let isFuture = false;
-        const period = allAwardPeriods.find(p => p.id === seasonMonth.id);
-        if (period) {
-          isFuture = currentWeek < period.startWeek;
-        }
-        
-        if (historicalMonth && !isFuture) {
-            const winners = historicalMonth.awards.filter(a => a.type === 'MiMoM' || a.type === 'JoMiMoM');
-            const runnersUp = historicalMonth.awards.filter(a => a.type === 'RuMiMoM' || a.type === 'JoRuMiMoM');
-
-            const mapAwardToUser = (award: any) => {
-                const user = userNameMap.get(award.name);
-                return {
-                    ...(user || { id: award.name, name: award.name, avatar: '' }),
-                    improvement: award.improvement,
-                };
-            };
-            
-            return {
-                ...seasonMonth,
-                isCurrentMonth: false,
-                isFuture: false,
-                winners: winners.map(mapAwardToUser),
-                runnersUp: runnersUp.map(mapAwardToUser),
-                currentLeaders: null,
-                currentRunnersUp: null,
-            };
-        }
-
-        // Live calculation for current/future periods
-        const isCurrentPeriod = currentAwardPeriod?.id === seasonMonth.id;
-        let currentLeaders: (User & { improvement: number })[] | null = null;
-        let currentRunnersUp: (User & { improvement: number })[] | null = null;
-
-        if (isCurrentPeriod && currentWeek >= currentAwardPeriod.startWeek) {
-            const startWeek = currentAwardPeriod.startWeek;
-            const endWeek = currentWeek;
-
-            const monthlyImprovements: { userId: string; improvement: number; endScore: number; user: User }[] = [];
-
-            const nonProUsers = users.filter(u => !u.isPro);
-            nonProUsers.forEach(user => {
-                const history = userHistories.find(h => h.userId === user.id);
-                if (history) {
-                    const startWeekData = history.weeklyScores.find(ws => ws.week === startWeek);
-                    const endWeekData = history.weeklyScores.find(ws => ws.week === endWeek);
-                    if (startWeekData && endWeekData) {
-                        const improvement = endWeekData.score - startWeekData.score;
-                        monthlyImprovements.push({ userId: user.id, improvement, endScore: endWeekData.score, user });
-                    }
-                }
-            });
-
-            if (monthlyImprovements.length > 0) {
-                monthlyImprovements.sort((a, b) => b.improvement - a.improvement || b.endScore - a.endScore);
-                
-                const bestImprovement = monthlyImprovements[0].improvement;
-                const winners = monthlyImprovements.filter(u => u.improvement === bestImprovement);
-
-                currentLeaders = winners.map(w => ({ ...w.user, improvement: w.improvement }));
-
-                if (winners.length === 1) {
-                     const remainingPlayers = monthlyImprovements.filter(u => u.improvement < bestImprovement);
-                    if (remainingPlayers.length > 0) {
-                        const secondBestImprovement = remainingPlayers[0].improvement;
-                        const runnersUp = remainingPlayers.filter(u => u.improvement === secondBestImprovement);
-                        currentRunnersUp = runnersUp.map(r => ({ ...r.user, improvement: r.improvement }));
-                    }
-                }
-            }
-        }
-        
+    const mapAwardToUser = (award: HistoricalMimoAwardInfo) => {
+        const user = userNameMap.get(award.name);
         return {
-            ...seasonMonth,
+            ...(user || { id: award.name, name: award.name, avatar: '' }),
+            improvement: award.improvement,
+        };
+    };
+
+    return historicalAwardsTyped.map(historicalMonth => {
+        const winners = historicalMonth.awards.filter(a => a.type === 'MiMoM' || a.type === 'JoMiMoM').map(mapAwardToUser);
+        const runnersUp = historicalMonth.awards.filter(a => a.type === 'RuMiMoM' || a.type === 'JoRuMiMoM').map(mapAwardToUser);
+
+        const periodForCurrentSeason = allAwardPeriods.find(p => 
+            p.abbreviation.toUpperCase().startsWith(historicalMonth.month.toUpperCase().substring(0,3)) &&
+            `${p.year}-${p.year+1}` === historicalMonth.season
+        );
+        const isCurrentPeriod = !!(currentAwardPeriod && periodForCurrentSeason && currentAwardPeriod.id === periodForCurrentSeason.id);
+
+        return {
+            id: `${historicalMonth.season}-${historicalMonth.month}`,
+            abbreviation: historicalMonth.month.toUpperCase().substring(0, 4),
             isCurrentMonth: isCurrentPeriod,
-            isFuture,
-            winners: null,
-            runnersUp: null,
-            currentLeaders,
-            currentRunnersUp,
-        }
+            isFuture: false, // All historical records are past.
+            winners: winners,
+            runnersUp: runnersUp,
+            currentLeaders: null, 
+            currentRunnersUp: null,
+        };
     });
-  }, [users, seasonMonths, currentAwardPeriod, userHistories, currentWeek, userNameMap, historicalAwardsTyped]);
+  }, [users, userNameMap, currentAwardPeriod, historicalMimoAwards]);
 
 
   const getLadderRankColour = (user: (typeof ladderData.ladderWithRanks)[0]) => {
@@ -405,5 +327,3 @@ export default function MostImprovedPage() {
     </div>
   );
 }
-
-    
