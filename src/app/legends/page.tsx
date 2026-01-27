@@ -4,8 +4,8 @@ import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Crown, Trophy, Gem, ShieldCheck, TrendingUp, Star, DollarSign, Loader2 } from 'lucide-react';
-import type { User, RollOfHonourEntry } from '@/lib/types';
+import { Crown, Trophy, Gem, ShieldCheck, TrendingUp, Star, DollarSign, Award } from 'lucide-react';
+import type { User, RollOfHonourEntry, HonoursPlayer } from '@/lib/types';
 import { getAvatarUrl } from '@/lib/placeholder-images';
 import rollOfHonourData from '@/lib/roll-of-honour.json';
 import historicalPlayersData from '@/lib/historical-players.json';
@@ -19,7 +19,7 @@ const StatCard = ({ title, icon: Icon, winners }: { title: string, icon: React.E
             <CardTitle>{title}</CardTitle>
         </CardHeader>
         <CardContent className="flex-grow">
-            {winners.length > 0 ? (
+            {winners && winners.length > 0 ? (
                 winners.map(({ user, value }) => (
                     <div key={user.id} className="flex items-center gap-4 mt-2">
                         <Avatar className="h-12 w-12 border-2 border-primary">
@@ -50,17 +50,70 @@ export default function LegendsPage() {
             const validUsers = users.filter(u => u.name && !u.isPro);
             if (validUsers.length === 0) return [];
             
-            const values = validUsers.map(u => getValue(u)).filter(v => v !== undefined && v !== null && !isNaN(v));
-            if (values.length === 0) return [];
+            const allScores = validUsers.map(u => getValue(u));
+            if (allScores.length === 0) return [];
             
-            const maxValue = Math.max(...values);
-            
-            if (maxValue < 0) return []; // For stats like 'highest average', don't show if max is negative.
+            const maxValue = Math.max(...allScores.filter(v => v !== undefined && v !== null && !isNaN(v)));
 
             return validUsers
                 .filter(u => getValue(u) === maxValue)
                 .map(user => ({ user, value: formatValue(maxValue) }));
         };
+        
+        const userMap = new Map(users.map(u => [u.name, u]));
+
+        // --- HIGHEST POINTS FINISH ---
+        let maxPoints = -1;
+        rollOfHonourData.forEach(season => {
+            season.winners.forEach(winner => {
+                if (winner.points && winner.points > maxPoints) {
+                    maxPoints = winner.points;
+                }
+            });
+        });
+
+        const pointsWinners: { user: User, value: string }[] = [];
+        if (maxPoints > 0) {
+            const uniqueWinners = new Set<string>();
+            rollOfHonourData.forEach(season => {
+                season.winners.forEach(winner => {
+                    if (winner.points === maxPoints) {
+                        const user = userMap.get(winner.name);
+                        if (user && !uniqueWinners.has(user.id)) {
+                            pointsWinners.push({ user, value: `${maxPoints} points in ${season.season}` });
+                            uniqueWinners.add(user.id);
+                        }
+                    }
+                });
+            });
+        }
+
+        // --- HIGHEST SINGLE PRIZE ---
+        let maxWinnings = -1;
+        rollOfHonourData.forEach(season => {
+            season.winners.forEach(winner => {
+                if (winner.winnings && winner.winnings > maxWinnings) {
+                    maxWinnings = winner.winnings;
+                }
+            });
+        });
+
+        const winningsWinners: { user: User, value: string }[] = [];
+        if (maxWinnings > 0) {
+            const uniqueWinners = new Set<string>();
+            rollOfHonourData.forEach(season => {
+                season.winners.forEach(winner => {
+                    if (winner.winnings === maxWinnings) {
+                        const user = userMap.get(winner.name);
+                        if (user && !uniqueWinners.has(user.id)) {
+                            winningsWinners.push({ user, value: `£${maxWinnings.toFixed(2)} in ${season.season}` });
+                            uniqueWinners.add(user.id);
+                        }
+                    }
+                });
+            });
+        }
+
 
         const topTenFinishes = (u: User) => (u.first || 0) + (u.second || 0) + (u.third || 0) + (u.fourth || 0) + (u.fifth || 0) + (u.sixth || 0) + (u.seventh || 0) + (u.eighth || 0) + (u.ninth || 0) + (u.tenth || 0);
         const totalMiMoMs = (u: User) => (u.mimoM || 0) + (u.ruMimoM || 0) + (u.joMimoM || 0) + (u.joRuMimoM || 0);
@@ -71,6 +124,8 @@ export default function LegendsPage() {
             mostTopTens: findWinners(topTenFinishes, v => `${v} top 10 finishes`),
             highestAverage: findWinners(u => (u.seasonsPlayed || 0) > 1 ? ((u.cashWinnings || 0) / (u.seasonsPlayed || 1)) : -1, v => `£${v.toFixed(2)} / season`),
             mostMiMoMs: findWinners(totalMiMoMs, v => `${v} monthly award${v !== 1 ? 's' : ''}`),
+            highestPointsFinish: pointsWinners,
+            highestSinglePrize: winningsWinners
         };
     }, [users]);
     
@@ -87,6 +142,8 @@ export default function LegendsPage() {
                 {accolades && <StatCard title="Most Overall Wins" icon={Crown} winners={accolades.mostWins} />}
                 {accolades && <StatCard title="Highest Cumulative Cash" icon={DollarSign} winners={accolades.highestWinnings} />}
                 {accolades && <StatCard title="Most Top 10 Finishes" icon={Star} winners={accolades.mostTopTens} />}
+                {accolades && <StatCard title="Highest Points Finish" icon={TrendingUp} winners={accolades.highestPointsFinish} />}
+                {accolades && <StatCard title="Highest Single Prize" icon={Award} winners={accolades.highestSinglePrize} />}
             </CardContent>
         </Card>
         
