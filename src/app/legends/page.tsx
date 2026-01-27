@@ -55,14 +55,18 @@ export default function LegendsPage() {
         if (!users || users.length === 0) return null;
 
         const findWinners = (getValue: (u: User) => number, formatValue: (v: number) => string) => {
-            if (users.length === 0) return [];
-            
-            const validUsers = users.filter(u => u.name); // Ensure user has a name
+            const validUsers = users.filter(u => u.name);
             if (validUsers.length === 0) return [];
-
+            
             const values = validUsers.map(u => getValue(u));
             const maxValue = Math.max(...values);
-            if (maxValue === -Infinity || maxValue <= 0) return [];
+            
+            // If the max value is <= 0 and all values are <= 0, there are no "winners".
+            if (maxValue <= 0 && values.every(v => v <= 0)) {
+                return [];
+            }
+
+            if (maxValue === -Infinity) return [];
 
             return validUsers
                 .filter(u => getValue(u) === maxValue)
@@ -76,7 +80,7 @@ export default function LegendsPage() {
             mostWins: findWinners(u => u.first || 0, v => `${v} win${v > 1 ? 's' : ''}`),
             highestWinnings: findWinners(u => u.cashWinnings || 0, v => `£${v.toFixed(2)}`),
             mostTopTens: findWinners(topTenFinishes, v => `${v} finishes`),
-            highestAverage: findWinners(u => u.seasonsPlayed && u.seasonsPlayed > 1 ? (u.cashWinnings || 0) / u.seasonsPlayed : 0, v => `£${v.toFixed(2)} / season`),
+            highestAverage: findWinners(u => (u.seasonsPlayed || 0) > 1 ? (u.cashWinnings || 0) / u.seasonsPlayed : -1, v => `£${v.toFixed(2)} / season`),
             mostMiMoMs: findWinners(totalMiMoMs, v => `${v} awards`),
         };
     }, [users]);
@@ -150,7 +154,7 @@ export default function LegendsPage() {
                                     {entry.winners.map(p => <div key={p.name}>{p.points || ''}</div>)}
                                 </TableCell>
                                 <TableCell className="text-right py-2 font-medium align-top">
-                                    {entry.winners.map(p => <div key={p.name}>{p.winnings > 0 ? `£${p.winnings.toFixed(2)}` : ''}</div>)}
+                                    {entry.winners.map(p => <div key={p.name}>{p.winnings && p.winnings > 0 ? `£${p.winnings.toFixed(2)}` : ''}</div>)}
                                 </TableCell>
                                 <TableCell className="py-2 border-l pl-4 align-top">
                                     {entry.runnersUp && entry.runnersUp.map(p => <div key={p.name}>{p.name}</div>)}
@@ -159,7 +163,7 @@ export default function LegendsPage() {
                                     {entry.runnersUp && entry.runnersUp.map(p => <div key={p.name}>{p.points || ''}</div>)}
                                 </TableCell>
                                 <TableCell className="text-right py-2 font-medium align-top">
-                                    {entry.runnersUp && entry.runnersUp.map(p => <div key={p.name}>{p.winnings > 0 ? `£${p.winnings.toFixed(2)}`: ''}</div>)}
+                                    {entry.runnersUp && entry.runnersUp.map(p => <div key={p.name}>{p.winnings && p.winnings > 0 ? `£${p.winnings.toFixed(2)}`: ''}</div>)}
                                 </TableCell>
                             </TableRow>
                         ))}
