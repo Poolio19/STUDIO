@@ -21,7 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useAuth, useFirestore, useResolvedUserId } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { useState } from 'react';
@@ -29,6 +29,7 @@ import { Loader2 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import type { User } from '@/lib/types';
+import historicalPlayersData from '@/lib/historical-players.json';
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -52,40 +53,102 @@ export function AuthForm() {
 
   const createInitialUserProfile = async (userId: string, email: string) => {
     if (!firestore) return;
-    
-    // Determine the document ID, handling the special case for Jim Poole.
+
     const docId = email === 'jim.poole@prempred.com' ? 'usr_009' : userId;
     const userDocRef = doc(firestore, 'users', docId);
 
     const docSnap = await getDoc(userDocRef);
     if (docSnap.exists()) {
-        console.log(`User profile for ${docId} already exists. Skipping creation.`);
-        return;
+      console.log(`User profile for ${docId} already exists. Skipping creation.`);
+      return;
     }
-    
-    const newUserProfile: Omit<User, 'id'> = {
-      name: email.split('@')[0] || 'New User',
-      nickname: '',
-      email: email,
-      avatar: String(Math.floor(Math.random() * 49) + 1),
-      score: 0,
-      rank: 0,
-      previousRank: 0,
-      previousScore: 0,
-      maxRank: 0,
-      minRank: 0,
-      maxScore: 0,
-      minScore: 0,
-      rankChange: 0,
-      scoreChange: 0,
-      isPro: false,
-      joinDate: new Date().toISOString(),
-      country: '',
-      favouriteTeam: '',
-      phoneNumber: '',
-    };
 
-    setDocumentNonBlocking(userDocRef, newUserProfile);
+    const historicalUser = historicalPlayersData.find(u => u.id === docId);
+
+    let profileData: Omit<User, 'id'>;
+
+    if (historicalUser) {
+      const { id, ...historicalData } = historicalUser;
+      profileData = {
+        name: historicalUser.name || email.split('@')[0] || 'New User',
+        nickname: historicalUser.nickname || '',
+        email: email,
+        avatar: String(Math.floor(Math.random() * 49) + 1), // Assign a random avatar for now
+        score: 0,
+        rank: 0,
+        previousRank: 0,
+        previousScore: 0,
+        maxRank: 0,
+        minRank: 0,
+        maxScore: 0,
+        minScore: 0,
+        rankChange: 0,
+        scoreChange: 0,
+        isPro: historicalUser.isPro ?? false,
+        joinDate: new Date().toISOString(),
+        country: historicalUser.country || '',
+        favouriteTeam: historicalUser.favouriteTeam || '',
+        phoneNumber: historicalUser.phoneNumber || '',
+        seasonsPlayed: historicalUser.seasonsPlayed || 0,
+        first: historicalUser.first || 0,
+        second: historicalUser.second || 0,
+        third: historicalUser.third || 0,
+        fourth: historicalUser.fourth || 0,
+        fifth: historicalUser.fifth || 0,
+        sixth: historicalUser.sixth || 0,
+        seventh: historicalUser.seventh || 0,
+        eighth: historicalUser.eighth || 0,
+        ninth: historicalUser.ninth || 0,
+        tenth: historicalUser.tenth || 0,
+        mimoM: historicalUser.mimoM || 0,
+        ruMimoM: historicalUser.ruMimoM || 0,
+        joMimoM: historicalUser.joMimoM || 0,
+        joRuMimoM: historicalUser.joRuMimoM || 0,
+        xmasNo1: historicalUser.xmasNo1 || 0,
+        cashWinnings: historicalUser.cashWinnings || 0,
+      };
+    } else {
+      // Create a brand new, default profile
+      profileData = {
+        name: email.split('@')[0] || 'New User',
+        nickname: '',
+        email: email,
+        avatar: String(Math.floor(Math.random() * 49) + 1),
+        score: 0,
+        rank: 0,
+        previousRank: 0,
+        previousScore: 0,
+        maxRank: 0,
+        minRank: 0,
+        maxScore: 0,
+        minScore: 0,
+        rankChange: 0,
+        scoreChange: 0,
+        isPro: false,
+        joinDate: new Date().toISOString(),
+        country: '',
+        favouriteTeam: '',
+        phoneNumber: '',
+        seasonsPlayed: 0,
+        first: 0,
+        second: 0,
+        third: 0,
+        fourth: 0,
+        fifth: 0,
+        sixth: 0,
+        seventh: 0,
+        eighth: 0,
+        ninth: 0,
+        tenth: 0,
+        mimoM: 0,
+        ruMimoM: 0,
+        joMimoM: 0,
+        joRuMimoM: 0,
+        xmasNo1: 0,
+        cashWinnings: 0,
+      };
+    }
+    setDocumentNonBlocking(userDocRef, profileData);
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
