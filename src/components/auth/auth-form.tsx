@@ -53,28 +53,34 @@ export function AuthForm() {
   const createInitialUserProfile = async (userId: string, email: string) => {
     if (!firestore) return;
 
-    // Special case for the admin user to link to a specific historical ID
-    const docId = email === 'jim.poole@prempred.com' ? 'usr_009' : userId;
-    const userDocRef = doc(firestore, 'users', docId);
+    // Use the Firebase Auth UID as the canonical document ID for all users.
+    const userDocRef = doc(firestore, 'users', userId);
 
     const docSnap = await getDoc(userDocRef);
     if (docSnap.exists()) {
-      console.log(`User profile for ${docId} already exists. Skipping creation.`);
+      // If a profile already exists for this UID, do nothing.
+      console.log(`User profile for ${userId} already exists. Skipping creation.`);
       return;
     }
-    
-    const historicalUser = historicalPlayersData.find(p => p.id === docId);
+
+    // Find the historical user by converting their name from the JSON
+    // into the expected email format and matching it.
+    const historicalUser = historicalPlayersData.find(p => {
+        if (!p.name) return false;
+        const expectedEmail = `${p.name.toLowerCase().replace(/ /g, '.')}@prempred.com`;
+        return expectedEmail === email.toLowerCase();
+    });
 
     let profileData: Omit<User, 'id'>;
 
     if (historicalUser) {
-      // If historical data is found, use it
+      // If historical data is found, use it to create the new profile.
       const { id, ...historicalData } = historicalUser;
       profileData = {
-        name: historicalUser.name || email.split('@')[0] || 'New User',
+        name: historicalUser.name,
         nickname: historicalUser.nickname || '',
         email: email,
-        avatar: String(Math.floor(Math.random() * 49) + 1),
+        avatar: String(Math.floor(Math.random() * 49) + 1), // Assign a random avatar on creation
         score: 0, rank: 0, previousRank: 0, previousScore: 0, maxRank: 0,
         minRank: 0, maxScore: 0, minScore: 0, rankChange: 0, scoreChange: 0,
         isPro: historicalUser.isPro ?? false,
@@ -102,22 +108,14 @@ export function AuthForm() {
         cashWinnings: historicalUser.cashWinnings || 0,
       };
     } else {
-      // Create a brand new, default profile for a user not in the historical file
-      profileData = {
-        name: email.split('@')[0] || 'New User',
-        nickname: '',
-        email: email,
-        avatar: String(Math.floor(Math.random() * 49) + 1),
-        score: 0, rank: 0, previousRank: 0, previousScore: 0, maxRank: 0,
-        minRank: 0, maxScore: 0, minScore: 0, rankChange: 0, scoreChange: 0,
-        isPro: false,
-        joinDate: new Date().toISOString(),
-        country: '', favouriteTeam: '', phoneNumber: '', seasonsPlayed: 0,
-        first: 0, second: 0, third: 0, fourth: 0, fifth: 0, sixth: 0,
-        seventh: 0, eighth: 0, ninth: 0, tenth: 0, mimoM: 0, ruMimoM: 0,
-        joMimoM: 0, joRuMimoM: 0, xmasNo1: 0, cashWinnings: 0,
-      };
+      // If this user is not in the historical file, it's an error for this private league.
+      // We will prevent the profile from being created.
+      console.error(`Attempted to create profile for non-historical user: ${email}`);
+      // Throw an error that will be caught in the onSubmit handler.
+      throw new Error("This user is not registered for the league. Please contact the administrator.");
     }
+    
+    // Create the document using the secure Firebase Auth UID.
     setDocumentNonBlocking(userDocRef, profileData);
   };
 
@@ -135,27 +133,23 @@ export function AuthForm() {
 
     try {
         const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+        // On successful sign-in, ensure the user profile exists or is created from historical data.
         await createInitialUserProfile(userCredential.user.uid, values.email);
         toast({ title: 'Signed in successfully!' });
     } catch (error: any) {
+        let errorMessage = 'An unknown error occurred. Please try again.';
         if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
-             const errorMessage = "Invalid credentials. If you believe you should have access, please contact the administrator.";
-             setAuthError(errorMessage);
-             toast({
-                variant: 'destructive',
-                title: 'Sign In Failed',
-                description: errorMessage,
-            });
+             errorMessage = "Invalid credentials. If you believe you should have access, please contact the administrator.";
         } else {
-            console.error('Sign in failed:', error);
-            const errorMessage = error.message || 'An unknown error occurred during sign-in.';
-            setAuthError(errorMessage);
-            toast({
-                variant: 'destructive',
-                title: 'Sign In Failed',
-                description: errorMessage,
-            });
+            errorMessage = error.message || errorMessage;
         }
+        setAuthError(errorMessage);
+        toast({
+            variant: 'destructive',
+            title: 'Sign In Failed',
+            description: errorMessage,
+        });
+        console.error('Sign in failed:', error);
     } finally {
         setIsLoading(false);
     }
@@ -166,7 +160,7 @@ export function AuthForm() {
       <CardHeader>
         <CardTitle>Sign In</CardTitle>
         <CardDescription>
-          Enter your details to sign in. New user registration is closed.
+          Enter your details to sign in. Please contact the administrator if you need an account.
         </CardDescription>
       </CardHeader>
       <CardContent>
