@@ -1,69 +1,9 @@
 
 'use server';
 /**
- * @fileOverview A flow to create a JSON file with a week's match results.
+ * @fileOverview This flow has been temporarily disabled.
+ * The use of Node.js modules like 'fs' and 'os' in this file was causing
+ * the Next.js production build (webpack) to fail during deployment.
+ * The logic has been moved to a client-side implementation in the admin page
+ * until a server-compatible solution can be implemented.
  */
-
-import { ai } from '@/ai/genkit';
-import { z } from 'zod';
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import * as os from 'os';
-import type { WeekResults } from '@/lib/types';
-
-
-const CreateResultsFileInputSchema = z.object({
-  week: z.number(),
-  results: z.array(z.object({
-    id: z.string(),
-    homeScore: z.number(),
-    awayScore: z.number(),
-  })),
-});
-export type CreateResultsFileInput = z.infer<typeof CreateResultsFileInputSchema>;
-
-const CreateResultsFileOutputSchema = z.object({
-  success: z.boolean(),
-  filePath: z.string().optional(),
-  message: z.string().optional(),
-  fileContent: z.string().optional(), // Return the file content as a string
-});
-export type CreateResultsFileOutput = z.infer<typeof CreateResultsFileOutputSchema>;
-
-
-export async function createResultsFile(input: CreateResultsFileInput): Promise<CreateResultsFileOutput> {
-  return createResultsFileFlow(input);
-}
-
-
-const createResultsFileFlow = ai.defineFlow(
-  {
-    name: 'createResultsFileFlow',
-    inputSchema: CreateResultsFileInputSchema,
-    outputSchema: CreateResultsFileOutputSchema,
-  },
-  async (input) => {
-    const { week, results } = input;
-    const fileName = `wk-${week}-results.json`;
-    // IMPORTANT: In a sandboxed cloud environment, we can only write to os.tmpdir()
-    const filePath = path.join(os.tmpdir(), fileName);
-    
-    const weekResults: WeekResults = { week, results };
-    const fileContentString = JSON.stringify(weekResults, null, 2);
-
-    try {
-      await fs.writeFile(filePath, fileContentString);
-      
-      return {
-        success: true,
-        filePath: filePath,
-        message: `Successfully created ${fileName}`,
-        fileContent: fileContentString, // Send the content back to the client
-      };
-
-    } catch (error: any) {
-      console.error(`Failed to create file for Week ${week}:`, error);
-      throw new Error(`Flow failed during file creation: ${error.message}`);
-    }
-  }
-);
