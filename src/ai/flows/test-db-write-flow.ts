@@ -7,15 +7,6 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import * as admin from 'firebase-admin';
-import type { firestore as adminFirestore } from 'firebase-admin';
-
-// Initialize Firebase Admin SDK within this module's scope
-let db: adminFirestore.Firestore;
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-db = admin.firestore();
-
 
 const TestWriteOutputSchema = z.object({
   success: z.boolean(),
@@ -24,6 +15,16 @@ const TestWriteOutputSchema = z.object({
 });
 export type TestDbWriteOutput = z.infer<typeof TestWriteOutputSchema>;
 
+/**
+ * Gets a Firestore admin instance, initializing the app if needed.
+ * This is a safer pattern for Next.js server environments.
+ */
+function getDb() {
+    if (admin.apps.length === 0) {
+        admin.initializeApp();
+    }
+    return admin.firestore();
+}
 
 export const testDbWriteFlow = ai.defineFlow(
   {
@@ -32,6 +33,7 @@ export const testDbWriteFlow = ai.defineFlow(
     outputSchema: TestWriteOutputSchema,
   },
   async (input, context) => {
+    const db = getDb();
     context.logger.info("Firestore admin instance acquired.");
 
     const collectionName = 'test_01';
