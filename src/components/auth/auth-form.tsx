@@ -107,7 +107,8 @@ export function AuthForm() {
     } catch (error: any) {
         if (error.code === 'auth/email-already-in-use') {
             try {
-                await signInWithEmailAndPassword(auth, values.email, values.password);
+                const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+                await createInitialUserProfile(userCredential.user.uid, values.email);
                 toast({ title: 'Signed in successfully!' });
             } catch (signInError: any) {
                 console.error('Sign in failed:', signInError);
@@ -180,5 +181,3 @@ export function AuthForm() {
     </Card>
   );
 }
-
-    
