@@ -57,6 +57,7 @@ import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser, useResol
 import { collection, doc, query, where, getDocs } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { AuthForm } from '@/components/auth/auth-form';
+import { updatePassword } from 'firebase/auth';
 
 
 const profileFormSchema = z.object({
@@ -74,6 +75,17 @@ const profileFormSchema = z.object({
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
+
+const passwordFormSchema = z.object({
+  password: z.string().min(6, "Password must be at least 6 characters."),
+  confirmPassword: z.string()
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Passwords don't match.",
+  path: ["confirmPassword"],
+});
+
+type PasswordFormValues = z.infer<typeof passwordFormSchema>;
+
 
 export default function ProfilePage() {
   const { toast } = useToast();
@@ -119,6 +131,14 @@ export default function ProfilePage() {
       phoneNumber: '',
     },
     mode: 'onChange',
+  });
+
+   const passwordForm = useForm<PasswordFormValues>({
+    resolver: zodResolver(passwordFormSchema),
+    defaultValues: {
+      password: "",
+      confirmPassword: ""
+    }
   });
 
   React.useEffect(() => {
@@ -173,6 +193,32 @@ export default function ProfilePage() {
       title: 'Profile Updated!',
       description: 'Your profile information has been saved.',
     });
+  }
+
+  async function onPasswordSubmit(data: PasswordFormValues) {
+    if (!authUser) {
+      toast({ variant: 'destructive', title: 'Not Authenticated', description: 'You must be logged in to change your password.' });
+      return;
+    }
+
+    try {
+      await updatePassword(authUser, data.password);
+      toast({ title: 'Password Updated Successfully!', description: 'Please log in again with your new password.' });
+      passwordForm.reset();
+      // Optional: Sign the user out automatically
+      // auth.signOut(); 
+    } catch (error: any) {
+      console.error("Password update error:", error);
+      let description = "An unexpected error occurred. Please try again.";
+      if (error.code === 'auth/requires-recent-login') {
+        description = "This action is sensitive. Please log out and log back in before changing your password.";
+      }
+      toast({
+        variant: 'destructive',
+        title: 'Update Failed',
+        description: description,
+      });
+    }
   }
 
   const { chartData, yAxisDomain } = React.useMemo(() => {
@@ -507,42 +553,92 @@ export default function ProfilePage() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit">Update Profile</Button>
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                  {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Update Profile
+                </Button>
               </form>
             </Form>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Email Notifications</CardTitle>
-            <CardDescription>Choose which emails you want to receive.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg border p-4">
-              <div>
-                <Label htmlFor="weekly-progress" className="text-base font-medium">Weekly Progress Emails</Label>
-                <p className="text-sm text-muted-foreground">Receive a summary of your performance and rank every week.</p>
+        <div className="space-y-8">
+           <Card>
+            <CardHeader>
+              <CardTitle>Security</CardTitle>
+              <CardDescription>
+                Update your password here. It's recommended to change your password after your first login.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...passwordForm}>
+                <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+                  <FormField
+                    control={passwordForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>New Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="New password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={passwordForm.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirm New Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="Confirm new password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" disabled={passwordForm.formState.isSubmitting}>
+                    {passwordForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Update Password
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Email Notifications</CardTitle>
+              <CardDescription>Choose which emails you want to receive.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div>
+                  <Label htmlFor="weekly-progress" className="text-base font-medium">Weekly Progress Emails</Label>
+                  <p className="text-sm text-muted-foreground">Receive a summary of your performance and rank every week.</p>
+                </div>
+                <Switch id="weekly-progress" defaultChecked />
               </div>
-              <Switch id="weekly-progress" defaultChecked />
-            </div>
-            <div className="flex items-center justify-between rounded-lg border p-4">
-              <div>
-                <Label htmlFor="new-events" className="text-base font-medium">New Event Alerts</Label>
-                <p className="text-sm text-muted-foreground">Get notified when new games are available for prediction.</p>
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div>
+                  <Label htmlFor="new-events" className="text-base font-medium">New Event Alerts</Label>
+                  <p className="text-sm text-muted-foreground">Get notified when new games are available for prediction.</p>
+                </div>
+                <Switch id="new-events" defaultChecked />
               </div>
-              <Switch id="new-events" defaultChecked />
-            </div>
-            <div className="flex items-center justify-between rounded-lg border p-4">
-              <div>
-                <Label htmlFor="prediction-reminders" className="text-base font-medium">Prediction Reminders</Label>
-                <p className="text-sm text-muted-foreground">Get a reminder before the prediction deadline for a game.</p>
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div>
+                  <Label htmlFor="prediction-reminders" className="text-base font-medium">Prediction Reminders</Label>
+                  <p className="text-sm text-muted-foreground">Get a reminder before the prediction deadline for a game.</p>
+                </div>
+                <Switch id="prediction-reminders" />
               </div>
-              <Switch id="prediction-reminders" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
 }
+
