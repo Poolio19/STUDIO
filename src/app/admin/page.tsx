@@ -29,7 +29,6 @@ import {
 } from "@/components/ui/alert-dialog"
 
 import type { Match, Team, WeekResults, User } from '@/lib/types';
-import { createResultsFile } from '@/ai/flows/create-results-file-flow';
 import { recalculateAllDataClientSide } from '@/lib/recalculate';
 
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
@@ -237,37 +236,35 @@ export default function AdminPage() {
   }, [selectedWeek, weekFixtures, scoresForm]);
 
 
-  const onWriteResultsFileSubmit = async (data: ScoresFormValues) => {
+  const onWriteResultsFileSubmit = (data: ScoresFormValues) => {
     setIsWritingFile(true);
     setLatestFilePath(null);
     setLatestFileContent(null);
     
     const validResults = data.results.filter(r => (r.homeScore >= 0 && r.awayScore >= 0) || (r.homeScore === -2 && r.awayScore === -2));
     
-    toast({ title: `Creating results file for Week ${data.week}...` });
+    toast({ title: `Creating results content for Week ${data.week}...` });
     try {
-      const result = await createResultsFile({
+      const weekResultsData = {
         week: data.week,
         results: validResults.map(r => ({ id: r.id, homeScore: r.homeScore, awayScore: r.awayScore })),
-      });
-  
-      if (!result.success || !result.filePath || !result.fileContent) {
-        throw new Error(result.message || 'Failed to create results file.');
-      }
-  
-      setLatestFilePath(result.filePath);
-      setLatestFileContent(result.fileContent);
+      };
+
+      const fileContent = JSON.stringify(weekResultsData, null, 2);
+      
+      setLatestFilePath(`week-${data.week}-results.json`); // This is just a virtual path now
+      setLatestFileContent(fileContent);
 
       toast({
-        title: 'File Created!',
-        description: `Results file for ${validResults.length} matches created and is ready for import.`,
+        title: 'Content Created!',
+        description: `Results content for ${validResults.length} matches is ready for import.`,
       });
   
     } catch (error: any) {
-      console.error('Error during file creation:', error);
+      console.error('Error during content creation:', error);
       toast({
         variant: 'destructive',
-        title: 'File Creation Failed',
+        title: 'Content Creation Failed',
         description: error.message || 'An unexpected error occurred.',
       });
     } finally {
@@ -746,5 +743,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
