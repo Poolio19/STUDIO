@@ -23,4 +23,4 @@ This is a Next.js application for the PremPred prediction league, built with Fir
 
 This application is deployed automatically via Firebase App Hosting. Every change approved in Firebase Studio is automatically pushed to the connected GitHub repository, which triggers a new build and deployment.
 
-<!-- Final sync with GitHub. -->
+<!-- Re-syncing all files with GitHub repository. -->
