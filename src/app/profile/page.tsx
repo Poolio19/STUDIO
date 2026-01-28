@@ -54,7 +54,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser, useResolvedUserId } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, query, where, getDocs } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { AuthForm } from '@/components/auth/auth-form';
 
@@ -134,8 +134,29 @@ export default function ProfilePage() {
   }, [user, form]);
 
   async function onSubmit(data: ProfileFormValues) {
-    if (!userDocRef) {
-      toast({ variant: 'destructive', title: 'Error', description: 'User not authenticated.' });
+    if (!userDocRef || !resolvedUserId || !firestore) {
+      toast({ variant: 'destructive', title: 'Error', description: 'User not authenticated or database not available.' });
+      return;
+    }
+
+    // Validation: Check if name is already taken by another user
+    const usersRef = collection(firestore, 'users');
+    const q = query(usersRef, where("name", "==", data.name));
+    const querySnapshot = await getDocs(q);
+
+    let isNameTaken = false;
+    querySnapshot.forEach((doc) => {
+        if (doc.id !== resolvedUserId) {
+            isNameTaken = true;
+        }
+    });
+
+    if (isNameTaken) {
+      toast({
+        variant: 'destructive',
+        title: 'Name already taken',
+        description: `The name "${data.name}" is already in use by another player. Please choose a different name.`,
+      });
       return;
     }
 
@@ -525,5 +546,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
