@@ -2,7 +2,7 @@
 # https://firebase.google.com/docs/app-hosting/configure
 # This project is automatically deployed from a connected GitHub repository.
 
-location: europe-west4
+location: europe-west2
 runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
