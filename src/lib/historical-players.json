@@ -1,7 +1,10 @@
+
 [
    {
       "id": "usr_001",
       "name": "Tom Wright",
+      "email": "tom.wright@prempred.com",
+      "initials": "TW",
       "seasonsPlayed": 2,
       "first": 1,
       "second": 0,
@@ -22,6 +25,8 @@
    {
       "id": "usr_002",
       "name": "Barrie Cross",
+      "email": "barrie.cross@prempred.com",
+      "initials": "BC",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 1,
@@ -42,6 +47,8 @@
    {
       "id": "usr_003",
       "name": "Dave Nightingale",
+      "email": "dave.nightingale@prempred.com",
+      "initials": "DN",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 1,
@@ -62,6 +69,8 @@
    {
       "id": "usr_004",
       "name": "Pip Stokes",
+      "email": "pip.stokes@prempred.com",
+      "initials": "PS",
       "seasonsPlayed": 11,
       "first": 0,
       "second": 0,
@@ -82,6 +91,8 @@
    {
       "id": "usr_005",
       "name": "Alex Anderson",
+      "email": "alex.anderson@prempred.com",
+      "initials": "AA",
       "seasonsPlayed": 7,
       "first": 0,
       "second": 0,
@@ -102,6 +113,8 @@
    {
       "id": "usr_006",
       "name": "Nat Walsh",
+      "email": "nat.walsh@prempred.com",
+      "initials": "NW",
       "seasonsPlayed": 10,
       "first": 0,
       "second": 0,
@@ -122,6 +135,8 @@
    {
       "id": "usr_007",
       "name": "Patrick Meese",
+      "email": "patrick.meese@prempred.com",
+      "initials": "PM",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -142,6 +157,8 @@
    {
       "id": "usr_008",
       "name": "Lee Harte",
+      "email": "lee.harte@prempred.com",
+      "initials": "LH",
       "seasonsPlayed": 16,
       "first": 1,
       "second": 0,
@@ -162,6 +179,8 @@
    {
       "id": "usr_009",
       "name": "Jim Poole",
+      "email": "jim.poole@prempred.com",
+      "initials": "JP",
       "seasonsPlayed": 16,
       "first": 0,
       "second": 1,
@@ -182,6 +201,8 @@
    {
       "id": "usr_010",
       "name": "Lyndon Padmore",
+      "email": "lyndon.padmore@prempred.com",
+      "initials": "LP",
       "seasonsPlayed": 9,
       "first": 0,
       "second": 0,
@@ -202,6 +223,8 @@
    {
       "id": "usr_011",
       "name": "Alf Wroldsen",
+      "email": "alf.wroldsen@prempred.com",
+      "initials": "AW",
       "seasonsPlayed": 12,
       "first": 0,
       "second": 1,
@@ -222,6 +245,8 @@
    {
       "id": "usr_012",
       "name": "Steve Wroldsen",
+      "email": "steve.wroldsen@prempred.com",
+      "initials": "SW",
       "seasonsPlayed": 12,
       "first": 1,
       "second": 0,
@@ -242,6 +267,8 @@
    {
       "id": "usr_013",
       "name": "Roger Wymer",
+      "email": "roger.wymer@prempred.com",
+      "initials": "RW",
       "seasonsPlayed": 9,
       "first": 0,
       "second": 0,
@@ -262,6 +289,8 @@
    {
       "id": "usr_014",
       "name": "Mike Wymer",
+      "email": "mike.wymer@prempred.com",
+      "initials": "MW",
       "seasonsPlayed": 10,
       "first": 1,
       "second": 1,
@@ -282,6 +311,8 @@
    {
       "id": "usr_015",
       "name": "Andy Belton",
+      "email": "andy.belton@prempred.com",
+      "initials": "AB",
       "seasonsPlayed": 9,
       "first": 0,
       "second": 0,
@@ -302,6 +333,8 @@
    {
       "id": "usr_016",
       "name": "Ernest Belton",
+      "email": "ernest.belton@prempred.com",
+      "initials": "EB",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -322,6 +355,8 @@
    {
       "id": "usr_017",
       "name": "Tim Birchall",
+      "email": "tim.birchall@prempred.com",
+      "initials": "TB",
       "seasonsPlayed": 11,
       "first": 1,
       "second": 0,
@@ -342,6 +377,8 @@
    {
       "id": "usr_018",
       "name": "Nathan Hyatt",
+      "email": "nathan.hyatt@prempred.com",
+      "initials": "NH",
       "seasonsPlayed": 10,
       "first": 0,
       "second": 1,
@@ -362,6 +399,8 @@
    {
       "id": "usr_019",
       "name": "Rory Hyatt",
+      "email": "rory.hyatt@prempred.com",
+      "initials": "RH",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -382,6 +421,8 @@
    {
       "id": "usr_020",
       "name": "Gaz Littlewood",
+      "email": "gaz.littlewood@prempred.com",
+      "initials": "GL",
       "seasonsPlayed": 10,
       "first": 0,
       "second": 0,
@@ -402,6 +443,8 @@
    {
       "id": "usr_021",
       "name": "Fazil Sediqi",
+      "email": "fazil.sediqi@prempred.com",
+      "initials": "FS",
       "seasonsPlayed": 12,
       "first": 1,
       "second": 0,
@@ -422,6 +465,8 @@
    {
       "id": "usr_022",
       "name": "Shuhra Sediqi",
+      "email": "shuhra.sediqi@prempred.com",
+      "initials": "SS",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -442,6 +487,8 @@
    {
       "id": "usr_023",
       "name": "Ilyas Taj Sediqi",
+      "email": "ilyas.sediqi@prempred.com",
+      "initials": "IS",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -462,6 +509,8 @@
    {
       "id": "usr_024",
       "name": "Eshwa Sediqi",
+      "email": "eshwa.sediqi@prempred.com",
+      "initials": "ES",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -482,6 +531,8 @@
    {
       "id": "usr_025",
       "name": "Ben Fellows",
+      "email": "ben.fellows@prempred.com",
+      "initials": "BF",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -502,6 +553,8 @@
    {
       "id": "usr_026",
       "name": "Michelle Duffy-Turner",
+      "email": "michelle.duffy-turner@prempred.com",
+      "initials": "MD",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -522,6 +575,8 @@
    {
       "id": "usr_027",
       "name": "Nicola Spears",
+      "email": "nicola.spears@prempred.com",
+      "initials": "NS",
       "seasonsPlayed": 7,
       "first": 0,
       "second": 0,
@@ -542,6 +597,8 @@
    {
       "id": "usr_028",
       "name": "Jamie Spears",
+      "email": "jamie.spears@prempred.com",
+      "initials": "JS",
       "seasonsPlayed": 6,
       "first": 0,
       "second": 0,
@@ -562,6 +619,8 @@
    {
       "id": "usr_029",
       "name": "Jonny Taylor",
+      "email": "jonny.taylor@prempred.com",
+      "initials": "JT",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -582,6 +641,8 @@
    {
       "id": "usr_030",
       "name": "John Taylor",
+      "email": "john.taylor@prempred.com",
+      "initials": "JT",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -602,6 +663,8 @@
    {
       "id": "usr_031",
       "name": "Sam Dixon",
+      "email": "sam.dixon@prempred.com",
+      "initials": "SD",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -622,6 +685,8 @@
    {
       "id": "usr_032",
       "name": "Doug Potter",
+      "email": "doug.potter@prempred.com",
+      "initials": "DP",
       "seasonsPlayed": 14,
       "first": 0,
       "second": 0,
@@ -642,6 +707,8 @@
    {
       "id": "usr_033",
       "name": "Finlay Sinclair",
+      "email": "finlay.sinclair@prempred.com",
+      "initials": "FS",
       "seasonsPlayed": 6,
       "first": 0,
       "second": 0,
@@ -662,6 +729,8 @@
    {
       "id": "usr_034",
       "name": "Bart Ainsworth",
+      "email": "bart.ainsworth@prempred.com",
+      "initials": "BA",
       "seasonsPlayed": 12,
       "first": 0,
       "second": 1,
@@ -682,6 +751,8 @@
    {
       "id": "usr_035",
       "name": "Aidan Kehoe",
+      "email": "aidan.kehoe@prempred.com",
+      "initials": "AK",
       "seasonsPlayed": 5,
       "first": 0,
       "second": 0,
@@ -702,6 +773,8 @@
    {
       "id": "usr_036",
       "name": "Ben Patey",
+      "email": "ben.patey@prempred.com",
+      "initials": "BP",
       "seasonsPlayed": 11,
       "first": 0,
       "second": 0,
@@ -722,6 +795,8 @@
    {
       "id": "usr_037",
       "name": "Theo Gresson",
+      "email": "theo.gresson@prempred.com",
+      "initials": "TG",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 1,
@@ -742,6 +817,8 @@
    {
       "id": "usr_038",
       "name": "Adam Barclay",
+      "email": "adam.barclay@prempred.com",
+      "initials": "AB",
       "seasonsPlayed": 13,
       "first": 0,
       "second": 1,
@@ -762,6 +839,8 @@
    {
       "id": "usr_039",
       "name": "James Eldred",
+      "email": "james.eldred@prempred.com",
+      "initials": "JE",
       "seasonsPlayed": 12,
       "first": 0,
       "second": 0,
@@ -782,6 +861,8 @@
    {
       "id": "usr_040",
       "name": "Otis Eldred",
+      "email": "otis.eldred@prempred.com",
+      "initials": "OE",
       "seasonsPlayed": 5,
       "first": 0,
       "second": 0,
@@ -802,6 +883,8 @@
    {
       "id": "usr_041",
       "name": "Dan Coles",
+      "email": "dan.coles@prempred.com",
+      "initials": "DC",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -822,6 +905,8 @@
    {
       "id": "usr_042",
       "name": "Daniel Crick",
+      "email": "daniel.crick@prempred.com",
+      "initials": "DC",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -842,6 +927,8 @@
    {
       "id": "usr_043",
       "name": "Sheila Mckenzie",
+      "email": "sheila.mckenzie@prempred.com",
+      "initials": "SM",
       "seasonsPlayed": 7,
       "first": 0,
       "second": 0,
@@ -862,6 +949,8 @@
    {
       "id": "usr_044",
       "name": "Chris Dodds",
+      "email": "chris.dodds@prempred.com",
+      "initials": "CD",
       "seasonsPlayed": 5,
       "first": 0,
       "second": 1,
@@ -882,6 +971,8 @@
    {
       "id": "usr_045",
       "name": "Rich Seddon",
+      "email": "rich.seddon@prempred.com",
+      "initials": "RS",
       "seasonsPlayed": 5,
       "first": 0,
       "second": 0,
@@ -902,6 +993,8 @@
    {
       "id": "usr_046",
       "name": "Ross Allatt",
+      "email": "ross.allatt@prempred.com",
+      "initials": "RA",
       "seasonsPlayed": 13,
       "first": 0,
       "second": 0,
@@ -922,6 +1015,8 @@
    {
       "id": "usr_047",
       "name": "Neville Johnson",
+      "email": "neville.johnson@prempred.com",
+      "initials": "NJ",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -942,6 +1037,8 @@
    {
       "id": "usr_048",
       "name": "Julian Spears",
+      "email": "julian.spears@prempred.com",
+      "initials": "JS",
       "seasonsPlayed": 8,
       "first": 0,
       "second": 0,
@@ -962,6 +1059,8 @@
    {
       "id": "usr_049",
       "name": "Andrew Spears",
+      "email": "andrew.spears@prempred.com",
+      "initials": "AS",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -982,6 +1081,8 @@
    {
       "id": "usr_050",
       "name": "Danny Broom",
+      "email": "danny.broom@prempred.com",
+      "initials": "DB",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -1002,6 +1103,8 @@
    {
       "id": "usr_051",
       "name": "Paul Hammett",
+      "email": "paul.hammett@prempred.com",
+      "initials": "PH",
       "seasonsPlayed": 11,
       "first": 1,
       "second": 0,
@@ -1022,6 +1125,8 @@
    {
       "id": "usr_052",
       "name": "Tom Gill",
+      "email": "tom.gill@prempred.com",
+      "initials": "TG",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -1042,6 +1147,8 @@
    {
       "id": "usr_053",
       "name": "Ronnie Bain",
+      "email": "ronnie.bain@prempred.com",
+      "initials": "RB",
       "seasonsPlayed": 15,
       "first": 2,
       "second": 0,
@@ -1062,6 +1169,8 @@
    {
       "id": "usr_054",
       "name": "Matthew Bain",
+      "email": "matthew.bain@prempred.com",
+      "initials": "MB",
       "seasonsPlayed": 14,
       "first": 0,
       "second": 1,
@@ -1082,6 +1191,8 @@
    {
       "id": "usr_055",
       "name": "Sam Bain",
+      "email": "sam.bain@prempred.com",
+      "initials": "SB",
       "seasonsPlayed": 15,
       "first": 0,
       "second": 0,
@@ -1102,6 +1213,8 @@
    {
       "id": "usr_056",
       "name": "Andy Barnes",
+      "email": "andy.barnes@prempred.com",
+      "initials": "AB",
       "seasonsPlayed": 10,
       "first": 0,
       "second": 0,
@@ -1122,6 +1235,8 @@
    {
       "id": "usr_057",
       "name": "Pascal Walls",
+      "email": "pascal.walls@prempred.com",
+      "initials": "PW",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -1142,6 +1257,8 @@
    {
       "id": "usr_058",
       "name": "Steve Lawrence",
+      "email": "steve.lawrence@prempred.com",
+      "initials": "SL",
       "seasonsPlayed": 10,
       "first": 0,
       "second": 0,
@@ -1162,6 +1279,8 @@
    {
       "id": "usr_059",
       "name": "Gill Butler",
+      "email": "gill.butler@prempred.com",
+      "initials": "GB",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -1182,6 +1301,8 @@
    {
       "id": "usr_060",
       "name": "Tom Coles",
+      "email": "tom.coles@prempred.com",
+      "initials": "TC",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -1202,6 +1323,8 @@
    {
       "id": "usr_061",
       "name": "Tom Poole",
+      "email": "tom.poole@prempred.com",
+      "initials": "TP",
       "seasonsPlayed": 9,
       "first": 0,
       "second": 0,
@@ -1222,6 +1345,8 @@
    {
       "id": "usr_062",
       "name": "Eddie Spencer",
+      "email": "eddie.spencer@prempred.com",
+      "initials": "ES",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -1242,6 +1367,8 @@
    {
       "id": "usr_063",
       "name": "Rory Poole",
+      "email": "rory.poole@prempred.com",
+      "initials": "RP",
       "seasonsPlayed": 6,
       "first": 0,
       "second": 0,
@@ -1262,6 +1389,8 @@
    {
       "id": "usr_064",
       "name": "Scott Emmett",
+      "email": "scott.emmett@prempred.com",
+      "initials": "SE",
       "seasonsPlayed": 5,
       "first": 0,
       "second": 0,
@@ -1282,6 +1411,8 @@
    {
       "id": "usr_065",
       "name": "Craig Temporal",
+      "email": "craig.temporal@prempred.com",
+      "initials": "CT",
       "seasonsPlayed": 5,
       "first": 0,
       "second": 0,
@@ -1302,6 +1433,8 @@
    {
       "id": "usr_066",
       "name": "Andy Senior",
+      "email": "andy.senior@prempred.com",
+      "initials": "AS",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -1322,6 +1455,8 @@
    {
       "id": "usr_067",
       "name": "Dan Brown",
+      "email": "dan.brown@prempred.com",
+      "initials": "DB",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -1342,6 +1477,8 @@
    {
       "id": "usr_068",
       "name": "Rupert Massey",
+      "email": "rupert.massey@prempred.com",
+      "initials": "RM",
       "seasonsPlayed": 5,
       "first": 0,
       "second": 0,
@@ -1362,6 +1499,8 @@
    {
       "id": "usr_069",
       "name": "Matt Howard",
+      "email": "matt.howard@prempred.com",
+      "initials": "MH",
       "seasonsPlayed": 16,
       "first": 0,
       "second": 0,
@@ -1382,6 +1521,8 @@
    {
       "id": "usr_070",
       "name": "Justin Downing",
+      "email": "justin.downing@prempred.com",
+      "initials": "JD",
       "seasonsPlayed": 8,
       "first": 0,
       "second": 0,
@@ -1402,6 +1543,8 @@
    {
       "id": "usr_071",
       "name": "Sam Burgess",
+      "email": "sam.burgess@prempred.com",
+      "initials": "SB",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -1422,6 +1565,8 @@
    {
       "id": "usr_072",
       "name": "George Roberts",
+      "email": "george.roberts@prempred.com",
+      "initials": "GR",
       "seasonsPlayed": 11,
       "first": 1,
       "second": 0,
@@ -1442,6 +1587,8 @@
    {
       "id": "usr_073",
       "name": "Leyton Collings",
+      "email": "leyton.collings@prempred.com",
+      "initials": "LC",
       "seasonsPlayed": 7,
       "first": 0,
       "second": 2,
@@ -1462,6 +1609,8 @@
    {
       "id": "usr_074",
       "name": "Ben Cox",
+      "email": "ben.cox@prempred.com",
+      "initials": "BC",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -1482,6 +1631,8 @@
    {
       "id": "usr_075",
       "name": "Adam F Bain",
+      "email": "adam.f.bain@prempred.com",
+      "initials": "AB",
       "seasonsPlayed": 13,
       "first": 0,
       "second": 0,
@@ -1502,6 +1653,8 @@
    {
       "id": "usr_076",
       "name": "Amy Parkinson",
+      "email": "amy.parkinson@prempred.com",
+      "initials": "AP",
       "seasonsPlayed": 14,
       "first": 1,
       "second": 0,
@@ -1522,6 +1675,8 @@
    {
       "id": "usr_077",
       "name": "Steven Bain",
+      "email": "steven.bain@prempred.com",
+      "initials": "SB",
       "seasonsPlayed": 14,
       "first": 0,
       "second": 0,
@@ -1542,6 +1697,8 @@
    {
       "id": "usr_078",
       "name": "Ian Scotland",
+      "email": "ian.scotland@prempred.com",
+      "initials": "IS",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -1562,6 +1719,8 @@
    {
       "id": "usr_079",
       "name": "Ben Dawes",
+      "email": "ben.dawes@prempred.com",
+      "initials": "BD",
       "seasonsPlayed": 5,
       "first": 0,
       "second": 0,
@@ -1582,6 +1741,8 @@
    {
       "id": "usr_080",
       "name": "Tom Bywater",
+      "email": "tom.bywater@prempred.com",
+      "initials": "TB",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -1602,6 +1763,8 @@
    {
       "id": "usr_081",
       "name": "Jack Murray",
+      "email": "jack.murray@prempred.com",
+      "initials": "JM",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -1622,6 +1785,8 @@
    {
       "id": "usr_082",
       "name": "Rob Mabon",
+      "email": "rob.mabon@prempred.com",
+      "initials": "RM",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -1642,6 +1807,8 @@
    {
       "id": "usr_083",
       "name": "Andrew Trafford",
+      "email": "andrew.trafford@prempred.com",
+      "initials": "AT",
       "seasonsPlayed": 9,
       "first": 0,
       "second": 0,
@@ -1662,6 +1829,8 @@
    {
       "id": "usr_084",
       "name": "Luca Trafford",
+      "email": "luca.trafford@prempred.com",
+      "initials": "LT",
       "seasonsPlayed": 5,
       "first": 0,
       "second": 0,
@@ -1682,6 +1851,8 @@
    {
       "id": "usr_085",
       "name": "Craig Stevens",
+      "email": "craig.stevens@prempred.com",
+      "initials": "CS",
       "seasonsPlayed": 12,
       "first": 0,
       "second": 1,
@@ -1702,6 +1873,8 @@
    {
       "id": "usr_086",
       "name": "George Butterworth",
+      "email": "george.butterworth@prempred.com",
+      "initials": "GB",
       "seasonsPlayed": 4,
       "first": 0,
       "second": 0,
@@ -1722,6 +1895,8 @@
    {
       "id": "usr_087",
       "name": "Ashley Davies",
+      "email": "ashley.davies@prempred.com",
+      "initials": "AD",
       "seasonsPlayed": 7,
       "first": 0,
       "second": 0,
@@ -1742,6 +1917,8 @@
    {
       "id": "usr_088",
       "name": "Duncan Holder",
+      "email": "duncan.holder@prempred.com",
+      "initials": "DH",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -1762,6 +1939,8 @@
    {
       "id": "usr_089",
       "name": "Arthur Gwyn-Davies",
+      "email": "arthur.gwyn-davies@prempred.com",
+      "initials": "AG",
       "seasonsPlayed": 4,
       "first": 0,
       "second": 1,
@@ -1782,6 +1961,8 @@
    {
       "id": "usr_090",
       "name": "Paul Stonier",
+      "email": "paul.stonier@prempred.com",
+      "initials": "PS",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -1802,6 +1983,8 @@
    {
       "id": "usr_091",
       "name": "Jember Weekes",
+      "email": "jember.weekes@prempred.com",
+      "initials": "JW",
       "seasonsPlayed": 6,
       "first": 0,
       "second": 0,
@@ -1822,6 +2005,8 @@
    {
       "id": "usr_092",
       "name": "Tom Kehoe",
+      "email": "tom.kehoe@prempred.com",
+      "initials": "TK",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 1,
@@ -1842,6 +2027,8 @@
    {
       "id": "usr_093",
       "name": "Chris Burston",
+      "email": "chris.burston@prempred.com",
+      "initials": "CB",
       "seasonsPlayed": 12,
       "first": 0,
       "second": 1,
@@ -1862,6 +2049,8 @@
    {
       "id": "usr_094",
       "name": "Malcolm Sinclair",
+      "email": "malcolm.sinclair@prempred.com",
+      "initials": "MS",
       "seasonsPlayed": 13,
       "first": 0,
       "second": 1,
@@ -1882,6 +2071,8 @@
    {
       "id": "usr_095",
       "name": "Dan Parkinson",
+      "email": "dan.parkinson@prempred.com",
+      "initials": "DP",
       "seasonsPlayed": 6,
       "first": 0,
       "second": 0,
@@ -1902,6 +2093,8 @@
    {
       "id": "usr_096",
       "name": "Alf Skingley",
+      "email": "alf.skingley@prempred.com",
+      "initials": "AS",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -1922,6 +2115,8 @@
    {
       "id": "usr_097",
       "name": "Bev Skingley",
+      "email": "bev.skingley@prempred.com",
+      "initials": "BS",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -1942,6 +2137,8 @@
    {
       "id": "usr_098",
       "name": "Dan Skingley",
+      "email": "dan.skingley@prempred.com",
+      "initials": "DS",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -1962,6 +2159,8 @@
    {
       "id": "usr_099",
       "name": "Ken Skingley",
+      "email": "ken.skingley@prempred.com",
+      "initials": "KS",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -1982,6 +2181,8 @@
    {
       "id": "usr_100",
       "name": "Lyndsey Preece",
+      "email": "lyndsey.preece@prempred.com",
+      "initials": "LP",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2002,6 +2203,8 @@
    {
       "id": "usr_101",
       "name": "Kane Sullivan",
+      "email": "kane.sullivan@prempred.com",
+      "initials": "KS",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -2022,6 +2225,8 @@
    {
       "id": "usr_102",
       "name": "Graeme Bailie",
+      "email": "graeme.bailie@prempred.com",
+      "initials": "GB",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2042,6 +2247,8 @@
    {
       "id": "usr_103",
       "name": "Dan Dawson",
+      "email": "dan.dawson@prempred.com",
+      "initials": "DD",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2062,6 +2269,8 @@
    {
       "id": "usr_104",
       "name": "Alix Nicholls",
+      "email": "alix.nicholls@prempred.com",
+      "initials": "AN",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2082,6 +2291,8 @@
    {
       "id": "usr_105",
       "name": "Alistair Whitfield",
+      "email": "alistair.whitfield@prempred.com",
+      "initials": "AW",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2102,6 +2313,8 @@
    {
       "id": "usr_106",
       "name": "THE PREM-MEM",
+      "email": "the.prem-mem@prempred.com",
+      "initials": "TM",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2122,6 +2335,8 @@
    {
       "id": "usr_107",
       "name": "THE A.I.",
+      "email": "the.a.i.@prempred.com",
+      "initials": "TI",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2142,6 +2357,8 @@
    {
       "id": "usr_108",
       "name": "THE SUPERCOMPUTER",
+      "email": "the.supercomputer@prempred.com",
+      "initials": "TS",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -2162,6 +2379,8 @@
    {
       "id": "usr_109",
       "name": "Alex Liston",
+      "email": "alex.liston@prempred.com",
+      "initials": "AL",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -2182,6 +2401,8 @@
    {
       "id": "usr_110",
       "name": "Andy Banks",
+      "email": "andy.banks@prempred.com",
+      "initials": "AB",
       "seasonsPlayed": 5,
       "first": 0,
       "second": 0,
@@ -2202,6 +2423,8 @@
    {
       "id": "usr_111",
       "name": "Adam Bain",
+      "email": "adam.bain@prempred.com",
+      "initials": "AB",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -2222,6 +2445,8 @@
    {
       "id": "usr_112",
       "name": "Allan Brown",
+      "email": "allan.brown@prempred.com",
+      "initials": "AB",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -2242,6 +2467,8 @@
    {
       "id": "usr_113",
       "name": "Adrian Brown",
+      "email": "adrian.brown@prempred.com",
+      "initials": "AB",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -2262,6 +2489,8 @@
    {
       "id": "usr_114",
       "name": "Adam McGonnell",
+      "email": "adam.mcgonnell@prempred.com",
+      "initials": "AM",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2282,6 +2511,8 @@
    {
       "id": "usr_115",
       "name": "Alex Evans",
+      "email": "alex.evans@prempred.com",
+      "initials": "AE",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -2302,6 +2533,8 @@
    {
       "id": "usr_116",
       "name": "Archie MacVicar",
+      "email": "archie.macvicar@prempred.com",
+      "initials": "AM",
       "seasonsPlayed": 8,
       "first": 2,
       "second": 1,
@@ -2322,6 +2555,8 @@
    {
       "id": "usr_117",
       "name": "Allan Wardrope",
+      "email": "allan.wardrope@prempred.com",
+      "initials": "AW",
       "seasonsPlayed": 13,
       "first": 0,
       "second": 0,
@@ -2342,6 +2577,8 @@
    {
       "id": "usr_118",
       "name": "Andy Neill",
+      "email": "andy.neill@prempred.com",
+      "initials": "AN",
       "seasonsPlayed": 2,
       "first": 1,
       "second": 0,
@@ -2362,6 +2599,8 @@
    {
       "id": "usr_119",
       "name": "Andy Baker",
+      "email": "andy.baker@prempred.com",
+      "initials": "AB",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2382,6 +2621,8 @@
    {
       "id": "usr_120",
       "name": "Amanda Turner",
+      "email": "amanda.turner@prempred.com",
+      "initials": "AT",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2402,6 +2643,8 @@
    {
       "id": "usr_121",
       "name": "Avril Tucker",
+      "email": "avril.tucker@prempred.com",
+      "initials": "AT",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -2422,6 +2665,8 @@
    {
       "id": "usr_122",
       "name": "Alex Taylor",
+      "email": "alex.taylor@prempred.com",
+      "initials": "AT",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2442,6 +2687,8 @@
    {
       "id": "usr_123",
       "name": "Andy Willan",
+      "email": "andy.willan@prempred.com",
+      "initials": "AW",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -2462,6 +2709,8 @@
    {
       "id": "usr_124",
       "name": "Akif Warraich",
+      "email": "akif.warraich@prempred.com",
+      "initials": "AW",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2482,6 +2731,8 @@
    {
       "id": "usr_125",
       "name": "THE BBC",
+      "email": "the.bbc@prempred.com",
+      "initials": "TB",
       "seasonsPlayed": 12,
       "first": 0,
       "second": 0,
@@ -2502,6 +2753,8 @@
    {
       "id": "usr_126",
       "name": "Benjamin Campbell",
+      "email": "benjamin.campbell@prempred.com",
+      "initials": "BC",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2522,6 +2775,8 @@
    {
       "id": "usr_127",
       "name": "Benson Frost",
+      "email": "benson.frost@prempred.com",
+      "initials": "BF",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2542,6 +2797,8 @@
    {
       "id": "usr_128",
       "name": "Brian Gichanga",
+      "email": "brian.gichanga@prempred.com",
+      "initials": "BG",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2562,6 +2819,8 @@
    {
       "id": "usr_129",
       "name": "Ben Hope",
+      "email": "ben.hope@prempred.com",
+      "initials": "BH",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2582,6 +2841,8 @@
    {
       "id": "usr_130",
       "name": "Ben Lambert",
+      "email": "ben.lambert@prempred.com",
+      "initials": "BL",
       "seasonsPlayed": 4,
       "first": 0,
       "second": 0,
@@ -2602,6 +2863,8 @@
    {
       "id": "usr_131",
       "name": "Barry Munks",
+      "email": "barry.munks@prempred.com",
+      "initials": "BM",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2622,6 +2885,8 @@
    {
       "id": "usr_132",
       "name": "Ben Gorrill",
+      "email": "ben.gorrill@prempred.com",
+      "initials": "BG",
       "seasonsPlayed": 9,
       "first": 0,
       "second": 0,
@@ -2642,6 +2907,8 @@
    {
       "id": "usr_133",
       "name": "THE BOOKIES",
+      "email": "the.bookies@prempred.com",
+      "initials": "TB",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -2662,6 +2929,8 @@
    {
       "id": "usr_134",
       "name": "Bryan Tait",
+      "email": "bryan.tait@prempred.com",
+      "initials": "BT",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -2682,6 +2951,8 @@
    {
       "id": "usr_135",
       "name": "Becky Ryan",
+      "email": "becky.ryan@prempred.com",
+      "initials": "BR",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -2702,6 +2973,8 @@
    {
       "id": "usr_136",
       "name": "Carol Brown",
+      "email": "carol.brown@prempred.com",
+      "initials": "CB",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2722,6 +2995,8 @@
    {
       "id": "usr_137",
       "name": "Chris Bond",
+      "email": "chris.bond@prempred.com",
+      "initials": "CB",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2742,6 +3017,8 @@
    {
       "id": "usr_138",
       "name": "Craig Edwards",
+      "email": "craig.edwards@prempred.com",
+      "initials": "CE",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2762,6 +3039,8 @@
    {
       "id": "usr_139",
       "name": "Chris Howson",
+      "email": "chris.howson@prempred.com",
+      "initials": "CH",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -2782,6 +3061,8 @@
    {
       "id": "usr_140",
       "name": "Chris Jones",
+      "email": "chris.jones@prempred.com",
+      "initials": "CJ",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -2802,6 +3083,8 @@
    {
       "id": "usr_141",
       "name": "Colin Garland",
+      "email": "colin.garland@prempred.com",
+      "initials": "CG",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -2822,6 +3105,8 @@
    {
       "id": "usr_142",
       "name": "Colleen Carroll",
+      "email": "colleen.carroll@prempred.com",
+      "initials": "CC",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2842,6 +3127,8 @@
    {
       "id": "usr_143",
       "name": "Chris Hamilton",
+      "email": "chris.hamilton@prempred.com",
+      "initials": "CH",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -2862,6 +3149,8 @@
    {
       "id": "usr_144",
       "name": "Chak Li",
+      "email": "chak.li@prempred.com",
+      "initials": "CL",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -2882,6 +3171,8 @@
    {
       "id": "usr_145",
       "name": "Duncan Barnes",
+      "email": "duncan.barnes@prempred.com",
+      "initials": "DB",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2902,6 +3193,8 @@
    {
       "id": "usr_146",
       "name": "Dail Beattie",
+      "email": "dail.beattie@prempred.com",
+      "initials": "DB",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2922,6 +3215,8 @@
    {
       "id": "usr_147",
       "name": "David Carey",
+      "email": "david.carey@prempred.com",
+      "initials": "DC",
       "seasonsPlayed": 6,
       "first": 0,
       "second": 0,
@@ -2942,6 +3237,8 @@
    {
       "id": "usr_148",
       "name": "David Davies",
+      "email": "david.davies@prempred.com",
+      "initials": "DD",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -2962,6 +3259,8 @@
    {
       "id": "usr_149",
       "name": "Dave Eismont",
+      "email": "dave.eismont@prempred.com",
+      "initials": "DE",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -2982,6 +3281,8 @@
    {
       "id": "usr_150",
       "name": "David Renwick",
+      "email": "david.renwick@prempred.com",
+      "initials": "DR",
       "seasonsPlayed": 6,
       "first": 0,
       "second": 0,
@@ -3002,6 +3303,8 @@
    {
       "id": "usr_151",
       "name": "Daniel Fee",
+      "email": "daniel.fee@prempred.com",
+      "initials": "DF",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -3022,6 +3325,8 @@
    {
       "id": "usr_152",
       "name": "Daniel Gee",
+      "email": "daniel.gee@prempred.com",
+      "initials": "DG",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -3042,6 +3347,8 @@
    {
       "id": "usr_153",
       "name": "Daro Clark",
+      "email": "daro.clark@prempred.com",
+      "initials": "DC",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3062,6 +3369,8 @@
    {
       "id": "usr_154",
       "name": "Joan Poole",
+      "email": "joan.poole@prempred.com",
+      "initials": "JP",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3082,6 +3391,8 @@
    {
       "id": "usr_155",
       "name": "Dave Keaney",
+      "email": "dave.keaney@prempred.com",
+      "initials": "DK",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -3102,6 +3413,8 @@
    {
       "id": "usr_156",
       "name": "Demi-Lee Mather",
+      "email": "demi-lee.mather@prempred.com",
+      "initials": "DM",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3122,6 +3435,8 @@
    {
       "id": "usr_157",
       "name": "Darren Mellor",
+      "email": "darren.mellor@prempred.com",
+      "initials": "DM",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -3142,6 +3457,8 @@
    {
       "id": "usr_158",
       "name": "Daven Argile",
+      "email": "daven.argile@prempred.com",
+      "initials": "DA",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -3162,6 +3479,8 @@
    {
       "id": "usr_159",
       "name": "David McNair",
+      "email": "david.mcnair@prempred.com",
+      "initials": "DM",
       "seasonsPlayed": 4,
       "first": 0,
       "second": 0,
@@ -3182,6 +3501,8 @@
    {
       "id": "usr_160",
       "name": "Darren Willis",
+      "email": "darren.willis@prempred.com",
+      "initials": "DW",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3202,6 +3523,8 @@
    {
       "id": "usr_161",
       "name": "Damian Rafferty",
+      "email": "damian.rafferty@prempred.com",
+      "initials": "DR",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3222,6 +3545,8 @@
    {
       "id": "usr_162",
       "name": "Dan Richardson",
+      "email": "dan.richardson@prempred.com",
+      "initials": "DR",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3242,6 +3567,8 @@
    {
       "id": "usr_163",
       "name": "Dave Roberts",
+      "email": "dave.roberts@prempred.com",
+      "initials": "DR",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3262,6 +3589,8 @@
    {
       "id": "usr_164",
       "name": "David Sutterby",
+      "email": "david.sutterby@prempred.com",
+      "initials": "DS",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3282,6 +3611,8 @@
    {
       "id": "usr_165",
       "name": "Ed Barrett",
+      "email": "ed.barrett@prempred.com",
+      "initials": "EB",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -3302,6 +3633,8 @@
    {
       "id": "usr_166",
       "name": "Ewelina Chilinska",
+      "email": "ewelina.chilinska@prempred.com",
+      "initials": "EC",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3322,6 +3655,8 @@
    {
       "id": "usr_167",
       "name": "Eamonn Moore",
+      "email": "eamonn.moore@prempred.com",
+      "initials": "EM",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3342,6 +3677,8 @@
    {
       "id": "usr_168",
       "name": "Emily Paulson",
+      "email": "emily.paulson@prempred.com",
+      "initials": "EP",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3362,6 +3699,8 @@
    {
       "id": "usr_169",
       "name": "Ed Tucker",
+      "email": "ed.tucker@prempred.com",
+      "initials": "ET",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3382,6 +3721,8 @@
    {
       "id": "usr_170",
       "name": "Felix Hall",
+      "email": "felix.hall@prempred.com",
+      "initials": "FH",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3402,6 +3743,8 @@
    {
       "id": "usr_171",
       "name": "Greig Sabin",
+      "email": "greig.sabin@prempred.com",
+      "initials": "GS",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3422,6 +3765,8 @@
    {
       "id": "usr_172",
       "name": "George Bland",
+      "email": "george.bland@prempred.com",
+      "initials": "GB",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -3442,6 +3787,8 @@
    {
       "id": "usr_173",
       "name": "George Poole",
+      "email": "george.poole@prempred.com",
+      "initials": "GP",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3462,6 +3809,8 @@
    {
       "id": "usr_174",
       "name": "THE GIVE ME SPORT",
+      "email": "the.give.me.sport@prempred.com",
+      "initials": "TS",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3482,6 +3831,8 @@
    {
       "id": "usr_175",
       "name": "THE GUARDIAN",
+      "email": "the.guardian@prempred.com",
+      "initials": "TG",
       "seasonsPlayed": 9,
       "first": 0,
       "second": 0,
@@ -3502,6 +3853,8 @@
    {
       "id": "usr_176",
       "name": "Harry Birch",
+      "email": "harry.birch@prempred.com",
+      "initials": "HB",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3522,6 +3875,8 @@
    {
       "id": "usr_177",
       "name": "Hugh Carson",
+      "email": "hugh.carson@prempred.com",
+      "initials": "HC",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3542,6 +3897,8 @@
    {
       "id": "usr_178",
       "name": "Helen Lamont",
+      "email": "helen.lamont@prempred.com",
+      "initials": "HL",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -3562,6 +3919,8 @@
    {
       "id": "usr_179",
       "name": "Harry Paulson",
+      "email": "harry.paulson@prempred.com",
+      "initials": "HP",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3582,6 +3941,8 @@
    {
       "id": "usr_180",
       "name": "Ian County Prior",
+      "email": "ian.county.prior@prempred.com",
+      "initials": "IP",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3602,6 +3963,8 @@
    {
       "id": "usr_181",
       "name": "Iain Tulley",
+      "email": "iain.tulley@prempred.com",
+      "initials": "IT",
       "seasonsPlayed": 9,
       "first": 0,
       "second": 0,
@@ -3622,6 +3985,8 @@
    {
       "id": "usr_182",
       "name": "Ian McGrann",
+      "email": "ian.mcgrann@prempred.com",
+      "initials": "IM",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3642,6 +4007,8 @@
    {
       "id": "usr_183",
       "name": "Ian Wilson",
+      "email": "ian.wilson@prempred.com",
+      "initials": "IW",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3662,6 +4029,8 @@
    {
       "id": "usr_184",
       "name": "Ian Ogilvy",
+      "email": "ian.ogilvy@prempred.com",
+      "initials": "IO",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3682,6 +4051,8 @@
    {
       "id": "usr_185",
       "name": "Jake Commins",
+      "email": "jake.commins@prempred.com",
+      "initials": "JC",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3702,6 +4073,8 @@
    {
       "id": "usr_186",
       "name": "John Poole",
+      "email": "john.poole@prempred.com",
+      "initials": "JP",
       "seasonsPlayed": 6,
       "first": 0,
       "second": 0,
@@ -3722,6 +4095,8 @@
    {
       "id": "usr_187",
       "name": "Joanne Beaton",
+      "email": "joanne.beaton@prempred.com",
+      "initials": "JB",
       "seasonsPlayed": 5,
       "first": 0,
       "second": 0,
@@ -3742,6 +4117,8 @@
    {
       "id": "usr_188",
       "name": "Jonny Spears",
+      "email": "jonny.spears@prempred.com",
+      "initials": "JS",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3762,6 +4139,8 @@
    {
       "id": "usr_189",
       "name": "Jack Gibbons",
+      "email": "jack.gibbons@prempred.com",
+      "initials": "JG",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3782,6 +4161,8 @@
    {
       "id": "usr_190",
       "name": "James Hobbins",
+      "email": "james.hobbins@prempred.com",
+      "initials": "JH",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3802,6 +4183,8 @@
    {
       "id": "usr_191",
       "name": "Joy Kirk",
+      "email": "joy.kirk@prempred.com",
+      "initials": "JK",
       "seasonsPlayed": 4,
       "first": 0,
       "second": 0,
@@ -3822,6 +4205,8 @@
    {
       "id": "usr_192",
       "name": "Jim Lockwood",
+      "email": "jim.lockwood@prempred.com",
+      "initials": "JL",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -3842,6 +4227,8 @@
    {
       "id": "usr_193",
       "name": "Jens Larsen",
+      "email": "jens.larsen@prempred.com",
+      "initials": "JL",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -3862,6 +4249,8 @@
    {
       "id": "usr_194",
       "name": "Jonah Dymond",
+      "email": "jonah.dymond@prempred.com",
+      "initials": "JD",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3882,6 +4271,8 @@
    {
       "id": "usr_195",
       "name": "John McFadden",
+      "email": "john.mcfadden@prempred.com",
+      "initials": "JM",
       "seasonsPlayed": 5,
       "first": 0,
       "second": 1,
@@ -3902,6 +4293,8 @@
    {
       "id": "usr_196",
       "name": "Joanne MacGillivray",
+      "email": "joanne.macgillivray@prempred.com",
+      "initials": "JM",
       "seasonsPlayed": 4,
       "first": 0,
       "second": 0,
@@ -3922,6 +4315,8 @@
    {
       "id": "usr_197",
       "name": "Jared Paulson",
+      "email": "jared.paulson@prempred.com",
+      "initials": "JP",
       "seasonsPlayed": 5,
       "first": 0,
       "second": 0,
@@ -3942,6 +4337,8 @@
    {
       "id": "usr_198",
       "name": "John Parkinson",
+      "email": "john.parkinson@prempred.com",
+      "initials": "JP",
       "seasonsPlayed": 2,
       "first": 1,
       "second": 0,
@@ -3962,6 +4359,8 @@
    {
       "id": "usr_199",
       "name": "Joel Roberts",
+      "email": "joel.roberts@prempred.com",
+      "initials": "JR",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -3982,6 +4381,8 @@
    {
       "id": "usr_200",
       "name": "Jamie Rodger",
+      "email": "jamie.rodger@prempred.com",
+      "initials": "JR",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4002,6 +4403,8 @@
    {
       "id": "usr_201",
       "name": "Jon Stevens",
+      "email": "jon.stevens@prempred.com",
+      "initials": "JS",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4022,6 +4425,8 @@
    {
       "id": "usr_202",
       "name": "Joe Lawrence",
+      "email": "joe.lawrence@prempred.com",
+      "initials": "JL",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4042,6 +4447,8 @@
    {
       "id": "usr_203",
       "name": "Jamie Young",
+      "email": "jamie.young@prempred.com",
+      "initials": "JY",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4062,6 +4469,8 @@
    {
       "id": "usr_204",
       "name": "James Tulley",
+      "email": "james.tulley@prempred.com",
+      "initials": "JT",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4082,6 +4491,8 @@
    {
       "id": "usr_205",
       "name": "Jo Walsh",
+      "email": "jo.walsh@prempred.com",
+      "initials": "JW",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4102,6 +4513,8 @@
    {
       "id": "usr_206",
       "name": "James Rathmell",
+      "email": "james.rathmell@prempred.com",
+      "initials": "JR",
       "seasonsPlayed": 7,
       "first": 0,
       "second": 0,
@@ -4122,6 +4535,8 @@
    {
       "id": "usr_207",
       "name": "Kevin Chesworth",
+      "email": "kevin.chesworth@prempred.com",
+      "initials": "KC",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4142,6 +4557,8 @@
    {
       "id": "usr_208",
       "name": "Kumbi Kariwo",
+      "email": "kumbi.kariwo@prempred.com",
+      "initials": "KK",
       "seasonsPlayed": 8,
       "first": 0,
       "second": 0,
@@ -4162,6 +4579,8 @@
    {
       "id": "usr_209",
       "name": "Katie Poole",
+      "email": "katie.poole@prempred.com",
+      "initials": "KP",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -4182,6 +4601,8 @@
    {
       "id": "usr_210",
       "name": "Kudzayi Gombiro",
+      "email": "kudzayi.gombiro@prempred.com",
+      "initials": "KG",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4202,6 +4623,8 @@
    {
       "id": "usr_211",
       "name": "Karen Garcia Diaz",
+      "email": "karen.garcia.diaz@prempred.com",
+      "initials": "KD",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4222,6 +4645,8 @@
    {
       "id": "usr_212",
       "name": "Kerys Nicholas",
+      "email": "kerys.nicholas@prempred.com",
+      "initials": "KN",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4242,6 +4667,8 @@
    {
       "id": "usr_213",
       "name": "Kevin McManus",
+      "email": "kevin.mcmanus@prempred.com",
+      "initials": "KM",
       "seasonsPlayed": 7,
       "first": 0,
       "second": 0,
@@ -4262,6 +4689,8 @@
    {
       "id": "usr_214",
       "name": "Karl Hussey",
+      "email": "karl.hussey@prempred.com",
+      "initials": "KH",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4282,6 +4711,8 @@
    {
       "id": "usr_215",
       "name": "Kevin Pennington",
+      "email": "kevin.pennington@prempred.com",
+      "initials": "KP",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4302,6 +4733,8 @@
    {
       "id": "usr_216",
       "name": "Kat Wheeler",
+      "email": "kat.wheeler@prempred.com",
+      "initials": "KW",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -4322,6 +4755,8 @@
    {
       "id": "usr_217",
       "name": "Linus Gregoriadis",
+      "email": "linus.gregoriadis@prempred.com",
+      "initials": "LG",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4342,6 +4777,8 @@
    {
       "id": "usr_218",
       "name": "Liz Johnson",
+      "email": "liz.johnson@prempred.com",
+      "initials": "LJ",
       "seasonsPlayed": 5,
       "first": 1,
       "second": 0,
@@ -4362,6 +4799,8 @@
    {
       "id": "usr_219",
       "name": "Luke Nightingale",
+      "email": "luke.nightingale@prempred.com",
+      "initials": "LN",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4382,6 +4821,8 @@
    {
       "id": "usr_220",
       "name": "Mick Brown",
+      "email": "mick.brown@prempred.com",
+      "initials": "MB",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 2,
@@ -4402,6 +4843,8 @@
    {
       "id": "usr_221",
       "name": "Mark Crowcroft",
+      "email": "mark.crowcroft@prempred.com",
+      "initials": "MC",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4422,6 +4865,8 @@
    {
       "id": "usr_222",
       "name": "Mike Crowe",
+      "email": "mike.crowe@prempred.com",
+      "initials": "MC",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4442,6 +4887,8 @@
    {
       "id": "usr_223",
       "name": "Mike Fordyce",
+      "email": "mike.fordyce@prempred.com",
+      "initials": "MF",
       "seasonsPlayed": 5,
       "first": 0,
       "second": 2,
@@ -4462,6 +4909,8 @@
    {
       "id": "usr_224",
       "name": "Mac Williams",
+      "email": "mac.williams@prempred.com",
+      "initials": "MW",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4482,6 +4931,8 @@
    {
       "id": "usr_225",
       "name": "Matt Gordon",
+      "email": "matt.gordon@prempred.com",
+      "initials": "MG",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4502,6 +4953,8 @@
    {
       "id": "usr_226",
       "name": "Martyn Whittaker",
+      "email": "martyn.whittaker@prempred.com",
+      "initials": "MW",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4522,6 +4975,8 @@
    {
       "id": "usr_227",
       "name": "Mark Harris",
+      "email": "mark.harris@prempred.com",
+      "initials": "MH",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4542,6 +4997,8 @@
    {
       "id": "usr_228",
       "name": "Matt Bithell",
+      "email": "matt.bithell@prempred.com",
+      "initials": "MB",
       "seasonsPlayed": 6,
       "first": 0,
       "second": 0,
@@ -4562,6 +5019,8 @@
    {
       "id": "usr_229",
       "name": "Michael Campbell",
+      "email": "michael.campbell@prempred.com",
+      "initials": "MC",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4582,6 +5041,8 @@
    {
       "id": "usr_230",
       "name": "Matt Lewtas",
+      "email": "matt.lewtas@prempred.com",
+      "initials": "ML",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -4602,6 +5063,8 @@
    {
       "id": "usr_231",
       "name": "Matt Loadwick",
+      "email": "matt.loadwick@prempred.com",
+      "initials": "ML",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4622,6 +5085,8 @@
    {
       "id": "usr_232",
       "name": "Mike Laws",
+      "email": "mike.laws@prempred.com",
+      "initials": "ML",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -4642,6 +5107,8 @@
    {
       "id": "usr_233",
       "name": "Marc Leach",
+      "email": "marc.leach@prempred.com",
+      "initials": "ML",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4662,6 +5129,8 @@
    {
       "id": "usr_234",
       "name": "Mike Martin",
+      "email": "mike.martin@prempred.com",
+      "initials": "MM",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4682,6 +5151,8 @@
    {
       "id": "usr_235",
       "name": "Matthew Connolly",
+      "email": "matthew.connolly@prempred.com",
+      "initials": "MC",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4702,6 +5173,8 @@
    {
       "id": "usr_236",
       "name": "Mark Mosley",
+      "email": "mark.mosley@prempred.com",
+      "initials": "MM",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4722,6 +5195,8 @@
    {
       "id": "usr_237",
       "name": "THE MICHAEL OWEN",
+      "email": "the.michael.owen@prempred.com",
+      "initials": "TO",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4742,6 +5217,8 @@
    {
       "id": "usr_238",
       "name": "Mark Ryan",
+      "email": "mark.ryan@prempred.com",
+      "initials": "MR",
       "seasonsPlayed": 4,
       "first": 1,
       "second": 0,
@@ -4762,6 +5239,8 @@
    {
       "id": "usr_239",
       "name": "Matt Stuart",
+      "email": "matt.stuart@prempred.com",
+      "initials": "MS",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4782,6 +5261,8 @@
    {
       "id": "usr_240",
       "name": "Max Spears",
+      "email": "max.spears@prempred.com",
+      "initials": "MS",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4802,6 +5283,8 @@
    {
       "id": "usr_241",
       "name": "Max Winnington",
+      "email": "max.winnington@prempred.com",
+      "initials": "MW",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -4822,6 +5305,8 @@
    {
       "id": "usr_242",
       "name": "Morgan Jordan",
+      "email": "morgan.jordan@prempred.com",
+      "initials": "MJ",
       "seasonsPlayed": 4,
       "first": 0,
       "second": 0,
@@ -4842,6 +5327,8 @@
    {
       "id": "usr_243",
       "name": "Mike Pollard",
+      "email": "mike.pollard@prempred.com",
+      "initials": "MP",
       "seasonsPlayed": 4,
       "first": 0,
       "second": 0,
@@ -4862,6 +5349,8 @@
    {
       "id": "usr_244",
       "name": "Nick Jakeman",
+      "email": "nick.jakeman@prempred.com",
+      "initials": "NJ",
       "seasonsPlayed": 4,
       "first": 0,
       "second": 0,
@@ -4882,6 +5371,8 @@
    {
       "id": "usr_245",
       "name": "Nick Grant",
+      "email": "nick.grant@prempred.com",
+      "initials": "NG",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4902,6 +5393,8 @@
    {
       "id": "usr_246",
       "name": "Nick Watson",
+      "email": "nick.watson@prempred.com",
+      "initials": "NW",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -4922,6 +5415,8 @@
    {
       "id": "usr_247",
       "name": "Nick Hatton",
+      "email": "nick.hatton@prempred.com",
+      "initials": "NH",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -4942,6 +5437,8 @@
    {
       "id": "usr_248",
       "name": "Neil Appleton",
+      "email": "neil.appleton@prempred.com",
+      "initials": "NA",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -4962,6 +5459,8 @@
    {
       "id": "usr_249",
       "name": "Neil Harrod",
+      "email": "neil.harrod@prempred.com",
+      "initials": "NH",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -4982,6 +5481,8 @@
    {
       "id": "usr_250",
       "name": "Neil Kirkley",
+      "email": "neil.kirkley@prempred.com",
+      "initials": "NK",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -5002,6 +5503,8 @@
    {
       "id": "usr_251",
       "name": "Nik Wheeler",
+      "email": "nik.wheeler@prempred.com",
+      "initials": "NW",
       "seasonsPlayed": 4,
       "first": 0,
       "second": 0,
@@ -5022,6 +5525,8 @@
    {
       "id": "usr_252",
       "name": "Owaiz Khan",
+      "email": "owaiz.khan@prempred.com",
+      "initials": "OK",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -5042,6 +5547,8 @@
    {
       "id": "usr_253",
       "name": "THE OPTA COMP",
+      "email": "the.opta.comp@prempred.com",
+      "initials": "TC",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5062,6 +5569,8 @@
    {
       "id": "usr_254",
       "name": "Paul Bancroft",
+      "email": "paul.bancroft@prempred.com",
+      "initials": "PB",
       "seasonsPlayed": 5,
       "first": 0,
       "second": 0,
@@ -5082,6 +5591,8 @@
    {
       "id": "usr_255",
       "name": "Peter Clark",
+      "email": "peter.clark@prempred.com",
+      "initials": "PC",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5102,6 +5613,8 @@
    {
       "id": "usr_256",
       "name": "Paul Guyers",
+      "email": "paul.guyers@prempred.com",
+      "initials": "PG",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5122,6 +5635,8 @@
    {
       "id": "usr_257",
       "name": "Pete Jones",
+      "email": "pete.jones@prempred.com",
+      "initials": "PJ",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5142,6 +5657,8 @@
    {
       "id": "usr_258",
       "name": "Peter Joyce",
+      "email": "peter.joyce@prempred.com",
+      "initials": "PJ",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5162,6 +5679,8 @@
    {
       "id": "usr_259",
       "name": "Paul Carey",
+      "email": "paul.carey@prempred.com",
+      "initials": "PC",
       "seasonsPlayed": 10,
       "first": 0,
       "second": 0,
@@ -5182,6 +5701,8 @@
    {
       "id": "usr_260",
       "name": "Phil Deller",
+      "email": "phil.deller@prempred.com",
+      "initials": "PD",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -5202,6 +5723,8 @@
    {
       "id": "usr_261",
       "name": "Paul Gillen",
+      "email": "paul.gillen@prempred.com",
+      "initials": "PG",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5222,6 +5745,8 @@
    {
       "id": "usr_262",
       "name": "Paul Tulley",
+      "email": "paul.tulley@prempred.com",
+      "initials": "PT",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5242,6 +5767,8 @@
    {
       "id": "usr_263",
       "name": "Paul Reid",
+      "email": "paul.reid@prempred.com",
+      "initials": "PR",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5262,6 +5789,8 @@
    {
       "id": "usr_264",
       "name": "Paul Mavin",
+      "email": "paul.mavin@prempred.com",
+      "initials": "PM",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -5282,6 +5811,8 @@
    {
       "id": "usr_265",
       "name": "Phil Wright",
+      "email": "phil.wright@prempred.com",
+      "initials": "PW",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5302,6 +5833,8 @@
    {
       "id": "usr_266",
       "name": "Paul Halliday",
+      "email": "paul.halliday@prempred.com",
+      "initials": "PH",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5322,6 +5855,8 @@
    {
       "id": "usr_267",
       "name": "THE RADIO TIMES",
+      "email": "the.radio.times@prempred.com",
+      "initials": "TT",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5342,6 +5877,8 @@
    {
       "id": "usr_268",
       "name": "Robin Carhart",
+      "email": "robin.carhart@prempred.com",
+      "initials": "RC",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5362,6 +5899,8 @@
    {
       "id": "usr_269",
       "name": "Ria Blackmore",
+      "email": "ria.blackmore@prempred.com",
+      "initials": "RB",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -5382,6 +5921,8 @@
    {
       "id": "usr_270",
       "name": "Russ Grundy",
+      "email": "russ.grundy@prempred.com",
+      "initials": "RG",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5402,6 +5943,8 @@
    {
       "id": "usr_271",
       "name": "Ren Fu",
+      "email": "ren.fu@prempred.com",
+      "initials": "RF",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -5422,6 +5965,8 @@
    {
       "id": "usr_272",
       "name": "Robert Campbell",
+      "email": "robert.campbell@prempred.com",
+      "initials": "RC",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5442,6 +5987,8 @@
    {
       "id": "usr_273",
       "name": "Rob Eagles",
+      "email": "rob.eagles@prempred.com",
+      "initials": "RE",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -5462,6 +6009,8 @@
    {
       "id": "usr_274",
       "name": "Rachel Lawrence",
+      "email": "rachel.lawrence@prempred.com",
+      "initials": "RL",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5482,6 +6031,8 @@
    {
       "id": "usr_275",
       "name": "Richard Lewis",
+      "email": "richard.lewis@prempred.com",
+      "initials": "RL",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5502,6 +6053,8 @@
    {
       "id": "usr_276",
       "name": "Rob McKinneley",
+      "email": "rob.mckinneley@prempred.com",
+      "initials": "RM",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5522,6 +6075,8 @@
    {
       "id": "usr_277",
       "name": "Rich Horswell",
+      "email": "rich.horswell@prempred.com",
+      "initials": "RH",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5542,6 +6097,8 @@
    {
       "id": "usr_278",
       "name": "Rich Paulson",
+      "email": "rich.paulson@prempred.com",
+      "initials": "RP",
       "seasonsPlayed": 8,
       "first": 0,
       "second": 0,
@@ -5562,6 +6119,8 @@
    {
       "id": "usr_279",
       "name": "Ruari Nash",
+      "email": "ruari.nash@prempred.com",
+      "initials": "RN",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5582,6 +6141,8 @@
    {
       "id": "usr_280",
       "name": "THE ROBOTS",
+      "email": "the.robots@prempred.com",
+      "initials": "TR",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5602,6 +6163,8 @@
    {
       "id": "usr_281",
       "name": "Robert Greatbach",
+      "email": "robert.greatbach@prempred.com",
+      "initials": "RG",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5622,6 +6185,8 @@
    {
       "id": "usr_282",
       "name": "Robert Johnson",
+      "email": "robert.johnson@prempred.com",
+      "initials": "RJ",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -5642,6 +6207,8 @@
    {
       "id": "usr_283",
       "name": "Richard Harrison",
+      "email": "richard.harrison@prempred.com",
+      "initials": "RH",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -5662,6 +6229,8 @@
    {
       "id": "usr_284",
       "name": "Rob Toms",
+      "email": "rob.toms@prempred.com",
+      "initials": "RT",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5682,6 +6251,8 @@
    {
       "id": "usr_285",
       "name": "Rob Wakefield",
+      "email": "rob.wakefield@prempred.com",
+      "initials": "RW",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5702,6 +6273,8 @@
    {
       "id": "usr_286",
       "name": "Steve East",
+      "email": "steve.east@prempred.com",
+      "initials": "SE",
       "seasonsPlayed": 5,
       "first": 0,
       "second": 0,
@@ -5722,6 +6295,8 @@
    {
       "id": "usr_287",
       "name": "Segla Tro",
+      "email": "segla.tro@prempred.com",
+      "initials": "ST",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -5742,6 +6317,8 @@
    {
       "id": "usr_288",
       "name": "Simon FitzGerald",
+      "email": "simon.fitzgerald@prempred.com",
+      "initials": "SF",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5762,6 +6339,8 @@
    {
       "id": "usr_289",
       "name": "Sung Kang",
+      "email": "sung.kang@prempred.com",
+      "initials": "SK",
       "seasonsPlayed": 6,
       "first": 1,
       "second": 0,
@@ -5782,6 +6361,8 @@
    {
       "id": "usr_290",
       "name": "Steve Clifton",
+      "email": "steve.clifton@prempred.com",
+      "initials": "SC",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -5802,6 +6383,8 @@
    {
       "id": "usr_291",
       "name": "Steve Norwood",
+      "email": "steve.norwood@prempred.com",
+      "initials": "SN",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5822,6 +6405,8 @@
    {
       "id": "usr_292",
       "name": "Sarah McDermott",
+      "email": "sarah.mcdermott@prempred.com",
+      "initials": "SM",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -5842,6 +6427,8 @@
    {
       "id": "usr_293",
       "name": "THE SKY SPORTS",
+      "email": "the.sky.sports@prempred.com",
+      "initials": "TS",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5862,6 +6449,8 @@
    {
       "id": "usr_294",
       "name": "Sue Laister",
+      "email": "sue.laister@prempred.com",
+      "initials": "SL",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5882,6 +6471,8 @@
    {
       "id": "usr_295",
       "name": "Stuart MacDonald",
+      "email": "stuart.macdonald@prempred.com",
+      "initials": "SM",
       "seasonsPlayed": 7,
       "first": 0,
       "second": 0,
@@ -5902,6 +6493,8 @@
    {
       "id": "usr_296",
       "name": "Stuart Barnes",
+      "email": "stuart.barnes@prempred.com",
+      "initials": "SB",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -5922,6 +6515,8 @@
    {
       "id": "usr_297",
       "name": "Steph Poole",
+      "email": "steph.poole@prempred.com",
+      "initials": "SP",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5942,6 +6537,8 @@
    {
       "id": "usr_298",
       "name": "Stephen Popland",
+      "email": "stephen.popland@prempred.com",
+      "initials": "SP",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -5962,6 +6559,8 @@
    {
       "id": "usr_299",
       "name": "Sean Rainey",
+      "email": "sean.rainey@prempred.com",
+      "initials": "SR",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -5982,6 +6581,8 @@
    {
       "id": "usr_300",
       "name": "Sam Cherrington",
+      "email": "sam.cherrington@prempred.com",
+      "initials": "SC",
       "seasonsPlayed": 3,
       "first": 0,
       "second": 0,
@@ -6002,6 +6603,8 @@
    {
       "id": "usr_301",
       "name": "Sam East",
+      "email": "sam.east@prempred.com",
+      "initials": "SE",
       "seasonsPlayed": 4,
       "first": 0,
       "second": 0,
@@ -6022,6 +6625,8 @@
    {
       "id": "usr_302",
       "name": "THE DAILY STAR",
+      "email": "the.daily.star@prempred.com",
+      "initials": "TD",
       "seasonsPlayed": 1,
       "first": 1,
       "second": 0,
@@ -6042,6 +6647,8 @@
    {
       "id": "usr_303",
       "name": "Sam Turner-Wilson",
+      "email": "sam.turner-wilson@prempred.com",
+      "initials": "SW",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -6062,6 +6669,8 @@
    {
       "id": "usr_304",
       "name": "THE SUN",
+      "email": "the.sun@prempred.com",
+      "initials": "TS",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -6082,6 +6691,8 @@
    {
       "id": "usr_305",
       "name": "Tim Carpenter",
+      "email": "tim.carpenter@prempred.com",
+      "initials": "TC",
       "seasonsPlayed": 4,
       "first": 0,
       "second": 0,
@@ -6102,6 +6713,8 @@
    {
       "id": "usr_306",
       "name": "THE TELEGRAPH",
+      "email": "the.telegraph@prempred.com",
+      "initials": "TT",
       "seasonsPlayed": 2,
       "first": 1,
       "second": 0,
@@ -6122,6 +6735,8 @@
    {
       "id": "usr_307",
       "name": "Tony Gordon",
+      "email": "tony.gordon@prempred.com",
+      "initials": "TG",
       "seasonsPlayed": 4,
       "first": 0,
       "second": 0,
@@ -6142,6 +6757,8 @@
    {
       "id": "usr_308",
       "name": "Tom Lamond",
+      "email": "tom.lamond@prempred.com",
+      "initials": "TL",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -6162,6 +6779,8 @@
    {
       "id": "usr_309",
       "name": "Tom Knowles",
+      "email": "tom.knowles@prempred.com",
+      "initials": "TK",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -6182,6 +6801,8 @@
    {
       "id": "usr_310",
       "name": "Thomas Kirby",
+      "email": "thomas.kirby@prempred.com",
+      "initials": "TK",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -6202,6 +6823,8 @@
    {
       "id": "usr_311",
       "name": "Tim Williams",
+      "email": "tim.williams@prempred.com",
+      "initials": "TW",
       "seasonsPlayed": 5,
       "first": 1,
       "second": 0,
@@ -6222,6 +6845,8 @@
    {
       "id": "usr_312",
       "name": "Rowan Peters",
+      "email": "rowan.peters@prempred.com",
+      "initials": "RP",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,
@@ -6242,6 +6867,8 @@
    {
       "id": "usr_313",
       "name": "Bill Cain",
+      "email": "bill.cain@prempred.com",
+      "initials": "BC",
       "seasonsPlayed": 1,
       "first": 0,
       "second": 0,
@@ -6262,6 +6889,8 @@
    {
       "id": "usr_314",
       "name": "Wade Hammett",
+      "email": "wade.hammett@prempred.com",
+      "initials": "WH",
       "seasonsPlayed": 2,
       "first": 0,
       "second": 0,

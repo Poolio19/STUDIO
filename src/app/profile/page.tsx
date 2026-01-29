@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -65,6 +66,7 @@ const profileFormSchema = z.object({
     message: 'Name must be at least 2 characters.',
   }),
   nickname: z.string().optional(),
+  initials: z.string().optional(),
   email: z.string().email({
     message: 'Please enter a valid email address.',
   }),
@@ -126,6 +128,7 @@ export default function ProfilePage() {
     defaultValues: {
       name: '',
       nickname: '',
+      initials: '',
       email: '',
       favouriteTeam: 'team_1',
       phoneNumber: '',
@@ -146,6 +149,7 @@ export default function ProfilePage() {
       form.reset({
         name: user.name || '',
         nickname: user.nickname || '',
+        initials: user.initials || '',
         email: user.email || '',
         favouriteTeam: user.favouriteTeam || 'none',
         phoneNumber: user.phoneNumber || '',
@@ -183,6 +187,7 @@ export default function ProfilePage() {
     const updatedData = {
         name: data.name,
         nickname: data.nickname,
+        initials: data.initials,
         email: data.email,
         favouriteTeam: data.favouriteTeam,
         phoneNumber: data.phoneNumber,
@@ -325,7 +330,7 @@ export default function ProfilePage() {
                       alt={user?.name}
                       data-ai-hint="person portrait"
                       />
-                      <AvatarFallback>{getInitials(user?.name)}</AvatarFallback>
+                      <AvatarFallback>{user?.initials || getInitials(user?.name)}</AvatarFallback>
                   </Avatar>
                   <div>
                       <h2 className="text-2xl font-bold">{user?.name}</h2>
@@ -502,6 +507,19 @@ export default function ProfilePage() {
                     </FormItem>
                   )}
                 />
+                 <FormField
+                  control={form.control}
+                  name="initials"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Initials</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Your initials" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="email"
@@ -641,4 +659,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
 

@@ -4,6 +4,7 @@ export type User = {
   id: string;
   name: string;
   nickname?: string;
+  initials?: string;
   avatar: string;
   score: number;
   rank: number;

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -60,17 +61,14 @@ export function AuthForm() {
       return;
     }
 
-    const historicalUser = historicalPlayersData.find(p => {
-        if (!p.name) return false;
-        const expectedEmail = `${p.name.toLowerCase().replace(/ /g, '.')}@prempred.com`;
-        return expectedEmail === email.toLowerCase();
-    });
+    const historicalUser = historicalPlayersData.find(p => p.email.toLowerCase() === email.toLowerCase());
 
     if (historicalUser) {
       const { id, ...historicalData } = historicalUser;
       const profileData: Omit<User, 'id'> = {
         name: historicalUser.name,
         nickname: historicalUser.nickname || '',
+        initials: historicalUser.initials || '',
         email: email,
         avatar: String(Math.floor(Math.random() * 49) + 1),
         score: 0, rank: 0, previousRank: 0, previousScore: 0, maxRank: 0,
