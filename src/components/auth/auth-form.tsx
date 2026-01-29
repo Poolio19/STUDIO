@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -63,24 +64,21 @@ export function AuthForm() {
     }
     
     // 3. The canonical ID from our JSON is the correct ID for the user's document.
-    // For most users, this will be their Firebase UID. For Jim, it's 'usr_009'.
     const canonicalUserId = historicalUser.id;
     const userDocRef = doc(firestore, 'users', canonicalUserId);
     const docSnap = await getDoc(userDocRef);
 
     // 4. If the document already exists, our work is done.
     if (docSnap.exists()) {
-      console.log(`User profile for ${canonicalUserId} already exists. Skipping creation.`);
       return;
     }
     
     // 5. If it doesn't exist, create it using the historical data.
-    console.log(`Creating new user profile for ${canonicalUserId} (${email}) from historical data.`);
     const { id, ...historicalData } = historicalUser;
     const profileData: Omit<User, 'id'> = {
       name: historicalUser.name,
       nickname: historicalUser.nickname || '',
-      initials: historicalData.Init || '', // Use 'Init' from JSON
+      initials: (historicalData as any).Init || '', // Use 'Init' from JSON
       email: email,
       avatar: String(Math.floor(Math.random() * 49) + 1), // Assign a random avatar
       score: 0, rank: 0, previousRank: 0, previousScore: 0, maxRank: 0,
@@ -129,7 +127,7 @@ export function AuthForm() {
         await createInitialUserProfile(userCredential.user.uid, values.email);
         toast({ title: 'Signed in successfully!' });
     } catch (error: any) {
-        let errorMessage = 'An unknown error occurred. Please try again.';
+        let errorMessage;
         const expectedErrorCodes = ['auth/user-not-found', 'auth/invalid-credential', 'auth/wrong-password'];
 
         if (expectedErrorCodes.includes(error.code)) {
@@ -137,18 +135,10 @@ export function AuthForm() {
         } else if (error.message.includes("not registered for the league")) {
             errorMessage = error.message;
         } else {
-            errorMessage = error.message || errorMessage;
-            // Only log unexpected errors to the console
+            errorMessage = 'An unknown error occurred. Please try again.';
             console.error('Sign in failed with unexpected error:', error);
         }
         setAuthError(errorMessage);
-        if (!expectedErrorCodes.includes(error.code)) {
-            toast({
-                variant: 'destructive',
-                title: 'Sign In Failed',
-                description: errorMessage,
-            });
-        }
     } finally {
         setIsLoading(false);
     }
