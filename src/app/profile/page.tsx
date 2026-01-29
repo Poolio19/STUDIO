@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Upload, Trophy, Award, ShieldCheck, Loader2, Users, Medal, DollarSign } from 'lucide-react';
+import { Calendar as CalendarIcon, Upload, Trophy, Award, ShieldCheck, Loader2, Users, Medal, DollarSign, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -318,6 +318,7 @@ export default function ProfilePage() {
   const joMimoMClass = (user?.joMimoM ?? 0) > 0 ? "text-yellow-600/80" : "text-gray-300 dark:text-gray-600";
   const ruMimoMClass = (user?.ruMimoM ?? 0) > 0 ? "text-slate-400" : "text-gray-300 dark:text-gray-600";
   const joRuMimoMClass = (user?.joRuMimoM ?? 0) > 0 ? "text-slate-400/80" : "text-gray-300 dark:text-gray-600";
+  const xmasNo1Class = (user?.xmasNo1 ?? 0) > 0 ? "text-yellow-400" : "text-gray-300 dark:text-gray-600";
 
   return (
     <div className="space-y-8">
@@ -442,6 +443,22 @@ export default function ProfilePage() {
                                               </div>
                                           </TooltipTrigger>
                                           <TooltipContent><p>{user?.joRuMiMoM || 0}x JoRuMiMoM</p></TooltipContent>
+                                      </Tooltip>
+                                  </TooltipProvider>
+                              </div>
+                          </div>
+                           <div>
+                              <p className="text-xs font-semibold text-muted-foreground text-center mb-2 uppercase">Special Trophies</p>
+                              <div className="flex justify-around">
+                                  <TooltipProvider>
+                                      <Tooltip>
+                                          <TooltipTrigger>
+                                              <div className="flex flex-col items-center gap-1">
+                                                  <Star className={cn("size-7", xmasNo1Class)} />
+                                                  <span className="text-xs font-bold">{user?.xmasNo1 || 0}</span>
+                                              </div>
+                                          </TooltipTrigger>
+                                          <TooltipContent><p>{user?.xmasNo1 || 0}x Xmas No. 1</p></TooltipContent>
                                       </Tooltip>
                                   </TooltipProvider>
                               </div>
