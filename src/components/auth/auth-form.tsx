@@ -50,56 +50,66 @@ export function AuthForm() {
     },
   });
 
-  const createInitialUserProfile = async (userId: string, email: string) => {
+  const createInitialUserProfile = async (firebaseAuthUid: string, email: string) => {
     if (!firestore) return;
 
-    const userDocRef = doc(firestore, 'users', userId);
-    const docSnap = await getDoc(userDocRef);
-    if (docSnap.exists()) {
-      console.log(`User profile for ${userId} already exists. Skipping creation.`);
-      return;
-    }
-
+    // 1. Find the historical user by email. This is the source of truth.
     const historicalUser = historicalPlayersData.find(p => p.email.toLowerCase() === email.toLowerCase());
 
-    if (historicalUser) {
-      const { id, ...historicalData } = historicalUser;
-      const profileData: Omit<User, 'id'> = {
-        name: historicalUser.name,
-        nickname: historicalUser.nickname || '',
-        initials: historicalUser.initials || '',
-        email: email,
-        avatar: String(Math.floor(Math.random() * 49) + 1),
-        score: 0, rank: 0, previousRank: 0, previousScore: 0, maxRank: 0,
-        minRank: 0, maxScore: 0, minScore: 0, rankChange: 0, scoreChange: 0,
-        isPro: historicalData.isPro ?? false,
-        joinDate: new Date().toISOString(),
-        country: historicalData.country || '',
-        favouriteTeam: historicalData.favouriteTeam || '',
-        phoneNumber: historicalData.phoneNumber || '',
-        seasonsPlayed: historicalData.seasonsPlayed || 0,
-        first: historicalData.first || 0,
-        second: historicalData.second || 0,
-        third: historicalData.third || 0,
-        fourth: historicalData.fourth || 0,
-        fifth: historicalData.fifth || 0,
-        sixth: historicalData.sixth || 0,
-        seventh: historicalData.seventh || 0,
-        eighth: historicalData.eighth || 0,
-        ninth: historicalData.ninth || 0,
-        tenth: historicalData.tenth || 0,
-        mimoM: historicalData.mimoM || 0,
-        ruMimoM: historicalData.ruMimoM || 0,
-        joMimoM: historicalData.joMimoM || 0,
-        joRuMimoM: historicalData.joRuMimoM || 0,
-        xmasNo1: historicalData.xmasNo1 || 0,
-        cashWinnings: historicalData.cashWinnings || 0,
-      };
-      setDocumentNonBlocking(userDocRef, profileData);
-    } else {
-      console.error(`Attempted to create profile for non-historical user: ${email}`);
-      throw new Error("This user is not registered for the league. Please contact the administrator.");
+    // 2. If not found, they are not registered for the league.
+    if (!historicalUser) {
+        console.error(`Sign-in for non-historical user blocked: ${email}`);
+        throw new Error("This user is not registered for the league. Please contact the administrator.");
     }
+    
+    // 3. The canonical ID from our JSON is the correct ID for the user's document.
+    // For most users, this will be their Firebase UID. For Jim, it's 'usr_009'.
+    const canonicalUserId = historicalUser.id;
+    const userDocRef = doc(firestore, 'users', canonicalUserId);
+    const docSnap = await getDoc(userDocRef);
+
+    // 4. If the document already exists, our work is done.
+    if (docSnap.exists()) {
+      console.log(`User profile for ${canonicalUserId} already exists. Skipping creation.`);
+      return;
+    }
+    
+    // 5. If it doesn't exist, create it using the historical data.
+    console.log(`Creating new user profile for ${canonicalUserId} (${email}) from historical data.`);
+    const { id, ...historicalData } = historicalUser;
+    const profileData: Omit<User, 'id'> = {
+      name: historicalUser.name,
+      nickname: historicalUser.nickname || '',
+      initials: historicalData.Init || '', // Use 'Init' from JSON
+      email: email,
+      avatar: String(Math.floor(Math.random() * 49) + 1), // Assign a random avatar
+      score: 0, rank: 0, previousRank: 0, previousScore: 0, maxRank: 0,
+      minRank: 0, maxScore: 0, minScore: 0, rankChange: 0, scoreChange: 0,
+      isPro: historicalData.isPro ?? false,
+      joinDate: new Date().toISOString(),
+      country: historicalData.country || '',
+      favouriteTeam: historicalData.favouriteTeam || '',
+      phoneNumber: historicalData.phoneNumber || '',
+      seasonsPlayed: historicalData.seasonsPlayed || 0,
+      first: historicalData.first || 0,
+      second: historicalData.second || 0,
+      third: historicalData.third || 0,
+      fourth: historicalData.fourth || 0,
+      fifth: historicalData.fifth || 0,
+      sixth: historicalData.sixth || 0,
+      seventh: historicalData.seventh || 0,
+      eighth: historicalData.eighth || 0,
+      ninth: historicalData.ninth || 0,
+      tenth: historicalData.tenth || 0,
+      mimoM: historicalData.mimoM || 0,
+      ruMimoM: historicalData.ruMimoM || 0,
+      joMimoM: historicalData.joMimoM || 0,
+      joRuMimoM: historicalData.joRuMimoM || 0,
+      xmasNo1: historicalData.xmasNo1 || 0,
+      cashWinnings: historicalData.cashWinnings || 0,
+    };
+    // Use the correct document reference with the canonical ID.
+    setDocumentNonBlocking(userDocRef, profileData);
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -124,17 +134,21 @@ export function AuthForm() {
 
         if (expectedErrorCodes.includes(error.code)) {
              errorMessage = "Invalid credentials. If you believe you should have access, please contact the administrator.";
+        } else if (error.message.includes("not registered for the league")) {
+            errorMessage = error.message;
         } else {
             errorMessage = error.message || errorMessage;
             // Only log unexpected errors to the console
             console.error('Sign in failed with unexpected error:', error);
         }
         setAuthError(errorMessage);
-        toast({
-            variant: 'destructive',
-            title: 'Sign In Failed',
-            description: errorMessage,
-        });
+        if (!expectedErrorCodes.includes(error.code)) {
+            toast({
+                variant: 'destructive',
+                title: 'Sign In Failed',
+                description: errorMessage,
+            });
+        }
     } finally {
         setIsLoading(false);
     }
