@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -121,10 +120,14 @@ export function AuthForm() {
         toast({ title: 'Signed in successfully!' });
     } catch (error: any) {
         let errorMessage = 'An unknown error occurred. Please try again.';
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+        const expectedErrorCodes = ['auth/user-not-found', 'auth/invalid-credential', 'auth/wrong-password'];
+
+        if (expectedErrorCodes.includes(error.code)) {
              errorMessage = "Invalid credentials. If you believe you should have access, please contact the administrator.";
         } else {
             errorMessage = error.message || errorMessage;
+            // Only log unexpected errors to the console
+            console.error('Sign in failed with unexpected error:', error);
         }
         setAuthError(errorMessage);
         toast({
@@ -132,7 +135,6 @@ export function AuthForm() {
             title: 'Sign In Failed',
             description: errorMessage,
         });
-        console.error('Sign in failed:', error);
     } finally {
         setIsLoading(false);
     }
