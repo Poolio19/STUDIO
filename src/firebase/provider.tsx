@@ -132,7 +132,7 @@ export const useUser = (): UserHookResult => {
 export const useResolvedUserId = (): string | null => {
     const { user } = useUser();
     if (!user) return null;
-    if (user.email === 'jim.poole@prempred.com') {
+    if (user.email === 'jim.poole@prempred.com' || user.email === 'jimpoolio@hotmail.com') {
         return 'usr_009';
     }
     return user.uid;
