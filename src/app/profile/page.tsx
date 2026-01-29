@@ -188,7 +188,7 @@ export default function ProfilePage() {
         name: data.name,
         nickname: data.nickname,
         initials: data.initials,
-        email: data.email,
+        // email: data.email, // Email should not be editable here
         favouriteTeam: data.favouriteTeam,
         phoneNumber: data.phoneNumber,
     };
@@ -527,8 +527,11 @@ export default function ProfilePage() {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="your.email@example.com" {...field} />
+                        <Input placeholder="your.email@example.com" {...field} readOnly />
                       </FormControl>
+                      <FormDescription>
+                        Your email address is your login and cannot be changed. Please contact the administrator if you need to update it.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -659,5 +662,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-
