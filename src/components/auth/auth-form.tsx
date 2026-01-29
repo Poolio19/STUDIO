@@ -53,70 +53,56 @@ export function AuthForm() {
   const createInitialUserProfile = async (userId: string, email: string) => {
     if (!firestore) return;
 
-    // Use the Firebase Auth UID as the canonical document ID for all users.
     const userDocRef = doc(firestore, 'users', userId);
-
     const docSnap = await getDoc(userDocRef);
     if (docSnap.exists()) {
-      // If a profile already exists for this UID, do nothing.
       console.log(`User profile for ${userId} already exists. Skipping creation.`);
       return;
     }
 
-    // Find the historical user by converting their name from the JSON
-    // into the expected email format and matching it.
     const historicalUser = historicalPlayersData.find(p => {
         if (!p.name) return false;
         const expectedEmail = `${p.name.toLowerCase().replace(/ /g, '.')}@prempred.com`;
         return expectedEmail === email.toLowerCase();
     });
 
-    let profileData: Omit<User, 'id'>;
-
     if (historicalUser) {
-      // If historical data is found, use it to create the new profile.
       const { id, ...historicalData } = historicalUser;
-      profileData = {
+      const profileData: Omit<User, 'id'> = {
         name: historicalUser.name,
         nickname: historicalUser.nickname || '',
         email: email,
-        avatar: String(Math.floor(Math.random() * 49) + 1), // Assign a random avatar on creation
+        avatar: String(Math.floor(Math.random() * 49) + 1),
         score: 0, rank: 0, previousRank: 0, previousScore: 0, maxRank: 0,
         minRank: 0, maxScore: 0, minScore: 0, rankChange: 0, scoreChange: 0,
-        isPro: historicalUser.isPro ?? false,
+        isPro: historicalData.isPro ?? false,
         joinDate: new Date().toISOString(),
-        country: historicalUser.country || '',
-        favouriteTeam: historicalUser.favouriteTeam || '',
-        phoneNumber: historicalUser.phoneNumber || '',
-        // Use historical trophy data
-        seasonsPlayed: historicalUser.seasonsPlayed || 0,
-        first: historicalUser.first || 0,
-        second: historicalUser.second || 0,
-        third: historicalUser.third || 0,
-        fourth: historicalUser.fourth || 0,
-        fifth: historicalUser.fifth || 0,
-        sixth: historicalUser.sixth || 0,
-        seventh: historicalUser.seventh || 0,
-        eighth: historicalUser.eighth || 0,
-        ninth: historicalUser.ninth || 0,
-        tenth: historicalUser.tenth || 0,
-        mimoM: historicalUser.mimoM || 0,
-        ruMimoM: historicalUser.ruMimoM || 0,
-        joMimoM: historicalUser.joMimoM || 0,
-        joRuMimoM: historicalUser.joRuMimoM || 0,
-        xmasNo1: historicalUser.xmasNo1 || 0,
-        cashWinnings: historicalUser.cashWinnings || 0,
+        country: historicalData.country || '',
+        favouriteTeam: historicalData.favouriteTeam || '',
+        phoneNumber: historicalData.phoneNumber || '',
+        seasonsPlayed: historicalData.seasonsPlayed || 0,
+        first: historicalData.first || 0,
+        second: historicalData.second || 0,
+        third: historicalData.third || 0,
+        fourth: historicalData.fourth || 0,
+        fifth: historicalData.fifth || 0,
+        sixth: historicalData.sixth || 0,
+        seventh: historicalData.seventh || 0,
+        eighth: historicalData.eighth || 0,
+        ninth: historicalData.ninth || 0,
+        tenth: historicalData.tenth || 0,
+        mimoM: historicalData.mimoM || 0,
+        ruMimoM: historicalData.ruMimoM || 0,
+        joMimoM: historicalData.joMimoM || 0,
+        joRuMimoM: historicalData.joRuMimoM || 0,
+        xmasNo1: historicalData.xmasNo1 || 0,
+        cashWinnings: historicalData.cashWinnings || 0,
       };
+      setDocumentNonBlocking(userDocRef, profileData);
     } else {
-      // If this user is not in the historical file, it's an error for this private league.
-      // We will prevent the profile from being created.
       console.error(`Attempted to create profile for non-historical user: ${email}`);
-      // Throw an error that will be caught in the onSubmit handler.
       throw new Error("This user is not registered for the league. Please contact the administrator.");
     }
-    
-    // Create the document using the secure Firebase Auth UID.
-    setDocumentNonBlocking(userDocRef, profileData);
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -133,7 +119,6 @@ export function AuthForm() {
 
     try {
         const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-        // On successful sign-in, ensure the user profile exists or is created from historical data.
         await createInitialUserProfile(userCredential.user.uid, values.email);
         toast({ title: 'Signed in successfully!' });
     } catch (error: any) {
