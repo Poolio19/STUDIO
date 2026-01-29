@@ -80,7 +80,7 @@ export default function LegendsPage() {
                     if (winner.points === maxPoints) {
                         const user = userMap.get(winner.name);
                         if (user && !uniqueWinners.has(user.id)) {
-                            pointsWinners.push({ user, value: `${maxPoints} points in ${season.season}` });
+                            pointsWinners.push({ user, value: `${maxPoints}pts ${season.season}` });
                             uniqueWinners.add(user.id);
                         }
                     }
@@ -106,7 +106,7 @@ export default function LegendsPage() {
                     if (winner.winnings === maxWinnings) {
                         const user = userMap.get(winner.name);
                         if (user && !uniqueWinners.has(user.id)) {
-                            winningsWinners.push({ user, value: `£${maxWinnings.toFixed(2)} in ${season.season}` });
+                            winningsWinners.push({ user, value: `£${maxWinnings.toFixed(2)} ${season.season}` });
                             uniqueWinners.add(user.id);
                         }
                     }
