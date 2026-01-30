@@ -8,4 +8,4 @@ runConfig:
   # more instances in response to increased traffic.
   maxInstances: 1
 output: 'standalone'
-# Final push to sync all files and confirm the europe-west2 deployment location.
+# Final sync to confirm the europe-west2 (London) deployment location.
