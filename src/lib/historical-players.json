@@ -1,4 +1,3 @@
- 
 [
     {
        "id": "usr_001",
@@ -20,7 +19,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -43,7 +42,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -89,7 +88,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -112,7 +111,7 @@
        "mimoM": 1,
        "ruMimoM": 0,
        "joMimoM": 5,
-       "joRuMimoM": 5,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -135,7 +134,7 @@
        "mimoM": 4,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 2,
+       "joRuMimoM": 1,
        "xmasNo1": 1
      },
     {
@@ -250,7 +249,7 @@
        "mimoM": 1,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 2,
+       "joRuMimoM": 1,
        "xmasNo1": 0
      },
     {
@@ -273,7 +272,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 0,
+       "joRuMimoM": 2,
        "xmasNo1": 1
      },
     {
@@ -296,7 +295,7 @@
        "mimoM": 1,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -342,7 +341,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -388,7 +387,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 2,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -411,7 +410,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -434,7 +433,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -457,7 +456,7 @@
        "mimoM": 1,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -618,7 +617,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -733,7 +732,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -756,7 +755,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 2,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -779,7 +778,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 2,
+       "joRuMimoM": 1,
        "xmasNo1": 0
      },
     {
@@ -825,7 +824,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 0,
-       "joRuMimoM": 0,
+       "joRuMimoM": 1,
        "xmasNo1": 0
      },
     {
@@ -848,7 +847,7 @@
        "mimoM": 1,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -894,7 +893,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -917,7 +916,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -1055,7 +1054,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 4,
-       "joRuMimoM": 4,
+       "joRuMimoM": 2,
        "xmasNo1": 0
      },
     {
@@ -1078,7 +1077,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 2,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -1101,7 +1100,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -1170,7 +1169,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -1193,7 +1192,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -1216,7 +1215,7 @@
        "mimoM": 1,
        "ruMimoM": 0,
        "joMimoM": 4,
-       "joRuMimoM": 4,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -1239,7 +1238,7 @@
        "mimoM": 2,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 0,
+       "joRuMimoM": 1,
        "xmasNo1": 0
      },
     {
@@ -1285,7 +1284,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 2,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -1308,7 +1307,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -1630,7 +1629,7 @@
        "mimoM": 1,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -1653,7 +1652,7 @@
        "mimoM": 2,
        "ruMimoM": 0,
        "joMimoM": 4,
-       "joRuMimoM": 2,
+       "joRuMimoM": 1,
        "xmasNo1": 0
      },
     {
@@ -1722,7 +1721,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 2,
+       "joRuMimoM": 0,
        "xmasNo1": 1
      },
     {
@@ -1745,7 +1744,7 @@
        "mimoM": 0,
        "ruMimoM": 2,
        "joMimoM": 3,
-       "joRuMimoM": 2,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -1837,7 +1836,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -1906,7 +1905,7 @@
        "mimoM": 1,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -1952,7 +1951,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 3,
-       "joRuMimoM": 2,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -1975,7 +1974,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -1998,7 +1997,7 @@
        "mimoM": 1,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 1
      },
     {
@@ -2044,7 +2043,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -2136,7 +2135,7 @@
        "mimoM": 1,
        "ruMimoM": 0,
        "joMimoM": 0,
-       "joRuMimoM": 0,
+       "joRuMimoM": 2,
        "xmasNo1": 0
      },
     {
@@ -2159,7 +2158,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -2527,7 +2526,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -2550,7 +2549,7 @@
        "mimoM": 2,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -2665,7 +2664,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 3,
-       "joRuMimoM": 2,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -2688,7 +2687,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 2,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -2734,7 +2733,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -2803,7 +2802,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -3010,7 +3009,7 @@
        "mimoM": 1,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -3079,7 +3078,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 0,
-       "joRuMimoM": 0,
+       "joRuMimoM": 1,
        "xmasNo1": 0
      },
     {
@@ -3194,7 +3193,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -3309,7 +3308,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 2,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -3447,7 +3446,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -3516,7 +3515,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -3792,7 +3791,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -3953,7 +3952,7 @@
        "mimoM": 1,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -4160,7 +4159,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -4275,7 +4274,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -4367,7 +4366,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -4505,7 +4504,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -4735,7 +4734,7 @@
        "mimoM": 1,
        "ruMimoM": 0,
        "joMimoM": 0,
-       "joRuMimoM": 0,
+       "joRuMimoM": 2,
        "xmasNo1": 0
      },
     {
@@ -4850,7 +4849,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -4896,7 +4895,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 4,
-       "joRuMimoM": 3,
+       "joRuMimoM": 1,
        "xmasNo1": 0
      },
     {
@@ -4988,7 +4987,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -5011,7 +5010,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 0,
-       "joRuMimoM": 0,
+       "joRuMimoM": 1,
        "xmasNo1": 0
      },
     {
@@ -5126,7 +5125,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 0,
-       "joRuMimoM": 0,
+       "joRuMimoM": 1,
        "xmasNo1": 0
      },
     {
@@ -5241,7 +5240,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 0,
+       "joRuMimoM": 1,
        "xmasNo1": 0
      },
     {
@@ -5287,7 +5286,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -5471,7 +5470,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 2,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -5586,7 +5585,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 2,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -5701,7 +5700,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -5839,7 +5838,7 @@
        "mimoM": 1,
        "ruMimoM": 0,
        "joMimoM": 0,
-       "joRuMimoM": 0,
+       "joRuMimoM": 2,
        "xmasNo1": 0
      },
     {
@@ -6000,7 +5999,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -6184,7 +6183,7 @@
        "mimoM": 1,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -6345,7 +6344,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 0,
-       "joRuMimoM": 0,
+       "joRuMimoM": 1,
        "xmasNo1": 0
      },
     {
@@ -6483,7 +6482,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 0,
-       "joRuMimoM": 0,
+       "joRuMimoM": 1,
        "xmasNo1": 0
      },
     {
@@ -6575,7 +6574,7 @@
        "mimoM": 0,
        "ruMimoM": 1,
        "joMimoM": 0,
-       "joRuMimoM": 0,
+       "joRuMimoM": 1,
        "xmasNo1": 0
      },
     {
@@ -6782,7 +6781,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 2,
-       "joRuMimoM": 0,
+       "joRuMimoM": 1,
        "xmasNo1": 0
      },
     {
@@ -6920,7 +6919,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 0,
-       "joRuMimoM": 0,
+       "joRuMimoM": 1,
        "xmasNo1": 0
      },
     {
@@ -7012,7 +7011,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 1,
-       "joRuMimoM": 1,
+       "joRuMimoM": 0,
        "xmasNo1": 0
      },
     {
@@ -7150,7 +7149,7 @@
        "mimoM": 0,
        "ruMimoM": 0,
        "joMimoM": 0,
-       "joRuMimoM": 0,
+       "joRuMimoM": 1,
        "xmasNo1": 0
      },
     {
