@@ -45,42 +45,41 @@ export function AuthForm() {
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
+    defaultValues: { email: '', password: '' },
   });
 
   const createInitialUserProfile = async (firebaseAuthUid: string, email: string) => {
     if (!firestore) return;
 
-    // 1. Find the historical user by email. This is the source of truth.
-    const historicalUser = historicalPlayersData.find(p => p.email.toLowerCase() === email.toLowerCase());
-
-    // 2. If not found, they are not registered for the league.
-    if (!historicalUser) {
-        console.error(`Sign-in for non-historical user blocked: ${email}`);
-        throw new Error("This user is not registered for the league. Please contact the administrator.");
-    }
-    
-    // 3. The canonical ID from our JSON is the correct ID for the user's document.
-    const canonicalUserId = historicalUser.id;
-    const userDocRef = doc(firestore, 'users', canonicalUserId);
+    // 1. Check if profile exists at this UID (source of truth)
+    const userDocRef = doc(firestore, 'users', firebaseAuthUid);
     const docSnap = await getDoc(userDocRef);
+    if (docSnap.exists()) return;
 
-    // 4. If the document already exists, our work is done.
-    if (docSnap.exists()) {
-      return;
+    // 2. If not, find historical record by email
+    const historicalUser = historicalPlayersData.find(p => p.email.toLowerCase() === email.toLowerCase());
+    if (!historicalUser) {
+        // If not found, create a placeholder profile at the current UID
+        const profileData: Omit<User, 'id'> = {
+            name: email.split('@')[0],
+            nickname: '', initials: '', email: email, avatar: '1',
+            score: 0, rank: 0, previousRank: 0, previousScore: 0, maxRank: 0,
+            minRank: 0, maxScore: 0, minScore: 0, rankChange: 0, scoreChange: 0,
+            joinDate: new Date().toISOString(), mustChangePassword: true,
+        };
+        setDocumentNonBlocking(userDocRef, profileData);
+        return;
     }
     
-    // 5. If it doesn't exist, create it using the historical data.
+    // 3. Document UID didn't exist, but historical email matched. 
+    // This happens if the user was NOT bulk synced. We link the historical stats to this UID.
     const { id, ...historicalData } = historicalUser;
     const profileData: Omit<User, 'id'> = {
       name: historicalUser.name,
       nickname: historicalUser.nickname || '',
-      initials: (historicalData as any).Init || '', // Use 'Init' from JSON
+      initials: (historicalData as any).Init || (historicalData as any).initials || '',
       email: email,
-      avatar: String(Math.floor(Math.random() * 49) + 1), // Assign a random avatar
+      avatar: String(Math.floor(Math.random() * 49) + 1),
       score: 0, rank: 0, previousRank: 0, previousScore: 0, maxRank: 0,
       minRank: 0, maxScore: 0, minScore: 0, rankChange: 0, scoreChange: 0,
       isPro: historicalData.isPro ?? false,
@@ -107,39 +106,19 @@ export function AuthForm() {
       cashWinnings: historicalData.cashWinnings || 0,
       mustChangePassword: true,
     };
-    // Use the correct document reference with the canonical ID.
     setDocumentNonBlocking(userDocRef, profileData);
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!auth) {
-        toast({
-            variant: 'destructive',
-            title: 'Authentication not ready',
-            description: 'Please wait a moment and try again.'
-        });
-        return;
-    };
+    if (!auth) return;
     setIsLoading(true);
     setAuthError(null);
-
     try {
         const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
         await createInitialUserProfile(userCredential.user.uid, values.email);
         toast({ title: 'Signed in successfully!' });
     } catch (error: any) {
-        let errorMessage;
-        const expectedErrorCodes = ['auth/user-not-found', 'auth/invalid-credential', 'auth/wrong-password'];
-
-        if (expectedErrorCodes.includes(error.code)) {
-             errorMessage = "Invalid credentials. If you believe you should have access, please contact the administrator.";
-        } else if (error.message.includes("not registered for the league")) {
-            errorMessage = error.message;
-        } else {
-            errorMessage = 'An unknown error occurred. Please try again.';
-            console.error('Sign in failed with unexpected error:', error);
-        }
-        setAuthError(errorMessage);
+        setAuthError("Invalid credentials. Please contact the administrator.");
     } finally {
         setIsLoading(false);
     }
@@ -147,46 +126,14 @@ export function AuthForm() {
 
   return (
     <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>Sign In</CardTitle>
-        <CardDescription>
-          Enter your details to sign in. Please contact the administrator if you need an account.
-        </CardDescription>
-      </CardHeader>
+      <CardHeader><CardTitle>Sign In</CardTitle><CardDescription>Enter details to sign in.</CardDescription></CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input placeholder="you@example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input type="password" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="password" render={({ field }) => (<FormItem><FormLabel>Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
             {authError && <p className="text-sm font-medium text-destructive">{authError}</p>}
-            <Button type="submit" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isLoading ? 'Processing...' : 'Sign In'}
-            </Button>
+            <Button type="submit" disabled={isLoading}>{isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Sign In'}</Button>
           </form>
         </Form>
       </CardContent>

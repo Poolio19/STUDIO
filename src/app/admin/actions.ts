@@ -27,6 +27,7 @@ function getAdminAuth() {
 
 /**
  * Aggressively sets every player's password to "Password" and verifies account existence.
+ * If a UID mismatch is detected, it recreates the account to ensure canonical IDs are used.
  */
 export async function bulkCreateAuthUsers() {
   let auth;
@@ -40,7 +41,6 @@ export async function bulkCreateAuthUsers() {
   let updatedCount = 0;
   const errors: { email: string; message: string }[] = [];
 
-  // Process users sequentially to avoid overloading the Auth service
   for (const player of historicalPlayersData) {
     const email = player.email?.trim()?.toLowerCase();
     const uid = player.id?.trim();
@@ -53,33 +53,44 @@ export async function bulkCreateAuthUsers() {
 
     try {
       try {
-        // 1. Try updating existing user by UID
-        await auth.updateUser(uid, {
-          email: email,
-          password: password,
-          displayName: player.name,
-        });
-        updatedCount++;
+        // 1. Try to fetch user by UID
+        const userByUid = await auth.getUser(uid);
+        
+        // If email matches, just update password
+        if (userByUid.email?.toLowerCase() === email) {
+            await auth.updateUser(uid, { password });
+            updatedCount++;
+        } else {
+            // If email differs, update both (this shouldn't happen with canonical IDs)
+            await auth.updateUser(uid, { email, password });
+            updatedCount++;
+        }
       } catch (uidError: any) {
         if (uidError.code === 'auth/user-not-found') {
           try {
-            // 2. If UID not found, check if email exists with a different UID
+            // 2. UID not found, check if email exists with a DIFFERENT UID
             const userByEmail = await auth.getUserByEmail(email);
-            await auth.updateUser(userByEmail.uid, {
-              password: password,
-              displayName: player.name,
+            
+            // CRITICAL: We found the email but it has a non-canonical UID.
+            // We must delete and recreate to enforce the canonical usr_XXX ID.
+            await auth.deleteUser(userByEmail.uid);
+            await auth.createUser({
+                uid: uid,
+                email: email,
+                emailVerified: true,
+                password: password,
+                displayName: player.name,
             });
-            updatedCount++;
+            createdCount++;
           } catch (emailError: any) {
             if (emailError.code === 'auth/user-not-found') {
-              // 3. Create new account if neither UID nor email exists
+              // 3. Neither UID nor Email exists - clean create
               await auth.createUser({
                 uid: uid,
                 email: email,
                 emailVerified: true,
                 password: password,
                 displayName: player.name,
-                disabled: false,
               });
               createdCount++;
             } else {

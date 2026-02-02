@@ -103,19 +103,14 @@ export default function ProfilePage() {
 
   const allUserHistoriesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'userHistories') : null, [firestore]);
   const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
-  
-  const mimoMQuery = useMemoFirebase(() => {
-    return firestore && authUser ? collection(firestore, 'monthlyMimoM') : null
-  }, [firestore, authUser]);
-
+  const mimoMQuery = useMemoFirebase(() => firestore && authUser ? collection(firestore, 'monthlyMimoM') : null, [firestore, authUser]);
 
   const { data: user, isLoading: userLoading } = useDoc<User>(userDocRef);
   const { data: userHistory, isLoading: historyLoading } = useDoc<UserHistory>(userHistoryDocRef);
   const { data: allUserHistories, isLoading: allHistoriesLoading } = useCollection<UserHistory>(allUserHistoriesQuery);
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
-  const { data: monthlyMimoM, isLoading: mimoMLoading } = useCollection<MonthlyMimoM>(mimoMQuery);
 
-  const isLoading = isAuthUserLoading || userLoading || historyLoading || teamsLoading || mimoMLoading || allHistoriesLoading;
+  const isLoading = isAuthUserLoading || userLoading || historyLoading || teamsLoading || allHistoriesLoading;
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -161,18 +156,17 @@ export default function ProfilePage() {
 
   async function onSubmit(data: ProfileFormValues) {
     if (!userDocRef || !resolvedUserId || !firestore) {
-      toast({ variant: 'destructive', title: 'Error', description: 'User not authenticated or database not available.' });
+      toast({ variant: 'destructive', title: 'Error', description: 'Authentication failed.' });
       return;
     }
 
-    // Validation: Check if name is already taken by ANOTHER user
+    // Check for duplicate names (excluding current user by ID)
     const usersRef = collection(firestore, 'users');
     const q = query(usersRef, where("name", "==", data.name));
     const querySnapshot = await getDocs(q);
 
     let isNameTaken = false;
     querySnapshot.forEach((doc) => {
-        // Only mark as taken if the ID doesn't match current user
         if (doc.id !== resolvedUserId) {
             isNameTaken = true;
         }
@@ -182,7 +176,7 @@ export default function ProfilePage() {
       toast({
         variant: 'destructive',
         title: 'Name already taken',
-        description: `The name "${data.name}" is already in use by another player. Please choose a different name.`,
+        description: `The name "${data.name}" is already in use.`,
       });
       return;
     }
@@ -196,46 +190,34 @@ export default function ProfilePage() {
     };
 
     setDocumentNonBlocking(userDocRef, updatedData, { merge: true });
-    toast({
-      title: 'Profile Updated!',
-      description: 'Your profile information has been saved.',
-    });
+    toast({ title: 'Profile Updated!' });
   }
 
   async function onEmailSubmit(data: EmailFormValues) {
     if (!authUser || !userDocRef) return;
-
     try {
       await updateEmail(authUser, data.email);
       setDocumentNonBlocking(userDocRef, { email: data.email }, { merge: true });
-      toast({ title: 'Login Email Updated!', description: 'Your sign-in and notification address has been updated.' });
+      toast({ title: 'Login Email Updated!' });
     } catch (error: any) {
       console.error("Email update error:", error);
-      let description = "Failed to update email. You might need to sign out and sign back in to perform this sensitive action.";
-      if (error.code === 'auth/email-already-in-use') {
-        description = "This email address is already registered to another account.";
-      }
+      let description = "Failed to update email. Re-authentication may be required.";
+      if (error.code === 'auth/email-already-in-use') description = "Email already in use.";
       toast({ variant: 'destructive', title: 'Update Failed', description });
     }
   }
 
   async function onPasswordSubmit(data: PasswordFormValues) {
-    if (!authUser || !userDocRef) {
-      toast({ variant: 'destructive', title: 'Not Authenticated', description: 'You must be logged in to change your password.' });
-      return;
-    }
-
+    if (!authUser || !userDocRef) return;
     try {
       await updatePassword(authUser, data.password);
       setDocumentNonBlocking(userDocRef, { mustChangePassword: false }, { merge: true });
-      toast({ title: 'Password Updated Successfully!', description: 'Your security settings have been updated.' });
+      toast({ title: 'Password Updated!' });
       passwordForm.reset();
     } catch (error: any) {
       console.error("Password update error:", error);
-      let description = "An unexpected error occurred. Please try again.";
-      if (error.code === 'auth/requires-recent-login') {
-        description = "This action is sensitive. Please log out and log back in before changing your password.";
-      }
+      let description = "Update failed. Re-authentication may be required.";
+      if (error.code === 'auth/requires-recent-login') description = "Please sign out and sign back in to change your password.";
       toast({ variant: 'destructive', title: 'Update Failed', description });
     }
   }
@@ -244,24 +226,13 @@ export default function ProfilePage() {
     if (!allUserHistories || !userHistory || !userHistory.weeklyScores) {
       return { chartData: [], yAxisDomain: [0, 0] };
     }
-
     const allWeeks = [...new Set(allUserHistories.flatMap(h => h.weeklyScores.map(w => w.week)))].filter(w => w > 0).sort((a, b) => a - b);
-    
     const allScores = allUserHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.score));
-    if (allScores.length === 0) {
-        return { chartData: [], yAxisDomain: [0, 10] };
-    }
-    const overallMinScore = Math.min(...allScores);
-    const overallMaxScore = Math.max(...allScores);
-    const yAxisDomain: [number, number] = [overallMinScore - 5, overallMaxScore + 5];
-
+    if (allScores.length === 0) return { chartData: [], yAxisDomain: [0, 10] };
+    const yAxisDomain: [number, number] = [Math.min(...allScores) - 5, Math.max(...allScores) + 5];
     const transformedData = allWeeks.map(week => {
-      const scoresThisWeek = allUserHistories
-        .map(h => h.weeklyScores.find(w => w.week === week)?.score)
-        .filter((score): score is number => score !== undefined);
-
+      const scoresThisWeek = allUserHistories.map(h => h.weeklyScores.find(w => w.week === week)?.score).filter((s): s is number => s !== undefined);
       const currentUserWeekInfo = userHistory.weeklyScores.find(w => w.week === week);
-
       return {
         week: `Wk ${week}`,
         'Your Score': currentUserWeekInfo?.score,
@@ -269,7 +240,6 @@ export default function ProfilePage() {
         'Min Score': scoresThisWeek.length > 0 ? Math.min(...scoresThisWeek) : undefined,
       };
     });
-
     return { chartData: transformedData, yAxisDomain };
   }, [allUserHistories, userHistory]);
 
@@ -281,92 +251,29 @@ export default function ProfilePage() {
         const result = reader.result as string;
         setAvatarPreview(result);
         setDocumentNonBlocking(userDocRef, { avatar: result }, { merge: true });
-        toast({ title: 'Avatar Updated!', description: 'Your new avatar has been set.' });
+        toast({ title: 'Avatar Updated!' });
       };
       reader.readAsDataURL(file);
     }
   };
   
-  const getInitials = (name: string | null | undefined) => {
-    if (!name) return '?';
-    const parts = name.split(' ');
-    if (parts.length > 1) {
-      return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
-  };
-
-  if (isAuthUserLoading) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <Loader2 className="mr-2 h-8 w-8 animate-spin" />
-        <span>Loading profile...</span>
-      </div>
-    );
-  }
-
-  if (!authUser) {
-     return (
-        <div className="flex h-full w-full items-center justify-center">
-            <AuthForm />
-        </div>
-    )
-  }
-
-  if (!user && !isLoading) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <p className="text-destructive">Could not load user profile. It might not be created yet.</p>
-      </div>
-    );
-  }
+  if (isAuthUserLoading) return <div className="flex h-screen w-screen items-center justify-center"><Loader2 className="mr-2 h-8 w-8 animate-spin" /><p>Loading profile...</p></div>;
+  if (!authUser) return <div className="flex h-full w-full items-center justify-center"><AuthForm /></div>;
 
   if (user?.mustChangePassword) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Card className="w-full max-w-md border-2 border-destructive shadow-lg">
           <CardHeader className="bg-destructive/10">
-            <CardTitle className="flex items-center gap-2 text-destructive">
-              <ShieldAlert className="size-6" />
-              Security Update Required
-            </CardTitle>
-            <CardDescription className="text-destructive-foreground/80">
-              You are currently using a temporary password. For security reasons, you must set a new password before accessing the rest of the application.
-            </CardDescription>
+            <CardTitle className="flex items-center gap-2 text-destructive"><ShieldAlert className="size-6" />Security Update Required</CardTitle>
+            <CardDescription className="text-destructive-foreground/80">Set a new password to access the application.</CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
             <Form {...passwordForm}>
               <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
-                <FormField
-                  control={passwordForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>New Password</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="New password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={passwordForm.control}
-                  name="confirmPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confirm New Password</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="Confirm new password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full" disabled={passwordForm.formState.isSubmitting}>
-                  {passwordForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Set New Password & Continue
-                </Button>
+                <FormField control={passwordForm.control} name="password" render={({ field }) => (<FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={passwordForm.control} name="confirmPassword" render={({ field }) => (<FormItem><FormLabel>Confirm Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <Button type="submit" className="w-full" disabled={passwordForm.formState.isSubmitting}>{passwordForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Set Password & Continue</Button>
               </form>
             </Form>
           </CardContent>
@@ -375,16 +282,9 @@ export default function ProfilePage() {
     );
   }
 
-  const topTenCount = (user?.first || 0) + (user?.second || 0) + (user?.third || 0) + (user?.fourth || 0) + (user?.fifth || 0) + (user?.sixth || 0) + (user?.seventh || 0) + (user?.eighth || 0) + (user?.ninth || 0) + (user?.tenth || 0);
+  if (!user && !isLoading) return <div className="flex h-full w-full items-center justify-center"><p className="text-destructive">Could not load profile. UID: {resolvedUserId}</p></div>;
 
-  const firstPlaceClass = (user?.first ?? 0) > 0 ? "text-yellow-500" : "text-gray-300 dark:text-gray-600";
-  const secondPlaceClass = (user?.second ?? 0) > 0 ? "text-slate-400" : "text-gray-300 dark:text-gray-600";
-  const thirdPlaceClass = (user?.third ?? 0) > 0 ? "text-amber-700" : "text-gray-300 dark:text-gray-600";
-  const mimoMClass = (user?.mimoM ?? 0) > 0 ? "text-yellow-600" : "text-gray-300 dark:text-gray-600";
-  const joMimoMClass = (user?.joMimoM ?? 0) > 0 ? "text-yellow-600/80" : "text-gray-300 dark:text-gray-600";
-  const ruMimoMClass = (user?.ruMimoM ?? 0) > 0 ? "text-slate-400" : "text-gray-300 dark:text-gray-600";
-  const joRuMimoMClass = (user?.joRuMimoM ?? 0) > 0 ? "text-slate-400/80" : "text-gray-300 dark:text-gray-600";
-  const xmasNo1Class = (user?.xmasNo1 ?? 0) > 0 ? "text-yellow-400" : "text-gray-300 dark:text-gray-600";
+  const topTenCount = (user?.first || 0) + (user?.second || 0) + (user?.third || 0) + (user?.fourth || 0) + (user?.fifth || 0) + (user?.sixth || 0) + (user?.seventh || 0) + (user?.eighth || 0) + (user?.ninth || 0) + (user?.tenth || 0);
 
   return (
     <div className="space-y-8">
@@ -392,12 +292,8 @@ export default function ProfilePage() {
           <CardContent className="pt-6 flex flex-col lg:flex-row items-center lg:items-start gap-6">
               <div className="flex flex-col items-center text-center lg:items-start lg:text-left gap-4">
                   <Avatar className="h-24 w-24 border-4 border-primary">
-                      <AvatarImage
-                      src={avatarPreview || getAvatarUrl(user?.avatar)}
-                      alt={user?.name}
-                      data-ai-hint="person portrait"
-                      />
-                      <AvatarFallback>{user?.initials || getInitials(user?.name)}</AvatarFallback>
+                      <AvatarImage src={avatarPreview || getAvatarUrl(user?.avatar)} alt={user?.name} />
+                      <AvatarFallback>{(user?.name || '?').charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div>
                       <h2 className="text-2xl font-bold">{user?.name}</h2>
@@ -406,138 +302,27 @@ export default function ProfilePage() {
                       <p className="text-sm text-muted-foreground">All Time Winnings: £{(user?.cashWinnings || 0).toFixed(2)}</p>
                   </div>
               </div>
-
               <Separator orientation="vertical" className="h-auto hidden lg:block" />
               <Separator className="w-full lg:hidden" />
-
               <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 flex-1">
-                  <div className="w-full">
+                  <div>
                       <h3 className="text-lg font-semibold mb-2 text-center">Season Stats</h3>
                       <div className="grid grid-cols-4 gap-x-2 text-center text-sm px-2">
-                          <div />
-                          <div className="font-medium text-muted-foreground">High</div>
-                          <div className="font-medium text-muted-foreground">Low</div>
-                          <div className="font-medium text-muted-foreground">Current</div>
-
-                          <div className="font-medium text-muted-foreground text-left">Position</div>
-                          <div className="font-bold">{user?.minRank}</div>
-                          <div className="font-bold">{user?.maxRank}</div>
-                          <div className="font-bold">{user?.rank}</div>
-
-                          <div className="font-medium text-muted-foreground text-left">Points</div>
-                          <div className="font-bold">{user?.maxScore}</div>
-                          <div className="font-bold">{user?.minScore}</div>
-                          <div className="font-bold">{user?.score}</div>
+                          <div /><div className="font-medium text-muted-foreground">High</div><div className="font-medium text-muted-foreground">Low</div><div className="font-medium text-muted-foreground">Current</div>
+                          <div className="font-medium text-muted-foreground text-left">Pos</div><div className="font-bold">{user?.minRank}</div><div className="font-bold">{user?.maxRank}</div><div className="font-bold">{user?.rank}</div>
+                          <div className="font-medium text-muted-foreground text-left">Pts</div><div className="font-bold">{user?.maxScore}</div><div className="font-bold">{user?.minScore}</div><div className="font-bold">{user?.score}</div>
                       </div>
                   </div>
-                  <div className="w-full">
+                  <div>
                       <h3 className="text-lg font-semibold mb-2 text-center">Trophy Cabinet</h3>
                        <div className="space-y-4">
-                          <div>
-                              <p className="text-xs font-semibold text-muted-foreground text-center mb-2 uppercase">Best Finishes</p>
-                              <div className="flex justify-around items-end">
-                                  <TooltipProvider>
-                                      <Tooltip>
-                                          <TooltipTrigger>
-                                              <div className="flex flex-col items-center gap-1 w-12">
-                                                  <span className="text-xs font-semibold">2nd</span>
-                                                  <Medal className={cn("size-7", secondPlaceClass)} />
-                                                  <span className="text-sm font-bold">{user?.second || 0}</span>
-                                              </div>
-                                          </TooltipTrigger>
-                                          <TooltipContent><p>{user?.second || 0}x Runner Up</p></TooltipContent>
-                                      </Tooltip>
-                                      <Tooltip>
-                                          <TooltipTrigger>
-                                              <div className="flex flex-col items-center gap-1 w-12">
-                                                  <span className="text-sm font-bold">1st</span>
-                                                  <Trophy className={cn("size-8", firstPlaceClass)} />
-                                                  <span className="text-base font-bold">{user?.first || 0}</span>
-                                              </div>
-                                          </TooltipTrigger>
-                                          <TooltipContent><p>{user?.first || 0}x League Champion</p></TooltipContent>
-                                      </Tooltip>
-                                      <Tooltip>
-                                          <TooltipTrigger>
-                                              <div className="flex flex-col items-center gap-1 w-12">
-                                                  <span className="text-xs font-semibold">3rd</span>
-                                                  <Medal className={cn("size-6", thirdPlaceClass)} />
-                                                  <span className="text-sm font-bold">{user?.third || 0}</span>
-                                              </div>
-                                          </TooltipTrigger>
-                                          <TooltipContent><p>{user?.third || 0}x 3rd Place</p></TooltipContent>
-                                      </Tooltip>
-                                      <Tooltip>
-                                          <TooltipTrigger>
-                                              <div className="flex flex-col items-center gap-1 w-12">
-                                                  <span className="text-xs font-semibold">Top 10</span>
-                                                  <Star className={cn("size-6 text-yellow-400")} />
-                                                  <span className="text-sm font-bold">{topTenCount}</span>
-                                              </div>
-                                          </TooltipTrigger>
-                                          <TooltipContent><p>{topTenCount}x Top 10 Finishes</p></TooltipContent>
-                                      </Tooltip>
-                                  </TooltipProvider>
-                              </div>
-                          </div>
-                          <div>
-                              <p className="text-xs font-semibold text-muted-foreground text-center mb-2 uppercase">Monthly Awards</p>
-                              <div className="flex justify-around">
-                                  <TooltipProvider>
-                                      <Tooltip>
-                                          <TooltipTrigger>
-                                              <div className="flex flex-col items-center gap-1">
-                                                  <Award className={cn("size-7", mimoMClass)} />
-                                                  <span className="text-xs font-bold">{user?.mimoM || 0}</span>
-                                              </div>
-                                          </TooltipTrigger>
-                                          <TooltipContent><p>{user?.mimoM || 0}x MiMoM</p></TooltipContent>
-                                      </Tooltip>
-                                      <Tooltip>
-                                          <TooltipTrigger>
-                                              <div className="flex flex-col items-center gap-1">
-                                                  <Award className={cn("size-6", joMimoMClass)} />
-                                                  <span className="text-xs font-bold">{user?.joMimoM || 0}</span>
-                                              </div>
-                                          </TooltipTrigger>
-                                          <TooltipContent><p>{user?.joMimoM || 0}x JoMiMoM</p></TooltipContent>
-                                      </Tooltip>
-                                      <Tooltip>
-                                          <TooltipTrigger>
-                                              <div className="flex flex-col items-center gap-1">
-                                                  <Award className={cn("size-7", ruMimoMClass)} />
-                                                  <span className="text-xs font-bold">{user?.ruMimoM || 0}</span>
-                                              </div>
-                                          </TooltipTrigger>
-                                          <TooltipContent><p>{user?.ruMimoM || 0}x RuMiMoM</p></TooltipContent>
-                                      </Tooltip>
-                                      <Tooltip>
-                                          <TooltipTrigger>
-                                              <div className="flex flex-col items-center gap-1">
-                                                  <Award className={cn("size-6", joRuMimoMClass)} />
-                                                  <span className="text-xs font-bold">{user?.joRuMimoM || 0}</span>
-                                              </div>
-                                          </TooltipTrigger>
-                                          <TooltipContent><p>{user?.joRuMimoM || 0}x JoRuMiMoM</p></TooltipContent>
-                                      </Tooltip>
-                                  </TooltipProvider>
-                              </div>
-                          </div>
-                           <div>
-                              <p className="text-xs font-semibold text-muted-foreground text-center mb-2 uppercase">Special Trophies</p>
-                              <div className="flex justify-around">
-                                  <TooltipProvider>
-                                      <Tooltip>
-                                          <TooltipTrigger>
-                                              <div className="flex flex-col items-center gap-1">
-                                                  <Star className={cn("size-7", xmasNo1Class)} />
-                                                  <span className="text-xs font-bold">{user?.xmasNo1 || 0}</span>
-                                              </div>
-                                          </TooltipTrigger>
-                                          <TooltipContent><p>{user?.xmasNo1 || 0}x Xmas No. 1</p></TooltipContent>
-                                      </Tooltip>
-                                  </TooltipProvider>
-                              </div>
+                          <div className="flex justify-around items-end">
+                              <TooltipProvider>
+                                  <Tooltip><TooltipTrigger><div className="flex flex-col items-center gap-1 w-12"><span className="text-xs font-semibold">2nd</span><Medal className={cn("size-7", (user?.second ?? 0) > 0 ? "text-slate-400" : "text-gray-300")} /><span className="text-sm font-bold">{user?.second || 0}</span></div></TooltipTrigger><TooltipContent><p>Runner Up</p></TooltipContent></Tooltip>
+                                  <Tooltip><TooltipTrigger><div className="flex flex-col items-center gap-1 w-12"><span className="text-sm font-bold">1st</span><Trophy className={cn("size-8", (user?.first ?? 0) > 0 ? "text-yellow-500" : "text-gray-300")} /><span className="text-base font-bold">{user?.first || 0}</span></div></TooltipTrigger><TooltipContent><p>Champion</p></TooltipContent></Tooltip>
+                                  <Tooltip><TooltipTrigger><div className="flex flex-col items-center gap-1 w-12"><span className="text-xs font-semibold">3rd</span><Medal className={cn("size-6", (user?.third ?? 0) > 0 ? "text-amber-700" : "text-gray-300")} /><span className="text-sm font-bold">{user?.third || 0}</span></div></TooltipTrigger><TooltipContent><p>3rd Place</p></TooltipContent></Tooltip>
+                                  <Tooltip><TooltipTrigger><div className="flex flex-col items-center gap-1 w-12"><span className="text-xs font-semibold">Top 10</span><Star className="size-6 text-yellow-400" /><span className="text-sm font-bold">{topTenCount}</span></div></TooltipTrigger><TooltipContent><p>Top 10 Finishes</p></TooltipContent></Tooltip>
+                              </TooltipProvider>
                           </div>
                       </div>
                   </div>
@@ -549,112 +334,25 @@ export default function ProfilePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card>
-          <CardHeader>
-            <CardTitle>Profile Information</CardTitle>
-            <CardDescription>
-              Update your personal details here. 
-            </CardDescription>
-          </CardHeader>
+          <CardHeader><CardTitle>Profile Information</CardTitle></CardHeader>
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                   <div className="space-y-2">
                       <Label>Avatar</Label>
                       <div className="flex items-center gap-4">
-                            <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                              <Upload className="mr-2 h-4 w-4" />
-                              Upload Image
-                          </Button>
-                            <Input
-                              type="file"
-                              ref={fileInputRef}
-                              className="hidden"
-                              accept="image/*"
-                              onChange={handleAvatarUpload}
-                          />
+                            <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}><Upload className="mr-2 h-4 w-4" />Upload Image</Button>
+                            <Input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload} />
                       </div>
                   </div>
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Your name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="nickname"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nickname</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Your nickname" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="initials"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Initials</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Your initials" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="phoneNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone Number</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Your phone number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                <FormField
-                  control={form.control}
-                  name="favouriteTeam"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Favourite Premier League Team</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select your favourite team" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="none">None</SelectItem>
-                          {teams && teams.map((team) => (
-                            <SelectItem key={team.id} value={team.id}>
-                              {team.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Update Profile
-                </Button>
+                <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="nickname" render={({ field }) => (<FormItem><FormLabel>Nickname</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="initials" render={({ field }) => (<FormItem><FormLabel>Initials</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="phoneNumber" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="favouriteTeam" render={({ field }) => (
+                    <FormItem><FormLabel>Favourite Team</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="none">None</SelectItem>{teams?.map((team) => (<SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>
+                )} />
+                <Button type="submit" disabled={form.formState.isSubmitting}>{form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Update Profile</Button>
               </form>
             </Form>
           </CardContent>
@@ -662,107 +360,26 @@ export default function ProfilePage() {
 
         <div className="space-y-8">
           <Card>
-            <CardHeader>
-              <CardTitle>Security: Login Email</CardTitle>
-              <CardDescription>Update the email address you use to sign in.</CardDescription>
-            </CardHeader>
+            <CardHeader><CardTitle>Security: Login Email</CardTitle></CardHeader>
             <CardContent>
               <Form {...emailForm}>
                 <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-4">
-                  <FormField
-                    control={emailForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>New Login Email</FormLabel>
-                        <FormControl>
-                          <Input placeholder="new.email@example.com" {...field} />
-                        </FormControl>
-                        <FormDescription>Changing this will update your login credentials and notification address.</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" disabled={emailForm.formState.isSubmitting}>
-                    {emailForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
-                    Update Login Email
-                  </Button>
+                  <FormField control={emailForm.control} name="email" render={({ field }) => (<FormItem><FormLabel>New Login Email</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                  <Button type="submit" disabled={emailForm.formState.isSubmitting}>{emailForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />} Update Email</Button>
                 </form>
               </Form>
             </CardContent>
           </Card>
-
            <Card>
-            <CardHeader>
-              <CardTitle>Security: Password</CardTitle>
-              <CardDescription>
-                Update your password here. It's recommended to change your password after your first login.
-              </CardDescription>
-            </CardHeader>
+            <CardHeader><CardTitle>Security: Password</CardTitle></CardHeader>
             <CardContent>
               <Form {...passwordForm}>
                 <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
-                  <FormField
-                    control={passwordForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>New Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="New password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={passwordForm.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Confirm New Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="Confirm new password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" disabled={passwordForm.formState.isSubmitting}>
-                    {passwordForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Update Password
-                  </Button>
+                  <FormField control={passwordForm.control} name="password" render={({ field }) => (<FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={passwordForm.control} name="confirmPassword" render={({ field }) => (<FormItem><FormLabel>Confirm Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                  <Button type="submit" disabled={passwordForm.formState.isSubmitting}>{passwordForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Update Password</Button>
                 </form>
               </Form>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Notifications</CardTitle>
-              <CardDescription>Choose which emails you want to receive.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between rounded-lg border p-4">
-                <div>
-                  <Label htmlFor="weekly-progress" className="text-base font-medium">Weekly Progress Emails</Label>
-                  <p className="text-sm text-muted-foreground">Receive a summary of your performance and rank every week.</p>
-                </div>
-                <Switch id="weekly-progress" defaultChecked />
-              </div>
-              <div className="flex items-center justify-between rounded-lg border p-4">
-                <div>
-                  <Label htmlFor="new-events" className="text-base font-medium">New Event Alerts</Label>
-                  <p className="text-sm text-muted-foreground">Get notified when new games are available for prediction.</p>
-                </div>
-                <Switch id="new-events" defaultChecked />
-              </div>
-              <div className="flex items-center justify-between rounded-lg border p-4">
-                <div>
-                  <Label htmlFor="prediction-reminders" className="text-base font-medium">Prediction Reminders</Label>
-                  <p className="text-sm text-muted-foreground">Get a reminder before the prediction deadline for a game.</p>
-                </div>
-                <Switch id="prediction-reminders" />
-              </div>
             </CardContent>
           </Card>
         </div>

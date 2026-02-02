@@ -35,16 +35,16 @@ const pageInfoMap: { [key: string]: { title: string; description: string | ((sea
           ? 'The season has started. Your predictions are locked in.'
           : 'Drag and drop the teams to create your PremPred entry; then sit back and pray for glory'
   },
-  '/most-improved': { title: 'MiMoM', description: 'Celebrating the meek, rarely-vaunted, mid-season heroes of the PremPred - with cash!' },
-  '/standings': { title: 'Premier League', description: 'Official league standings, results, and form guide for the 2025-26 season.' },
-  '/stats': { title: 'PredStats', description: "A detailed breakdown of each player's prediction scores for every team." },
+  '/most-improved': { title: 'MiMoM', description: 'Celebrating the mid-season heroes of the PremPred.' },
+  '/standings': { title: 'Premier League', description: 'Official league standings and form guide.' },
+  '/stats': { title: 'PredStats', description: "A detailed breakdown of each player's prediction scores." },
   '/consensus': { title: 'PredConsensus', description: 'See how the community predicts the final league standings.' },
-  '/performance': { title: 'PredScore Graph', description: 'Track player score progression over the season.' },
-  '/rankings': { title: 'PredPosition Graph', description: 'Track player rank progression over the season.' },
+  '/performance': { title: 'PredScore Graph', description: 'Track player score progression.' },
+  '/rankings': { title: 'PredPosition Graph', description: 'Track player rank progression.' },
   '/profile': { title: 'PredProfile', description: 'Pred Performance and Personal Particulars' },
-  '/scoring': { title: 'PredRules', description: 'Understand how scores are calculated and other important rules.' },
+  '/scoring': { title: 'PredRules', description: 'Understand how scores are calculated.' },
   '/legends': { title: 'PredLegends', description: 'A hall of fame for past champions.'},
-  '/admin': { title: 'Data Administration', description: "Manage your application's data sources and imports." },
+  '/admin': { title: 'Data Administration', description: "Manage application data sources." },
 };
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
@@ -99,68 +99,26 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   }
   
   const handleRecalculate = async () => {
-    if (!firestore) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Firestore is not available.' });
-      return;
-    }
+    if (!firestore) return;
     setIsRecalculating(true);
-    toast({ title: 'Kicking off master recalculation...', description: 'This may take a minute. The page will refresh upon completion.' });
     try {
       await recalculateAllDataClientSide(firestore, (message: string) => {
         toast({ title: 'Recalculation Progress', description: message });
       });
-      toast({ title: 'Recalculation Complete!', description: 'All data has been updated. Refreshing page...' });
+      toast({ title: 'Recalculation Complete!' });
       window.location.reload();
     } catch (error: any) {
-      console.error('Recalculation failed:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Recalculation Failed',
-        description: error.message || 'An unexpected error occurred.',
-      });
+      toast({ variant: 'destructive', title: 'Recalculation Failed', description: error.message });
     } finally {
       setIsRecalculating(false);
     }
   };
 
 
-  if (!isConfigured) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-background p-4">
-        <Card className="max-w-lg text-center">
-            <CardHeader>
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
-                    <AlertTriangle className="h-6 w-6 text-destructive" />
-                </div>
-                <CardTitle className="mt-4">Firebase Not Configured</CardTitle>
-                <CardDescription>
-                    The application cannot connect to Firebase because a valid API key has not been provided.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <p className="mb-4">
-                    To fix this, please open the following file in your editor:
-                </p>
-                <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold text-foreground">
-                    src/firebase/config.ts
-                </code>
-                <p className="mt-4">
-                    Replace the placeholder <code className="font-mono text-xs">AIzaSyB-...</code> with your actual Firebase web app API key.
-                </p>
-            </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  if (!isConfigured) return <div className="flex h-screen w-screen items-center justify-center p-4">Firebase not configured.</div>;
 
-  // While checking auth, show a global loading screen.
   if (isUserLoading || (user && isProfileLoading)) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <p className="ml-2">Connecting to services...</p>
-      </div>
-    );
+    return <div className="flex h-screen w-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /><p className="ml-2">Connecting...</p></div>;
   }
   
   return (
@@ -171,8 +129,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </Sidebar>
       )}
       <SidebarInset className="flex flex-col">
-        <header className={cn("flex h-auto min-h-14 items-center gap-4 border-b bg-card px-6 py-3", { "hidden": isMobile || mustChangePassword })}>
-          {!mustChangePassword && <SidebarTrigger />}
+        <header className={cn("flex h-auto min-h-14 items-center gap-4 border-b bg-card px-6 py-3", { "hidden": mustChangePassword })}>
+          {!mustChangePassword && <SidebarTrigger className={cn({ "hidden": isMobile })} />}
           <div>
             <h1 className="text-lg font-semibold">{title}</h1>
             {description && <p className="text-sm text-muted-foreground">{description}</p>}
@@ -181,22 +139,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             {isAdmin && !mustChangePassword && (
               <AlertDialog>
                   <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm" disabled={isRecalculating}>
-                          {isRecalculating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                          Recalculate Data
-                      </Button>
+                      <Button variant="outline" size="sm" disabled={isRecalculating}>{isRecalculating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}Recalculate</Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
-                      <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                          This will run the full data recalculation process. This can take up to a minute.
-                      </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleRecalculate}>Yes, Recalculate</AlertDialogAction>
-                      </AlertDialogFooter>
+                      <AlertDialogHeader><AlertDialogTitle>Run master recalculation?</AlertDialogTitle></AlertDialogHeader>
+                      <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleRecalculate}>Recalculate</AlertDialogAction></AlertDialogFooter>
                   </AlertDialogContent>
               </AlertDialog>
             )}
