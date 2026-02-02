@@ -62,18 +62,19 @@ export default function ForumPage() {
     };
   }, [users]);
   
-  const scrollToBottom = () => {
+  const scrollToBottom = React.useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, []);
 
   React.useEffect(() => {
-    if (messages) {
+    if (messages && messages.length > 0) {
         scrollToBottom();
     }
-  }, [messages]);
+  }, [messages, scrollToBottom]);
 
 
-  const renderMessageText = (text: string) => {
+  const renderMessageText = (text: string | null | undefined) => {
+    if (!text) return '';
     if (!users || users.length === 0) {
       return text;
     }
@@ -82,7 +83,7 @@ export default function ForumPage() {
     const parts = text.split(/(@\w+(?:\s\w+)*)/g);
   
     return parts.map((part, index) => {
-      if (part.startsWith('@')) {
+      if (part && part.startsWith('@')) {
         const potentialName = part.substring(1);
         const mentionedUser = userMap.byName.get(potentialName);
         if (mentionedUser) {
@@ -116,7 +117,7 @@ export default function ForumPage() {
     const mentionedUsers = new Set<string>();
     if (users) {
       users.forEach(u => {
-        if (data.text.includes(`@${u.name}`)) {
+        if (u.name && data.text.includes(`@${u.name}`)) {
           mentionedUsers.add(u.id);
         }
       });
@@ -124,8 +125,8 @@ export default function ForumPage() {
 
     const newMessage: Omit<Message, 'id'> = {
       userId: resolvedUserId,
-      userName: userProfile.name,
-      userAvatar: userProfile.avatar,
+      userName: userProfile.name || 'Anonymous',
+      userAvatar: userProfile.avatar || '',
       text: cleanedText,
       createdAt: serverTimestamp(),
       mentions: Array.from(mentionedUsers),
@@ -157,23 +158,24 @@ export default function ForumPage() {
                 ) : (
                     <div className="space-y-6">
                         {messages?.map((message) => {
+                            if (!message) return null;
                             const sender = userMap.byId.get(message.userId);
                             return (
                                 <div key={message.id} className="flex items-start gap-4">
                                     <Avatar>
-                                        <AvatarImage src={getAvatarUrl(sender?.avatar)} data-ai-hint="person" />
-                                        <AvatarFallback>{sender?.name?.charAt(0) || '?'}</AvatarFallback>
+                                        <AvatarImage src={getAvatarUrl(sender?.avatar || message.userAvatar)} data-ai-hint="person" />
+                                        <AvatarFallback>{(sender?.name || message.userName || '?').charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex-1">
                                         <div className="flex items-baseline gap-2">
-                                            <p className="font-semibold">{sender?.name || 'Unknown User'}</p>
+                                            <p className="font-semibold">{sender?.name || message.userName || 'Unknown User'}</p>
                                             <p className="text-xs text-muted-foreground">
                                                 {message.createdAt?.toDate 
                                                     ? formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true }) 
                                                     : 'Just now'}
                                             </p>
                                         </div>
-                                        <p className="text-sm whitespace-pre-wrap">{renderMessageText(message.text)}</p>
+                                        <div className="text-sm whitespace-pre-wrap">{renderMessageText(message.text)}</div>
                                     </div>
                                 </div>
                             )
