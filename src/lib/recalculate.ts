@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -36,8 +35,12 @@ export async function recalculateAllDataClientSide(
       const allUsers = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
       const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
       
-      // Filter for active users who have made a prediction this season
-      const activeUserIds = new Set(predictions.map(p => p.userId));
+      // Filter for active users who have made a complete prediction this season (20 teams)
+      const activeUserIds = new Set(
+        predictions
+          .filter(p => p.rankings && p.rankings.length === 20)
+          .map(p => p.userId)
+      );
       const users = allUsers.filter(u => activeUserIds.has(u.id));
 
       const prevStandings: PreviousSeasonStanding[] = prevStandingsData.map(d => ({...d, teamId: d.teamId || ''}));
@@ -46,9 +49,10 @@ export async function recalculateAllDataClientSide(
       // --- 2. Calculate definitive Week 0 user scores from DEFINITIVE previous season standings ---
       progressCallback('Calculating definitive Week 0 scores...');
       const userScoresForWeek0: { [userId: string]: number } = {};
-      predictions.forEach(prediction => {
-          if (!prediction.rankings) {
-              userScoresForWeek0[prediction.userId] = 0;
+      users.forEach(user => {
+          const prediction = predictions.find(p => p.userId === user.id);
+          if (!prediction || !prediction.rankings) {
+              userScoresForWeek0[user.id] = 0;
               return;
           }
           let totalScore = 0;
@@ -61,7 +65,7 @@ export async function recalculateAllDataClientSide(
                   totalScore += score;
               }
           });
-          userScoresForWeek0[prediction.userId] = totalScore;
+          userScoresForWeek0[user.id] = totalScore;
       });
   
       const rankedUsersForWeek0 = users
@@ -121,7 +125,7 @@ export async function recalculateAllDataClientSide(
           }
       };
       
-      // --- 4. Populate Season Months for the Hall of Fame page ---
+      // --- 4. Populate Season Months ---
       progressCallback('Setting up season months...');
       allAwardPeriods.forEach(period => {
           const docRef = doc(firestore, 'seasonMonths', period.id);
@@ -134,7 +138,7 @@ export async function recalculateAllDataClientSide(
           }));
       });
 
-      // --- 5. Write Week 0 Team Standings from definitive source ---
+      // --- 5. Write Week 0 Team Standings ---
       progressCallback('Writing definitive Week 0 team standings...');
       prevStandings.forEach(standing => {
         if (!standing.teamId) return;
@@ -146,14 +150,13 @@ export async function recalculateAllDataClientSide(
         }));
       });
   
-      // --- 6. Build history week by week from played matches ---
+      // --- 6. Build history week by week ---
       const playedMatches = allMatches.filter(m => m.homeScore > -1 && m.awayScore > -1);
       const playedWeeks = [...new Set(playedMatches.map(m => m.week))].sort((a, b) => a - b);
   
       for (const week of playedWeeks) {
           progressCallback(`Processing Week ${week}...`);
   
-        // A. Calculate team standings up to the current week
         const matchesUpToWeek = allMatches.filter(m => m.week <= week && m.homeScore > -1 && m.awayScore > -1);
         const weeklyTeamStats: { [teamId: string]: Omit<CurrentStanding, 'teamId' | 'rank' > } = {};
         teams.forEach(team => {
@@ -169,7 +172,7 @@ export async function recalculateAllDataClientSide(
             homeStats.goalsFor += match.homeScore;
             awayStats.goalsFor += match.awayScore;
             homeStats.goalsAgainst += match.awayScore;
-            awayStats.goalsAgainst += match.homeScore;
+            homeStats.goalsAgainst += match.homeScore;
             
             if (match.homeScore > match.awayScore) { homeStats.points += 3; homeStats.wins++; awayStats.losses++; }
             else if (match.homeScore < match.awayScore) { awayStats.points += 3; awayStats.wins++; homeStats.losses++; }
@@ -204,10 +207,10 @@ export async function recalculateAllDataClientSide(
           }));
         });
 
-        // B. Calculate user scores for the week
         const userScoresForWeek: { [userId: string]: number } = {};
-        predictions.forEach(prediction => {
-          if (!prediction.rankings) return;
+        users.forEach(user => {
+          const prediction = predictions.find(p => p.userId === user.id);
+          if (!prediction || !prediction.rankings) return;
           let totalScore = 0;
           prediction.rankings.forEach((teamId, index) => {
             const predictedRank = index + 1;
@@ -215,16 +218,15 @@ export async function recalculateAllDataClientSide(
             if (actualRank !== undefined && actualRank > 0) {
               const score = 5 - Math.abs(predictedRank - actualRank);
               totalScore += score;
-              if (week === playedWeeks[playedWeeks.length -1]) { // Only write final player scores
-                const docRef = doc(firestore, 'playerTeamScores', `${prediction.userId}_${teamId}`);
-                addOperation(b => b.set(docRef, { userId: prediction.userId, teamId, score }));
+              if (week === playedWeeks[playedWeeks.length -1]) {
+                const docRef = doc(firestore, 'playerTeamScores', `${user.id}_${teamId}`);
+                addOperation(b => b.set(docRef, { userId: user.id, teamId, score }));
               }
             }
           });
-          userScoresForWeek[prediction.userId] = totalScore;
+          userScoresForWeek[user.id] = totalScore;
         });
   
-        // C. Rank users for the week, handling ties correctly.
         const rankedUsersForWeek = users
             .map(user => ({ ...user, scoreForWeek: userScoresForWeek[user.id] ?? 0 }))
             .sort((a, b) => b.scoreForWeek - a.scoreForWeek || (a.name || '').localeCompare(b.name || ''));
@@ -240,7 +242,7 @@ export async function recalculateAllDataClientSide(
         });
       }
   
-      // --- 7. Process final user states and write histories ---
+      // --- 7. Finalize profiles ---
       progressCallback('Finalizing user profiles...');
       for (const user of users) {
         const userHistory = allUserHistories[user.id];
@@ -263,8 +265,8 @@ export async function recalculateAllDataClientSide(
             rankChange: (previousWeekData?.rank ?? 0) > 0 ? (previousWeekData!.rank - latestWeekData.rank) : 0,
             maxScore: allScores.length > 0 ? Math.max(...allScores) : 0,
             minScore: allScores.length > 0 ? Math.min(...allScores) : 0,
-            minRank: allRanks.length > 0 ? Math.min(...allRanks) : 0, // Best rank
-            maxRank: allRanks.length > 0 ? Math.max(...allRanks) : 0,  // Worst rank
+            minRank: allRanks.length > 0 ? Math.min(...allRanks) : 0,
+            maxRank: allRanks.length > 0 ? Math.max(...allRanks) : 0,
         };
         const userDocRef = doc(firestore, 'users', user.id);
         addOperation(b => b.set(userDocRef, finalUserData, { merge: true }));
@@ -273,9 +275,9 @@ export async function recalculateAllDataClientSide(
         addOperation(b => b.set(historyDocRef, userHistory));
       }
 
-      // --- 8. Calculate and store Monthly MimoM awards ---
+      // --- 8. Monthly Awards ---
       progressCallback('Calculating monthly awards...');
-      const nonProUsers = allUsers.filter(u => !u.isPro);
+      const nonProUsers = users.filter(u => !u.isPro);
 
       for (const period of allAwardPeriods) {
         if (playedWeeks.includes(period.endWeek)) {
@@ -336,9 +338,10 @@ export async function recalculateAllDataClientSide(
         }
       }
 
-      // --- 9. Generate final league standings and recent results ---
+      // --- 9. League Standings ---
       progressCallback('Generating final standings...');
-      const finalMatches = allMatches.filter(m => m.week <= (playedWeeks[playedWeeks.length -1] || 0) && m.homeScore > -1 && m.awayScore > -1);
+      const lastPlayedWeek = playedWeeks[playedWeeks.length - 1] || 0;
+      const finalMatches = allMatches.filter(m => m.week <= lastPlayedWeek && m.homeScore > -1 && m.awayScore > -1);
       const finalTeamStats: { [teamId: string]: Omit<CurrentStanding, 'teamId' | 'rank'> } = {};
       teams.forEach(team => {
           finalTeamStats[team.id] = { points: 0, gamesPlayed: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0 };
@@ -385,7 +388,6 @@ export async function recalculateAllDataClientSide(
         addOperation(b => b.set(recentResultDocRef, { teamId: team.id, results: results.reverse() }));
       });
 
-      // --- 10. Commit all changes ---
       progressCallback(`Committing ${mainBatches.length} batch(es) of updates...`);
       await Promise.all(mainBatches.map(b => b.commit()));
       progressCallback('Full data recalculation completed successfully.');

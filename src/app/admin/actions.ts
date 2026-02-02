@@ -6,8 +6,6 @@ import historicalPlayersData from '@/lib/historical-players.json';
 
 /**
  * Initializes the Firebase Admin SDK if it hasn't been already.
- * In Firebase App Hosting, this will automatically use the environment's 
- * default service account credentials.
  */
 function getAdminAuth() {
   let app;
@@ -25,9 +23,7 @@ function getAdminAuth() {
 }
 
 /**
- * Iterates through all players in historical-players.json and ensuring
- * they have a Firebase Authentication account with the password "Password".
- * It will create new accounts for missing users and reset passwords for existing ones.
+ * Aggressively sets every player's password to "Password".
  */
 export async function bulkCreateAuthUsers() {
   let auth;
@@ -52,8 +48,8 @@ export async function bulkCreateAuthUsers() {
     }
 
     try {
-      // 1. Try to find/update user by UID first (canonical approach)
       try {
+        // Force update existing user
         await auth.updateUser(uid, {
           email: email,
           password: password,
@@ -62,10 +58,9 @@ export async function bulkCreateAuthUsers() {
         updatedCount++;
       } catch (uidError: any) {
         if (uidError.code === 'auth/user-not-found') {
-          // 2. UID not found, check if the email is already in use by a DIFFERENT UID
           try {
             const userByEmail = await auth.getUserByEmail(email);
-            // Email exists but with a different UID. Update that user's password.
+            // Email exists with different UID, reset that user's password
             await auth.updateUser(userByEmail.uid, {
               password: password,
               displayName: player.name,
@@ -73,7 +68,7 @@ export async function bulkCreateAuthUsers() {
             updatedCount++;
           } catch (emailError: any) {
             if (emailError.code === 'auth/user-not-found') {
-              // 3. Neither UID nor email exists, create a fresh account
+              // Create new account
               await auth.createUser({
                 uid: uid,
                 email: email,

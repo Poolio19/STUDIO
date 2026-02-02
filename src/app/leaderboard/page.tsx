@@ -73,8 +73,12 @@ export default function LeaderboardPage() {
 
   const sortedUsers = useMemo(() => {
     if (!usersData || !predictionsData) return [];
-    // Only show players who have a prediction for the current season
-    const activeUserIds = new Set(predictionsData.map(p => p.userId || p.id));
+    // Only show players who have a valid prediction for the current season (20 teams ranked)
+    const activeUserIds = new Set(
+      predictionsData
+        .filter(p => p.rankings && p.rankings.length === 20)
+        .map(p => p.userId || p.id)
+    );
     return [...usersData]
         .filter(u => u.name && activeUserIds.has(u.id))
         .sort((a, b) => a.rank - b.rank);
@@ -84,7 +88,7 @@ export default function LeaderboardPage() {
   const regularPlayers = useMemo(() => sortedUsers.filter(u => !u.isPro), [sortedUsers]);
 
   const bestProRank = useMemo(() => {
-    if (proPlayers.length === 0) return Infinity; // No pros, so no one can beat them.
+    if (proPlayers.length === 0) return Infinity;
     return Math.min(...proPlayers.map(p => p.rank));
   }, [proPlayers]);
 
@@ -165,7 +169,6 @@ export default function LeaderboardPage() {
       }
     });
     
-    // Update global map
     calculatedTotalWinnings.forEach((value, key) => {
         totalWinningsMap.set(key, value);
     });
@@ -174,34 +177,32 @@ export default function LeaderboardPage() {
   }, [regularPlayers, proPlayers, usersData, monthlyMimoM]);
 
     const getRankColour = (user: User) => {
-    // Pro players have a distinct style and are not part of the main prize ranking
     if (user.isPro) {
         return 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200/80 dark:hover:bg-gray-700/80';
     }
 
-    // Rank-based colors take precedence for non-pro players
     switch (user.rank) {
-        case 1: return 'bg-red-800 text-yellow-300 hover:bg-red-800/90 dark:bg-red-900 dark:text-yellow-300 dark:hover:bg-red-900/90'; // Crimson with yellow font
-        case 2: return 'bg-red-600 text-white hover:bg-red-600/90 dark:bg-red-700 dark:hover:bg-red-700/90'; // Red
-        case 3: return 'bg-orange-700 text-white hover:bg-orange-700/90 dark:bg-orange-800 dark:hover:bg-orange-800/90'; // Dark Orange
-        case 4: return 'bg-orange-500 text-white hover:bg-orange-500/90 dark:bg-orange-600 dark:hover:bg-orange-600/90'; // Mid Orange
-        case 5: return 'bg-orange-300 text-orange-900 hover:bg-orange-300/90 dark:bg-orange-500/50 dark:text-white'; // Light orange / peach
-        case 6: return 'bg-yellow-200 text-yellow-900 hover:bg-yellow-200/90 dark:bg-yellow-800/30 dark:text-yellow-200'; // Pale Yellow
-        case 7: return 'bg-green-200 text-green-900 hover:bg-green-200/90 dark:bg-green-800/30 dark:text-green-200'; // Pale Green
-        case 8: return 'bg-cyan-200 text-cyan-900 hover:bg-cyan-200/90 dark:bg-cyan-800/30 dark:text-cyan-200'; // Pale Cyan
-        case 9: return 'bg-cyan-400 text-cyan-900 hover:bg-cyan-400/90 dark:bg-cyan-500/50 dark:text-white'; // Cyan
-        case 10: return 'bg-teal-400 text-teal-900 hover:bg-teal-400/90 dark:bg-teal-600/50 dark:text-white'; // Deep cyan/teal
+        case 1: return 'bg-red-800 text-yellow-300 hover:bg-red-800/90 dark:bg-red-900 dark:text-yellow-300 dark:hover:bg-red-900/90';
+        case 2: return 'bg-red-600 text-white hover:bg-red-600/90 dark:bg-red-700 dark:hover:bg-red-700/90';
+        case 3: return 'bg-orange-700 text-white hover:bg-orange-700/90 dark:bg-orange-800 dark:hover:bg-orange-800/90';
+        case 4: return 'bg-orange-500 text-white hover:bg-orange-500/90 dark:bg-orange-600 dark:hover:bg-orange-600/90';
+        case 5: return 'bg-orange-300 text-orange-900 hover:bg-orange-300/90 dark:bg-orange-500/50 dark:text-white';
+        case 6: return 'bg-yellow-200 text-yellow-900 hover:bg-yellow-200/90 dark:bg-yellow-800/30 dark:text-yellow-200';
+        case 7: return 'bg-green-200 text-green-900 hover:bg-green-200/90 dark:bg-green-800/30 dark:text-green-200';
+        case 8: return 'bg-cyan-200 text-cyan-900 hover:bg-cyan-200/90 dark:bg-cyan-800/30 dark:text-cyan-200';
+        case 9: return 'bg-cyan-400 text-cyan-900 hover:bg-cyan-400/90 dark:bg-cyan-500/50 dark:text-white';
+        case 10: return 'bg-teal-400 text-teal-900 hover:bg-teal-400/90 dark:bg-teal-600/50 dark:text-white';
         default:
             break;
     }
 
     if (user.rank <= bestProRank) {
-        return 'bg-blue-300 text-blue-900 hover:bg-blue-300/90 dark:bg-blue-800/40 dark:text-blue-200'; // Light Blue
+        return 'bg-blue-300 text-blue-900 hover:bg-blue-300/90 dark:bg-blue-800/40 dark:text-blue-200';
     }
     
     const totalWinnings = localTotalWinningsMap.get(user.id) || 0;
     if (totalWinnings > 0) {
-        return 'bg-blue-100 text-blue-900 hover:bg-blue-100/90 dark:bg-blue-900/30 dark:text-blue-300'; // Very Pale Blue
+        return 'bg-blue-100 text-blue-900 hover:bg-blue-100/90 dark:bg-blue-900/30 dark:text-blue-300';
     }
 
     return '';

@@ -39,8 +39,12 @@ export default function StatsPage() {
   
   const sortedUsers = useMemo(() => {
     if (!users || !predictions) return [];
-    // Only show players who have a prediction for the current season
-    const activeUserIds = new Set(predictions.map(p => p.userId || p.id));
+    // Only show players who have a valid prediction for the current season (20 teams ranked)
+    const activeUserIds = new Set(
+      predictions
+        .filter(p => p.rankings && p.rankings.length === 20)
+        .map(p => p.userId || p.id)
+    );
     return [...users]
       .filter(u => u.name && activeUserIds.has(u.id))
       .sort((a, b) => a.rank - b.rank);
