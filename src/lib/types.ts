@@ -1,5 +1,4 @@
 
-
 export type User = {
   id: string;
   name: string;
@@ -39,6 +38,7 @@ export type User = {
   xmasNo1?: number;
   cashWinnings?: number;
   phoneNumber?: string;
+  mustChangePassword?: boolean;
 };
 
 export type Team = {
@@ -184,8 +184,3 @@ export type Message = {
     createdAt: any; // Firestore Timestamp
     mentions?: string[];
 };
-    
-
-    
-
-    

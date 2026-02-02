@@ -105,6 +105,7 @@ export function AuthForm() {
       joRuMimoM: historicalData.joRuMimoM || 0,
       xmasNo1: historicalData.xmasNo1 || 0,
       cashWinnings: historicalData.cashWinnings || 0,
+      mustChangePassword: true,
     };
     // Use the correct document reference with the canonical ID.
     setDocumentNonBlocking(userDocRef, profileData);

@@ -1,12 +1,11 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Upload, Trophy, Award, ShieldCheck, Loader2, Users, Medal, DollarSign, Star } from 'lucide-react';
+import { Calendar as CalendarIcon, Upload, Trophy, Award, ShieldCheck, Loader2, Users, Medal, DollarSign, Star, ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -59,6 +58,7 @@ import { collection, doc, query, where, getDocs } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { AuthForm } from '@/components/auth/auth-form';
 import { updatePassword } from 'firebase/auth';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 
 const profileFormSchema = z.object({
@@ -201,17 +201,19 @@ export default function ProfilePage() {
   }
 
   async function onPasswordSubmit(data: PasswordFormValues) {
-    if (!authUser) {
+    if (!authUser || !userDocRef) {
       toast({ variant: 'destructive', title: 'Not Authenticated', description: 'You must be logged in to change your password.' });
       return;
     }
 
     try {
       await updatePassword(authUser, data.password);
-      toast({ title: 'Password Updated Successfully!', description: 'Please log in again with your new password.' });
+      
+      // Update the Firestore flag so the user is no longer prompted
+      setDocumentNonBlocking(userDocRef, { mustChangePassword: false }, { merge: true });
+
+      toast({ title: 'Password Updated Successfully!', description: 'Your security settings have been updated.' });
       passwordForm.reset();
-      // Optional: Sign the user out automatically
-      // auth.signOut(); 
     } catch (error: any) {
       console.error("Password update error:", error);
       let description = "An unexpected error occurred. Please try again.";
@@ -311,6 +313,8 @@ export default function ProfilePage() {
     );
   }
 
+  const topTenCount = (user?.first || 0) + (user?.second || 0) + (user?.third || 0) + (user?.fourth || 0) + (user?.fifth || 0) + (user?.sixth || 0) + (user?.seventh || 0) + (user?.eighth || 0) + (user?.ninth || 0) + (user?.tenth || 0);
+
   const firstPlaceClass = (user?.first ?? 0) > 0 ? "text-yellow-500" : "text-gray-300 dark:text-gray-600";
   const secondPlaceClass = (user?.second ?? 0) > 0 ? "text-slate-400" : "text-gray-300 dark:text-gray-600";
   const thirdPlaceClass = (user?.third ?? 0) > 0 ? "text-amber-700" : "text-gray-300 dark:text-gray-600";
@@ -322,6 +326,16 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-8">
+      {user?.mustChangePassword && (
+        <Alert variant="destructive">
+          <ShieldAlert className="h-4 w-4" />
+          <AlertTitle>Password Change Required</AlertTitle>
+          <AlertDescription>
+            You are using a temporary password. Please update your password in the Security section below.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Card>
           <CardContent className="pt-6 flex flex-col lg:flex-row items-center lg:items-start gap-6">
               <div className="flex flex-col items-center text-center lg:items-start lg:text-left gap-4">
@@ -401,6 +415,16 @@ export default function ProfilePage() {
                                           </TooltipTrigger>
                                           <TooltipContent><p>{user?.third || 0}x 3rd Place</p></TooltipContent>
                                       </Tooltip>
+                                      <Tooltip>
+                                          <TooltipTrigger>
+                                              <div className="flex flex-col items-center gap-1 w-12">
+                                                  <span className="text-xs font-semibold">Top 10</span>
+                                                  <Star className={cn("size-6 text-yellow-400")} />
+                                                  <span className="text-sm font-bold">{topTenCount}</span>
+                                              </div>
+                                          </TooltipTrigger>
+                                          <TooltipContent><p>{topTenCount}x Top 10 Finishes</p></TooltipContent>
+                                      </Tooltip>
                                   </TooltipProvider>
                               </div>
                           </div>
@@ -442,7 +466,7 @@ export default function ProfilePage() {
                                                   <span className="text-xs font-bold">{user?.joRuMimoM || 0}</span>
                                               </div>
                                           </TooltipTrigger>
-                                          <TooltipContent><p>{user?.joRuMiMoM || 0}x JoRuMiMoM</p></TooltipContent>
+                                          <TooltipContent><p>{user?.joRuMimoM || 0}x JoRuMiMoM</p></TooltipContent>
                                       </Tooltip>
                                   </TooltipProvider>
                               </div>
