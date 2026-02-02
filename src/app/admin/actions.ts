@@ -3,7 +3,8 @@
 
 import { getAuth } from 'firebase-admin/auth';
 import { initializeApp, getApps, getApp, credential } from 'firebase-admin/app';
-import historicalPlayersData from '@/lib/historical-players.json';
+
+export const maxDuration = 60; // Increase timeout to 60 seconds
 
 /**
  * Initializes the Firebase Admin SDK robustly.
@@ -28,9 +29,9 @@ function getAdminAuth() {
 /**
  * Aggressively sets every player's password to "Password" and verifies account existence.
  * If a UID mismatch is detected, it recreates the account to ensure canonical IDs are used.
- * This ONLY affects the Auth Console login record; historical data is restored in the next step.
+ * Processes a provided chunk of players to prevent server timeouts.
  */
-export async function bulkCreateAuthUsers() {
+export async function bulkCreateAuthUsersChunk(players: any[]) {
   let auth;
   try {
     auth = getAdminAuth();
@@ -42,7 +43,7 @@ export async function bulkCreateAuthUsers() {
   let updatedCount = 0;
   const errors: { email: string; message: string }[] = [];
 
-  for (const player of historicalPlayersData) {
+  for (const player of players) {
     const email = player.email?.trim()?.toLowerCase();
     const uid = player.id?.trim();
     const password = 'Password';

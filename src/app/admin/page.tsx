@@ -11,12 +11,11 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Users, AlertCircle } from 'lucide-react';
+import { Loader2, Users } from 'lucide-react';
 import { useFirestore } from '@/firebase';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
-import { collection, doc, writeBatch, getDocs, query, orderBy } from 'firebase/firestore';
-import { Icons } from '@/components/icons';
+import { collection, doc, writeBatch, getDocs, query } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,7 +28,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-import type { Match, Team, WeekResults, User } from '@/lib/types';
+import type { Match, Team, WeekResults } from '@/lib/types';
 import { recalculateAllDataClientSide } from '@/lib/recalculate';
 
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
@@ -44,10 +43,8 @@ import {
 } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
 
-import pastFixtures from '@/lib/past-fixtures.json';
-import previousSeasonData from '@/lib/previous-season-standings-24-25.json';
 import historicalPlayersData from '@/lib/historical-players.json';
-import { bulkCreateAuthUsers } from './actions';
+import { bulkCreateAuthUsersChunk } from './actions';
 
 const scoreTransformer = (val: 'P' | 'p' | number | string | null | undefined) => {
     if (val === undefined || val === null || val === '') return -1;
@@ -107,8 +104,6 @@ export default function AdminPage() {
   const [isUpdating, setIsUpdating] = React.useState(false);
   const [isWritingFile, setIsWritingFile] = React.useState(false);
   const [isImportingFile, setIsImportingFile] = React.useState(false);
-  const [isImportingFixtures, setIsImportingFixtures] = React.useState(false);
-  const [isImportingStandings, setIsImportingStandings] = React.useState(false);
   const [isUpdatingHistoricalData, setIsUpdatingHistoricalData] = React.useState(false);
   const [isImportingUsers, setIsImportingUsers] = React.useState(false);
   const [initialWeekSet, setInitialWeekSet] = React.useState(false);
@@ -269,79 +264,44 @@ export default function AdminPage() {
     }
   };
 
-  const handleImportPastFixtures = async () => {
-    if (!firestore) return;
-    setIsImportingFixtures(true);
-    try {
-        const matchesCollection = collection(firestore, 'matches');
-        const batch = writeBatch(firestore);
-        const snapshot = await getDocs(matchesCollection);
-        snapshot.docs.forEach(doc => batch.delete(doc.ref));
-        pastFixtures.forEach(fixture => {
-            const { id, ...fixtureData } = fixture;
-            if (!id) return;
-            batch.set(doc(matchesCollection, id), fixtureData);
-        });
-        await batch.commit();
-        toast({ title: 'Success!', description: `Imported ${pastFixtures.length} fixtures.` });
-        await fetchAllMatches();
-    } catch (error: any) {
-        toast({ variant: 'destructive', title: 'Fixture Import Failed', description: error.message });
-    } finally {
-        setIsImportingFixtures(false);
-    }
-  };
-
-  const handleImportPreviousStandings = async () => {
-    if (!firestore) return;
-    setIsImportingStandings(true);
-    try {
-        const standingsCollection = collection(firestore, 'previousSeasonStandings');
-        const teamsCollection = collection(firestore, 'teams');
-        const batch = writeBatch(firestore);
-        const teamsSnap = await getDocs(teamsCollection);
-        const teamNameToIdMap = new Map(teamsSnap.docs.map(doc => [doc.data().name as string, doc.id]));
-        const nameMapping: { [key: string]: string } = { "Man City": "Manchester City", "Notts Forest": "Nottingham Forest", "Man United": "Manchester United" };
-        const snapshot = await getDocs(standingsCollection);
-        snapshot.docs.forEach(doc => batch.delete(doc.ref));
-        previousSeasonData.forEach(standing => {
-            const teamName = nameMapping[standing.name] || standing.name;
-            const teamId = teamNameToIdMap.get(teamName);
-            if (teamId) {
-                batch.set(doc(standingsCollection, teamId), { teamId, rank: standing.rank, points: standing.points, goalDifference: standing.goalDifference });
-            }
-        });
-        await batch.commit();
-        toast({ title: 'Success!', description: `Standings updated.` });
-    } catch (error: any) {
-        toast({ variant: 'destructive', title: 'Standings Import Failed', description: error.message });
-    } finally {
-        setIsImportingStandings(false);
-    }
-  }
-
   const handleImportAuthUsers = async () => {
     if (!firestore) return;
     setIsImportingUsers(true);
-    toast({ title: 'Starting Auth & Firestore Sync...', description: 'Resetting passwords and forcing canonical UIDs.' });
+    toast({ title: 'Starting Auth & Firestore Sync...', description: 'Syncing in chunks to prevent timeouts.' });
+    
     try {
-        // 1. Sync Authentication (this enforces canonical UIDs like usr_009)
-        const result = await bulkCreateAuthUsers();
-        
-        // 2. Restore ALL historical stats to Firestore in chunks.
-        // This ensures the Trophy Cabinet is populated for all players.
-        const chunks = [];
-        const chunkSize = 400;
-        for (let i = 0; i < historicalPlayersData.length; i += chunkSize) {
-            chunks.push(historicalPlayersData.slice(i, i + chunkSize));
+        // 1. Sync Authentication in Chunks (fixes UIDs and resets passwords)
+        const authChunks = [];
+        const authChunkSize = 50;
+        for (let i = 0; i < historicalPlayersData.length; i += authChunkSize) {
+            authChunks.push(historicalPlayersData.slice(i, i + authChunkSize));
         }
 
-        for (const chunk of chunks) {
+        let totalCreated = 0;
+        let totalUpdated = 0;
+        let chunkIndex = 1;
+
+        for (const chunk of authChunks) {
+            toast({ title: `Syncing Auth Chunk ${chunkIndex}/${authChunks.length}` });
+            const result = await bulkCreateAuthUsersChunk(chunk);
+            totalCreated += result.createdCount;
+            totalUpdated += result.updatedCount;
+            chunkIndex++;
+        }
+        
+        // 2. Restore ALL historical stats to Firestore in chunks.
+        const dbChunks = [];
+        const dbChunkSize = 100; // Smaller chunks for Firestore
+        for (let i = 0; i < historicalPlayersData.length; i += dbChunkSize) {
+            dbChunks.push(historicalPlayersData.slice(i, i + dbChunkSize));
+        }
+
+        chunkIndex = 1;
+        for (const chunk of dbChunks) {
+            toast({ title: `Restoring Stats Chunk ${chunkIndex}/${dbChunks.length}` });
             const batch = writeBatch(firestore);
             chunk.forEach(player => {
                 const userRef = doc(firestore, 'users', player.id);
-                // Ensure email used for login is correct, set the mustChangePassword flag,
-                // and push all historical achievements from the backup JSON.
                 const { id, email, ...stats } = player;
                 batch.set(userRef, { 
                     ...stats, 
@@ -350,35 +310,17 @@ export default function AdminPage() {
                 }, { merge: true });
             });
             await batch.commit();
+            chunkIndex++;
         }
 
         toast({
             title: 'Bulk Sync Complete!',
-            description: `Auth: Created ${result.createdCount}, Updated ${result.updatedCount}. Firestore stats restored.`,
-            variant: result.errors.length > 0 ? 'destructive' : 'default',
+            description: `Auth: Created ${totalCreated}, Updated ${totalUpdated}. All statistics restored.`,
         });
     } catch (error: any) {
         toast({ variant: 'destructive', title: 'Bulk Sync Failed', description: error.message });
     } finally {
         setIsImportingUsers(false);
-    }
-  };
-
-  const onHistoricalSubmit = async (data: HistoricalDataFormValues) => {
-    if (!firestore) return;
-    setIsUpdatingHistoricalData(true);
-    try {
-        const batch = writeBatch(firestore);
-        data.users.forEach(user => {
-            const { id, name, ...userData } = user;
-            batch.set(doc(firestore, 'users', user.id), userData, { merge: true });
-        });
-        await batch.commit();
-        toast({ title: 'Success!', description: 'Historical data saved.' });
-    } catch (error: any) {
-        toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
-    } finally {
-        setIsUpdatingHistoricalData(false);
     }
   };
 
@@ -486,7 +428,7 @@ export default function AdminPage() {
                           <Button variant="outline" className="w-full" disabled={isImportingUsers}>{isImportingUsers ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Users className="mr-2 h-4 w-4" />} Bulk Sync & Force Reset</Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
-                          <AlertDialogHeader><AlertDialogTitle>Strict Identity Sync</AlertDialogTitle><AlertDialogDescription>This resets passwords to `Password` and forces accounts to use canonical UIDs (usr_XXX). It will also restore all Trophy Cabinet data for existing players.</AlertDialogDescription></AlertDialogHeader>
+                          <AlertDialogHeader><AlertDialogTitle>Strict Identity Sync</AlertDialogTitle><AlertDialogDescription>This resets passwords to `Password` and forces accounts to use canonical UIDs (usr_XXX). This will be processed in chunks to prevent timeouts.</AlertDialogDescription></AlertDialogHeader>
                           <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction onClick={handleImportAuthUsers}>Sync & Reset Now</AlertDialogAction>

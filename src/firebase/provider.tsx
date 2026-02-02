@@ -127,11 +127,15 @@ export const useUser = (): UserHookResult => {
  * A hook that returns the correct document ID for the current user.
  * In this application, we explicitly set the Firebase Auth UID to match 
  * the canonical historical ID (e.g. usr_009) during account creation.
- * @returns The user's canonical document ID or null if not authenticated.
+ * This is the source of truth for both Auth and Firestore.
  */
 export const useResolvedUserId = (): string | null => {
     const { user } = useUser();
-    return user?.uid || null;
+    if (!user) return null;
+    
+    // We prioritize the Auth UID because it has been synchronized 
+    // to match the canonical usr_XXX ID.
+    return user.uid;
 };
 
 
