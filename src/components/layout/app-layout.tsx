@@ -1,3 +1,4 @@
+
 'use client';
 
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
@@ -170,7 +171,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </Sidebar>
       )}
       <SidebarInset className="flex flex-col">
-        <header className={cn("flex h-auto min-h-14 items-center gap-4 border-b bg-card px-6 py-3", { "hidden": isMobile })}>
+        <header className={cn("flex h-auto min-h-14 items-center gap-4 border-b bg-card px-6 py-3", { "hidden": isMobile || mustChangePassword })}>
           {!mustChangePassword && <SidebarTrigger />}
           <div>
             <h1 className="text-lg font-semibold">{title}</h1>

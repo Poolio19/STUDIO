@@ -1,3 +1,4 @@
+
 'use server';
 
 import { getAuth } from 'firebase-admin/auth';
@@ -39,7 +40,7 @@ export async function bulkCreateAuthUsers() {
   let updatedCount = 0;
   const errors: { email: string; message: string }[] = [];
 
-  // Process in small batches if necessary, but 314 is manageable sequentially if individual ops are fast.
+  // Process users sequentially to avoid overloading the Auth service
   for (const player of historicalPlayersData) {
     const email = player.email?.trim()?.toLowerCase();
     const uid = player.id?.trim();
