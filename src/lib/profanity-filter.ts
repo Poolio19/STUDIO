@@ -7,6 +7,7 @@ const profanityMap: Record<string, string> = {
   fucked: 'forked',
   fucking: 'flipping',
   fucks: 'flaps',
+  fucker: 'funster',
   shit: 'rare cheese',
   shite: 'shergar',
   shits: 'shirts',
@@ -30,24 +31,35 @@ const profanityMap: Record<string, string> = {
   twat: 'twonk',
   shat: 'plopped',
   pissed: 'pickled',
+  gay: 'fab',
+  fag: 'fab',
+  bummer: 'legend',
+  wank: 'wiggle',
 };
 
 /**
  * Replaces swear words in a string with funny alternatives while attempting to preserve case.
  */
 export function filterProfanity(text: string): string {
+  if (!text) return text;
+  
   let cleaned = text;
 
-  Object.keys(profanityMap).forEach((word) => {
+  // Sort keys by length descending to match longer phrases first
+  const sortedWords = Object.keys(profanityMap).sort((a, b) => b.length - a.length);
+
+  sortedWords.forEach((word) => {
     const regex = new RegExp(`\\b${word}\\b`, 'gi');
     cleaned = cleaned.replace(regex, (match) => {
       const replacement = profanityMap[word.toLowerCase()];
       
-      // Match the case of the original word
+      // All caps
       if (match === match.toUpperCase()) return replacement.toUpperCase();
+      // Capitalized
       if (match[0] === match[0].toUpperCase()) {
         return replacement.charAt(0).toUpperCase() + replacement.slice(1);
       }
+      // Lowercase
       return replacement;
     });
   });

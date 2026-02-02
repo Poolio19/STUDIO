@@ -67,7 +67,9 @@ export default function ForumPage() {
   };
 
   React.useEffect(() => {
-    scrollToBottom();
+    if (messages) {
+        scrollToBottom();
+    }
   }, [messages]);
 
 
@@ -76,6 +78,7 @@ export default function ForumPage() {
       return text;
     }
   
+    // Split by mentions to highlight them
     const parts = text.split(/(@\w+(?:\s\w+)*)/g);
   
     return parts.map((part, index) => {
@@ -147,7 +150,7 @@ export default function ForumPage() {
                 <CardDescription>Discuss predictions, celebrate wins, and talk trash with fellow players.</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 overflow-y-auto pr-4">
-                {isLoading ? (
+                {isLoading && !messages ? (
                      <div className="flex h-full items-center justify-center">
                         <Loader2 className="size-8 animate-spin text-muted-foreground" />
                      </div>
@@ -165,7 +168,9 @@ export default function ForumPage() {
                                         <div className="flex items-baseline gap-2">
                                             <p className="font-semibold">{sender?.name || 'Unknown User'}</p>
                                             <p className="text-xs text-muted-foreground">
-                                                {message.createdAt?.toDate && formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true })}
+                                                {message.createdAt?.toDate 
+                                                    ? formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true }) 
+                                                    : 'Just now'}
                                             </p>
                                         </div>
                                         <p className="text-sm whitespace-pre-wrap">{renderMessageText(message.text)}</p>
