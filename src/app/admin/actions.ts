@@ -28,6 +28,7 @@ function getAdminAuth() {
 /**
  * Aggressively sets every player's password to "Password" and verifies account existence.
  * If a UID mismatch is detected, it recreates the account to ensure canonical IDs are used.
+ * This ONLY affects the Auth Console login record; historical data is restored in the next step.
  */
 export async function bulkCreateAuthUsers() {
   let auth;
@@ -61,7 +62,7 @@ export async function bulkCreateAuthUsers() {
             await auth.updateUser(uid, { password });
             updatedCount++;
         } else {
-            // If email differs, update both (this shouldn't happen with canonical IDs)
+            // If email differs, update both (this ensures canonical link)
             await auth.updateUser(uid, { email, password });
             updatedCount++;
         }
@@ -72,7 +73,7 @@ export async function bulkCreateAuthUsers() {
             const userByEmail = await auth.getUserByEmail(email);
             
             // CRITICAL: We found the email but it has a non-canonical UID.
-            // We must delete and recreate to enforce the canonical usr_XXX ID.
+            // We must delete the random UID and recreate with the canonical usr_XXX ID.
             await auth.deleteUser(userByEmail.uid);
             await auth.createUser({
                 uid: uid,

@@ -325,10 +325,11 @@ export default function AdminPage() {
     setIsImportingUsers(true);
     toast({ title: 'Starting Auth & Firestore Sync...', description: 'Resetting passwords and forcing canonical UIDs.' });
     try {
-        // 1. Sync Authentication (this enforces canonical UIDs)
+        // 1. Sync Authentication (this enforces canonical UIDs like usr_009)
         const result = await bulkCreateAuthUsers();
         
-        // 2. Push ALL historical stats to Firestore in chunks
+        // 2. Restore ALL historical stats to Firestore in chunks.
+        // This ensures the Trophy Cabinet is populated for all players.
         const chunks = [];
         const chunkSize = 400;
         for (let i = 0; i < historicalPlayersData.length; i += chunkSize) {
@@ -339,7 +340,8 @@ export default function AdminPage() {
             const batch = writeBatch(firestore);
             chunk.forEach(player => {
                 const userRef = doc(firestore, 'users', player.id);
-                // Ensure email used for login is correct, and set the security flag
+                // Ensure email used for login is correct, set the mustChangePassword flag,
+                // and push all historical achievements from the backup JSON.
                 const { id, email, ...stats } = player;
                 batch.set(userRef, { 
                     ...stats, 
@@ -352,7 +354,7 @@ export default function AdminPage() {
 
         toast({
             title: 'Bulk Sync Complete!',
-            description: `Auth: Created ${result.createdCount}, Updated ${result.updatedCount}. Firestore data restored.`,
+            description: `Auth: Created ${result.createdCount}, Updated ${result.updatedCount}. Firestore stats restored.`,
             variant: result.errors.length > 0 ? 'destructive' : 'default',
         });
     } catch (error: any) {
@@ -484,7 +486,7 @@ export default function AdminPage() {
                           <Button variant="outline" className="w-full" disabled={isImportingUsers}>{isImportingUsers ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Users className="mr-2 h-4 w-4" />} Bulk Sync & Force Reset</Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
-                          <AlertDialogHeader><AlertDialogTitle>Strict Identity Sync</AlertDialogTitle><AlertDialogDescription>This resets passwords to `Password` and forces accounts to use canonical UIDs (usr_XXX). It will also restore all Trophy Cabinet data.</AlertDialogDescription></AlertDialogHeader>
+                          <AlertDialogHeader><AlertDialogTitle>Strict Identity Sync</AlertDialogTitle><AlertDialogDescription>This resets passwords to `Password` and forces accounts to use canonical UIDs (usr_XXX). It will also restore all Trophy Cabinet data for existing players.</AlertDialogDescription></AlertDialogHeader>
                           <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction onClick={handleImportAuthUsers}>Sync & Reset Now</AlertDialogAction>
