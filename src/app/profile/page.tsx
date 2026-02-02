@@ -188,7 +188,7 @@ export default function ProfilePage() {
         name: data.name,
         nickname: data.nickname,
         initials: data.initials,
-        // email: data.email, // Email should not be editable here
+        email: data.email, // Now editable for notifications
         favouriteTeam: data.favouriteTeam,
         phoneNumber: data.phoneNumber,
     };
@@ -545,7 +545,7 @@ export default function ProfilePage() {
           <CardHeader>
             <CardTitle>Profile Information</CardTitle>
             <CardDescription>
-              Update your personal details here.
+              Update your personal details here. Your email address will be used for notifications.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -611,12 +611,12 @@ export default function ProfilePage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>Notification Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="your.email@example.com" {...field} readOnly />
+                        <Input placeholder="your.email@example.com" {...field} />
                       </FormControl>
                       <FormDescription>
-                        Your email address is your login and cannot be changed. Please contact the administrator if you need to update it.
+                        This is the address used for league results and updates. You can change this anytime.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
