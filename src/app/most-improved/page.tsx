@@ -141,7 +141,7 @@ export default function MostImprovedPage() {
         const isPastPeriod = period.endWeek <= currentWeek && !isCurrentPeriod;
         
         // Show TBC until the 2nd match week of the month has been played (results in).
-        const isTooEarly = isCurrentPeriod && currentWeek <= period.startWeek + 1;
+        const isTooEarly = isCurrentPeriod && currentWeek < (period.startWeek + 2);
 
         let winners: (User & { improvement: number })[] = [];
         let runnersUp: (User & { improvement: number })[] = [];

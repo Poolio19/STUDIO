@@ -49,7 +49,7 @@ export async function bulkCreateAuthUsers() {
 
     try {
       try {
-        // Force update existing user
+        // Force update existing user password
         await auth.updateUser(uid, {
           email: email,
           password: password,

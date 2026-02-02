@@ -45,8 +45,6 @@ const formatPointsChange = (change: number) => {
 
 const prizeTiers = [50, 41, 33, 26, 20];
 
-const totalWinningsMap = new Map<string, number>();
-
 export default function LeaderboardPage() {
   const firestore = useFirestore();
   const resolvedUserId = useResolvedUserId();
@@ -94,7 +92,7 @@ export default function LeaderboardPage() {
 
   const localTotalWinningsMap = useMemo(() => {
     if (!usersData || !monthlyMimoM) return new Map();
-    const mimoMWinnings = new Map<string, number>();
+    const winningsMap = new Map<string, number>();
     const monthlyAwards: { [key: string]: { winners: string[], runnersUp: string[] } } = {};
 
     monthlyMimoM.forEach(m => {
@@ -114,18 +112,16 @@ export default function LeaderboardPage() {
     Object.values(monthlyAwards).forEach(award => {
         const winnerPrize = 10 / (award.winners.length || 1);
         award.winners.forEach(userId => {
-            mimoMWinnings.set(userId, (mimoMWinnings.get(userId) || 0) + winnerPrize);
+            winningsMap.set(userId, (winningsMap.get(userId) || 0) + winnerPrize);
         });
 
         if (award.winners.length === 1 && award.runnersUp.length > 0) {
             const runnerUpPrize = 5 / award.runnersUp.length;
             award.runnersUp.forEach(userId => {
-                mimoMWinnings.set(userId, (mimoMWinnings.get(userId) || 0) + runnerUpPrize);
+                winningsMap.set(userId, (winningsMap.get(userId) || 0) + runnerUpPrize);
             });
         }
     });
-    
-    const leaderboardWinnings = new Map<string, number>();
     
     let playerIndex = 0;
     while(playerIndex < regularPlayers.length) {
@@ -133,7 +129,6 @@ export default function LeaderboardPage() {
         const playersAtSameRank = regularPlayers.filter(p => p.rank === player.rank);
         
         const prizePoolRanks = Array.from({ length: playersAtSameRank.length }, (_, i) => playerIndex + i);
-        
         const prizePool = prizePoolRanks.reduce((sum, rankIndex) => {
             return sum + (prizeTiers[rankIndex] || 0);
         }, 0);
@@ -141,39 +136,22 @@ export default function LeaderboardPage() {
         const individualWinnings = prizePool > 0 ? prizePool / playersAtSameRank.length : 0;
 
         playersAtSameRank.forEach(tiedPlayer => {
-            leaderboardWinnings.set(tiedPlayer.id, individualWinnings);
+            winningsMap.set(tiedPlayer.id, (winningsMap.get(tiedPlayer.id) || 0) + individualWinnings);
         });
 
         playerIndex += playersAtSameRank.length;
     }
 
-    const proWinnings = new Map<string, number>();
     if (proPlayers.length > 0) {
       const bestPro = Math.min(...proPlayers.map(p => p.rank));
       regularPlayers.forEach(player => {
           if (player.rank > 0 && player.rank < bestPro) {
-              proWinnings.set(player.id, 5);
+              winningsMap.set(player.id, (winningsMap.get(player.id) || 0) + 5);
           }
       });
     }
 
-    const calculatedTotalWinnings = new Map<string, number>();
-    [...regularPlayers, ...proPlayers].forEach(user => {
-      if (user.isPro) {
-        calculatedTotalWinnings.set(user.id, 0);
-      } else {
-        const lbWinnings = leaderboardWinnings.get(user.id) || 0;
-        const mmWinnings = mimoMWinnings.get(user.id) || 0;
-        const pWinnings = proWinnings.get(user.id) || 0;
-        calculatedTotalWinnings.set(user.id, lbWinnings + mmWinnings + pWinnings);
-      }
-    });
-    
-    calculatedTotalWinnings.forEach((value, key) => {
-        totalWinningsMap.set(key, value);
-    });
-
-    return calculatedTotalWinnings;
+    return winningsMap;
   }, [regularPlayers, proPlayers, usersData, monthlyMimoM]);
 
     const getRankColour = (user: User) => {

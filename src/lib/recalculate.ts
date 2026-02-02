@@ -87,8 +87,8 @@ export async function recalculateAllDataClientSide(
           };
       });
   
-      // --- 3. Clear all derived data collections ---
-      progressCallback('Clearing old derived data...');
+      // --- 3. Clear derived data for ACTIVE users only (or all if you prefer a fresh start) ---
+      progressCallback('Clearing derived data...');
       const collectionsToClear = ['standings', 'playerTeamScores', 'teamRecentResults', 'weeklyTeamStandings', 'userHistories', 'monthlyMimoM', 'seasonMonths'];
       
       for (const collectionName of collectionsToClear) {
