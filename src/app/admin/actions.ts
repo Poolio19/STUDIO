@@ -66,7 +66,6 @@ export async function bulkCreateAuthUsers() {
           try {
             const userByEmail = await auth.getUserByEmail(email);
             // Email exists but with a different UID. Update that user's password.
-            // Note: We can't change the UID, but the app matches by email anyway.
             await auth.updateUser(userByEmail.uid, {
               password: password,
               displayName: player.name,
