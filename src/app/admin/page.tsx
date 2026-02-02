@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Users } from 'lucide-react';
+import { Loader2, Users, AlertCircle } from 'lucide-react';
 import { useFirestore } from '@/firebase';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
@@ -114,7 +114,6 @@ export default function AdminPage() {
   const [isImportingUsers, setIsImportingUsers] = React.useState(false);
   const [initialWeekSet, setInitialWeekSet] = React.useState(false);
 
-  const [latestFilePath, setLatestFilePath] = React.useState<string | null>(null);
   const [latestFileContent, setLatestFileContent] = React.useState<string | null>(null);
 
   const [allMatches, setAllMatches] = React.useState<Match[]>([]);
@@ -152,7 +151,6 @@ export default function AdminPage() {
         matchesByWeek[match.week].push(match);
     }
     
-    // Find the first week that is not fully complete (has at least one match with score -1)
     for (let i = 1; i <= 38; i++) {
         const weekMatches = matchesByWeek[i];
         if (weekMatches && weekMatches.length > 0) {
@@ -163,13 +161,11 @@ export default function AdminPage() {
         }
     }
     
-    // If all defined weeks are complete, find the highest week number and return the next one
     const latestDefinedWeek = Math.max(...Object.keys(matchesByWeek).map(Number));
     if (latestDefinedWeek > 0 && latestDefinedWeek < 38) {
       return latestDefinedWeek + 1;
     }
 
-    // Fallback
     return latestDefinedWeek > 0 ? latestDefinedWeek : 1;
   }, [allMatches]);
   
@@ -215,11 +211,9 @@ export default function AdminPage() {
   });
 
   React.useEffect(() => {
-    // This effect now only runs once when the defaultWeek is calculated from the fetched data.
-    // It sets the initial value, and then `initialWeekSet` prevents it from running again.
     if (defaultWeek > 0 && !initialWeekSet && allMatches.length > 0) {
       scoresForm.setValue('week', defaultWeek, { shouldDirty: false });
-      setInitialWeekSet(true); // Mark that we've done the initial set.
+      setInitialWeekSet(true);
     }
   }, [defaultWeek, scoresForm, initialWeekSet, allMatches]);
 
@@ -232,8 +226,6 @@ export default function AdminPage() {
   }, [selectedWeek, allMatches]);
 
   React.useEffect(() => {
-    // Do not run the reset logic until after our initial week has been properly set.
-    // This avoids the race condition where this effect overwrites the initial week value.
     if (!initialWeekSet) {
       return;
     }
@@ -248,7 +240,6 @@ export default function AdminPage() {
 
   const onWriteResultsFileSubmit = (data: ScoresFormValues) => {
     setIsWritingFile(true);
-    setLatestFilePath(null);
     setLatestFileContent(null);
     
     const validResults = data.results.filter(r => (r.homeScore >= 0 && r.awayScore >= 0) || (r.homeScore === -2 && r.awayScore === -2));
@@ -261,8 +252,6 @@ export default function AdminPage() {
       };
 
       const fileContent = JSON.stringify(weekResultsData, null, 2);
-      
-      setLatestFilePath(`week-${data.week}-results.json`); // This is just a virtual path now
       setLatestFileContent(fileContent);
 
       toast({
@@ -302,7 +291,6 @@ export default function AdminPage() {
 
       for (const result of scoredResults) {
         if (!result.id) {
-          console.warn('Skipping result with no ID:', result);
           continue;
         }
 
@@ -481,17 +469,23 @@ export default function AdminPage() {
         const result = await bulkCreateAuthUsers();
         let description = `Created: ${result.createdCount}, Updated: ${result.updatedCount}.`;
         if (result.errors.length > 0) {
-            description += ` Errors: ${result.errors.length}. Check console for details.`;
+            description += ` Errors: ${result.errors.length}. Check server logs for details.`;
             console.error("Auth sync errors:", result.errors);
+            
+            // Show first error if any for better feedback
+            if (result.errors[0]) {
+              description += ` Example error: ${result.errors[0].message}`;
+            }
         }
         toast({
-            title: 'Auth User Sync Complete!',
+            title: result.errors.length === historicalPlayersData.length ? 'Auth Sync Failed Completely' : 'Auth User Sync Complete!',
             description: description,
+            variant: result.errors.length === historicalPlayersData.length ? 'destructive' : 'default',
         });
     } catch (error: any) {
         toast({
             variant: 'destructive',
-            title: 'Auth Sync Failed',
+            title: 'Auth Sync Fatal Error',
             description: error.message,
         });
     } finally {
@@ -509,7 +503,6 @@ export default function AdminPage() {
             const userRef = doc(firestore, 'users', user.id);
             const { id, name, ...userData } = user;
 
-            // Ensure no NaN values are sent to Firestore
             Object.keys(userData).forEach(key => {
                 const typedKey = key as keyof typeof userData;
                 const value = userData[typedKey];
