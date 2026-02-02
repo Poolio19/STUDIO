@@ -11,6 +11,7 @@ import {
 import type { Team, Prediction, User as UserProfile, UserHistory, CurrentStanding, PreviousSeasonStanding, Match } from '@/lib/types';
 import { allAwardPeriods } from '@/lib/award-periods';
 import prevStandingsData from './previous-season-standings-24-25.json';
+import historicalPlayersData from './historical-players.json';
 
 
 export async function recalculateAllDataClientSide(
@@ -35,10 +36,11 @@ export async function recalculateAllDataClientSide(
       const allUsers = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
       const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
       
-      // Filter for active users who have made a complete prediction this season (20 teams)
+      // Filter for active users who are in the historical list AND have submitted a complete prediction
+      const historicalUserIds = new Set(historicalPlayersData.map(p => p.id));
       const activeUserIds = new Set(
         predictions
-          .filter(p => p.rankings && p.rankings.length === 20)
+          .filter(p => p.rankings && p.rankings.length === 20 && historicalUserIds.has(p.userId))
           .map(p => p.userId)
       );
       const users = allUsers.filter(u => activeUserIds.has(u.id));
@@ -87,7 +89,7 @@ export async function recalculateAllDataClientSide(
           };
       });
   
-      // --- 3. Clear derived data for ACTIVE users only (or all if you prefer a fresh start) ---
+      // --- 3. Clear derived data ---
       progressCallback('Clearing derived data...');
       const collectionsToClear = ['standings', 'playerTeamScores', 'teamRecentResults', 'weeklyTeamStandings', 'userHistories', 'monthlyMimoM', 'seasonMonths'];
       
@@ -126,7 +128,6 @@ export async function recalculateAllDataClientSide(
       };
       
       // --- 4. Populate Season Months ---
-      progressCallback('Setting up season months...');
       allAwardPeriods.forEach(period => {
           const docRef = doc(firestore, 'seasonMonths', period.id);
           addOperation(b => b.set(docRef, {
@@ -139,7 +140,6 @@ export async function recalculateAllDataClientSide(
       });
 
       // --- 5. Write Week 0 Team Standings ---
-      progressCallback('Writing definitive Week 0 team standings...');
       prevStandings.forEach(standing => {
         if (!standing.teamId) return;
         const docRef = doc(firestore, 'weeklyTeamStandings', `0-${standing.teamId}`);

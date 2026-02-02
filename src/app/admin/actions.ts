@@ -1,17 +1,19 @@
 'use server';
 
 import { getAuth } from 'firebase-admin/auth';
-import { initializeApp, getApps, getApp } from 'firebase-admin/app';
+import { initializeApp, getApps, getApp, credential } from 'firebase-admin/app';
 import historicalPlayersData from '@/lib/historical-players.json';
 
 /**
- * Initializes the Firebase Admin SDK if it hasn't been already.
+ * Initializes the Firebase Admin SDK robustly.
  */
 function getAdminAuth() {
   let app;
   if (getApps().length === 0) {
     try {
-      app = initializeApp();
+      app = initializeApp({
+        credential: credential.applicationDefault(),
+      });
     } catch (e: any) {
       console.error("Firebase Admin initialization error:", e);
       throw new Error(`Admin SDK init failed: ${e.message}`);
@@ -23,7 +25,7 @@ function getAdminAuth() {
 }
 
 /**
- * Aggressively sets every player's password to "Password".
+ * Aggressively sets every player's password to "Password" and verifies account existence.
  */
 export async function bulkCreateAuthUsers() {
   let auth;
@@ -37,6 +39,7 @@ export async function bulkCreateAuthUsers() {
   let updatedCount = 0;
   const errors: { email: string; message: string }[] = [];
 
+  // Process in small batches if necessary, but 314 is manageable sequentially if individual ops are fast.
   for (const player of historicalPlayersData) {
     const email = player.email?.trim()?.toLowerCase();
     const uid = player.id?.trim();
@@ -49,7 +52,7 @@ export async function bulkCreateAuthUsers() {
 
     try {
       try {
-        // Force update existing user password
+        // 1. Try updating existing user by UID
         await auth.updateUser(uid, {
           email: email,
           password: password,
@@ -59,8 +62,8 @@ export async function bulkCreateAuthUsers() {
       } catch (uidError: any) {
         if (uidError.code === 'auth/user-not-found') {
           try {
+            // 2. If UID not found, check if email exists with a different UID
             const userByEmail = await auth.getUserByEmail(email);
-            // Email exists with different UID, reset that user's password
             await auth.updateUser(userByEmail.uid, {
               password: password,
               displayName: player.name,
@@ -68,7 +71,7 @@ export async function bulkCreateAuthUsers() {
             updatedCount++;
           } catch (emailError: any) {
             if (emailError.code === 'auth/user-not-found') {
-              // Create new account
+              // 3. Create new account if neither UID nor email exists
               await auth.createUser({
                 uid: uid,
                 email: email,
@@ -87,6 +90,7 @@ export async function bulkCreateAuthUsers() {
         }
       }
     } catch (finalError: any) {
+      console.error(`Error syncing user ${email}:`, finalError.message);
       errors.push({ email, message: finalError.message });
     }
   }

@@ -465,19 +465,32 @@ export default function AdminPage() {
   const handleImportAuthUsers = async () => {
     if (!firestore) return;
     setIsImportingUsers(true);
-    toast({ title: 'Starting Auth & Firestore Sync...', description: 'Resetting passwords to "Password" and updating security flags.' });
+    toast({ title: 'Starting Auth & Firestore Sync...', description: 'Resetting passwords to "Password" and restoring historical stats.' });
     try {
         const result = await bulkCreateAuthUsers();
         
-        // After Auth sync, update Firestore to set mustChangePassword flag for all valid users
-        const batch = writeBatch(firestore);
-        historicalPlayersData.forEach(player => {
-            const userRef = doc(firestore, 'users', player.id);
-            batch.set(userRef, { mustChangePassword: true }, { merge: true });
-        });
-        await batch.commit();
+        // Push ALL historical stats to Firestore to fix Trophy Cabinet/Top 10 finishes
+        const chunks = [];
+        const chunkSize = 400; // Keep batch size safe
+        for (let i = 0; i < historicalPlayersData.length; i += chunkSize) {
+            chunks.push(historicalPlayersData.slice(i, i + chunkSize));
+        }
 
-        let description = `Auth: Created ${result.createdCount}, Updated ${result.updatedCount}. Firestore security flags set.`;
+        for (const chunk of chunks) {
+            const batch = writeBatch(firestore);
+            chunk.forEach(player => {
+                const userRef = doc(firestore, 'users', player.id);
+                // Sync everything including mustChangePassword and trophies
+                const { id, email, ...stats } = player;
+                batch.set(userRef, { 
+                    ...stats,
+                    mustChangePassword: true 
+                }, { merge: true });
+            });
+            await batch.commit();
+        }
+
+        let description = `Auth: Created ${result.createdCount}, Updated ${result.updatedCount}. Firestore stats & security flags synchronized.`;
         if (result.errors.length > 0) {
             description += ` Errors: ${result.errors.length}.`;
             console.error("Auth sync errors:", result.errors);
@@ -489,6 +502,7 @@ export default function AdminPage() {
             variant: result.errors.length === historicalPlayersData.length ? 'destructive' : 'default',
         });
     } catch (error: any) {
+        console.error("Bulk sync fatal error:", error);
         toast({
             variant: 'destructive',
             title: 'Bulk Sync Failed',
@@ -736,7 +750,7 @@ export default function AdminPage() {
                           <AlertDialogHeader>
                           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                           <AlertDialogDescription>
-                              This will reset ALL historical players' passwords to `Password` and force them to set a new one on their next login.
+                              This will reset ALL historical players' passwords to `Password` and force them to set a new one on their next login. It also synchronizes their historical stats to Firestore.
                           </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
