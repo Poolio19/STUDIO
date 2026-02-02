@@ -7,7 +7,6 @@ import { Firestore, getFirestore, enableNetwork } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged, getAuth } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { firebaseConfig } from './config';
-import historicalPlayersData from '@/lib/historical-players.json';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -77,7 +76,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       const unsubscribe = onAuthStateChanged(
         auth,
         (firebaseUser) => {
-            // The user is either logged in or null. Do not attempt anonymous sign-in.
             setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
         },
         (error) => {
@@ -127,28 +125,13 @@ export const useUser = (): UserHookResult => {
 
 /**
  * A hook that returns the correct document ID for the current user.
- * It maps the authenticated user's email to their canonical ID from the historical player data.
- * @returns The user's canonical document ID (e.g., 'usr_009') or null if not found or not authenticated.
+ * In this application, we explicitly set the Firebase Auth UID to match 
+ * the canonical historical ID (e.g. usr_009) during account creation.
+ * @returns The user's canonical document ID or null if not authenticated.
  */
 export const useResolvedUserId = (): string | null => {
     const { user } = useUser();
-
-    if (!user || !user.email) {
-      return null;
-    }
-
-    // This is the source of truth for mapping a logged-in user to their canonical ID.
-    const historicalUser = (historicalPlayersData as any[]).find(
-      (p) => p.email && p.email.toLowerCase() === user.email!.toLowerCase()
-    );
-
-    if (historicalUser && historicalUser.id) {
-        return historicalUser.id;
-    }
-    
-    // Fallback for a user that might exist in Auth but not in our historical data.
-    // In the current "private league" model, this shouldn't happen for valid users.
-    return null;
+    return user?.uid || null;
 };
 
 

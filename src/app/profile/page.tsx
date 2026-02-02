@@ -4,11 +4,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Upload, Trophy, Award, ShieldCheck, Loader2, Users, Medal, DollarSign, Star, ShieldAlert } from 'lucide-react';
+import { Mail, Upload, Trophy, Award, ShieldCheck, Loader2, Users, Medal, DollarSign, Star, ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import {
   Form,
   FormControl,
@@ -19,11 +17,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -57,8 +50,7 @@ import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser, useResol
 import { collection, doc, query, where, getDocs } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { AuthForm } from '@/components/auth/auth-form';
-import { updatePassword } from 'firebase/auth';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { updatePassword, updateEmail } from 'firebase/auth';
 
 
 const profileFormSchema = z.object({
@@ -67,9 +59,6 @@ const profileFormSchema = z.object({
   }),
   nickname: z.string().optional(),
   initials: z.string().optional(),
-  email: z.string().email({
-    message: 'Please enter a valid email address.',
-  }),
   favouriteTeam: z.string({
     required_error: 'Please select a team.',
   }),
@@ -77,6 +66,11 @@ const profileFormSchema = z.object({
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
+
+const emailFormSchema = z.object({
+  email: z.string().email("Please enter a valid email address."),
+});
+type EmailFormValues = z.infer<typeof emailFormSchema>;
 
 const passwordFormSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters."),
@@ -129,11 +123,17 @@ export default function ProfilePage() {
       name: '',
       nickname: '',
       initials: '',
-      email: '',
       favouriteTeam: 'team_1',
       phoneNumber: '',
     },
     mode: 'onChange',
+  });
+
+  const emailForm = useForm<EmailFormValues>({
+    resolver: zodResolver(emailFormSchema),
+    defaultValues: {
+      email: authUser?.email || '',
+    }
   });
 
    const passwordForm = useForm<PasswordFormValues>({
@@ -150,12 +150,14 @@ export default function ProfilePage() {
         name: user.name || '',
         nickname: user.nickname || '',
         initials: user.initials || '',
-        email: user.email || '',
         favouriteTeam: user.favouriteTeam || 'none',
         phoneNumber: user.phoneNumber || '',
       });
+      emailForm.reset({
+        email: user.email || authUser?.email || '',
+      });
     }
-  }, [user, form]);
+  }, [user, form, emailForm, authUser]);
 
   async function onSubmit(data: ProfileFormValues) {
     if (!userDocRef || !resolvedUserId || !firestore) {
@@ -163,13 +165,14 @@ export default function ProfilePage() {
       return;
     }
 
-    // Validation: Check if name is already taken by another user
+    // Validation: Check if name is already taken by ANOTHER user
     const usersRef = collection(firestore, 'users');
     const q = query(usersRef, where("name", "==", data.name));
     const querySnapshot = await getDocs(q);
 
     let isNameTaken = false;
     querySnapshot.forEach((doc) => {
+        // Only mark as taken if the ID doesn't match current user
         if (doc.id !== resolvedUserId) {
             isNameTaken = true;
         }
@@ -188,7 +191,6 @@ export default function ProfilePage() {
         name: data.name,
         nickname: data.nickname,
         initials: data.initials,
-        email: data.email, // Now editable for notifications
         favouriteTeam: data.favouriteTeam,
         phoneNumber: data.phoneNumber,
     };
@@ -200,6 +202,23 @@ export default function ProfilePage() {
     });
   }
 
+  async function onEmailSubmit(data: EmailFormValues) {
+    if (!authUser || !userDocRef) return;
+
+    try {
+      await updateEmail(authUser, data.email);
+      setDocumentNonBlocking(userDocRef, { email: data.email }, { merge: true });
+      toast({ title: 'Login Email Updated!', description: 'Your sign-in and notification address has been updated.' });
+    } catch (error: any) {
+      console.error("Email update error:", error);
+      let description = "Failed to update email. You might need to sign out and sign back in to perform this sensitive action.";
+      if (error.code === 'auth/email-already-in-use') {
+        description = "This email address is already registered to another account.";
+      }
+      toast({ variant: 'destructive', title: 'Update Failed', description });
+    }
+  }
+
   async function onPasswordSubmit(data: PasswordFormValues) {
     if (!authUser || !userDocRef) {
       toast({ variant: 'destructive', title: 'Not Authenticated', description: 'You must be logged in to change your password.' });
@@ -208,10 +227,7 @@ export default function ProfilePage() {
 
     try {
       await updatePassword(authUser, data.password);
-      
-      // Update the Firestore flag so the user is no longer prompted
       setDocumentNonBlocking(userDocRef, { mustChangePassword: false }, { merge: true });
-
       toast({ title: 'Password Updated Successfully!', description: 'Your security settings have been updated.' });
       passwordForm.reset();
     } catch (error: any) {
@@ -220,11 +236,7 @@ export default function ProfilePage() {
       if (error.code === 'auth/requires-recent-login') {
         description = "This action is sensitive. Please log out and log back in before changing your password.";
       }
-      toast({
-        variant: 'destructive',
-        title: 'Update Failed',
-        description: description,
-      });
+      toast({ variant: 'destructive', title: 'Update Failed', description });
     }
   }
 
@@ -269,11 +281,7 @@ export default function ProfilePage() {
         const result = reader.result as string;
         setAvatarPreview(result);
         setDocumentNonBlocking(userDocRef, { avatar: result }, { merge: true });
-
-        toast({
-            title: 'Avatar Updated!',
-            description: 'Your new avatar has been set.',
-        });
+        toast({ title: 'Avatar Updated!', description: 'Your new avatar has been set.' });
       };
       reader.readAsDataURL(file);
     }
@@ -313,7 +321,6 @@ export default function ProfilePage() {
     );
   }
 
-  // FORCE PASSWORD CHANGE VIEW
   if (user?.mustChangePassword) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -545,7 +552,7 @@ export default function ProfilePage() {
           <CardHeader>
             <CardTitle>Profile Information</CardTitle>
             <CardDescription>
-              Update your personal details here. Your email address will be used for notifications.
+              Update your personal details here. 
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -606,22 +613,6 @@ export default function ProfilePage() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Notification Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="your.email@example.com" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        This is the address used for league results and updates. You can change this anytime.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
                  <FormField
                     control={form.control}
                     name="phoneNumber"
@@ -670,9 +661,40 @@ export default function ProfilePage() {
         </Card>
 
         <div className="space-y-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Security: Login Email</CardTitle>
+              <CardDescription>Update the email address you use to sign in.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...emailForm}>
+                <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-4">
+                  <FormField
+                    control={emailForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>New Login Email</FormLabel>
+                        <FormControl>
+                          <Input placeholder="new.email@example.com" {...field} />
+                        </FormControl>
+                        <FormDescription>Changing this will update your login credentials and notification address.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" disabled={emailForm.formState.isSubmitting}>
+                    {emailForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
+                    Update Login Email
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+
            <Card>
             <CardHeader>
-              <CardTitle>Security</CardTitle>
+              <CardTitle>Security: Password</CardTitle>
               <CardDescription>
                 Update your password here. It's recommended to change your password after your first login.
               </CardDescription>
@@ -716,7 +738,7 @@ export default function ProfilePage() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Email Notifications</CardTitle>
+              <CardTitle>Notifications</CardTitle>
               <CardDescription>Choose which emails you want to receive.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
