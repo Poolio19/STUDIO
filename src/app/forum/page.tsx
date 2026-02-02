@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -23,6 +22,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Loader2, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { filterProfanity } from '@/lib/profanity-filter';
 
 const messageFormSchema = z.object({
   text: z.string().min(1, 'Message cannot be empty.').max(500, 'Message is too long.'),
@@ -106,6 +106,9 @@ export default function ForumPage() {
         return;
     }
 
+    // Convert profanity to amusing alternatives
+    const cleanedText = filterProfanity(data.text);
+
     // Basic mention parsing
     const mentionedUsers = new Set<string>();
     if (users) {
@@ -120,7 +123,7 @@ export default function ForumPage() {
       userId: resolvedUserId,
       userName: userProfile.name,
       userAvatar: userProfile.avatar,
-      text: data.text,
+      text: cleanedText,
       createdAt: serverTimestamp(),
       mentions: Array.from(mentionedUsers),
     };
@@ -204,5 +207,3 @@ export default function ForumPage() {
     </div>
   );
 }
-
-  
