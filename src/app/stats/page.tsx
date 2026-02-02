@@ -17,6 +17,7 @@ import type { User, Team, PlayerTeamScore, CurrentStanding, Prediction } from '@
 import { useCollection, useFirestore, useMemoFirebase, useResolvedUserId } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
+import historicalPlayersData from '@/lib/historical-players.json';
 
 
 export default function StatsPage() {
@@ -39,14 +40,20 @@ export default function StatsPage() {
   
   const sortedUsers = useMemo(() => {
     if (!users || !predictions) return [];
-    // Only show players who have a valid prediction for the current season (20 teams ranked)
+    
+    // 1. Identify IDs of players in the official historical list
+    const historicalUserIds = new Set(historicalPlayersData.map(p => p.id));
+
+    // 2. Identify IDs of players who have officially entered this season (complete prediction)
     const activeUserIds = new Set(
       predictions
         .filter(p => p.rankings && p.rankings.length === 20)
         .map(p => p.userId || p.id)
     );
+
+    // 3. Filter for users who are both historical players AND active this season
     return [...users]
-      .filter(u => u.name && activeUserIds.has(u.id))
+      .filter(u => u.name && historicalUserIds.has(u.id) && activeUserIds.has(u.id))
       .sort((a, b) => a.rank - b.rank);
   }, [users, predictions]);
   

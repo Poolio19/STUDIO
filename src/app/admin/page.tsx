@@ -463,29 +463,35 @@ export default function AdminPage() {
   }
 
   const handleImportAuthUsers = async () => {
+    if (!firestore) return;
     setIsImportingUsers(true);
-    toast({ title: 'Starting Auth User Sync...', description: 'Setting "Password" for all players in historical-players.json.' });
+    toast({ title: 'Starting Auth & Firestore Sync...', description: 'Resetting passwords to "Password" and updating security flags.' });
     try {
         const result = await bulkCreateAuthUsers();
-        let description = `Created: ${result.createdCount}, Updated: ${result.updatedCount}.`;
+        
+        // After Auth sync, update Firestore to set mustChangePassword flag for all valid users
+        const batch = writeBatch(firestore);
+        historicalPlayersData.forEach(player => {
+            const userRef = doc(firestore, 'users', player.id);
+            batch.set(userRef, { mustChangePassword: true }, { merge: true });
+        });
+        await batch.commit();
+
+        let description = `Auth: Created ${result.createdCount}, Updated ${result.updatedCount}. Firestore security flags set.`;
         if (result.errors.length > 0) {
-            description += ` Errors: ${result.errors.length}. Check server logs for details.`;
+            description += ` Errors: ${result.errors.length}.`;
             console.error("Auth sync errors:", result.errors);
-            
-            // Show first error if any for better feedback
-            if (result.errors[0]) {
-              description += ` Example error: ${result.errors[0].message}`;
-            }
         }
+        
         toast({
-            title: result.errors.length === historicalPlayersData.length ? 'Auth Sync Failed Completely' : 'Auth User Sync Complete!',
+            title: 'Bulk Sync Complete!',
             description: description,
             variant: result.errors.length === historicalPlayersData.length ? 'destructive' : 'default',
         });
     } catch (error: any) {
         toast({
             variant: 'destructive',
-            title: 'Auth Sync Fatal Error',
+            title: 'Bulk Sync Failed',
             description: error.message,
         });
     } finally {
@@ -713,9 +719,9 @@ export default function AdminPage() {
             </Card>
             <Card>
               <CardHeader>
-                  <CardTitle>Authentication Management</CardTitle>
+                  <CardTitle>Authentication & Security</CardTitle>
                   <CardDescription>
-                      Bulk sync authentication accounts for all players listed in `historical-players.json`.
+                      Bulk sync authentication accounts and force password changes for all players.
                   </CardDescription>
               </CardHeader>
               <CardContent>
@@ -723,19 +729,19 @@ export default function AdminPage() {
                       <AlertDialogTrigger asChild>
                           <Button variant="outline" disabled={isImportingUsers}>
                               {isImportingUsers ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Users className="mr-2 h-4 w-4" />}
-                              Bulk Sync Auth Users
+                              Bulk Sync & Force Reset
                           </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                           <AlertDialogHeader>
                           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                           <AlertDialogDescription>
-                              This will ensure every player in `historical-players.json` has an account and that their password is set to `Password`. Existing passwords will be overwritten.
+                              This will reset ALL historical players' passwords to `Password` and force them to set a new one on their next login.
                           </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleImportAuthUsers}>Yes, Sync Users</AlertDialogAction>
+                          <AlertDialogAction onClick={handleImportAuthUsers}>Yes, Sync & Reset</AlertDialogAction>
                           </AlertDialogFooter>
                       </AlertDialogContent>
                   </AlertDialog>
