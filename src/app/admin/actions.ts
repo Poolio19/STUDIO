@@ -1,7 +1,7 @@
 'use server';
 
 import { getAuth } from 'firebase-admin/auth';
-import { initializeApp, getApps } from 'firebase-admin/app';
+import { initializeApp, getApps, getApp } from 'firebase-admin/app';
 import historicalPlayersData from '@/lib/historical-players.json';
 
 /**
@@ -10,14 +10,18 @@ import historicalPlayersData from '@/lib/historical-players.json';
  * default service account credentials.
  */
 function getAdminAuth() {
+  let app;
   if (getApps().length === 0) {
     try {
-      initializeApp();
+      app = initializeApp();
     } catch (e: any) {
       console.error("Firebase Admin initialization error:", e);
+      throw new Error(`Admin SDK init failed: ${e.message}`);
     }
+  } else {
+    app = getApp();
   }
-  return getAuth();
+  return getAuth(app);
 }
 
 /**
@@ -26,7 +30,13 @@ function getAdminAuth() {
  * It will create new accounts for missing users and reset passwords for existing ones.
  */
 export async function bulkCreateAuthUsers() {
-  const auth = getAdminAuth();
+  let auth;
+  try {
+    auth = getAdminAuth();
+  } catch (authInitError: any) {
+    return { createdCount: 0, updatedCount: 0, errors: [{ email: 'system', message: authInitError.message }] };
+  }
+
   let createdCount = 0;
   let updatedCount = 0;
   const errors: { email: string; message: string }[] = [];

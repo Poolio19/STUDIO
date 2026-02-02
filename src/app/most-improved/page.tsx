@@ -140,6 +140,11 @@ export default function MostImprovedPage() {
         const isCurrentPeriod = currentAwardPeriod?.id === period.id;
         const isPastPeriod = period.endWeek <= currentWeek && !isCurrentPeriod;
         
+        // Show TBC until the 2nd match week of the month has been played (results in).
+        // Since improvement is (current - startWeek), after the 1st match week (currentWeek === startWeek),
+        // everyone is on +0. After the 2nd match week (currentWeek === startWeek + 1), people have points.
+        const isTooEarly = isCurrentPeriod && currentWeek <= period.startWeek;
+
         let winners: (User & { improvement: number })[] = [];
         let runnersUp: (User & { improvement: number })[] = [];
         
@@ -157,7 +162,7 @@ export default function MostImprovedPage() {
                 const user = userMap.get(award.userId);
                 return { ...user, improvement: award.improvement || 0 } as User & { improvement: number };
             }).filter(u => u.id);
-        } else if (isCurrentPeriod) {
+        } else if (isCurrentPeriod && !isTooEarly) {
             if (ladderData.firstPlaceImprovement !== undefined) {
                 winners = ladderData.ladderWithRanks
                     .filter(u => u.improvement === ladderData.firstPlaceImprovement) as (User & { improvement: number })[];
@@ -172,7 +177,7 @@ export default function MostImprovedPage() {
             id: period.id,
             abbreviation: period.abbreviation,
             isCurrentMonth: isCurrentPeriod,
-            isFuture: !isPastPeriod && !isCurrentPeriod,
+            isFuture: (!isPastPeriod && !isCurrentPeriod) || isTooEarly,
             winners,
             runnersUp,
         };
