@@ -476,22 +476,22 @@ export default function AdminPage() {
 
   const handleImportAuthUsers = async () => {
     setIsImportingUsers(true);
-    toast({ title: 'Starting Auth User Import...', description: 'Creating accounts for users in historical-players.json.' });
+    toast({ title: 'Starting Auth User Sync...', description: 'Setting "Password" for all players in historical-players.json.' });
     try {
         const result = await bulkCreateAuthUsers();
-        let description = `Created: ${result.createdCount}, Skipped: ${result.skippedCount}.`;
+        let description = `Created: ${result.createdCount}, Updated: ${result.updatedCount}.`;
         if (result.errors.length > 0) {
             description += ` Errors: ${result.errors.length}. Check console for details.`;
-            console.error("Auth import errors:", result.errors);
+            console.error("Auth sync errors:", result.errors);
         }
         toast({
-            title: 'Auth User Import Complete!',
+            title: 'Auth User Sync Complete!',
             description: description,
         });
     } catch (error: any) {
         toast({
             variant: 'destructive',
-            title: 'Auth Import Failed',
+            title: 'Auth Sync Failed',
             description: error.message,
         });
     } finally {
@@ -722,7 +722,7 @@ export default function AdminPage() {
               <CardHeader>
                   <CardTitle>Authentication Management</CardTitle>
                   <CardDescription>
-                      Bulk create authentication accounts for all players listed in `historical-players.json`.
+                      Bulk sync authentication accounts for all players listed in `historical-players.json`.
                   </CardDescription>
               </CardHeader>
               <CardContent>
@@ -730,19 +730,19 @@ export default function AdminPage() {
                       <AlertDialogTrigger asChild>
                           <Button variant="outline" disabled={isImportingUsers}>
                               {isImportingUsers ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Users className="mr-2 h-4 w-4" />}
-                              Bulk Create Auth Users
+                              Bulk Sync Auth Users
                           </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                           <AlertDialogHeader>
                           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                           <AlertDialogDescription>
-                              This will create Firebase Authentication accounts for all users in `historical-players.json` who do not already have one. It will set their password to a default value (`Password`) which they must change. This process is irreversible.
+                              This will ensure every player in `historical-players.json` has an account and that their password is set to `Password`. Existing passwords will be overwritten.
                           </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleImportAuthUsers}>Yes, Create Users</AlertDialogAction>
+                          <AlertDialogAction onClick={handleImportAuthUsers}>Yes, Sync Users</AlertDialogAction>
                           </AlertDialogFooter>
                       </AlertDialogContent>
                   </AlertDialog>

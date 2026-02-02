@@ -9,57 +9,75 @@ if (getApps().length === 0) {
   initializeApp();
 }
 
+/**
+ * Iterates through all players in historical-players.json and ensuring
+ * they have a Firebase Authentication account with the password "Password".
+ * It will create new accounts for missing users and reset passwords for existing ones.
+ */
 export async function bulkCreateAuthUsers() {
   const auth = getAuth();
   let createdCount = 0;
-  let skippedCount = 0;
+  let updatedCount = 0;
   const errors: { email: string; message: string }[] = [];
 
   for (const player of historicalPlayersData) {
     if (!player.email || !player.id) {
-      continue; // Skip players without an email or ID
+      continue; // Skip entries without mandatory fields
     }
 
+    const email = player.email.trim();
+    const uid = player.id.trim();
+    const password = 'Password';
+
     try {
-      // Check if user already exists by either UID or email
-      await auth.getUser(player.id);
-      skippedCount++;
-      continue;
-    } catch (error: any) {
-      // If user not found by UID, that's good. Check by email.
-      if (error.code !== 'auth/user-not-found') {
-        errors.push({ email: player.email, message: `Error checking UID ${player.id}: ${error.message}` });
-        continue;
-      }
-    }
+      // 1. Check if user exists by email
+      const userRecord = await auth.getUserByEmail(email);
       
-    try {
-      await auth.getUserByEmail(player.email);
-      skippedCount++;
-      continue;
-    } catch (error: any) {
-        // If user not found by email, we can create it.
-        if (error.code !== 'auth/user-not-found') {
-            errors.push({ email: player.email, message: `Error checking email ${player.email}: ${error.message}` });
-            continue;
-        }
-    }
-
-    // If we get here, the user doesn't exist by UID or email, so create them.
-    try {
-      await auth.createUser({
-        uid: player.id,
-        email: player.email,
-        emailVerified: true,
-        password: 'Password', // A temporary password
-        displayName: player.name,
-        disabled: false,
+      // User exists, reset their password to the default
+      await auth.updateUser(userRecord.uid, {
+        password: password,
       });
-      createdCount++;
-    } catch (creationError: any) {
-      errors.push({ email: player.email, message: creationError.message });
+      updatedCount++;
+      
+    } catch (error: any) {
+      if (error.code === 'auth/user-not-found') {
+        // 2. User not found by email, try creating a new account
+        // We use the ID from the JSON as the UID to keep things canonical.
+        try {
+          // Check if the UID is already taken by a different email
+          try {
+            await auth.getUser(uid);
+            // If we get here, the UID exists. Update it with this email and password.
+            await auth.updateUser(uid, {
+              email: email,
+              password: password,
+              displayName: player.name,
+            });
+            updatedCount++;
+          } catch (uidError: any) {
+            if (uidError.code === 'auth/user-not-found') {
+              // UID is free, create new user
+              await auth.createUser({
+                uid: uid,
+                email: email,
+                emailVerified: true,
+                password: password,
+                displayName: player.name,
+                disabled: false,
+              });
+              createdCount++;
+            } else {
+              throw uidError;
+            }
+          }
+        } catch (creationError: any) {
+          errors.push({ email, message: creationError.message });
+        }
+      } else {
+        errors.push({ email, message: `Lookup error: ${error.message}` });
+      }
     }
   }
 
-  return { createdCount, skippedCount, errors };
+  return { createdCount, updatedCount, errors };
 }
