@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Users } from 'lucide-react';
 import { useFirestore } from '@/firebase';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
@@ -46,6 +46,7 @@ import { Input } from '@/components/ui/input';
 import pastFixtures from '@/lib/past-fixtures.json';
 import previousSeasonData from '@/lib/previous-season-standings-24-25.json';
 import historicalPlayersData from '@/lib/historical-players.json';
+import { bulkCreateAuthUsers } from './actions';
 
 const scoreSchema = z.union([z.literal('P'), z.literal('p'), z.coerce.number().int()]);
 
@@ -110,6 +111,7 @@ export default function AdminPage() {
   const [isImportingFixtures, setIsImportingFixtures] = React.useState(false);
   const [isImportingStandings, setIsImportingStandings] = React.useState(false);
   const [isUpdatingHistoricalData, setIsUpdatingHistoricalData] = React.useState(false);
+  const [isImportingUsers, setIsImportingUsers] = React.useState(false);
   const [initialWeekSet, setInitialWeekSet] = React.useState(false);
 
   const [latestFilePath, setLatestFilePath] = React.useState<string | null>(null);
@@ -464,6 +466,31 @@ export default function AdminPage() {
     }
   }
 
+  const handleImportAuthUsers = async () => {
+    setIsImportingUsers(true);
+    toast({ title: 'Starting Auth User Import...', description: 'Creating accounts for users in historical-players.json.' });
+    try {
+        const result = await bulkCreateAuthUsers();
+        let description = `Created: ${result.createdCount}, Skipped: ${result.skippedCount}.`;
+        if (result.errors.length > 0) {
+            description += ` Errors: ${result.errors.length}. Check console for details.`;
+            console.error("Auth import errors:", result.errors);
+        }
+        toast({
+            title: 'Auth User Import Complete!',
+            description: description,
+        });
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Auth Import Failed',
+            description: error.message,
+        });
+    } finally {
+        setIsImportingUsers(false);
+    }
+  };
+
   const onHistoricalSubmit = async (data: HistoricalDataFormValues) => {
     if (!firestore) return;
     setIsUpdatingHistoricalData(true);
@@ -682,6 +709,36 @@ export default function AdminPage() {
                         </AlertDialogContent>
                     </AlertDialog>
                 </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                  <CardTitle>Authentication Management</CardTitle>
+                  <CardDescription>
+                      Bulk create authentication accounts for all players listed in `historical-players.json`.
+                  </CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                          <Button variant="outline" disabled={isImportingUsers}>
+                              {isImportingUsers ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Users className="mr-2 h-4 w-4" />}
+                              Bulk Create Auth Users
+                          </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                          <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                              This will create Firebase Authentication accounts for all users in `historical-players.json` who do not already have one. It will set their password to a default value (`Password123!`) which they must change. This process is irreversible.
+                          </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleImportAuthUsers}>Yes, Create Users</AlertDialogAction>
+                          </AlertDialogFooter>
+                      </AlertDialogContent>
+                  </AlertDialog>
+              </CardContent>
             </Card>
         </div>
       </div>
