@@ -215,10 +215,13 @@ export default function AdminPage() {
   });
 
   React.useEffect(() => {
-    if (defaultWeek > 0 && !scoresForm.formState.isDirty) {
+    // This effect now only runs once when the defaultWeek is calculated from the fetched data.
+    // It sets the initial value, and then `initialWeekSet` prevents it from running again.
+    if (defaultWeek > 0 && !initialWeekSet && allMatches.length > 0) {
       scoresForm.setValue('week', defaultWeek, { shouldDirty: false });
+      setInitialWeekSet(true); // Mark that we've done the initial set.
     }
-  }, [defaultWeek, scoresForm]);
+  }, [defaultWeek, scoresForm, initialWeekSet, allMatches]);
 
 
   const selectedWeek = scoresForm.watch('week');
@@ -229,13 +232,18 @@ export default function AdminPage() {
   }, [selectedWeek, allMatches]);
 
   React.useEffect(() => {
+    // Do not run the reset logic until after our initial week has been properly set.
+    // This avoids the race condition where this effect overwrites the initial week value.
+    if (!initialWeekSet) {
+      return;
+    }
     const results = weekFixtures.map(fixture => ({
       id: fixture.id,
       homeScore: fixture.homeScore,
       awayScore: fixture.awayScore,
     }));
     scoresForm.reset({ week: selectedWeek, results: results });
-  }, [selectedWeek, weekFixtures, scoresForm]);
+  }, [selectedWeek, weekFixtures, scoresForm, initialWeekSet]);
 
 
   const onWriteResultsFileSubmit = (data: ScoresFormValues) => {
