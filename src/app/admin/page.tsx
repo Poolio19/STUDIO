@@ -1,7 +1,7 @@
-
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -11,8 +11,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Users } from 'lucide-react';
-import { useFirestore } from '@/firebase';
+import { Loader2, Users, ShieldAlert } from 'lucide-react';
+import { useFirestore, useUser } from '@/firebase';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 import { collection, doc, writeBatch, getDocs, query } from 'firebase/firestore';
@@ -31,7 +31,7 @@ import {
 import type { Match, Team, WeekResults } from '@/lib/types';
 import { recalculateAllDataClientSide } from '@/lib/recalculate';
 
-import { useForm, Controller, useFieldArray } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {
@@ -98,13 +98,14 @@ type HistoricalDataFormValues = z.infer<typeof historicalDataFormSchema>;
 
 
 export default function AdminPage() {
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
   const { toast } = useToast();
   const firestore = useFirestore();
   
   const [isUpdating, setIsUpdating] = React.useState(false);
   const [isWritingFile, setIsWritingFile] = React.useState(false);
   const [isImportingFile, setIsImportingFile] = React.useState(false);
-  const [isUpdatingHistoricalData, setIsUpdatingHistoricalData] = React.useState(false);
   const [isImportingUsers, setIsImportingUsers] = React.useState(false);
   const [initialWeekSet, setInitialWeekSet] = React.useState(false);
 
@@ -112,7 +113,14 @@ export default function AdminPage() {
 
   const [allMatches, setAllMatches] = React.useState<Match[]>([]);
   const [teamsMap, setTeamsMap] = React.useState<Map<string, Team>>(new Map());
-  
+
+  // --- Security Redirect ---
+  React.useEffect(() => {
+    if (!isUserLoading && (!user || user.email !== 'jim.poole@prempred.com')) {
+      router.replace('/leaderboard');
+    }
+  }, [user, isUserLoading, router]);
+
   const fetchAllMatches = React.useCallback(async () => {
     if (!firestore) return;
     const matchesSnap = await getDocs(query(collection(firestore, 'matches')));
@@ -122,7 +130,7 @@ export default function AdminPage() {
   
   React.useEffect(() => {
     async function fetchAllData() {
-      if (!firestore) return;
+      if (!firestore || !user || user.email !== 'jim.poole@prempred.com') return;
       const teamsSnap = await getDocs(query(collection(firestore, 'teams')));
       const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
       setTeamsMap(new Map(teams.map(t => [t.id, t])));
@@ -130,7 +138,7 @@ export default function AdminPage() {
       fetchAllMatches();
     }
     fetchAllData();
-  }, [firestore, fetchAllMatches]);
+  }, [firestore, fetchAllMatches, user]);
 
   const defaultWeek = React.useMemo(() => {
     if (!allMatches || allMatches.length === 0) return 1;
@@ -182,8 +190,6 @@ export default function AdminPage() {
       })),
     },
   });
-  
-  const { fields } = useFieldArray({ control: historicalForm.control, name: "users" });
 
   React.useEffect(() => {
     if (defaultWeek > 0 && !initialWeekSet && allMatches.length > 0) {
@@ -270,7 +276,6 @@ export default function AdminPage() {
     toast({ title: 'Starting Auth & Firestore Sync...', description: 'Syncing in chunks to prevent timeouts.' });
     
     try {
-        // 1. Sync Authentication in Chunks (fixes UIDs and resets passwords)
         const authChunks = [];
         const authChunkSize = 50;
         for (let i = 0; i < historicalPlayersData.length; i += authChunkSize) {
@@ -289,9 +294,8 @@ export default function AdminPage() {
             chunkIndex++;
         }
         
-        // 2. Restore ALL historical stats to Firestore in chunks.
         const dbChunks = [];
-        const dbChunkSize = 100; // Smaller chunks for Firestore
+        const dbChunkSize = 100;
         for (let i = 0; i < historicalPlayersData.length; i += dbChunkSize) {
             dbChunks.push(historicalPlayersData.slice(i, i + dbChunkSize));
         }
@@ -343,6 +347,14 @@ export default function AdminPage() {
     { key: 'xmasNo1', label: 'Xmas', tooltip: 'Christmas No. 1 Wins' },
     { key: 'cashWinnings', label: '£', tooltip: 'Total Cash Winnings' },
   ];
+
+  if (isUserLoading || !user || user.email !== 'jim.poole@prempred.com') {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <Loader2 className="size-12 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -440,7 +452,7 @@ export default function AdminPage() {
         </div>
       </div>
       <Card>
-          <CardHeader><CardTitle>Historical Stats</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Historical Stats (Backup Reference)</CardTitle></CardHeader>
           <CardContent>
               <div className="overflow-x-auto">
                 <div className="grid grid-cols-[2fr_repeat(17,1fr)] gap-1 pb-2 min-w-[1000px]">
@@ -451,14 +463,13 @@ export default function AdminPage() {
                     ))}
                   </TooltipProvider>
                 </div>
-                {fields.map((field, index) => (
-                  <div key={field.id} className="grid grid-cols-[2fr_repeat(17,1fr)] gap-1 items-center hover:bg-muted/50 rounded-md">
-                      <span className="font-medium text-sm truncate sticky left-0 bg-card py-1">{field.name}</span>
+                {historicalPlayersData.map((player) => (
+                  <div key={player.id} className="grid grid-cols-[2fr_repeat(17,1fr)] gap-1 items-center hover:bg-muted/50 rounded-md">
+                      <span className="font-medium text-sm truncate sticky left-0 bg-card py-1">{player.name}</span>
                        {historicalDataHeaders.map(header => (
-                          <Controller key={`${field.id}-${header.key}`} control={historicalForm.control} name={`users.${index}.${header.key as any}`} render={({ field }) => (
-                                  <Input {...field} type="number" className="w-full text-center h-8 text-xs px-1" onChange={e => field.onChange(e.target.value === '' ? 0 : e.target.valueAsNumber)} value={field.value ?? 0} />
-                              )}
-                          />
+                          <div key={header.key} className="w-full text-center h-8 text-xs px-1 flex items-center justify-center border rounded bg-muted/20">
+                            {(player as any)[header.key] ?? 0}
+                          </div>
                        ))}
                   </div>
                 ))}

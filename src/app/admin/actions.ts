@@ -4,8 +4,6 @@
 import { getAuth } from 'firebase-admin/auth';
 import { initializeApp, getApps, getApp, credential } from 'firebase-admin/app';
 
-export const maxDuration = 60; // Increase timeout to 60 seconds
-
 /**
  * Initializes the Firebase Admin SDK robustly.
  */
