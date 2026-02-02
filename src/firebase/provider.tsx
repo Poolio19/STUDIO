@@ -7,6 +7,7 @@ import { Firestore, getFirestore, enableNetwork } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged, getAuth } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { firebaseConfig } from './config';
+import historicalPlayersData from '@/lib/historical-players.json';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -126,16 +127,28 @@ export const useUser = (): UserHookResult => {
 
 /**
  * A hook that returns the correct document ID for the current user.
- * It handles the special case for 'jim.poole@prempred.com'.
- * @returns The user's document ID (string) or null if not authenticated.
+ * It maps the authenticated user's email to their canonical ID from the historical player data.
+ * @returns The user's canonical document ID (e.g., 'usr_009') or null if not found or not authenticated.
  */
 export const useResolvedUserId = (): string | null => {
     const { user } = useUser();
-    if (!user) return null;
-    if (user.email === 'jim.poole@prempred.com' || user.email === 'jimpoolio@hotmail.com') {
-        return 'usr_009';
+
+    if (!user || !user.email) {
+      return null;
     }
-    return user.uid;
+
+    // This is the source of truth for mapping a logged-in user to their canonical ID.
+    const historicalUser = (historicalPlayersData as any[]).find(
+      (p) => p.email && p.email.toLowerCase() === user.email!.toLowerCase()
+    );
+
+    if (historicalUser && historicalUser.id) {
+        return historicalUser.id;
+    }
+    
+    // Fallback for a user that might exist in Auth but not in our historical data.
+    // In the current "private league" model, this shouldn't happen for valid users.
+    return null;
 };
 
 
