@@ -51,7 +51,7 @@ export async function bulkCreateAuthUsers() {
         uid: player.id,
         email: player.email,
         emailVerified: true,
-        password: 'Password123!', // A secure-enough temporary password
+        password: 'Password', // A temporary password
         displayName: player.name,
         disabled: false,
       });

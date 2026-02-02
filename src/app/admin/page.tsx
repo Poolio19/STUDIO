@@ -737,7 +737,7 @@ export default function AdminPage() {
                           <AlertDialogHeader>
                           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                           <AlertDialogDescription>
-                              This will create Firebase Authentication accounts for all users in `historical-players.json` who do not already have one. It will set their password to a default value (`Password123!`) which they must change. This process is irreversible.
+                              This will create Firebase Authentication accounts for all users in `historical-players.json` who do not already have one. It will set their password to a default value (`Password`) which they must change. This process is irreversible.
                           </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
