@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -313,6 +312,61 @@ export default function ProfilePage() {
     );
   }
 
+  // FORCE PASSWORD CHANGE VIEW
+  if (user?.mustChangePassword) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Card className="w-full max-w-md border-2 border-destructive shadow-lg">
+          <CardHeader className="bg-destructive/10">
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <ShieldAlert className="size-6" />
+              Security Update Required
+            </CardTitle>
+            <CardDescription className="text-destructive-foreground/80">
+              You are currently using a temporary password. For security reasons, you must set a new password before accessing the rest of the application.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <Form {...passwordForm}>
+              <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+                <FormField
+                  control={passwordForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>New Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="New password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={passwordForm.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirm New Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="Confirm new password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full" disabled={passwordForm.formState.isSubmitting}>
+                  {passwordForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Set New Password & Continue
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const topTenCount = (user?.first || 0) + (user?.second || 0) + (user?.third || 0) + (user?.fourth || 0) + (user?.fifth || 0) + (user?.sixth || 0) + (user?.seventh || 0) + (user?.eighth || 0) + (user?.ninth || 0) + (user?.tenth || 0);
 
   const firstPlaceClass = (user?.first ?? 0) > 0 ? "text-yellow-500" : "text-gray-300 dark:text-gray-600";
@@ -326,16 +380,6 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-8">
-      {user?.mustChangePassword && (
-        <Alert variant="destructive">
-          <ShieldAlert className="h-4 w-4" />
-          <AlertTitle>Password Change Required</AlertTitle>
-          <AlertDescription>
-            You are using a temporary password. Please update your password in the Security section below.
-          </AlertDescription>
-        </Alert>
-      )}
-
       <Card>
           <CardContent className="pt-6 flex flex-col lg:flex-row items-center lg:items-start gap-6">
               <div className="flex flex-col items-center text-center lg:items-start lg:text-left gap-4">

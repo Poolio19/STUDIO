@@ -4,13 +4,13 @@ import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from '@/compon
 import { SidebarNav } from './sidebar-nav';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import { useUser, useFirebaseConfigStatus, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
+import { useUser, useFirebaseConfigStatus, useFirestore, useMemoFirebase, useCollection, useDoc, useResolvedUserId } from '@/firebase';
 import { Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
-import { usePathname } from 'next/navigation';
-import React, { useMemo } from 'react';
-import { collection } from 'firebase/firestore';
-import type { Match } from '@/lib/types';
+import { usePathname, useRouter } from 'next/navigation';
+import React, { useMemo, useEffect } from 'react';
+import { collection, doc } from 'firebase/firestore';
+import type { Match, User } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -51,11 +51,27 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
   const { isConfigured } = useFirebaseConfigStatus();
   const pathname = usePathname();
+  const router = useRouter();
   const firestore = useFirestore();
+  const resolvedUserId = useResolvedUserId();
   const { toast } = useToast();
   const [isRecalculating, setIsRecalculating] = React.useState(false);
 
+  const userDocRef = useMemoFirebase(() => {
+    if (!firestore || !resolvedUserId) return null;
+    return doc(firestore, 'users', resolvedUserId);
+  }, [firestore, resolvedUserId]);
+
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<User>(userDocRef);
+
   const isAdmin = user?.email === 'jim.poole@prempred.com';
+  const mustChangePassword = userProfile?.mustChangePassword === true;
+
+  useEffect(() => {
+    if (mustChangePassword && pathname !== '/profile') {
+      router.push('/profile');
+    }
+  }, [mustChangePassword, pathname, router]);
 
   const matchesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'matches') : null, [firestore]);
   const { data: matchesData } = useCollection<Match>(matchesQuery);
@@ -137,7 +153,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   // While checking auth, show a global loading screen.
-  if (isUserLoading) {
+  if (isUserLoading || (user && isProfileLoading)) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -148,18 +164,20 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   
   return (
     <SidebarProvider>
-      <Sidebar>
-        <SidebarNav />
-      </Sidebar>
+      {!mustChangePassword && (
+        <Sidebar>
+          <SidebarNav />
+        </Sidebar>
+      )}
       <SidebarInset className="flex flex-col">
         <header className={cn("flex h-auto min-h-14 items-center gap-4 border-b bg-card px-6 py-3", { "hidden": isMobile })}>
-          <SidebarTrigger />
+          {!mustChangePassword && <SidebarTrigger />}
           <div>
             <h1 className="text-lg font-semibold">{title}</h1>
             {description && <p className="text-sm text-muted-foreground">{description}</p>}
           </div>
           <div className="ml-auto">
-            {isAdmin && (
+            {isAdmin && !mustChangePassword && (
               <AlertDialog>
                   <AlertDialogTrigger asChild>
                       <Button variant="outline" size="sm" disabled={isRecalculating}>
