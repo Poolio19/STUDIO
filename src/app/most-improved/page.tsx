@@ -141,9 +141,6 @@ export default function MostImprovedPage() {
         const isPastPeriod = period.endWeek <= currentWeek && !isCurrentPeriod;
         
         // Show TBC until the 2nd match week of the month has been played (results in).
-        // Since improvement is (current - startWeek), after the 1st match week (currentWeek === startWeek + 1),
-        // everyone is on +0 or single-week scores. 
-        // We show TBC if only 0 or 1 week of data exists for the current month.
         const isTooEarly = isCurrentPeriod && currentWeek <= period.startWeek + 1;
 
         let winners: (User & { improvement: number })[] = [];

@@ -73,7 +73,8 @@ export default function LeaderboardPage() {
 
   const sortedUsers = useMemo(() => {
     if (!usersData || !predictionsData) return [];
-    const activeUserIds = new Set(predictionsData.map(p => p.userId));
+    // Only show players who have a prediction for the current season
+    const activeUserIds = new Set(predictionsData.map(p => p.userId || p.id));
     return [...usersData]
         .filter(u => u.name && activeUserIds.has(u.id))
         .sort((a, b) => a.rank - b.rank);
@@ -179,7 +180,6 @@ export default function LeaderboardPage() {
     }
 
     // Rank-based colors take precedence for non-pro players
-    // This now correctly uses the rank property which handles ties after recalculation
     switch (user.rank) {
         case 1: return 'bg-red-800 text-yellow-300 hover:bg-red-800/90 dark:bg-red-900 dark:text-yellow-300 dark:hover:bg-red-900/90'; // Crimson with yellow font
         case 2: return 'bg-red-600 text-white hover:bg-red-600/90 dark:bg-red-700 dark:hover:bg-red-700/90'; // Red
@@ -192,24 +192,19 @@ export default function LeaderboardPage() {
         case 9: return 'bg-cyan-400 text-cyan-900 hover:bg-cyan-400/90 dark:bg-cyan-500/50 dark:text-white'; // Cyan
         case 10: return 'bg-teal-400 text-teal-900 hover:bg-teal-400/90 dark:bg-teal-600/50 dark:text-white'; // Deep cyan/teal
         default:
-            // Fall through if not in top 10
             break;
     }
 
-    // "Beating The Pros" condition
-    // This includes players who are tied with the best pro player
     if (user.rank <= bestProRank) {
         return 'bg-blue-300 text-blue-900 hover:bg-blue-300/90 dark:bg-blue-800/40 dark:text-blue-200'; // Light Blue
     }
     
-    // Winnings condition (for players outside the top 10 and not beating pros)
     const totalWinnings = localTotalWinningsMap.get(user.id) || 0;
     if (totalWinnings > 0) {
         return 'bg-blue-100 text-blue-900 hover:bg-blue-100/90 dark:bg-blue-900/30 dark:text-blue-300'; // Very Pale Blue
     }
 
-    // Default for everyone else
-    return ''; // white/transparent
+    return '';
 };
 
   return (
