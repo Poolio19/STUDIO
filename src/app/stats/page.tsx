@@ -13,7 +13,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { getAvatarUrl } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
-import type { User, Team, PlayerTeamScore, CurrentStanding } from '@/lib/types';
+import type { User, Team, PlayerTeamScore, CurrentStanding, Prediction } from '@/lib/types';
 import { useCollection, useFirestore, useMemoFirebase, useResolvedUserId } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
@@ -27,18 +27,24 @@ export default function StatsPage() {
   const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
   const scoresQuery = useMemoFirebase(() => firestore ? collection(firestore, 'playerTeamScores') : null, [firestore]);
   const standingsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'standings'), orderBy('rank', 'asc')) : null, [firestore]);
+  const predictionsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'predictions') : null, [firestore]);
   
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
   const { data: playerTeamScores, isLoading: scoresLoading } = useCollection<PlayerTeamScore>(scoresQuery);
   const { data: standings, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsQuery);
+  const { data: predictions, isLoading: predictionsLoading } = useCollection<Prediction>(predictionsQuery);
 
-  const isLoading = usersLoading || teamsLoading || scoresLoading || standingsLoading;
+  const isLoading = usersLoading || teamsLoading || scoresLoading || standingsLoading || predictionsLoading;
   
   const sortedUsers = useMemo(() => {
-    if (!users) return [];
-    return [...users].sort((a, b) => a.rank - b.rank);
-  }, [users]);
+    if (!users || !predictions) return [];
+    // Only show players who have a prediction for the current season
+    const activeUserIds = new Set(predictions.map(p => p.userId || p.id));
+    return [...users]
+      .filter(u => u.name && activeUserIds.has(u.id))
+      .sort((a, b) => a.rank - b.rank);
+  }, [users, predictions]);
   
   const sortedTeams = useMemo(() => {
     if (!teams || !standings) return [];
