@@ -11,11 +11,11 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Users, ShieldAlert } from 'lucide-react';
+import { Loader2, Users, ShieldAlert, Trash2 } from 'lucide-react';
 import { useFirestore, useUser } from '@/firebase';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
-import { collection, doc, writeBatch, getDocs, query } from 'firebase/firestore';
+import { collection, doc, writeBatch, getDocs, query, deleteDoc } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -273,9 +273,28 @@ export default function AdminPage() {
   const handleImportAuthUsers = async () => {
     if (!firestore) return;
     setIsImportingUsers(true);
-    toast({ title: 'Starting Auth & Firestore Sync...', description: 'Syncing in chunks to prevent timeouts.' });
+    toast({ title: 'Starting Strict Identity Sync...', description: 'Syncing IDs and cleaning up duplicates.' });
     
     try {
+        // Phase 1: Cleanup Forked Profiles
+        toast({ title: 'Phase 1: Cleaning up duplicates...' });
+        const allUsersSnap = await getDocs(collection(firestore, 'users'));
+        const historicalEmails = new Set(historicalPlayersData.map(p => p.email.toLowerCase()));
+        const canonicalIds = new Set(historicalPlayersData.map(p => p.id));
+        
+        let deletedCount = 0;
+        for (const userDoc of allUsersSnap.docs) {
+            const data = userDoc.data();
+            const email = data.email?.toLowerCase();
+            // If this doc ID is not canonical (usr_XXX) but matches a known email, delete the fork
+            if (!canonicalIds.has(userDoc.id) && historicalEmails.has(email)) {
+                await deleteDoc(userDoc.ref);
+                deletedCount++;
+            }
+        }
+        if (deletedCount > 0) toast({ title: `Removed ${deletedCount} duplicate profiles.` });
+
+        // Phase 2: Sync Authentication in chunks
         const authChunks = [];
         const authChunkSize = 50;
         for (let i = 0; i < historicalPlayersData.length; i += authChunkSize) {
@@ -294,6 +313,7 @@ export default function AdminPage() {
             chunkIndex++;
         }
         
+        // Phase 3: Restore Stats to canonical documents
         const dbChunks = [];
         const dbChunkSize = 100;
         for (let i = 0; i < historicalPlayersData.length; i += dbChunkSize) {
@@ -318,11 +338,11 @@ export default function AdminPage() {
         }
 
         toast({
-            title: 'Bulk Sync Complete!',
-            description: `Auth: Created ${totalCreated}, Updated ${totalUpdated}. All statistics restored.`,
+            title: 'Strict Identity Sync Complete!',
+            description: `Auth: ${totalCreated} new, ${totalUpdated} fixed. Historical stats restored.`,
         });
     } catch (error: any) {
-        toast({ variant: 'destructive', title: 'Bulk Sync Failed', description: error.message });
+        toast({ variant: 'destructive', title: 'Sync Failed', description: error.message });
     } finally {
         setIsImportingUsers(false);
     }
@@ -440,7 +460,7 @@ export default function AdminPage() {
                           <Button variant="outline" className="w-full" disabled={isImportingUsers}>{isImportingUsers ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Users className="mr-2 h-4 w-4" />} Bulk Sync & Force Reset</Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
-                          <AlertDialogHeader><AlertDialogTitle>Strict Identity Sync</AlertDialogTitle><AlertDialogDescription>This resets passwords to `Password` and forces accounts to use canonical UIDs (usr_XXX). This will be processed in chunks to prevent timeouts.</AlertDialogDescription></AlertDialogHeader>
+                          <AlertDialogHeader><AlertDialogTitle>Strict Identity Sync</AlertDialogTitle><AlertDialogDescription>Resets passwords to `Password`, forces canonical UIDs (usr_XXX), and cleans up duplicate profile documents in Firestore.</AlertDialogDescription></AlertDialogHeader>
                           <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction onClick={handleImportAuthUsers}>Sync & Reset Now</AlertDialogAction>

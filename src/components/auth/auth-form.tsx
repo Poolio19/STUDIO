@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -56,10 +55,22 @@ export function AuthForm() {
     const docSnap = await getDoc(userDocRef);
     if (docSnap.exists()) return;
 
-    // 2. If not, find historical record by email
+    // 2. Identify if this email belongs to a historical player
     const historicalUser = historicalPlayersData.find(p => p.email.toLowerCase() === email.toLowerCase());
+    
+    // 3. Prevent profile "forking": 
+    // If the UID is random (e.g. not usr_XXX) but they are a historical player,
+    // we should NOT create a new document at the random UID. 
+    // The Bulk Sync tool must handle the mapping to the canonical UID.
+    const isCanonicalUid = firebaseAuthUid.startsWith('usr_');
+    
+    if (historicalUser && !isCanonicalUid) {
+        console.warn(`User ${email} logged in with random UID ${firebaseAuthUid}. Canonical ID is ${historicalUser.id}. Account sync required.`);
+        return;
+    }
+
     if (!historicalUser) {
-        // If not found, create a placeholder profile at the current UID
+        // If not a historical player, create a placeholder profile at the current UID
         const profileData: Omit<User, 'id'> = {
             name: email.split('@')[0],
             nickname: '', initials: '', email: email, avatar: '1',
@@ -68,45 +79,7 @@ export function AuthForm() {
             joinDate: new Date().toISOString(), mustChangePassword: true,
         };
         setDocumentNonBlocking(userDocRef, profileData);
-        return;
     }
-    
-    // 3. Document UID didn't exist, but historical email matched. 
-    // This happens if the user was NOT bulk synced. We link the historical stats to this UID.
-    const { id, ...historicalData } = historicalUser;
-    const profileData: Omit<User, 'id'> = {
-      name: historicalUser.name,
-      nickname: historicalUser.nickname || '',
-      initials: (historicalData as any).Init || (historicalData as any).initials || '',
-      email: email,
-      avatar: String(Math.floor(Math.random() * 49) + 1),
-      score: 0, rank: 0, previousRank: 0, previousScore: 0, maxRank: 0,
-      minRank: 0, maxScore: 0, minScore: 0, rankChange: 0, scoreChange: 0,
-      isPro: historicalData.isPro ?? false,
-      joinDate: new Date().toISOString(),
-      country: historicalData.country || '',
-      favouriteTeam: historicalData.favouriteTeam || '',
-      phoneNumber: historicalData.phoneNumber || '',
-      seasonsPlayed: historicalData.seasonsPlayed || 0,
-      first: historicalData.first || 0,
-      second: historicalData.second || 0,
-      third: historicalData.third || 0,
-      fourth: historicalData.fourth || 0,
-      fifth: historicalData.fifth || 0,
-      sixth: historicalData.sixth || 0,
-      seventh: historicalData.seventh || 0,
-      eighth: historicalData.eighth || 0,
-      ninth: historicalData.ninth || 0,
-      tenth: historicalData.tenth || 0,
-      mimoM: historicalData.mimoM || 0,
-      ruMimoM: historicalData.ruMimoM || 0,
-      joMimoM: historicalData.joMimoM || 0,
-      joRuMimoM: historicalData.joRuMimoM || 0,
-      xmasNo1: historicalData.xmasNo1 || 0,
-      cashWinnings: historicalData.cashWinnings || 0,
-      mustChangePassword: true,
-    };
-    setDocumentNonBlocking(userDocRef, profileData);
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {

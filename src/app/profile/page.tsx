@@ -1,10 +1,9 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Mail, Upload, Trophy, Award, ShieldCheck, Loader2, Users, Medal, DollarSign, Star, ShieldAlert } from 'lucide-react';
+import { Mail, Upload, Trophy, Award, ShieldCheck, Loader2, Users, Medal, DollarSign, Star, ShieldAlert, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -46,7 +45,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser, useResolvedUserId } from '@/firebase';
+import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser, useResolvedUserId, useAuth } from '@/firebase';
 import { collection, doc, query, where, getDocs } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { AuthForm } from '@/components/auth/auth-form';
@@ -85,6 +84,7 @@ type PasswordFormValues = z.infer<typeof passwordFormSchema>;
 
 export default function ProfilePage() {
   const { toast } = useToast();
+  const auth = useAuth();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
   const { user: authUser, isUserLoading: isAuthUserLoading } = useUser();
@@ -103,7 +103,6 @@ export default function ProfilePage() {
 
   const allUserHistoriesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'userHistories') : null, [firestore]);
   const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
-  const mimoMQuery = useMemoFirebase(() => firestore && authUser ? collection(firestore, 'monthlyMimoM') : null, [firestore, authUser]);
 
   const { data: user, isLoading: userLoading } = useDoc<User>(userDocRef);
   const { data: userHistory, isLoading: historyLoading } = useDoc<UserHistory>(userHistoryDocRef);
@@ -176,7 +175,7 @@ export default function ProfilePage() {
       toast({
         variant: 'destructive',
         title: 'Name already taken',
-        description: `The name "${data.name}" is already in use.`,
+        description: `The name "${data.name}" is already in use by another account. Please sign out and sign in again to ensure your account is synchronized.`,
       });
       return;
     }
@@ -282,7 +281,20 @@ export default function ProfilePage() {
     );
   }
 
-  if (!user && !isLoading) return <div className="flex h-full w-full items-center justify-center"><p className="text-destructive">Could not load profile. UID: {resolvedUserId}</p></div>;
+  if (!user && !isLoading) {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-4 p-8">
+        <ShieldAlert className="size-16 text-destructive" />
+        <div className="text-center space-y-2">
+          <p className="text-xl font-bold">Profile Not Found</p>
+          <p className="text-muted-foreground">Your account may need to be synchronized with the historical database.</p>
+        </div>
+        <Button variant="outline" onClick={() => auth?.signOut()}>
+          <LogOut className="mr-2 size-4" /> Sign Out & Reconnect
+        </Button>
+      </div>
+    );
+  }
 
   const topTenCount = (user?.first || 0) + (user?.second || 0) + (user?.third || 0) + (user?.fourth || 0) + (user?.fifth || 0) + (user?.sixth || 0) + (user?.seventh || 0) + (user?.eighth || 0) + (user?.ninth || 0) + (user?.tenth || 0);
 
