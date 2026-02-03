@@ -1,8 +1,7 @@
-
 'use server';
 
 import { getAuth } from 'firebase-admin/auth';
-import { initializeApp, getApps, getApp, credential } from 'firebase-admin/app';
+import { initializeApp, getApps, getApp } from 'firebase-admin/app';
 
 /**
  * Initializes the Firebase Admin SDK robustly.
@@ -11,9 +10,9 @@ function getAdminAuth() {
   let app;
   if (getApps().length === 0) {
     try {
-      app = initializeApp({
-        credential: credential.applicationDefault(),
-      });
+      // In Firebase App Hosting/Functions, initializeApp() without arguments 
+      // automatically uses the environment's service account.
+      app = initializeApp();
     } catch (e: any) {
       console.error("Firebase Admin initialization error:", e);
       throw new Error(`Admin SDK init failed: ${e.message}`);
@@ -56,7 +55,7 @@ export async function emergencyAdminReset() {
         // 2. UID not found, check if email exists at a different UID
         try {
           const userByEmail = await auth.getUserByEmail(adminEmail);
-          // Delete the "forked" account with the random UID
+          // CRITICAL: email found but UID is wrong. Delete fork and recreate.
           await auth.deleteUser(userByEmail.uid);
         } catch (emailError) {}
 

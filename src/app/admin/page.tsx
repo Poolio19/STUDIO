@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -41,7 +40,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/select";
+} from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
 
 import historicalPlayersData from '@/lib/historical-players.json';
