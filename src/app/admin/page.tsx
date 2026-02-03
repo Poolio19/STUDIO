@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -40,7 +41,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/select";
 import { Input } from '@/components/ui/input';
 
 import historicalPlayersData from '@/lib/historical-players.json';
@@ -69,33 +70,6 @@ const scoresFormSchema = z.object({
 });
 
 type ScoresFormValues = z.infer<typeof scoresFormSchema>;
-
-const historicalDataFormSchema = z.object({
-  users: z.array(z.object({
-    id: z.string(),
-    name: z.string(),
-    seasonsPlayed: z.coerce.number().int().min(0),
-    first: z.coerce.number().int().min(0),
-    second: z.coerce.number().int().min(0),
-    third: z.coerce.number().int().min(0),
-    fourth: z.coerce.number().int().min(0),
-    fifth: z.coerce.number().int().min(0),
-    sixth: z.coerce.number().int().min(0),
-    seventh: z.coerce.number().int().min(0),
-    eighth: z.coerce.number().int().min(0),
-    ninth: z.coerce.number().int().min(0),
-    tenth: z.coerce.number().int().min(0),
-    mimoM: z.coerce.number().int().min(0),
-    ruMimoM: z.coerce.number().int().min(0),
-    joMimoM: z.coerce.number().int().min(0),
-    joRuMimoM: z.coerce.number().int().min(0),
-    xmasNo1: z.coerce.number().int().min(0),
-    cashWinnings: z.coerce.number().min(0),
-    phoneNumber: z.string().optional(),
-  }))
-});
-type HistoricalDataFormValues = z.infer<typeof historicalDataFormSchema>;
-
 
 export default function AdminPage() {
   const { user, isUserLoading } = useUser();
@@ -161,34 +135,6 @@ export default function AdminPage() {
   const scoresForm = useForm<ScoresFormValues>({
     resolver: zodResolver(scoresFormSchema),
     defaultValues: { week: 1, results: [] },
-  });
-
-  const historicalForm = useForm<HistoricalDataFormValues>({
-    resolver: zodResolver(historicalDataFormSchema),
-    defaultValues: {
-      users: historicalPlayersData.map(u => ({
-        id: u.id,
-        name: u.name,
-        seasonsPlayed: u.seasonsPlayed || 0,
-        first: u.first || 0,
-        second: u.second || 0,
-        third: u.third || 0,
-        fourth: u.fourth || 0,
-        fifth: u.fifth || 0,
-        sixth: u.sixth || 0,
-        seventh: u.seventh || 0,
-        eighth: u.eighth || 0,
-        ninth: u.ninth || 0,
-        tenth: u.tenth || 0,
-        mimoM: u.mimoM || 0,
-        ruMimoM: u.ruMimoM || 0,
-        joMimoM: u.joMimoM || 0,
-        joRuMimoM: u.joRuMimoM || 0,
-        xmasNo1: u.xmasNo1 || 0,
-        cashWinnings: u.cashWinnings || 0,
-        phoneNumber: u.phoneNumber || ''
-      })),
-    },
   });
 
   React.useEffect(() => {
@@ -286,7 +232,7 @@ export default function AdminPage() {
         for (const userDoc of allUsersSnap.docs) {
             const data = userDoc.data();
             const email = data.email?.toLowerCase();
-            // If this doc ID is not canonical (usr_XXX) but matches a known email, delete the fork
+            // If this doc ID is not canonical but matches a historical email, delete the duplicate fork
             if (!canonicalIds.has(userDoc.id) && historicalEmails.has(email)) {
                 await deleteDoc(userDoc.ref);
                 deletedCount++;

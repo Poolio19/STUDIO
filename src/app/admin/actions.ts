@@ -27,6 +27,7 @@ function getAdminAuth() {
 /**
  * Force-resets the primary admin account to ensure access.
  * Sets email to jim.poole@prempred.com, UID to usr_009, and password to 'Password'.
+ * Handles existing account cleanup if UIDs mismatch.
  */
 export async function emergencyAdminReset() {
   let auth;
@@ -71,7 +72,7 @@ export async function emergencyAdminReset() {
         throw uidError;
       }
     }
-    return { success: true, message: 'Admin account has been reset to default credentials.' };
+    return { success: true, message: 'Admin account has been reset to jim.poole@prempred.com / Password' };
   } catch (error: any) {
     console.error("Emergency reset error:", error);
     return { success: false, message: error.message };
@@ -81,7 +82,6 @@ export async function emergencyAdminReset() {
 /**
  * Aggressively sets every player's password to "Password" and verifies account existence.
  * If a UID mismatch is detected, it recreates the account to ensure canonical IDs are used.
- * Processes a provided chunk of players to prevent server timeouts.
  */
 export async function bulkCreateAuthUsersChunk(players: any[]) {
   let auth;
@@ -115,7 +115,7 @@ export async function bulkCreateAuthUsersChunk(players: any[]) {
             await auth.updateUser(uid, { password });
             updatedCount++;
         } else {
-            // If email differs, update both (this ensures canonical link)
+            // If email differs, update both
             await auth.updateUser(uid, { email, password });
             updatedCount++;
         }
@@ -125,8 +125,7 @@ export async function bulkCreateAuthUsersChunk(players: any[]) {
             // 2. UID not found, check if email exists with a DIFFERENT UID
             const userByEmail = await auth.getUserByEmail(email);
             
-            // CRITICAL: We found the email but it has a non-canonical UID.
-            // We must delete the random UID and recreate with the canonical usr_XXX ID.
+            // CRITICAL: email found but UID is wrong. Delete fork and recreate.
             await auth.deleteUser(userByEmail.uid);
             await auth.createUser({
                 uid: uid,

@@ -57,14 +57,17 @@ export function AuthForm() {
     const docSnap = await getDoc(userDocRef);
     if (docSnap.exists()) return;
 
+    // Check if this is a historical player logging in for the first time
     const historicalUser = historicalPlayersData.find(p => p.email.toLowerCase() === email.toLowerCase());
     const isCanonicalUid = firebaseAuthUid.startsWith('usr_');
     
+    // If they are historical but UID is random, we stop here and wait for sync
     if (historicalUser && !isCanonicalUid) {
         console.warn(`User ${email} logged in with random UID ${firebaseAuthUid}. Account sync required.`);
         return;
     }
 
+    // Only create "new" profiles for non-historical users (e.g. fresh testers)
     if (!historicalUser) {
         const profileData: Omit<User, 'id'> = {
             name: email.split('@')[0],
@@ -86,7 +89,9 @@ export function AuthForm() {
         await createInitialUserProfile(userCredential.user.uid, values.email);
         toast({ title: 'Signed in successfully!' });
     } catch (error: any) {
-        setAuthError("Invalid credentials. Please contact the administrator.");
+        let message = "Invalid credentials. Please contact the administrator.";
+        if (error.code === 'auth/user-not-found') message = "Account not found. Run Bulk Sync.";
+        setAuthError(message);
     } finally {
         setIsLoading(false);
     }
