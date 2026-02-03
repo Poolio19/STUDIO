@@ -159,10 +159,13 @@ export default function ProfilePage() {
       return;
     }
 
+    const currentNameNormalized = (user?.name || '').trim().toLowerCase();
+    const newNameNormalized = data.name.trim().toLowerCase();
+
     // ONLY check for duplicate names if the name has actually changed
-    if (data.name !== user?.name) {
+    if (newNameNormalized !== currentNameNormalized) {
         const usersRef = collection(firestore, 'users');
-        const q = query(usersRef, where("name", "==", data.name));
+        const q = query(usersRef, where("name", "==", data.name.trim()));
         const querySnapshot = await getDocs(q);
 
         let isNameTaken = false;
@@ -176,18 +179,18 @@ export default function ProfilePage() {
           toast({
             variant: 'destructive',
             title: 'Name already taken',
-            description: `The name "${data.name}" is already in use by another account. Please run Bulk Sync in Admin to resolve identity conflicts.`,
+            description: `The name "${data.name}" is already in use by another account. Please ensure you have run Bulk Sync in Admin.`,
           });
           return;
         }
     }
 
     const updatedData = {
-        name: data.name,
-        nickname: data.nickname,
-        initials: data.initials,
+        name: data.name.trim(),
+        nickname: data.nickname?.trim(),
+        initials: data.initials?.trim()?.toUpperCase(),
         favouriteTeam: data.favouriteTeam,
-        phoneNumber: data.phoneNumber,
+        phoneNumber: data.phoneNumber?.trim(),
     };
 
     setDocumentNonBlocking(userDocRef, updatedData, { merge: true });
@@ -219,6 +222,7 @@ export default function ProfilePage() {
       console.error("Password update error:", error);
       let description = "Update failed. Re-authentication may be required.";
       if (error.code === 'auth/requires-recent-login') description = "Please sign out and sign back in to change your password.";
+      if (error.code === 'auth/user-token-expired') description = "Your session has expired. Please sign out and sign back in.";
       toast({ variant: 'destructive', title: 'Update Failed', description });
     }
   }
@@ -267,7 +271,7 @@ export default function ProfilePage() {
         <Card className="w-full max-w-md border-2 border-destructive shadow-lg">
           <CardHeader className="bg-destructive/10">
             <CardTitle className="flex items-center gap-2 text-destructive"><ShieldAlert className="size-6" />Security Update Required</CardTitle>
-            <CardDescription className="text-destructive-foreground/80">Set a new password to access the application.</CardDescription>
+            <CardDescription className="text-destructive-foreground/80">Set a new password to access the application. If you see an error, please sign out and back in first.</CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
             <Form {...passwordForm}>
@@ -277,6 +281,11 @@ export default function ProfilePage() {
                 <Button type="submit" className="w-full" disabled={passwordForm.formState.isSubmitting}>{passwordForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Set Password & Continue</Button>
               </form>
             </Form>
+            <div className="mt-6 pt-4 border-t">
+                <Button variant="outline" className="w-full" onClick={() => auth?.signOut()}>
+                    <LogOut className="mr-2 size-4" /> Sign Out & Re-authenticate
+                </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -391,7 +400,7 @@ export default function ProfilePage() {
                 <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
                   <FormField control={passwordForm.control} name="password" render={({ field }) => (<FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
                   <FormField control={passwordForm.control} name="confirmPassword" render={({ field }) => (<FormItem><FormLabel>Confirm Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                  <Button type="submit" disabled={passwordForm.formState.isSubmitting}>{passwordForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Update Password</Button>
+                  <Button type="submit" className="w-full" disabled={passwordForm.formState.isSubmitting}>{passwordForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Update Password</Button>
                 </form>
               </Form>
             </CardContent>
