@@ -71,7 +71,7 @@ export async function emergencyAdminReset() {
         throw uidError;
       }
     }
-    return { success: true, message: 'Admin account has been reset to jim.poole@prempred.com / Password' };
+    return { success: true, message: 'Admin account reset to jim.poole@prempred.com / Password' };
   } catch (error: any) {
     console.error("Emergency reset error:", error);
     return { success: false, message: error.message };
@@ -109,15 +109,13 @@ export async function bulkCreateAuthUsersChunk(players: any[]) {
         // 1. Try to fetch user by UID
         const userByUid = await auth.getUser(uid);
         
-        // If email matches, just update password
-        if (userByUid.email?.toLowerCase() === email) {
-            await auth.updateUser(uid, { password });
-            updatedCount++;
-        } else {
-            // If email differs, update both
-            await auth.updateUser(uid, { email, password });
-            updatedCount++;
-        }
+        // Update user to ensure email matches and password is reset
+        await auth.updateUser(uid, { 
+            email, 
+            password,
+            emailVerified: true 
+        });
+        updatedCount++;
       } catch (uidError: any) {
         if (uidError.code === 'auth/user-not-found') {
           try {

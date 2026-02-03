@@ -179,7 +179,7 @@ export default function ProfilePage() {
           toast({
             variant: 'destructive',
             title: 'Name already taken',
-            description: `The name "${data.name}" is already in use by another account. Please ensure you have run Bulk Sync in Admin.`,
+            description: `The name "${data.name}" is already in use by another account.`,
           });
           return;
         }
@@ -215,13 +215,14 @@ export default function ProfilePage() {
     if (!authUser || !userDocRef) return;
     try {
       await updatePassword(authUser, data.password);
+      // Immediately clear the flag in Firestore
       setDocumentNonBlocking(userDocRef, { mustChangePassword: false }, { merge: true });
-      toast({ title: 'Password Updated!' });
+      toast({ title: 'Password Updated!', description: "Your security update is complete." });
       passwordForm.reset();
     } catch (error: any) {
       console.error("Password update error:", error);
-      let description = "Update failed. Re-authentication may be required.";
-      if (error.code === 'auth/requires-recent-login') description = "Please sign out and sign back in to change your password.";
+      let description = "Update failed. Please sign out and back in to refresh your session.";
+      if (error.code === 'auth/requires-recent-login') description = "For security, you must sign out and sign back in before changing your password.";
       if (error.code === 'auth/user-token-expired') description = "Your session has expired. Please sign out and sign back in.";
       toast({ variant: 'destructive', title: 'Update Failed', description });
     }
@@ -267,21 +268,25 @@ export default function ProfilePage() {
 
   if (user?.mustChangePassword) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex items-center justify-center min-h-[60vh] p-4">
         <Card className="w-full max-w-md border-2 border-destructive shadow-lg">
-          <CardHeader className="bg-destructive/10">
-            <CardTitle className="flex items-center gap-2 text-destructive"><ShieldAlert className="size-6" />Security Update Required</CardTitle>
-            <CardDescription className="text-destructive-foreground/80">Set a new password to access the application. If you see an error, please sign out and back in first.</CardDescription>
+          <CardHeader className="bg-destructive/10 text-center">
+            <div className="mx-auto bg-destructive/20 p-3 rounded-full w-fit mb-2">
+                <ShieldAlert className="size-8 text-destructive" />
+            </div>
+            <CardTitle className="text-destructive">Security Update Required</CardTitle>
+            <CardDescription className="text-destructive-foreground/80">You are using a temporary password. Please set a permanent password to access the league.</CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
             <Form {...passwordForm}>
               <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
-                <FormField control={passwordForm.control} name="password" render={({ field }) => (<FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={passwordForm.control} name="confirmPassword" render={({ field }) => (<FormItem><FormLabel>Confirm Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <Button type="submit" className="w-full" disabled={passwordForm.formState.isSubmitting}>{passwordForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Set Password & Continue</Button>
+                <FormField control={passwordForm.control} name="password" render={({ field }) => (<FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" placeholder="At least 6 characters" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={passwordForm.control} name="confirmPassword" render={({ field }) => (<FormItem><FormLabel>Confirm Password</FormLabel><FormControl><Input type="password" placeholder="Repeat new password" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <Button type="submit" className="w-full" disabled={passwordForm.formState.isSubmitting}>{passwordForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Update Password & Continue</Button>
               </form>
             </Form>
-            <div className="mt-6 pt-4 border-t">
+            <div className="mt-6 pt-4 border-t text-center space-y-4">
+                <p className="text-xs text-muted-foreground">If the update fails, your session may have expired.</p>
                 <Button variant="outline" className="w-full" onClick={() => auth?.signOut()}>
                     <LogOut className="mr-2 size-4" /> Sign Out & Re-authenticate
                 </Button>
@@ -297,11 +302,11 @@ export default function ProfilePage() {
       <div className="flex h-full w-full flex-col items-center justify-center gap-4 p-8">
         <ShieldAlert className="size-16 text-destructive" />
         <div className="text-center space-y-2">
-          <p className="text-xl font-bold">Profile Not Found</p>
-          <p className="text-muted-foreground">Your account may need to be synchronized with the historical database.</p>
+          <p className="text-xl font-bold">Profile Sync Required</p>
+          <p className="text-muted-foreground">Your account needs to be synchronized with our historical database.</p>
         </div>
         <Button variant="outline" onClick={() => auth?.signOut()}>
-          <LogOut className="mr-2 size-4" /> Sign Out & Reconnect
+          <LogOut className="mr-2 size-4" /> Sign Out & Refresh
         </Button>
       </div>
     );
@@ -314,26 +319,28 @@ export default function ProfilePage() {
       <Card>
           <CardContent className="pt-6 flex flex-col lg:flex-row items-center lg:items-start gap-6">
               <div className="flex flex-col items-center text-center lg:items-start lg:text-left gap-4">
-                  <Avatar className="h-24 w-24 border-4 border-primary">
+                  <Avatar className="h-24 w-24 border-4 border-primary shadow-md">
                       <AvatarImage src={avatarPreview || getAvatarUrl(user?.avatar)} alt={user?.name} />
-                      <AvatarFallback>{(user?.name || '?').charAt(0)}</AvatarFallback>
+                      <AvatarFallback className="text-2xl">{(user?.name || '?').charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div>
                       <h2 className="text-2xl font-bold">{user?.name}</h2>
-                      {user?.nickname && <p className="text-lg text-muted-foreground">"{user.nickname}"</p>}
-                      <p className="text-sm text-muted-foreground">Seasons Played: {user?.seasonsPlayed || 0}</p>
-                      <p className="text-sm text-muted-foreground">All Time Winnings: £{(user?.cashWinnings || 0).toFixed(2)}</p>
+                      {user?.nickname && <p className="text-lg text-muted-foreground italic">"{user.nickname}"</p>}
+                      <div className="mt-2 space-y-1">
+                        <p className="text-sm text-muted-foreground flex items-center gap-2"><Trophy className="size-4" /> Seasons Played: {user?.seasonsPlayed || 0}</p>
+                        <p className="text-sm text-muted-foreground flex items-center gap-2"><DollarSign className="size-4" /> All Time Winnings: £{(user?.cashWinnings || 0).toFixed(2)}</p>
+                      </div>
                   </div>
               </div>
               <Separator orientation="vertical" className="h-auto hidden lg:block" />
               <Separator className="w-full lg:hidden" />
               <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 flex-1">
                   <div>
-                      <h3 className="text-lg font-semibold mb-2 text-center">Season Stats</h3>
-                      <div className="grid grid-cols-4 gap-x-2 text-center text-sm px-2">
+                      <h3 className="text-lg font-semibold mb-2 text-center flex items-center justify-center gap-2"><ShieldCheck className="size-5 text-primary" /> Season Stats</h3>
+                      <div className="grid grid-cols-4 gap-x-2 text-center text-sm px-2 bg-muted/20 p-4 rounded-lg">
                           <div /><div className="font-medium text-muted-foreground">High</div><div className="font-medium text-muted-foreground">Low</div><div className="font-medium text-muted-foreground">Current</div>
-                          <div className="font-medium text-muted-foreground text-left">Pos</div><div className="font-bold">{user?.minRank}</div><div className="font-bold">{user?.maxRank}</div><div className="font-bold">{user?.rank}</div>
-                          <div className="font-medium text-muted-foreground text-left">Pts</div><div className="font-bold">{user?.maxScore}</div><div className="font-bold">{user?.minScore}</div><div className="font-bold">{user?.score}</div>
+                          <div className="font-medium text-muted-foreground text-left">Pos</div><div className="font-bold text-green-600">{user?.minRank || '-'}</div><div className="font-bold text-red-600">{user?.maxRank || '-'}</div><div className="font-bold">{user?.rank || '-'}</div>
+                          <div className="font-medium text-muted-foreground text-left">Pts</div><div className="font-bold text-green-600">{user?.maxScore || '-'}</div><div className="font-bold text-red-600">{user?.minScore || '-'}</div><div className="font-bold">{user?.score || '-'}</div>
                       </div>
                   </div>
                   <div>
