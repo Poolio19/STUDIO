@@ -25,6 +25,60 @@ function getAdminAuth() {
 }
 
 /**
+ * Force-resets the primary admin account to ensure access.
+ * Sets email to jim.poole@prempred.com, UID to usr_009, and password to 'Password'.
+ */
+export async function emergencyAdminReset() {
+  let auth;
+  try {
+    auth = getAdminAuth();
+  } catch (e: any) {
+    return { success: false, message: `Auth Init Failed: ${e.message}` };
+  }
+
+  const adminEmail = 'jim.poole@prempred.com';
+  const adminUid = 'usr_009';
+  const adminPassword = 'Password';
+
+  try {
+    // 1. Check if UID exists
+    try {
+      await auth.getUser(adminUid);
+      // UID exists, update email and password to be sure
+      await auth.updateUser(adminUid, {
+        email: adminEmail,
+        password: adminPassword,
+        emailVerified: true
+      });
+    } catch (uidError: any) {
+      if (uidError.code === 'auth/user-not-found') {
+        // 2. UID not found, check if email exists at a different UID
+        try {
+          const userByEmail = await auth.getUserByEmail(adminEmail);
+          // Delete the "forked" account with the random UID
+          await auth.deleteUser(userByEmail.uid);
+        } catch (emailError) {}
+
+        // 3. Create the clean canonical account
+        await auth.createUser({
+          uid: adminUid,
+          email: adminEmail,
+          password: adminPassword,
+          displayName: 'Jim Poole',
+          emailVerified: true,
+        });
+      } else {
+        throw uidError;
+      }
+    }
+    return { success: true, message: 'Admin account has been reset to default credentials.' };
+  } catch (error: any) {
+    console.error("Emergency reset error:", error);
+    return { success: false, message: error.message };
+  }
+}
+
+/**
  * Aggressively sets every player's password to "Password" and verifies account existence.
  * If a UID mismatch is detected, it recreates the account to ensure canonical IDs are used.
  * Processes a provided chunk of players to prevent server timeouts.
