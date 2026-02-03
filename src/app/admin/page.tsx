@@ -225,14 +225,16 @@ export default function AdminPage() {
         toast({ title: 'Phase 1: Cleaning up duplicates...' });
         const allUsersSnap = await getDocs(collection(firestore, 'users'));
         const historicalEmails = new Set(historicalPlayersData.map(p => p.email.toLowerCase()));
+        const historicalNames = new Set(historicalPlayersData.map(p => p.name));
         const canonicalIds = new Set(historicalPlayersData.map(p => p.id));
         
         let deletedCount = 0;
         for (const userDoc of allUsersSnap.docs) {
             const data = userDoc.data();
             const email = data.email?.toLowerCase();
-            // If this doc ID is not canonical but matches a historical email, delete the duplicate fork
-            if (!canonicalIds.has(userDoc.id) && historicalEmails.has(email)) {
+            const name = data.name;
+            // If this doc ID is not canonical but matches a historical email OR name, delete the duplicate fork
+            if (!canonicalIds.has(userDoc.id) && (historicalEmails.has(email) || historicalNames.has(name))) {
                 await deleteDoc(userDoc.ref);
                 deletedCount++;
             }

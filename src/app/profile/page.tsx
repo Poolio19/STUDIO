@@ -159,25 +159,27 @@ export default function ProfilePage() {
       return;
     }
 
-    // Check for duplicate names (excluding current user by ID)
-    const usersRef = collection(firestore, 'users');
-    const q = query(usersRef, where("name", "==", data.name));
-    const querySnapshot = await getDocs(q);
+    // ONLY check for duplicate names if the name has actually changed
+    if (data.name !== user?.name) {
+        const usersRef = collection(firestore, 'users');
+        const q = query(usersRef, where("name", "==", data.name));
+        const querySnapshot = await getDocs(q);
 
-    let isNameTaken = false;
-    querySnapshot.forEach((doc) => {
-        if (doc.id !== resolvedUserId) {
-            isNameTaken = true;
+        let isNameTaken = false;
+        querySnapshot.forEach((doc) => {
+            if (doc.id !== resolvedUserId) {
+                isNameTaken = true;
+            }
+        });
+
+        if (isNameTaken) {
+          toast({
+            variant: 'destructive',
+            title: 'Name already taken',
+            description: `The name "${data.name}" is already in use by another account. Please run Bulk Sync in Admin to resolve identity conflicts.`,
+          });
+          return;
         }
-    });
-
-    if (isNameTaken) {
-      toast({
-        variant: 'destructive',
-        title: 'Name already taken',
-        description: `The name "${data.name}" is already in use by another account. Please sign out and sign in again to ensure your account is synchronized.`,
-      });
-      return;
     }
 
     const updatedData = {
