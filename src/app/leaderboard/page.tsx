@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -50,7 +51,7 @@ const formatPointsChange = (change: number) => {
     return change;
 }
 
-const prizeTiers = [50, 41, 33, 26, 20];
+const prizeTiers = [50, 41, 33, 26, 20, 18, 16, 14, 12, 10];
 
 export default function LeaderboardPage() {
   const firestore = useFirestore();
@@ -102,6 +103,7 @@ export default function LeaderboardPage() {
   const winningsBreakdownMap = useMemo(() => {
     if (!usersData || !monthlyMimoM) return new Map();
     const breakdown = new Map<string, { total: number, seasonal: number, monthly: number, proBounty: number }>();
+    const userMap = new Map(usersData.map(u => [u.id, u]));
     
     // 1. Initialize for all players
     sortedUsers.forEach(u => breakdown.set(u.id, { total: 0, seasonal: 0, monthly: 0, proBounty: 0 }));
@@ -131,21 +133,49 @@ export default function LeaderboardPage() {
         }
     });
     
-    // 3. Seasonal Rank Prizes (Based on position among regular players)
-    let playerIndex = 0;
-    while(playerIndex < regularPlayers.length) {
-        const player = regularPlayers[playerIndex];
-        const playersAtSameRank = regularPlayers.filter(p => p.rank === player.rank);
-        const prizePoolRanks = Array.from({ length: playersAtSameRank.length }, (_, i) => playerIndex + i);
-        const prizePool = prizePoolRanks.reduce((sum, rankIndex) => sum + (prizeTiers[rankIndex] || 0), 0);
-        const individualWinnings = prizePool > 0 ? prizePool / playersAtSameRank.length : 0;
+    // 3. Seasonal Rank Prizes (Shared Pooling for Tied Regular Players)
+    const pointsGroups = new Map<number, string[]>();
+    sortedUsers.forEach(u => {
+        const group = pointsGroups.get(u.score) || [];
+        group.push(u.id);
+        pointsGroups.set(u.score, group);
+    });
 
-        playersAtSameRank.forEach(tiedPlayer => {
-            const current = breakdown.get(tiedPlayer.id) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
-            breakdown.set(tiedPlayer.id, { ...current, total: current.total + individualWinnings, seasonal: current.seasonal + individualWinnings });
-        });
-        playerIndex += playersAtSameRank.length;
-    }
+    let currentGlobalIndex = 0;
+    const processedScores = new Set<number>();
+
+    sortedUsers.forEach((user) => {
+        if (processedScores.has(user.score)) return;
+        processedScores.add(user.score);
+
+        const groupUserIds = pointsGroups.get(user.score) || [];
+        const groupSize = groupUserIds.length;
+        
+        // Find regular players in this group
+        const regularPlayersInGroup = groupUserIds.filter(id => !userMap.get(id)?.isPro);
+        
+        if (regularPlayersInGroup.length > 0) {
+            // Calculate total prize pool for this group
+            // A PRO at a specific rank "consumes" the prize for that rank, but doesn't get paid.
+            const poolPrize = groupUserIds.reduce((sum, id, indexWithinGroup) => {
+                const globalRankIndex = currentGlobalIndex + indexWithinGroup;
+                const isPro = userMap.get(id)?.isPro;
+                if (!isPro && globalRankIndex < prizeTiers.length) {
+                    return sum + prizeTiers[globalRankIndex];
+                }
+                return sum;
+            }, 0);
+
+            const individualShare = poolPrize / regularPlayersInGroup.length;
+            
+            regularPlayersInGroup.forEach(userId => {
+                const current = breakdown.get(userId) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
+                breakdown.set(userId, { ...current, total: current.total + individualShare, seasonal: current.seasonal + individualShare });
+            });
+        }
+
+        currentGlobalIndex += groupSize;
+    });
 
     // 4. Pro Bounty Rule: Shared Pool logic
     // Pool = 10% of player count (rounded up) * £5 entry fee

@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -104,14 +105,19 @@ export default function RulesAndScoringPage() {
                 </CardTitle>
                 <CardDescription>Based on final league position (Regular Players only).</CardDescription>
             </CardHeader>
-            <CardContent>
-                <div className="space-y-2">
+            <CardContent className="space-y-4">
+                <div className="space-y-1">
                     {[
                         { rank: '1st', label: 'Champion', prize: '£50.00', icon: Trophy },
                         { rank: '2nd', label: 'Runner Up', prize: '£41.00', icon: Medal },
                         { rank: '3rd', label: '3rd Place', prize: '£33.00', icon: Medal },
                         { rank: '4th', label: '4th Place', prize: '£26.00', icon: null },
                         { rank: '5th', label: '5th Place', prize: '£20.00', icon: null },
+                        { rank: '6th', label: '6th Place', prize: '£18.00', icon: null },
+                        { rank: '7th', label: '7th Place', prize: '£16.00', icon: null },
+                        { rank: '8th', label: '8th Place', prize: '£14.00', icon: null },
+                        { rank: '9th', label: '9th Place', prize: '£12.00', icon: null },
+                        { rank: '10th', label: '10th Place', prize: '£10.00', icon: null },
                     ].map((tier) => (
                         <div key={tier.rank} className="flex items-center justify-between p-2 bg-card rounded border text-sm">
                             <div className="flex items-center gap-2">
@@ -122,6 +128,13 @@ export default function RulesAndScoringPage() {
                         </div>
                     ))}
                 </div>
+                <Alert className="bg-background/50 border-yellow-500/30">
+                    <Info className="size-4" />
+                    <AlertDescription className="text-xs">
+                        <strong>Tie-Breaking Rule:</strong> If multiple regular players are tied on points, they pool and share the total prize money for the positions they occupy. 
+                        Note: <strong>THE PROs always win ties</strong>, so a regular player must strictly outscore them to claim their prize spot.
+                    </AlertDescription>
+                </Alert>
             </CardContent>
         </Card>
       </div>
