@@ -151,22 +151,33 @@ export default function LeaderboardPage() {
         const groupUserIds = pointsGroups.get(user.score) || [];
         const groupSize = groupUserIds.length;
         
+        // Find if there is a PRO in this score group
+        const hasProInGroup = groupUserIds.some(id => userMap.get(id)?.isPro);
+        
         // Find regular players in this group
         const regularPlayersInGroup = groupUserIds.filter(id => !userMap.get(id)?.isPro);
         
         if (regularPlayersInGroup.length > 0) {
-            // Calculate total prize pool for this group
-            // A PRO at a specific rank "consumes" the prize for that rank, but doesn't get paid.
-            const poolPrize = groupUserIds.reduce((sum, id, indexWithinGroup) => {
-                const globalRankIndex = currentGlobalIndex + indexWithinGroup;
-                const isPro = userMap.get(id)?.isPro;
-                if (!isPro && globalRankIndex < prizeTiers.length) {
-                    return sum + prizeTiers[globalRankIndex];
-                }
-                return sum;
-            }, 0);
+            let individualShare = 0;
+            
+            // NEW RULE: If you are tied with a PRO, you get £0 for seasonal rank prizes
+            if (!hasProInGroup) {
+                // Calculate total prize pool for this group
+                // Note: The PRO tie-break rule means PROs always have the lower ordinal rank.
+                // If PROs are tied with you, they occupy the better prize spots, 
+                // and you only share what's left if you strictly outscore them (handled by sorting).
+                const poolPrize = groupUserIds.reduce((sum, id, indexWithinGroup) => {
+                    const globalRankIndex = currentGlobalIndex + indexWithinGroup;
+                    const isPro = userMap.get(id)?.isPro;
+                    // Pro consumes the prize but it's not added to the share for regular players
+                    if (!isPro && globalRankIndex < prizeTiers.length) {
+                        return sum + prizeTiers[globalRankIndex];
+                    }
+                    return sum;
+                }, 0);
 
-            const individualShare = poolPrize / regularPlayersInGroup.length;
+                individualShare = poolPrize / regularPlayersInGroup.length;
+            }
             
             regularPlayersInGroup.forEach(userId => {
                 const current = breakdown.get(userId) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
@@ -184,6 +195,7 @@ export default function LeaderboardPage() {
     const totalBountyPool = bountyCapCount * 5; 
     
     // EXCLUSION RULE: Anyone qualifying for a Top 10 prize (ranks 1-10) does not qualify for Pro-Slayer cashback.
+    // ALSO: strictly outranking Pros (rank < bestProRank)
     const proSlayers = regularPlayers.filter(player => player.rank > 10 && player.rank < bestProRank);
     const individualBounty = proSlayers.length > 0 ? (totalBountyPool / proSlayers.length) : 0;
 
@@ -263,7 +275,7 @@ export default function LeaderboardPage() {
                                 Winnings <Info className="size-3" />
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>Potential seasonal winnings including rank prizes, monthly awards, and Shared Pro Bounties.</p>
+                                <p>Potential seasonal winnings including shared rank prizes, monthly awards, and Shared Pro Bounties.</p>
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
