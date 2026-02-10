@@ -218,27 +218,32 @@ export default function LeaderboardPage() {
         return 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200/80 dark:hover:bg-gray-700/80';
     }
 
-    switch (user.rank) {
-        case 1: return 'bg-red-800 text-yellow-300 hover:bg-red-800/90 dark:bg-red-900 dark:text-yellow-300 dark:hover:bg-red-900/90';
-        case 2: return 'bg-red-600 text-white hover:bg-red-600/90 dark:bg-red-700 dark:hover:bg-red-700/90';
-        case 3: return 'bg-orange-700 text-white hover:bg-orange-700/90 dark:bg-orange-800 dark:hover:bg-orange-800/90';
-        case 4: return 'bg-orange-500 text-white hover:bg-orange-500/90 dark:bg-orange-600 dark:hover:bg-orange-600/90';
-        case 5: return 'bg-orange-300 text-orange-900 hover:bg-orange-300/90 dark:bg-orange-500/50 dark:text-white';
-        case 6: return 'bg-yellow-200 text-yellow-900 hover:bg-yellow-200/90 dark:bg-yellow-800/30 dark:text-yellow-200';
-        case 7: return 'bg-green-200 text-green-900 hover:bg-green-200/90 dark:bg-green-800/30 dark:text-green-200';
-        case 8: return 'bg-cyan-200 text-cyan-900 hover:bg-cyan-200/90 dark:bg-cyan-800/30 dark:text-cyan-200';
-        case 9: return 'bg-cyan-400 text-cyan-900 hover:bg-cyan-400/90 dark:bg-cyan-500/50 dark:text-white';
-        case 10: return 'bg-teal-400 text-teal-900 hover:bg-teal-400/90 dark:bg-teal-600/50 dark:text-white';
-        default:
-            break;
+    const breakdown = winningsBreakdownMap.get(user.id);
+    
+    // Only apply prize-zone highlights if they actually won seasonal money (failed ties with Pros show no color)
+    if (breakdown && breakdown.seasonal > 0) {
+        // Use the rank color, capped at rank 10 for tie-shared prizes
+        const effectiveRank = Math.min(user.rank, 10);
+        switch (effectiveRank) {
+            case 1: return 'bg-red-800 text-yellow-300 hover:bg-red-800/90 dark:bg-red-900 dark:text-yellow-300 dark:hover:bg-red-900/90';
+            case 2: return 'bg-red-600 text-white hover:bg-red-600/90 dark:bg-red-700 dark:text-white dark:hover:bg-red-700/90';
+            case 3: return 'bg-orange-700 text-white hover:bg-orange-700/90 dark:bg-orange-800 dark:text-white dark:hover:bg-orange-800/90';
+            case 4: return 'bg-orange-500 text-white hover:bg-orange-500/90 dark:bg-orange-600 dark:text-white dark:hover:bg-orange-600/90';
+            case 5: return 'bg-orange-300 text-orange-900 hover:bg-orange-300/90 dark:bg-orange-500/50 dark:text-white';
+            case 6: return 'bg-yellow-200 text-yellow-900 hover:bg-yellow-200/90 dark:bg-yellow-800/30 dark:text-yellow-200';
+            case 7: return 'bg-green-200 text-green-900 hover:bg-green-200/90 dark:bg-green-800/30 dark:text-green-200';
+            case 8: return 'bg-cyan-200 text-cyan-900 hover:bg-cyan-200/90 dark:bg-cyan-800/30 dark:text-cyan-200';
+            case 9: return 'bg-cyan-400 text-cyan-900 hover:bg-cyan-400/90 dark:bg-cyan-500/50 dark:text-white';
+            case 10: return 'bg-teal-400 text-teal-900 hover:bg-teal-400/90 dark:bg-teal-600/50 dark:text-white';
+        }
     }
 
-    // Pro Slayer Blue: Only applied if strictly outranking every pro AND not in Top 10
-    if (user.rank > 10 && user.rank < bestProRank) {
+    // Pro Slayer Blue: Only applied if strictly outranking every pro AND winning bounty
+    if (breakdown && breakdown.proBounty > 0) {
         return 'bg-blue-300 text-blue-900 hover:bg-blue-300/90 dark:bg-blue-800/40 dark:text-blue-200';
     }
     
-    const breakdown = winningsBreakdownMap.get(user.id);
+    // Generic Winning Highlight (Monthly awards only)
     if (breakdown && breakdown.total > 0) {
         return 'bg-blue-100 text-blue-900 hover:bg-blue-100/90 dark:bg-blue-900/30 dark:text-blue-300';
     }
@@ -259,7 +264,7 @@ export default function LeaderboardPage() {
               </TableRow>
               <TableRow>
                 <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-blue-100/50 dark:bg-blue-900/20 py-2">Week {currentWeek}, Current Standings</TableHead>
-                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-green-100/50 bg-green-900/20 py-2">Position</TableHead>
+                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-green-100/50 dark:bg-green-900/20 py-2">Position</TableHead>
                 <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-green-100/50 dark:bg-green-900/20 py-2">Points</TableHead>
                 <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-purple-100/50 dark:bg-purple-900/20 py-2">Position</TableHead>
                 <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground bg-purple-100/50 dark:bg-purple-900/20 py-2">Points</TableHead>
@@ -285,7 +290,7 @@ export default function LeaderboardPage() {
                 <TableHead className="text-center bg-green-50/50 dark:bg-green-900/10 py-2">Was</TableHead>
                 <TableHead className="w-[130px] text-center border-r bg-green-50/50 dark:bg-green-900/10 py-2">Change</TableHead>
                 <TableHead className="text-center bg-purple-50/50 dark:bg-purple-900/10 py-2">High</TableHead>
-                <TableHead className="text-center border-r bg-purple-5-50/50 dark:bg-purple-900/10 py-2">Low</TableHead>
+                <TableHead className="text-center border-r bg-purple-50/50 dark:bg-purple-900/10 py-2">Low</TableHead>
                 <TableHead className="text-center bg-purple-50/50 dark:bg-purple-900/10 py-2">High</TableHead>
                 <TableHead className="text-center bg-purple-50/50 dark:bg-purple-900/10 py-2">Low</TableHead>
               </TableRow>

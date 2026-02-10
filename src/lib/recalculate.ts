@@ -177,7 +177,7 @@ export async function recalculateAllDataClientSide(
             homeStats.goalsFor += match.homeScore;
             awayStats.goalsFor += match.awayScore;
             homeStats.goalsAgainst += match.awayScore;
-            homeStats.goalsAgainst += match.homeScore;
+            awayStats.goalsAgainst += match.homeScore;
             
             if (match.homeScore > match.awayScore) { homeStats.points += 3; homeStats.wins++; awayStats.losses++; }
             else if (match.homeScore < match.awayScore) { awayStats.points += 3; awayStats.wins++; homeStats.losses++; }
@@ -328,7 +328,7 @@ export async function recalculateAllDataClientSide(
               const remainingPlayers = monthlyImprovements.filter(u => u.improvement < bestImprovement);
               if (remainingPlayers.length > 0) {
                 const secondBestImprovement = remainingPlayers[0].improvement;
-                const runnersUp = remainingPlayers.filter(u => u.improvement === secondBestImprovescore);
+                const runnersUp = remainingPlayers.filter(u => u.improvement === secondBestImprovement);
                 runnersUp.forEach(runnerUp => {
                   const awardId = `${period.id}-ru-${runnerUp.userId}`;
                   const awardDocRef = doc(firestore, 'monthlyMimoM', awardId);
@@ -362,7 +362,7 @@ export async function recalculateAllDataClientSide(
           
           homeStats.gamesPlayed++; awayStats.gamesPlayed++;
           homeStats.goalsFor += match.homeScore; awayStats.goalsFor += match.awayScore;
-          homeStats.goalsAgainst += match.awayScore; goalsAgainst += match.homeScore;
+          homeStats.goalsAgainst += match.awayScore; awayStats.goalsAgainst += match.homeScore;
 
           if (match.homeScore > match.awayScore) { homeStats.points += 3; homeStats.wins++; awayStats.losses++; }
           else if (match.homeScore < match.awayScore) { awayStats.points += 3; awayStats.wins++; homeStats.losses++; }
