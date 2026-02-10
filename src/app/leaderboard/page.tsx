@@ -153,7 +153,7 @@ export default function LeaderboardPage() {
         
         if (regularPlayersInGroup.length > 0) {
             let individualShare = 0;
-            // Rule: Pro in group means no rank prize for regular players in that group
+            // RULE: Pro in group means no rank prize for regular players in that group
             if (!hasProInGroup) {
                 const poolPrize = groupUserIds.reduce((sum, id, indexWithinGroup) => {
                     const globalRankIndex = currentGlobalIndex + indexWithinGroup;
@@ -219,7 +219,7 @@ export default function LeaderboardPage() {
             case 5: return 'bg-orange-300 text-orange-900 hover:bg-orange-300/90 dark:bg-orange-500/50 dark:text-white';
             case 6: return 'bg-yellow-200 text-yellow-900 hover:bg-yellow-200/90 dark:bg-yellow-800/30 dark:text-yellow-200';
             case 7: return 'bg-green-200 text-green-900 hover:bg-green-200/90 dark:bg-green-800/30 dark:text-green-200';
-            case 8: return 'bg-cyan-200 text-cyan-900 hover:bg-cyan-200/90 dark:bg-cyan-800/30 dark:text-cyan-200';
+            case 8: return 'bg-cyan-200 text-cyan-900 hover:bg-cyan-200/90 dark:bg-cyan-800/30 dark:text-green-200';
             case 9: return 'bg-cyan-400 text-cyan-900 hover:bg-cyan-400/90 dark:bg-cyan-500/50 dark:text-white';
             case 10: return 'bg-teal-400 text-teal-900 hover:bg-teal-400/90 dark:bg-teal-600/50 dark:text-white';
         }
