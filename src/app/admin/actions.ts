@@ -4,14 +4,14 @@ import { getAuth } from 'firebase-admin/auth';
 import { initializeApp, getApps, getApp } from 'firebase-admin/app';
 
 /**
- * Initializes the Firebase Admin SDK robustly.
+ * Initializes the Firebase Admin SDK robustly for the server environment.
  */
 function getAdminAuth() {
   let app;
   if (getApps().length === 0) {
     try {
-      // In Firebase App Hosting/Functions, initializeApp() without arguments 
-      // automatically uses the environment's service account.
+      // In Firebase App Hosting, initializeApp() without arguments automatically 
+      // uses the environment's service account credentials.
       app = initializeApp();
     } catch (e: any) {
       console.error("Firebase Admin initialization error:", e);
@@ -44,7 +44,7 @@ export async function emergencyAdminReset() {
     // 1. Check if UID exists
     try {
       await auth.getUser(adminUid);
-      // UID exists, update email and password to be sure
+      // UID exists, update email and password to be sure it matches Jim
       await auth.updateUser(adminUid, {
         email: adminEmail,
         password: adminPassword,
@@ -52,10 +52,10 @@ export async function emergencyAdminReset() {
       });
     } catch (uidError: any) {
       if (uidError.code === 'auth/user-not-found') {
-        // 2. UID not found, check if email exists at a different UID
+        // 2. UID not found, check if email exists at a different (random) UID
         try {
           const userByEmail = await auth.getUserByEmail(adminEmail);
-          // CRITICAL: email found but UID is wrong. Delete fork and recreate.
+          // CRITICAL: email found but UID is wrong. Delete the "forked" account and recreate.
           await auth.deleteUser(userByEmail.uid);
         } catch (emailError) {}
 
@@ -79,8 +79,7 @@ export async function emergencyAdminReset() {
 }
 
 /**
- * Aggressively sets every player's password to "Password" and verifies account existence.
- * If a UID mismatch is detected, it recreates the account to ensure canonical IDs are used.
+ * Creates or updates Auth users in chunks to stay within server limits.
  */
 export async function bulkCreateAuthUsersChunk(players: any[]) {
   let auth;
@@ -106,23 +105,13 @@ export async function bulkCreateAuthUsersChunk(players: any[]) {
 
     try {
       try {
-        // 1. Try to fetch user by UID
         const userByUid = await auth.getUser(uid);
-        
-        // Update user to ensure email matches and password is reset
-        await auth.updateUser(uid, { 
-            email, 
-            password,
-            emailVerified: true 
-        });
+        await auth.updateUser(uid, { email, password, emailVerified: true });
         updatedCount++;
       } catch (uidError: any) {
         if (uidError.code === 'auth/user-not-found') {
           try {
-            // 2. UID not found, check if email exists with a DIFFERENT UID
             const userByEmail = await auth.getUserByEmail(email);
-            
-            // CRITICAL: email found but UID is wrong. Delete fork and recreate.
             await auth.deleteUser(userByEmail.uid);
             await auth.createUser({
                 uid: uid,
@@ -134,7 +123,6 @@ export async function bulkCreateAuthUsersChunk(players: any[]) {
             createdCount++;
           } catch (emailError: any) {
             if (emailError.code === 'auth/user-not-found') {
-              // 3. Neither UID nor Email exists - clean create
               await auth.createUser({
                 uid: uid,
                 email: email,
@@ -152,7 +140,6 @@ export async function bulkCreateAuthUsersChunk(players: any[]) {
         }
       }
     } catch (finalError: any) {
-      console.error(`Error syncing user ${email}:`, finalError.message);
       errors.push({ email, message: finalError.message });
     }
   }

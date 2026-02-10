@@ -3,13 +3,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Mail, Upload, Trophy, Award, ShieldCheck, Loader2, Users, Medal, DollarSign, Star, ShieldAlert, LogOut } from 'lucide-react';
+import { Mail, Upload, Trophy, Award, ShieldCheck, Loader2, Medal, DollarSign, Star, ShieldAlert, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -33,11 +32,10 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { getAvatarUrl } from '@/lib/placeholder-images';
-import type { Team, User, UserHistory, MonthlyMimoM } from '@/lib/types';
+import type { Team, User, UserHistory } from '@/lib/types';
 import { ProfilePerformanceChart } from '@/components/charts/profile-performance-chart';
 import React from 'react';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
@@ -214,6 +212,8 @@ export default function ProfilePage() {
   async function onPasswordSubmit(data: PasswordFormValues) {
     if (!authUser || !userDocRef) return;
     try {
+      // Token reload to ensure session is valid for password change
+      await authUser.reload();
       await updatePassword(authUser, data.password);
       // Immediately clear the flag in Firestore
       setDocumentNonBlocking(userDocRef, { mustChangePassword: false }, { merge: true });
