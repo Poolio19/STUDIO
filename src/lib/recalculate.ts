@@ -40,10 +40,12 @@ export async function recalculateAllDataClientSide(
       const historicalUserIds = new Set(historicalPlayersData.map(p => p.id));
       const activeUserIds = new Set(
         predictions
-          .filter(p => p.rankings && p.rankings.length === 20 && historicalUserIds.has(p.userId))
+          .filter(p => p.rankings && p.rankings.length === 20)
           .map(p => p.userId)
       );
-      const users = allUsers.filter(u => activeUserIds.has(u.id));
+      
+      // Filter for users who are either Pro or in historical list AND active
+      const users = allUsers.filter(u => activeUserIds.has(u.id) && (historicalUserIds.has(u.id) || u.isPro));
 
       const prevStandings: PreviousSeasonStanding[] = prevStandingsData.map(d => ({...d, teamId: d.teamId || ''}));
       const prevStandingsRankMap = new Map(prevStandings.map(s => [s.teamId, s.rank]));
@@ -74,6 +76,7 @@ export async function recalculateAllDataClientSide(
         .map(user => ({ ...user, score: userScoresForWeek0[user.id] ?? 0 }))
         .sort((a, b) => {
             if (b.score !== a.score) return b.score - a.score;
+            // RULE: PROs always win ties
             if (a.isPro && !b.isPro) return -1;
             if (!a.isPro && b.isPro) return 1;
             return (a.name || '').localeCompare(b.name || '');
@@ -228,6 +231,7 @@ export async function recalculateAllDataClientSide(
             .map(user => ({ ...user, scoreForWeek: userScoresForWeek[user.id] ?? 0 }))
             .sort((a, b) => {
                 if (b.scoreForWeek !== a.scoreForWeek) return b.scoreForWeek - a.scoreForWeek;
+                // RULE: PROs always win ties
                 if (a.isPro && !b.isPro) return -1;
                 if (!a.isPro && b.isPro) return 1;
                 return (a.name || '').localeCompare(b.name || '');

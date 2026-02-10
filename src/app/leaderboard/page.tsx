@@ -88,7 +88,7 @@ export default function LeaderboardPage() {
     );
 
     return [...usersData]
-        .filter(u => u.name && historicalUserIds.has(u.id) && activeUserIds.has(u.id))
+        .filter(u => u.name && (historicalUserIds.has(u.id) || u.isPro) && activeUserIds.has(u.id))
         .sort((a, b) => a.rank - b.rank);
   }, [usersData, predictionsData]);
   
@@ -107,6 +107,7 @@ export default function LeaderboardPage() {
     
     sortedUsers.forEach(u => breakdown.set(u.id, { total: 0, seasonal: 0, monthly: 0, proBounty: 0 }));
 
+    // 1. Calculate Monthly Awards
     const monthlyAwards: { [key: string]: { winners: string[], runnersUp: string[] } } = {};
     monthlyMimoM.forEach(m => {
         if (m.type !== 'winner' && m.type !== 'runner-up') return;
@@ -131,6 +132,7 @@ export default function LeaderboardPage() {
         }
     });
     
+    // 2. Calculate Seasonal Rank Prizes (with shared pool for ties)
     const pointsGroups = new Map<number, string[]>();
     sortedUsers.forEach(u => {
         const group = pointsGroups.get(u.score) || [];
@@ -152,11 +154,11 @@ export default function LeaderboardPage() {
         
         if (regularPlayersInGroup.length > 0) {
             let individualShare = 0;
+            // Rule: Pro in group means no rank prize for regular players in that group
             if (!hasProInGroup) {
                 const poolPrize = groupUserIds.reduce((sum, id, indexWithinGroup) => {
                     const globalRankIndex = currentGlobalIndex + indexWithinGroup;
-                    const isPro = userMap.get(id)?.isPro;
-                    if (!isPro && globalRankIndex < prizeTiers.length) {
+                    if (globalRankIndex < prizeTiers.length) {
                         return sum + prizeTiers[globalRankIndex];
                     }
                     return sum;
@@ -174,23 +176,27 @@ export default function LeaderboardPage() {
         currentGlobalIndex += groupSize;
     });
 
-    const totalRegularPlayers = regularPlayers.length;
-    const bountyCapCount = Math.ceil(totalRegularPlayers * 0.1); 
-    const totalBountyPool = bountyCapCount * 5; 
+    // 3. Calculate Pro Slayer Bounty (Shared Pool)
+    // Formula: 10% of total entry count (109) = 11. 11 * £5 = £55.00 pool.
+    const totalBountyPool = 55.00;
     
-    const proSlayers = regularPlayers.filter(player => player.rank > 10 && player.rank < bestProRank);
+    // Rule: Eligible if you strictly outscore all Pros AND didn't get a Top 10 rank prize
+    const proSlayers = regularPlayers.filter(player => {
+        const playerBreakdown = breakdown.get(player.id);
+        const hasSeasonalPrize = (playerBreakdown?.seasonal || 0) > 0;
+        return !hasSeasonalPrize && player.rank < bestProRank;
+    });
+
     const individualBounty = proSlayers.length > 0 ? (totalBountyPool / proSlayers.length) : 0;
 
-    if (proPlayers.length > 0) {
-      proSlayers.forEach(player => {
-          const current = breakdown.get(player.id) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
-          breakdown.set(player.id, { 
-              ...current, 
-              total: current.total + individualBounty, 
-              proBounty: current.proBounty + individualBounty 
-          });
-      });
-    }
+    proSlayers.forEach(player => {
+        const current = breakdown.get(player.id) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
+        breakdown.set(player.id, { 
+            ...current, 
+            total: current.total + individualBounty, 
+            proBounty: current.proBounty + individualBounty 
+        });
+    });
 
     return breakdown;
   }, [regularPlayers, proPlayers, usersData, monthlyMimoM, bestProRank, sortedUsers]);
@@ -201,9 +207,9 @@ export default function LeaderboardPage() {
     }
 
     const breakdown = winningsBreakdownMap.get(user.id);
+    const groupBestRank = sortedUsers.find(u => u.score === user.score)?.rank || user.rank;
     
     if (breakdown && breakdown.seasonal > 0) {
-        const groupBestRank = sortedUsers.find(u => u.score === user.score)?.rank || user.rank;
         const effectiveRank = Math.min(groupBestRank, 10);
         
         switch (effectiveRank) {
@@ -292,6 +298,8 @@ export default function LeaderboardPage() {
                   const breakdown = winningsBreakdownMap.get(user.id) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
                   const isCurrentUser = user.id === resolvedUserId;
                   const isBountyWinner = breakdown.proBounty > 0;
+                  
+                  // Use Competition Ranking for display: find the first rank entry for this score
                   const displayRank = sortedUsers.find(u => u.score === user.score)?.rank || user.rank;
 
                   return (
