@@ -13,6 +13,12 @@ import type { Team, Prediction, User as UserProfile, UserHistory, Match } from '
 import prevStandingsData from './previous-season-standings-24-25.json';
 import historicalPlayersData from './historical-players.json';
 
+/**
+ * Recalculates all derived data based on raw matches and predictions.
+ * Strictly enforces:
+ * 1. Pros always win ties (Sorted higher in ordinal ranks).
+ * 2. Standard Competition Ranking for visuals (1, 2, 2, 4...).
+ */
 export async function recalculateAllDataClientSide(
   firestore: Firestore,
   progressCallback: (message: string) => void
@@ -82,13 +88,20 @@ export async function recalculateAllDataClientSide(
           });
           userScores0[u.id] = score;
       });
+      
+      // Sort: Score DESC, Pros first DESC, Name ASC
       const ranked0 = users.map(u => ({...u, score: userScores0[u.id]}))
-          .sort((a,b) => b.score - a.score || (a.isPro ? -1 : (b.isPro ? 1 : 0)) || a.name.localeCompare(b.name));
+          .sort((a, b) => {
+              if (b.score !== a.score) return b.score - a.score;
+              if (a.isPro && !b.isPro) return -1;
+              if (!a.isPro && b.isPro) return 1;
+              return a.name.localeCompare(b.name);
+          });
       ranked0.forEach((u, i) => allUserHistories[u.id].weeklyScores.push({ week: 0, score: u.score, rank: i + 1 }));
 
       const playedWeeks = [...new Set(allMatches.filter(m => m.homeScore > -1).map(m => m.week))].sort((a,b) => a-b);
       for (const week of playedWeeks) {
-          progressCallback(`Week ${week}...`);
+          progressCallback(`Processing Week ${week}...`);
           const matches = allMatches.filter(m => m.week <= week && m.homeScore > -1);
           const tStats: { [tId: string]: any } = {};
           teams.forEach(t => tStats[t.id] = { points: 0, gd: 0, gf: 0, wins: 0, draws: 0, losses: 0, played: 0 });
@@ -114,6 +127,7 @@ export async function recalculateAllDataClientSide(
               });
               uScores[u.id] = score;
           });
+          
           const uRanked = users.map(u => ({...u, score: uScores[u.id]}))
               .sort((a, b) => {
                   if (b.score !== a.score) return b.score - a.score;
@@ -141,7 +155,7 @@ export async function recalculateAllDataClientSide(
           addOperation(b => b.set(doc(firestore, 'userHistories', u.id), hist));
       }
 
-      progressCallback("Committing batches...");
+      progressCallback("Committing data...");
       await Promise.all(mainBatches.map(b => b.commit()));
       progressCallback("Complete.");
     } catch (e: any) { progressCallback("Error: " + e.message); throw e; }

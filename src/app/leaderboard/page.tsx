@@ -27,7 +27,7 @@ import {
 import type { User, MonthlyMimoM, Match, Prediction } from '@/lib/types';
 import { getAvatarUrl } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
-import { ArrowUp, ArrowDown, Minus, Loader2, Swords } from 'lucide-react';
+import { ArrowUp, ArrowDown, Minus, Loader2, Swords, Info } from 'lucide-react';
 import { useMemo } from 'react';
 import { useCollection, useFirestore, useMemoFirebase, useResolvedUserId } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
@@ -84,9 +84,9 @@ export default function LeaderboardPage() {
         .map(p => p.userId || p.id)
     );
 
+    // Engine already sorted by (Score DESC, isPro DESC, name ASC)
     return [...usersData]
-        .filter(u => u.name && (historicalUserIds.has(u.id) || u.isPro) && activeUserIds.has(u.id))
-        .sort((a, b) => a.rank - b.rank);
+        .filter(u => u.name && (historicalUserIds.has(u.id) || u.isPro) && activeUserIds.has(u.id));
   }, [usersData, predictionsData]);
 
   const winningsBreakdownMap = useMemo(() => {
@@ -98,7 +98,6 @@ export default function LeaderboardPage() {
     // 1. Monthly Awards (£15 pool)
     const monthlyAwards: { [key: string]: { winners: string[], runnersUp: string[] } } = {};
     monthlyMimoM.forEach(m => {
-        if (m.type !== 'winner' && m.type !== 'runner-up') return;
         const key = m.special ? m.special : `${m.month}-${m.year}`;
         if (!monthlyAwards[key]) monthlyAwards[key] = { winners: [], runnersUp: [] };
         if (m.type === 'winner') monthlyAwards[key].winners.push(m.userId);
@@ -120,52 +119,84 @@ export default function LeaderboardPage() {
         }
     });
 
-    // 2. Dynamic Pro-Slayer Bounty
-    const bestProRank = Math.min(...sortedUsers.filter(u => u.isPro).map(u => u.rank), Infinity);
-    const slayers = sortedUsers.filter(u => !u.isPro && u.rank < bestProRank && u.rank > 10);
+    // 2. Identify Slayers & Top 10 Recipients
+    // Rule: Slayer strictly outscores experts AND receives £0 from Top 10 ranks.
+    let highestProScore = -1;
+    sortedUsers.forEach(u => { if (u.isPro && u.score > highestProScore) highestProScore = u.score; });
+
+    const slayers: User[] = [];
+    const pointsGroups: { score: number, players: User[], startOrdinal: number }[] = [];
+    let currentOrdinal = 1;
+
+    // Group players by score
+    sortedUsers.forEach((u, i) => {
+        if (i === 0 || u.score !== sortedUsers[i-1].score) {
+            pointsGroups.push({ score: u.score, players: [u], startOrdinal: currentOrdinal });
+        } else {
+            pointsGroups[pointsGroups.length - 1].players.push(u);
+        }
+        currentOrdinal++;
+    });
+
+    // Determine eligibility
+    const topTenRecipients = new Set<string>();
+    pointsGroups.forEach(group => {
+        const isTopTenGroup = group.startOrdinal <= 10;
+        const regulars = group.players.filter(p => !p.isPro);
+        
+        if (isTopTenGroup) {
+            // Check if any regular occupies a Rank 1-10 slot after Pros take their share
+            group.players.forEach((p, i) => {
+                const playerOrdinal = group.startOrdinal + i;
+                if (!p.isPro && playerOrdinal <= 10) {
+                    topTenRecipients.add(p.id);
+                }
+            });
+        } else if (group.score > highestProScore) {
+            // Potential slayers
+            regulars.forEach(r => slayers.push(r));
+        }
+    });
+
+    // 3. Calculate Slayer Pool
     const slayerCount = slayers.length;
-    const slayerBountyReduction = Math.min(slayerCount * 5, 55);
-    const individualSlayerPrize = slayerCount > 0 ? (slayerBountyReduction / slayerCount) : 0;
+    const slayerPool = Math.min(slayerCount * 5, 55);
+    const bountyPerSlayer = slayerCount > 0 ? slayerPool / slayerCount : 0;
 
-    // 3. Seasonal Fund (Total - Fixed - Slayers)
-    const totalPot = 530.00;
-    const netSeasonalFund = totalPot - 150.00 - 10.00 - slayerBountyReduction;
-
+    // 4. Seasonal Prizes (Top 10)
+    const netSeasonalFund = 530.00 - 150.00 - 10.00 - slayerPool;
     const p10 = netSeasonalFund * 0.030073;
     let seasonalPrizes: number[] = [p10];
     for (let i = 0; i < 9; i++) { seasonalPrizes.push(seasonalPrizes[i] * 1.25); }
     seasonalPrizes = seasonalPrizes.reverse(); // [p1, p2, ..., p10]
 
-    // 4. Rank Prize Allocation (Pro Consumption)
-    const pointsGroups = new Map<number, User[]>();
-    sortedUsers.forEach(u => {
-        const group = pointsGroups.get(u.score) || [];
-        group.push(u);
-        pointsGroups.set(u.score, group);
-    });
-
-    pointsGroups.forEach((groupUsers) => {
-        const regulars = groupUsers.filter(u => !u.isPro);
+    // 5. Final Allocation
+    pointsGroups.forEach(group => {
+        const regulars = group.players.filter(p => !p.isPro);
         if (regulars.length === 0) return;
 
-        const sharedPool = regulars.reduce((sum, u) => {
-            if (u.rank <= 10) return sum + seasonalPrizes[u.rank - 1];
-            return sum;
-        }, 0);
+        // Ordinal ranks occupied by regulars in this tie
+        const ranksHeldByRegulars: number[] = [];
+        group.players.forEach((p, i) => {
+            const ord = group.startOrdinal + i;
+            if (!p.isPro && ord <= 10) ranksHeldByRegulars.push(ord);
+        });
 
-        if (sharedPool > 0) {
-            const individualShare = sharedPool / regulars.length;
-            regulars.forEach(u => {
-                const b = breakdown.get(u.id);
-                if (b) { b.total += individualShare; b.seasonal += individualShare; b.visualRankId = Math.min(...groupUsers.map(gu => gu.rank)); }
+        if (ranksHeldByRegulars.length > 0) {
+            // Shared Top 10 Pool
+            const totalSum = ranksHeldByRegulars.reduce((sum, ord) => sum + seasonalPrizes[ord-1], 0);
+            const share = totalSum / regulars.length;
+            regulars.forEach(r => {
+                const b = breakdown.get(r.id);
+                if (b) { b.total += share; b.seasonal = share; b.visualRankId = group.startOrdinal; }
+            });
+        } else if (group.score > highestProScore) {
+            // Slayers
+            regulars.forEach(r => {
+                const b = breakdown.get(r.id);
+                if (b) { b.total += bountyPerSlayer; b.proBounty = bountyPerSlayer; b.visualRankId = 0; }
             });
         }
-    });
-
-    // 5. Apply Slayers
-    slayers.forEach(u => {
-        const b = breakdown.get(u.id);
-        if (b) { b.total += individualSlayerPrize; b.proBounty += individualSlayerPrize; }
     });
 
     return breakdown;
@@ -232,6 +263,8 @@ export default function LeaderboardPage() {
                   const RankIcon = getRankChangeIcon(user.rankChange);
                   const ScoreIcon = getRankChangeIcon(user.scoreChange);
                   const isCurrentUser = user.id === resolvedUserId;
+                  
+                  // Visual position numbering: all players tied on points share the same rank
                   const displayRank = sortedUsers.find(u => u.score === user.score)?.rank || user.rank;
 
                   return (
