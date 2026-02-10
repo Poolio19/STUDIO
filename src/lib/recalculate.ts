@@ -175,8 +175,8 @@ export async function recalculateAllDataClientSide(
             homeStats.gamesPlayed++;
             awayStats.gamesPlayed++;
             homeStats.goalsFor += match.homeScore;
-            awayStats.goalsFor += match.awayScore;
             homeStats.goalsAgainst += match.awayScore;
+            awayStats.goalsFor += match.awayScore;
             awayStats.goalsAgainst += match.homeScore;
             
             if (match.homeScore > match.awayScore) { homeStats.points += 3; homeStats.wins++; awayStats.losses++; }
@@ -361,8 +361,10 @@ export async function recalculateAllDataClientSide(
           if (!homeStats || !awayStats) return;
           
           homeStats.gamesPlayed++; awayStats.gamesPlayed++;
-          homeStats.goalsFor += match.homeScore; awayStats.goalsFor += match.awayScore;
-          homeStats.goalsAgainst += match.awayScore; awayStats.goalsAgainst += match.homeScore;
+          homeStats.goalsFor += match.homeScore; 
+          homeStats.goalsAgainst += match.awayScore;
+          awayStats.goalsFor += match.awayScore;
+          awayStats.goalsAgainst += match.homeScore;
 
           if (match.homeScore > match.awayScore) { homeStats.points += 3; homeStats.wins++; awayStats.losses++; }
           else if (match.homeScore < match.awayScore) { awayStats.points += 3; awayStats.wins++; homeStats.losses++; }

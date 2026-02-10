@@ -160,16 +160,11 @@ export default function LeaderboardPage() {
         if (regularPlayersInGroup.length > 0) {
             let individualShare = 0;
             
-            // NEW RULE: If you are tied with a PRO, you get £0 for seasonal rank prizes
+            // RULE: If you are tied with a PRO, you get £0 for seasonal rank prizes
             if (!hasProInGroup) {
-                // Calculate total prize pool for this group
-                // Note: The PRO tie-break rule means PROs always have the lower ordinal rank.
-                // If PROs are tied with you, they occupy the better prize spots, 
-                // and you only share what's left if you strictly outscore them (handled by sorting).
                 const poolPrize = groupUserIds.reduce((sum, id, indexWithinGroup) => {
                     const globalRankIndex = currentGlobalIndex + indexWithinGroup;
                     const isPro = userMap.get(id)?.isPro;
-                    // Pro consumes the prize but it's not added to the share for regular players
                     if (!isPro && globalRankIndex < prizeTiers.length) {
                         return sum + prizeTiers[globalRankIndex];
                     }
@@ -189,13 +184,11 @@ export default function LeaderboardPage() {
     });
 
     // 4. Pro Bounty Rule: Shared Pool logic
-    // Pool = 10% of player count (rounded up) * £5 entry fee
     const totalRegularPlayers = regularPlayers.length;
     const bountyCapCount = Math.ceil(totalRegularPlayers * 0.1); 
     const totalBountyPool = bountyCapCount * 5; 
     
     // EXCLUSION RULE: Anyone qualifying for a Top 10 prize (ranks 1-10) does not qualify for Pro-Slayer cashback.
-    // ALSO: strictly outranking Pros (rank < bestProRank)
     const proSlayers = regularPlayers.filter(player => player.rank > 10 && player.rank < bestProRank);
     const individualBounty = proSlayers.length > 0 ? (totalBountyPool / proSlayers.length) : 0;
 
@@ -213,17 +206,19 @@ export default function LeaderboardPage() {
     return breakdown;
   }, [regularPlayers, proPlayers, usersData, monthlyMimoM, bestProRank, sortedUsers]);
 
-    const getRankColour = (user: User) => {
+  const getRankColour = (user: User) => {
     if (user.isPro) {
         return 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200/80 dark:hover:bg-gray-700/80';
     }
 
     const breakdown = winningsBreakdownMap.get(user.id);
     
-    // Only apply prize-zone highlights if they actually won seasonal money (failed ties with Pros show no color)
+    // Prize-zone highlight alignment: Ties share the same color shade based on their group's highest rank
     if (breakdown && breakdown.seasonal > 0) {
-        // Use the rank color, capped at rank 10 for tie-shared prizes
-        const effectiveRank = Math.min(user.rank, 10);
+        // Find the points group this user belongs to
+        const groupBestRank = sortedUsers.find(u => u.score === user.score)?.rank || user.rank;
+        const effectiveRank = Math.min(groupBestRank, 10);
+        
         switch (effectiveRank) {
             case 1: return 'bg-red-800 text-yellow-300 hover:bg-red-800/90 dark:bg-red-900 dark:text-yellow-300 dark:hover:bg-red-900/90';
             case 2: return 'bg-red-600 text-white hover:bg-red-600/90 dark:bg-red-700 dark:text-white dark:hover:bg-red-700/90';
@@ -238,12 +233,10 @@ export default function LeaderboardPage() {
         }
     }
 
-    // Pro Slayer Blue: Only applied if strictly outranking every pro AND winning bounty
     if (breakdown && breakdown.proBounty > 0) {
         return 'bg-blue-300 text-blue-900 hover:bg-blue-300/90 dark:bg-blue-800/40 dark:text-blue-200';
     }
     
-    // Generic Winning Highlight (Monthly awards only)
     if (breakdown && breakdown.total > 0) {
         return 'bg-blue-100 text-blue-900 hover:bg-blue-100/90 dark:bg-blue-900/30 dark:text-blue-300';
     }
@@ -306,16 +299,21 @@ export default function LeaderboardPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                sortedUsers.map((user) => {
+                sortedUsers.map((user, index) => {
                   const RankIcon = getRankChangeIcon(user.rankChange);
                   const ScoreIcon = getRankChangeIcon(user.scoreChange);
                   const breakdown = winningsBreakdownMap.get(user.id) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
                   const isCurrentUser = user.id === resolvedUserId;
                   const isBountyWinner = breakdown.proBounty > 0;
                   
+                  // Calculate Display Rank (Competition Style: 1, 2, 2, 4...)
+                  // Note: Because PROs win ties and are unique ordinal ranks, 
+                  // regular players tied with each other will share the rank number of the highest in their group.
+                  const displayRank = sortedUsers.find(u => u.score === user.score)?.rank || user.rank;
+
                   return (
                       <TableRow key={user.id} className={cn(getRankColour(user), { 'font-bold ring-2 ring-inset ring-primary z-10 relative': isCurrentUser })}>
-                          <TableCell className="font-medium text-center py-1">{user.rank}</TableCell>
+                          <TableCell className="font-medium text-center py-1">{displayRank}</TableCell>
                           <TableCell className="py-1">
                             <div className="flex items-center gap-3">
                                 <Avatar className="h-8 w-8">
