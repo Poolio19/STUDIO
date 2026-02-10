@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -131,7 +132,7 @@ export default function LeaderboardPage() {
         }
     });
     
-    // 3. Seasonal Rank Prizes
+    // 3. Seasonal Rank Prizes (Based on position among regular players)
     let playerIndex = 0;
     while(playerIndex < regularPlayers.length) {
         const player = regularPlayers[playerIndex];
@@ -147,7 +148,7 @@ export default function LeaderboardPage() {
         playerIndex += playersAtSameRank.length;
     }
 
-    // 4. Pro Bounty Rule: £5 for beating ALL pros
+    // 4. Pro Bounty Rule: £5 for beating ALL pros (Must have lower rank number than best pro)
     if (proPlayers.length > 0) {
       regularPlayers.forEach(player => {
           if (player.rank > 0 && player.rank < bestProRank) {
@@ -180,7 +181,8 @@ export default function LeaderboardPage() {
             break;
     }
 
-    if (user.rank <= bestProRank) {
+    // Pro Slayer Blue: Only applied if strictly outranking every pro (no ties allowed)
+    if (user.rank < bestProRank) {
         return 'bg-blue-300 text-blue-900 hover:bg-blue-300/90 dark:bg-blue-800/40 dark:text-blue-200';
     }
     

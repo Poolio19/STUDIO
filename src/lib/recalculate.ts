@@ -72,21 +72,25 @@ export async function recalculateAllDataClientSide(
       });
   
       const rankedUsersForWeek0 = users
-        .map(user => ({ ...user, score: userScoresForWeek0[user.id] ?? 0 }))
-        .sort((a, b) => b.score - a.score || (a.name || '').localeCompare(b.name || ''));
+        .map(user => ({ ...user, score: userScoresForWeek[user.id] ?? 0 }))
+        .sort((a, b) => {
+            // Primary Sort: Score (Points) Descending
+            if (b.score !== a.score) return b.score - a.score;
+            // Secondary Sort (Tie-break): THE PROs always win ties and sit above regular players
+            if (a.isPro && !b.isPro) return -1;
+            if (!a.isPro && b.isPro) return 1;
+            // Tertiary Sort: Alphabetical Name
+            return (a.name || '').localeCompare(b.name || '');
+        });
           
       const allUserHistories: { [userId: string]: UserHistory } = {};
 
-      let rankForWeek0 = 0;
-      let lastScoreForWeek0 = Infinity;
+      // Assign Ordinal Ranking (1, 2, 3...) - This ensures PROs take the better rank number on ties
       rankedUsersForWeek0.forEach((user, index) => {
-          if (user.score < lastScoreForWeek0) {
-              rankForWeek0 = index + 1;
-          }
-          lastScoreForWeek0 = user.score;
+          const rank = index + 1;
           allUserHistories[user.id] = { 
               userId: user.id, 
-              weeklyScores: [{ week: 0, score: user.score, rank: rankForWeek0 }] 
+              weeklyScores: [{ week: 0, score: user.score, rank: rank }] 
           };
       });
   
@@ -230,16 +234,20 @@ export async function recalculateAllDataClientSide(
   
         const rankedUsersForWeek = users
             .map(user => ({ ...user, scoreForWeek: userScoresForWeek[user.id] ?? 0 }))
-            .sort((a, b) => b.scoreForWeek - a.scoreForWeek || (a.name || '').localeCompare(b.name || ''));
+            .sort((a, b) => {
+                // Primary Sort: Points Descending
+                if (b.scoreForWeek !== a.scoreForWeek) return b.scoreForWeek - a.scoreForWeek;
+                // Secondary Sort (Tie-break): THE PROs always win ties and sit above regular players
+                if (a.isPro && !b.isPro) return -1;
+                if (!a.isPro && b.isPro) return 1;
+                // Tertiary Sort: Alphabetical Name
+                return (a.name || '').localeCompare(b.name || '');
+            });
             
-        let rankForWeek = 0;
-        let lastScoreForWeek = Infinity;
+        // Assign Ordinal Ranking (1, 2, 3...)
         rankedUsersForWeek.forEach((user, index) => {
-            if (user.scoreForWeek < lastScoreForWeek) {
-                rankForWeek = index + 1;
-            }
-            lastScoreForWeek = user.scoreForWeek;
-            allUserHistories[user.id].weeklyScores.push({ week: week, score: user.scoreForWeek, rank: rankForWeek });
+            const rank = index + 1;
+            allUserHistories[user.id].weeklyScores.push({ week: week, score: user.scoreForWeek, rank: rank });
         });
       }
   
