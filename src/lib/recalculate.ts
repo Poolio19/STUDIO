@@ -37,7 +37,7 @@ export async function recalculateAllDataClientSide(
       const allUsers = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
       const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
       
-      // Filter for active users who are in the historical list AND have submitted a complete prediction
+      // Filter for active users who are in the official list AND have submitted a complete prediction
       const historicalUserIds = new Set(historicalPlayersData.map(p => p.id));
       const activeUserIds = new Set(
         predictions
@@ -49,7 +49,7 @@ export async function recalculateAllDataClientSide(
       const prevStandings: PreviousSeasonStanding[] = prevStandingsData.map(d => ({...d, teamId: d.teamId || ''}));
       const prevStandingsRankMap = new Map(prevStandings.map(s => [s.teamId, s.rank]));
 
-      // --- 2. Calculate definitive Week 0 user scores from DEFINITIVE previous season standings ---
+      // --- 2. Calculate definitive Week 0 user scores ---
       progressCallback('Calculating definitive Week 0 scores...');
       const userScoresForWeek0: { [userId: string]: number } = {};
       users.forEach(user => {
@@ -72,7 +72,7 @@ export async function recalculateAllDataClientSide(
       });
   
       const rankedUsersForWeek0 = users
-        .map(user => ({ ...user, score: userScoresForWeek[user.id] ?? 0 }))
+        .map(user => ({ ...user, score: userScoresForWeek0[user.id] ?? 0 }))
         .sort((a, b) => {
             // Primary Sort: Score (Points) Descending
             if (b.score !== a.score) return b.score - a.score;
