@@ -148,13 +148,24 @@ export default function LeaderboardPage() {
         playerIndex += playersAtSameRank.length;
     }
 
-    // 4. Pro Bounty Rule: £5 for beating ALL pros (Must have lower rank number than best pro)
+    // 4. Pro Bounty Rule: Shared Pool logic
+    // Pool = 10% of player count (rounded up) * £5 entry fee
+    const totalRegularPlayers = regularPlayers.length;
+    const bountyCapCount = Math.ceil(totalRegularPlayers * 0.1); 
+    const totalBountyPool = bountyCapCount * 5; 
+    
+    const proSlayers = regularPlayers.filter(player => player.rank > 0 && player.rank < bestProRank);
+    const individualBounty = proSlayers.length > 0 ? (totalBountyPool / proSlayers.length) : 0;
+
     if (proPlayers.length > 0) {
-      regularPlayers.forEach(player => {
-          if (player.rank > 0 && player.rank < bestProRank) {
-              const current = breakdown.get(player.id) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
-              breakdown.set(player.id, { ...current, total: current.total + 5, proBounty: current.proBounty + 5 });
-          }
+      proSlayers.forEach(player => {
+          const current = breakdown.get(player.id) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
+          breakdown.set(player.id, { 
+              ...current, 
+              total: current.total + individualBounty, 
+              proSlayersCount: proSlayers.length, // Store for UI/Tooltip use if needed
+              proBounty: current.proBounty + individualBounty 
+          });
       });
     }
 
@@ -207,7 +218,7 @@ export default function LeaderboardPage() {
               </TableRow>
               <TableRow>
                 <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-blue-100/50 dark:bg-blue-900/20 py-2">Week {currentWeek}, Current Standings</TableHead>
-                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-green-100/50 dark:bg-green-900/20 py-2">Position</TableHead>
+                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-green-100/50 bg-green-900/20 py-2">Position</TableHead>
                 <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-green-100/50 dark:bg-green-900/20 py-2">Points</TableHead>
                 <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-purple-100/50 dark:bg-purple-900/20 py-2">Position</TableHead>
                 <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground bg-purple-100/50 dark:bg-purple-900/20 py-2">Points</TableHead>
@@ -223,7 +234,7 @@ export default function LeaderboardPage() {
                                 Winnings <Info className="size-3" />
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>Potential seasonal winnings including rank prizes, monthly awards, and Pro Bounties.</p>
+                                <p>Potential seasonal winnings including rank prizes, monthly awards, and Shared Pro Bounties.</p>
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
@@ -291,8 +302,13 @@ export default function LeaderboardPage() {
                                             <div className="grid grid-cols-2 gap-x-4 text-xs">
                                                 <span>Seasonal Rank:</span><span className="text-right">£{breakdown.seasonal.toFixed(2)}</span>
                                                 <span>Monthly Awards:</span><span className="text-right">£{breakdown.monthly.toFixed(2)}</span>
-                                                <span>Pro Bounty:</span><span className="text-right">£{breakdown.proBounty.toFixed(2)}</span>
+                                                <span className="font-bold text-primary">Pro Bounty:</span><span className="text-right font-bold text-primary">£{breakdown.proBounty.toFixed(2)}</span>
                                             </div>
+                                            {isBeatingPros && (
+                                                <p className="text-[10px] text-muted-foreground pt-1 italic">
+                                                    * Bounty is your share of the shared £55 pool.
+                                                </p>
+                                            )}
                                         </TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>

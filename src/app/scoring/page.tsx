@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -78,12 +79,15 @@ export default function RulesAndScoringPage() {
             </CardHeader>
             <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">
-                    Any regular player who finishes the season ranked higher than <strong>ALL</strong> of "THE PROs" (BBC, Guardian, Supercomputer, etc.) will receive a potential bounty prize.
+                    Any regular player who finishes the season ranked higher than <strong>ALL</strong> professional entities (BBC, Guardian, Supercomputer, etc.) will receive a share of the Pro-Slayer pool.
                 </p>
                 <div className="flex items-center justify-between p-3 bg-card rounded-md border shadow-sm">
-                    <span className="font-bold">Pro Slayer Bonus</span>
-                    <span className="text-lg font-bold text-primary">£5.00</span>
+                    <span className="font-bold">Shared Pro-Slayer Pool</span>
+                    <span className="text-lg font-bold text-primary">£55.00</span>
                 </div>
+                <p className="text-[10px] text-muted-foreground mt-3 italic">
+                    * The pool is capped at 10% of total entries (11) multiplied by the £5 entry fee. This total is divided equally amongst all successful Pro Slayers.
+                </p>
             </CardContent>
         </Card>
 
