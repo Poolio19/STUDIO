@@ -130,7 +130,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       )}
       <SidebarInset className="flex flex-col">
         <header className={cn("flex h-auto min-h-14 items-center gap-4 border-b bg-card px-6 py-3", { "hidden": mustChangePassword })}>
-          {!mustChangePassword && <SidebarTrigger className={cn({ "hidden": isMobile })} />}
+          {!mustChangePassword && <SidebarTrigger />}
           <div>
             <h1 className="text-lg font-semibold">{title}</h1>
             {description && <p className="text-sm text-muted-foreground">{description}</p>}

@@ -17,7 +17,7 @@ import historicalPlayersData from './historical-players.json';
  * Recalculates all derived data based on raw matches and predictions.
  * Strictly enforces:
  * 1. Pros always win ties (Sorted higher in ordinal ranks).
- * 2. Standard Competition Ranking for visuals (1, 2, 2, 4...).
+ * 2. Competition Ranking (1, 2, 2, 4...) stored in history.
  */
 export async function recalculateAllDataClientSide(
   firestore: Firestore,
@@ -89,7 +89,7 @@ export async function recalculateAllDataClientSide(
           userScores0[u.id] = score;
       });
       
-      // Sort: Score DESC, Pros first DESC, Name ASC
+      // Sort for Ordinal Ranks: Score DESC, Pros first DESC, Name ASC
       const ranked0 = users.map(u => ({...u, score: userScores0[u.id]}))
           .sort((a, b) => {
               if (b.score !== a.score) return b.score - a.score;
@@ -97,7 +97,13 @@ export async function recalculateAllDataClientSide(
               if (!a.isPro && b.isPro) return 1;
               return a.name.localeCompare(b.name);
           });
-      ranked0.forEach((u, i) => allUserHistories[u.id].weeklyScores.push({ week: 0, score: u.score, rank: i + 1 }));
+      
+      // Calculate Competition Ranks (1, 2, 2, 4) for visual history
+      const scores0 = ranked0.map(u => u.score);
+      ranked0.forEach((u) => {
+          const compRank = scores0.indexOf(u.score) + 1;
+          allUserHistories[u.id].weeklyScores.push({ week: 0, score: u.score, rank: compRank });
+      });
 
       const playedWeeks = [...new Set(allMatches.filter(m => m.homeScore > -1).map(m => m.week))].sort((a,b) => a-b);
       for (const week of playedWeeks) {
@@ -135,7 +141,12 @@ export async function recalculateAllDataClientSide(
                   if (!a.isPro && b.isPro) return 1;
                   return a.name.localeCompare(b.name);
               });
-          uRanked.forEach((u, i) => allUserHistories[u.id].weeklyScores.push({ week, score: u.score, rank: i + 1 }));
+          
+          const weekScores = uRanked.map(u => u.score);
+          uRanked.forEach((u) => {
+              const compRank = weekScores.indexOf(u.score) + 1;
+              allUserHistories[u.id].weeklyScores.push({ week, score: u.score, rank: compRank });
+          });
       }
 
       // Save Final States
