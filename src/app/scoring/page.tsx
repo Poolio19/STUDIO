@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -9,7 +8,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, Trophy, Swords, Medal } from 'lucide-react';
 
 export default function RulesAndScoringPage() {
   return (
@@ -67,6 +66,56 @@ export default function RulesAndScoringPage() {
           </div>
         </CardContent>
       </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <Card className="border-primary/20 bg-primary/5">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Swords className="size-6 text-primary" />
+                    Beat the Pros Bounty
+                </CardTitle>
+                <CardDescription>Extra rewards for outperforming the experts.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                    Any regular player who finishes the season ranked higher than <strong>ALL</strong> of "THE PROs" (BBC, Guardian, Supercomputer, etc.) will receive a potential bounty prize.
+                </p>
+                <div className="flex items-center justify-between p-3 bg-card rounded-md border shadow-sm">
+                    <span className="font-bold">Pro Slayer Bonus</span>
+                    <span className="text-lg font-bold text-primary">£5.00</span>
+                </div>
+            </CardContent>
+        </Card>
+
+        <Card className="border-yellow-500/20 bg-yellow-500/5">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Trophy className="size-6 text-yellow-600" />
+                    Season Prize Tiers
+                </CardTitle>
+                <CardDescription>Based on final league position (Regular Players only).</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-2">
+                    {[
+                        { rank: '1st', label: 'Champion', prize: '£50.00', icon: Trophy },
+                        { rank: '2nd', label: 'Runner Up', prize: '£41.00', icon: Medal },
+                        { rank: '3rd', label: '3rd Place', prize: '£33.00', icon: Medal },
+                        { rank: '4th', label: '4th Place', prize: '£26.00', icon: null },
+                        { rank: '5th', label: '5th Place', prize: '£20.00', icon: null },
+                    ].map((tier) => (
+                        <div key={tier.rank} className="flex items-center justify-between p-2 bg-card rounded border text-sm">
+                            <div className="flex items-center gap-2">
+                                <span className="font-bold w-8">{tier.rank}</span>
+                                <span className="text-muted-foreground">{tier.label}</span>
+                            </div>
+                            <span className="font-bold">{tier.prize}</span>
+                        </div>
+                    ))}
+                </div>
+            </CardContent>
+        </Card>
+      </div>
 
       <Alert variant="destructive">
         <ShieldAlert className="h-4 w-4" />

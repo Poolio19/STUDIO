@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -18,10 +17,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { User, CurrentStanding, MonthlyMimoM, Match, Prediction } from '@/lib/types';
 import { getAvatarUrl } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
-import { ArrowUp, ArrowDown, Minus, Loader2 } from 'lucide-react';
+import { ArrowUp, ArrowDown, Minus, Loader2, Swords, Info } from 'lucide-react';
 import { useMemo } from 'react';
 import { useCollection, useFirestore, useMemoFirebase, useResolvedUserId } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
@@ -74,17 +79,13 @@ export default function LeaderboardPage() {
   const sortedUsers = useMemo(() => {
     if (!usersData || !predictionsData) return [];
     
-    // 1. Identify IDs of players in the official historical list
     const historicalUserIds = new Set(historicalPlayersData.map(p => p.id));
-
-    // 2. Identify IDs of players who have officially entered this season (complete prediction)
     const activeUserIds = new Set(
       predictionsData
         .filter(p => p.rankings && p.rankings.length === 20)
         .map(p => p.userId || p.id)
     );
 
-    // 3. Filter for users who are both historical players AND active this season
     return [...usersData]
         .filter(u => u.name && historicalUserIds.has(u.id) && activeUserIds.has(u.id))
         .sort((a, b) => a.rank - b.rank);
@@ -98,69 +99,66 @@ export default function LeaderboardPage() {
     return Math.min(...proPlayers.map(p => p.rank));
   }, [proPlayers]);
 
-  const localTotalWinningsMap = useMemo(() => {
+  const winningsBreakdownMap = useMemo(() => {
     if (!usersData || !monthlyMimoM) return new Map();
-    const winningsMap = new Map<string, number>();
-    const monthlyAwards: { [key: string]: { winners: string[], runnersUp: string[] } } = {};
+    const breakdown = new Map<string, { total: number, seasonal: number, monthly: number, proBounty: number }>();
+    
+    // 1. Initialize for all players
+    sortedUsers.forEach(u => breakdown.set(u.id, { total: 0, seasonal: 0, monthly: 0, proBounty: 0 }));
 
+    // 2. Monthly Awards
+    const monthlyAwards: { [key: string]: { winners: string[], runnersUp: string[] } } = {};
     monthlyMimoM.forEach(m => {
         if (m.type !== 'winner' && m.type !== 'runner-up') return;
-
         const key = m.special ? m.special : `${m.month}-${m.year}`;
-        if (!monthlyAwards[key]) {
-            monthlyAwards[key] = { winners: [], runnersUp: [] };
-        }
-        if (m.type === 'winner') {
-            monthlyAwards[key].winners.push(m.userId);
-        } else if (m.type === 'runner-up') {
-            monthlyAwards[key].runnersUp.push(m.userId);
-        }
+        if (!monthlyAwards[key]) monthlyAwards[key] = { winners: [], runnersUp: [] };
+        if (m.type === 'winner') monthlyAwards[key].winners.push(m.userId);
+        else if (m.type === 'runner-up') monthlyAwards[key].runnersUp.push(m.userId);
     });
 
     Object.values(monthlyAwards).forEach(award => {
         const winnerPrize = 10 / (award.winners.length || 1);
         award.winners.forEach(userId => {
-            winningsMap.set(userId, (winningsMap.get(userId) || 0) + winnerPrize);
+            const current = breakdown.get(userId) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
+            breakdown.set(userId, { ...current, total: current.total + winnerPrize, monthly: current.monthly + winnerPrize });
         });
-
         if (award.winners.length === 1 && award.runnersUp.length > 0) {
             const runnerUpPrize = 5 / award.runnersUp.length;
             award.runnersUp.forEach(userId => {
-                winningsMap.set(userId, (winningsMap.get(userId) || 0) + runnerUpPrize);
+                const current = breakdown.get(userId) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
+                breakdown.set(userId, { ...current, total: current.total + runnerUpPrize, monthly: current.monthly + runnerUpPrize });
             });
         }
     });
     
+    // 3. Seasonal Rank Prizes
     let playerIndex = 0;
     while(playerIndex < regularPlayers.length) {
         const player = regularPlayers[playerIndex];
         const playersAtSameRank = regularPlayers.filter(p => p.rank === player.rank);
-        
         const prizePoolRanks = Array.from({ length: playersAtSameRank.length }, (_, i) => playerIndex + i);
-        const prizePool = prizePoolRanks.reduce((sum, rankIndex) => {
-            return sum + (prizeTiers[rankIndex] || 0);
-        }, 0);
-
+        const prizePool = prizePoolRanks.reduce((sum, rankIndex) => sum + (prizeTiers[rankIndex] || 0), 0);
         const individualWinnings = prizePool > 0 ? prizePool / playersAtSameRank.length : 0;
 
         playersAtSameRank.forEach(tiedPlayer => {
-            winningsMap.set(tiedPlayer.id, (winningsMap.get(tiedPlayer.id) || 0) + individualWinnings);
+            const current = breakdown.get(tiedPlayer.id) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
+            breakdown.set(tiedPlayer.id, { ...current, total: current.total + individualWinnings, seasonal: current.seasonal + individualWinnings });
         });
-
         playerIndex += playersAtSameRank.length;
     }
 
+    // 4. Pro Bounty Rule: £5 for beating ALL pros
     if (proPlayers.length > 0) {
-      const bestPro = Math.min(...proPlayers.map(p => p.rank));
       regularPlayers.forEach(player => {
-          if (player.rank > 0 && player.rank < bestPro) {
-              winningsMap.set(player.id, (winningsMap.get(player.id) || 0) + 5);
+          if (player.rank > 0 && player.rank < bestProRank) {
+              const current = breakdown.get(player.id) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
+              breakdown.set(player.id, { ...current, total: current.total + 5, proBounty: current.proBounty + 5 });
           }
       });
     }
 
-    return winningsMap;
-  }, [regularPlayers, proPlayers, usersData, monthlyMimoM]);
+    return breakdown;
+  }, [regularPlayers, proPlayers, usersData, monthlyMimoM, bestProRank, sortedUsers]);
 
     const getRankColour = (user: User) => {
     if (user.isPro) {
@@ -186,8 +184,8 @@ export default function LeaderboardPage() {
         return 'bg-blue-300 text-blue-900 hover:bg-blue-300/90 dark:bg-blue-800/40 dark:text-blue-200';
     }
     
-    const totalWinnings = localTotalWinningsMap.get(user.id) || 0;
-    if (totalWinnings > 0) {
+    const breakdown = winningsBreakdownMap.get(user.id);
+    if (breakdown && breakdown.total > 0) {
         return 'bg-blue-100 text-blue-900 hover:bg-blue-100/90 dark:bg-blue-900/30 dark:text-blue-300';
     }
 
@@ -216,7 +214,18 @@ export default function LeaderboardPage() {
                 <TableHead className="w-[80px] bg-blue-50/50 dark:bg-blue-900/10 py-2">Position</TableHead>
                 <TableHead className="bg-blue-50/50 dark:bg-blue-900/10 py-2">Player</TableHead>
                 <TableHead className="text-center bg-blue-50/50 dark:bg-blue-900/10 py-2">Points</TableHead>
-                <TableHead className="text-center border-r bg-blue-50/50 dark:bg-blue-900/10 py-2">Winnings</TableHead>
+                <TableHead className="text-center border-r bg-blue-50/50 dark:bg-blue-900/10 py-2">
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger className="flex items-center justify-center gap-1 w-full font-bold">
+                                Winnings <Info className="size-3" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Potential seasonal winnings including rank prizes, monthly awards, and Pro Bounties.</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </TableHead>
                 <TableHead className="text-center bg-green-50/50 dark:bg-green-900/10 py-2">Was</TableHead>
                 <TableHead className="w-[130px] text-center border-r bg-green-50/50 dark:bg-green-900/10 py-2">Move</TableHead>
                 <TableHead className="text-center bg-green-50/50 dark:bg-green-900/10 py-2">Was</TableHead>
@@ -241,8 +250,9 @@ export default function LeaderboardPage() {
                 sortedUsers.map((user) => {
                   const RankIcon = getRankChangeIcon(user.rankChange);
                   const ScoreIcon = getRankChangeIcon(user.scoreChange);
-                  const userWinnings = localTotalWinningsMap.get(user.id) || 0;
+                  const breakdown = winningsBreakdownMap.get(user.id) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
                   const isCurrentUser = user.id === resolvedUserId;
+                  const isBeatingPros = breakdown.proBounty > 0;
                   
                   return (
                       <TableRow key={user.id} className={cn(getRankColour(user), { 'font-bold ring-2 ring-inset ring-primary z-10 relative': isCurrentUser })}>
@@ -253,12 +263,38 @@ export default function LeaderboardPage() {
                                 <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name || 'User'} data-ai-hint="person" />
                                 <AvatarFallback>{(user.name || '?').charAt(0)}</AvatarFallback>
                                 </Avatar>
-                                <span>{user.isPro ? (user.name || '').toUpperCase() : user.name}</span>
+                                <span className="flex items-center gap-2">
+                                    {user.isPro ? (user.name || '').toUpperCase() : user.name}
+                                    {isBeatingPros && !user.isPro && (
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger><Swords className="size-4 text-primary animate-pulse" /></TooltipTrigger>
+                                                <TooltipContent><p>Pro Slayer: Currently beating ALL professional entities!</p></TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    )}
+                                </span>
                             </div>
                           </TableCell>
                           <TableCell className="text-center font-bold text-lg py-1">{user.score}</TableCell>
                           <TableCell className="text-center font-medium border-r py-1">
-                            {user.isPro ? '-' : (userWinnings > 0 ? `£${userWinnings.toFixed(2)}` : '£0.00')}
+                            {user.isPro ? '-' : (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger className="cursor-help underline decoration-dotted underline-offset-4">
+                                            {breakdown.total > 0 ? `£${breakdown.total.toFixed(2)}` : '£0.00'}
+                                        </TooltipTrigger>
+                                        <TooltipContent side="left" className="space-y-1">
+                                            <p className="font-bold border-b pb-1 mb-1 text-xs">Prize Breakdown</p>
+                                            <div className="grid grid-cols-2 gap-x-4 text-xs">
+                                                <span>Seasonal Rank:</span><span className="text-right">£{breakdown.seasonal.toFixed(2)}</span>
+                                                <span>Monthly Awards:</span><span className="text-right">£{breakdown.monthly.toFixed(2)}</span>
+                                                <span>Pro Bounty:</span><span className="text-right">£{breakdown.proBounty.toFixed(2)}</span>
+                                            </div>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
                           </TableCell>
                           <TableCell className="text-center font-medium py-1">{user.previousRank}</TableCell>
                           <TableCell className={cn("font-bold text-center border-r py-1", getRankChangeColour(user.rankChange))}>
