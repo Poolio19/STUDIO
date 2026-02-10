@@ -78,7 +78,15 @@ export default function LeaderboardPage() {
     if (!usersData || !predictionsData) return [];
     const historicalUserIds = new Set(historicalPlayersData.map(p => p.id));
     const activeUserIds = new Set(predictionsData.map(p => p.userId || p.id));
-    return [...usersData].filter(u => u.name && (historicalUserIds.has(u.id) || u.isPro) && activeUserIds.has(u.id));
+    // Filter for active players and sort by Score (Desc), Pro (Desc), Name (Asc) for ordinal prizes
+    return [...usersData]
+        .filter(u => u.name && (historicalUserIds.has(u.id) || u.isPro) && activeUserIds.has(u.id))
+        .sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            if (a.isPro && !b.isPro) return -1;
+            if (!a.isPro && b.isPro) return 1;
+            return a.name.localeCompare(b.name);
+        });
   }, [usersData, predictionsData]);
 
   const winningsMap = useMemo(() => {
@@ -111,7 +119,7 @@ export default function LeaderboardPage() {
         }
     });
 
-    // 2. Pro-Slayer Bounty shared Pool
+    // 2. Identify Slayers & Pro Slayer shared Pool
     let highestProScore = -1;
     sortedUsers.forEach(u => { if (u.isPro && u.score > highestProScore) highestProScore = u.score; });
 
@@ -124,10 +132,11 @@ export default function LeaderboardPage() {
         currentOrdinal++;
     });
 
+    // A player is a slayer if score > highestProScore AND they receive £0 seasonal prize (rank > 10)
     pointsGroups.forEach(group => {
         group.players.forEach((p, i) => {
             const ord = group.startOrdinal + i;
-            if (!p.isPro && group.score > highestProScore && ord > 10) slayers.push(p.id);
+            if (!p.isPro && p.score > highestProScore && ord > 10) slayers.push(p.id);
         });
     });
 
@@ -170,17 +179,22 @@ export default function LeaderboardPage() {
     if (user.isPro) return 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     const b = winningsMap.get(user.id);
     if (!b) return '';
+    
+    // Find the highest rank in this user's points group
+    const userScore = user.score;
+    const topOfGroup = sortedUsers.find(u => u.score === userScore);
+    const highestOrdinal = sortedUsers.indexOf(topOfGroup!) + 1;
+
     if (b.seasonal > 0) {
-        const ord = sortedUsers.findIndex(u => u.id === user.id) + 1;
-        if (ord === 1) return 'bg-red-800 text-yellow-300';
-        if (ord <= 2) return 'bg-red-600 text-white';
-        if (ord <= 3) return 'bg-orange-700 text-white';
-        if (ord <= 4) return 'bg-orange-500 text-white';
-        if (ord <= 5) return 'bg-orange-300 text-orange-900';
-        if (ord <= 6) return 'bg-yellow-200 text-yellow-900';
-        if (ord <= 7) return 'bg-green-200 text-green-900';
-        if (ord <= 8) return 'bg-cyan-200 text-cyan-900';
-        if (ord <= 9) return 'bg-cyan-400 text-cyan-900';
+        if (highestOrdinal === 1) return 'bg-red-800 text-yellow-300';
+        if (highestOrdinal <= 2) return 'bg-red-600 text-white';
+        if (highestOrdinal <= 3) return 'bg-orange-700 text-white';
+        if (highestOrdinal <= 4) return 'bg-orange-500 text-white';
+        if (highestOrdinal <= 5) return 'bg-orange-300 text-orange-900';
+        if (highestOrdinal <= 6) return 'bg-yellow-200 text-yellow-900';
+        if (highestOrdinal <= 7) return 'bg-green-200 text-green-900';
+        if (highestOrdinal <= 8) return 'bg-cyan-200 text-cyan-900';
+        if (highestOrdinal <= 9) return 'bg-cyan-400 text-cyan-900';
         return 'bg-teal-400 text-teal-900';
     }
     if (b.proBounty > 0) return 'bg-blue-300 text-blue-900';

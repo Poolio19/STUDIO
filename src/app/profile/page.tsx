@@ -155,10 +155,14 @@ export default function ProfilePage() {
 
     const sortedUsers = [...allUsers]
         .filter(u => u.name && predictions.some(p => (p.userId || p.id) === u.id))
-        .sort((a,b) => a.rank - b.rank);
+        .sort((a,b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            if (a.isPro && !b.isPro) return -1;
+            if (!a.isPro && b.isPro) return 1;
+            return a.name.localeCompare(b.name);
+        });
 
     // 1. Bagged (Monthly & Xmas)
-    const monthlyAwards = monthlyMimoM.filter(m => m.userId === user.id);
     let bagged = 0;
     const awardsMap: { [key: string]: { winners: string[], runnersUp: string[] } } = {};
     monthlyMimoM.forEach(m => {
