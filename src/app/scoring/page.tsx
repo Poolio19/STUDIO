@@ -79,7 +79,7 @@ export default function RulesAndScoringPage() {
             </CardHeader>
             <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                    Any regular player who finishes the season ranked higher than <strong>ALL</strong> professional entities (BBC, Guardian, Supercomputer, etc.) will receive a share of the Pro-Slayer pool.
+                    Any regular player who finishes the season ranked strictly higher than <strong>ALL</strong> professional entities (BBC, Guardian, Supercomputer, etc.) will receive a share of the Pro-Slayer pool.
                 </p>
                 <div className="flex items-center justify-between p-3 bg-card rounded-md border shadow-sm">
                     <span className="font-bold">Shared Pro-Slayer Pool</span>
@@ -92,7 +92,7 @@ export default function RulesAndScoringPage() {
                     </AlertDescription>
                 </Alert>
                 <p className="text-[10px] text-muted-foreground italic">
-                    * The pool is calculated as 10% of total entries multiplied by the £5 entry fee. This total is divided equally amongst all eligible Pro Slayers.
+                    * The pool is calculated as 10% of total entries (11) multiplied by the £5 entry fee. This total is divided equally amongst all eligible Pro Slayers.
                 </p>
             </CardContent>
         </Card>

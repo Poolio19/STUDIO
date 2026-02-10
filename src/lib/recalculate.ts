@@ -37,7 +37,6 @@ export async function recalculateAllDataClientSide(
       const allUsers = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
       const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
       
-      // Filter for active users who are in the official list AND have submitted a complete prediction
       const historicalUserIds = new Set(historicalPlayersData.map(p => p.id));
       const activeUserIds = new Set(
         predictions
@@ -74,18 +73,14 @@ export async function recalculateAllDataClientSide(
       const rankedUsersForWeek0 = users
         .map(user => ({ ...user, score: userScoresForWeek0[user.id] ?? 0 }))
         .sort((a, b) => {
-            // Primary Sort: Score (Points) Descending
             if (b.score !== a.score) return b.score - a.score;
-            // Secondary Sort (Tie-break): THE PROs always win ties and sit above regular players
             if (a.isPro && !b.isPro) return -1;
             if (!a.isPro && b.isPro) return 1;
-            // Tertiary Sort: Alphabetical Name
             return (a.name || '').localeCompare(b.name || '');
         });
           
       const allUserHistories: { [userId: string]: UserHistory } = {};
 
-      // Assign Ordinal Ranking (1, 2, 3...) - This ensures PROs take the better rank number on ties
       rankedUsersForWeek0.forEach((user, index) => {
           const rank = index + 1;
           allUserHistories[user.id] = { 
@@ -99,7 +94,6 @@ export async function recalculateAllDataClientSide(
       const collectionsToClear = ['standings', 'playerTeamScores', 'teamRecentResults', 'weeklyTeamStandings', 'userHistories', 'monthlyMimoM', 'seasonMonths'];
       
       for (const collectionName of collectionsToClear) {
-          progressCallback(`Clearing ${collectionName}...`);
           const snapshot = await getDocs(collection(firestore, collectionName));
           if (snapshot.empty) continue;
           
@@ -132,7 +126,6 @@ export async function recalculateAllDataClientSide(
           }
       };
       
-      // --- 4. Populate Season Months ---
       allAwardPeriods.forEach(period => {
           const docRef = doc(firestore, 'seasonMonths', period.id);
           addOperation(b => b.set(docRef, {
@@ -144,7 +137,6 @@ export async function recalculateAllDataClientSide(
           }));
       });
 
-      // --- 5. Write Week 0 Team Standings ---
       prevStandings.forEach(standing => {
         if (!standing.teamId) return;
         const docRef = doc(firestore, 'weeklyTeamStandings', `0-${standing.teamId}`);
@@ -235,16 +227,12 @@ export async function recalculateAllDataClientSide(
         const rankedUsersForWeek = users
             .map(user => ({ ...user, scoreForWeek: userScoresForWeek[user.id] ?? 0 }))
             .sort((a, b) => {
-                // Primary Sort: Points Descending
                 if (b.scoreForWeek !== a.scoreForWeek) return b.scoreForWeek - a.scoreForWeek;
-                // Secondary Sort (Tie-break): THE PROs always win ties and sit above regular players
                 if (a.isPro && !b.isPro) return -1;
                 if (!a.isPro && b.isPro) return 1;
-                // Tertiary Sort: Alphabetical Name
                 return (a.name || '').localeCompare(b.name || '');
             });
             
-        // Assign Ordinal Ranking (1, 2, 3...)
         rankedUsersForWeek.forEach((user, index) => {
             const rank = index + 1;
             allUserHistories[user.id].weeklyScores.push({ week: week, score: user.scoreForWeek, rank: rank });

@@ -105,10 +105,8 @@ export default function LeaderboardPage() {
     const breakdown = new Map<string, { total: number, seasonal: number, monthly: number, proBounty: number }>();
     const userMap = new Map(usersData.map(u => [u.id, u]));
     
-    // 1. Initialize for all players
     sortedUsers.forEach(u => breakdown.set(u.id, { total: 0, seasonal: 0, monthly: 0, proBounty: 0 }));
 
-    // 2. Monthly Awards
     const monthlyAwards: { [key: string]: { winners: string[], runnersUp: string[] } } = {};
     monthlyMimoM.forEach(m => {
         if (m.type !== 'winner' && m.type !== 'runner-up') return;
@@ -133,7 +131,6 @@ export default function LeaderboardPage() {
         }
     });
     
-    // 3. Seasonal Rank Prizes (Shared Pooling for Tied Regular Players)
     const pointsGroups = new Map<number, string[]>();
     sortedUsers.forEach(u => {
         const group = pointsGroups.get(u.score) || [];
@@ -150,17 +147,11 @@ export default function LeaderboardPage() {
 
         const groupUserIds = pointsGroups.get(user.score) || [];
         const groupSize = groupUserIds.length;
-        
-        // Find if there is a PRO in this score group
         const hasProInGroup = groupUserIds.some(id => userMap.get(id)?.isPro);
-        
-        // Find regular players in this group
         const regularPlayersInGroup = groupUserIds.filter(id => !userMap.get(id)?.isPro);
         
         if (regularPlayersInGroup.length > 0) {
             let individualShare = 0;
-            
-            // RULE: If you are tied with a PRO, you get £0 for seasonal rank prizes
             if (!hasProInGroup) {
                 const poolPrize = groupUserIds.reduce((sum, id, indexWithinGroup) => {
                     const globalRankIndex = currentGlobalIndex + indexWithinGroup;
@@ -183,12 +174,10 @@ export default function LeaderboardPage() {
         currentGlobalIndex += groupSize;
     });
 
-    // 4. Pro Bounty Rule: Shared Pool logic
     const totalRegularPlayers = regularPlayers.length;
     const bountyCapCount = Math.ceil(totalRegularPlayers * 0.1); 
     const totalBountyPool = bountyCapCount * 5; 
     
-    // EXCLUSION RULE: Anyone qualifying for a Top 10 prize (ranks 1-10) does not qualify for Pro-Slayer cashback.
     const proSlayers = regularPlayers.filter(player => player.rank > 10 && player.rank < bestProRank);
     const individualBounty = proSlayers.length > 0 ? (totalBountyPool / proSlayers.length) : 0;
 
@@ -213,9 +202,7 @@ export default function LeaderboardPage() {
 
     const breakdown = winningsBreakdownMap.get(user.id);
     
-    // Prize-zone highlight alignment: Ties share the same color shade based on their group's highest rank
     if (breakdown && breakdown.seasonal > 0) {
-        // Find the points group this user belongs to
         const groupBestRank = sortedUsers.find(u => u.score === user.score)?.rank || user.rank;
         const effectiveRank = Math.min(groupBestRank, 10);
         
@@ -305,10 +292,6 @@ export default function LeaderboardPage() {
                   const breakdown = winningsBreakdownMap.get(user.id) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
                   const isCurrentUser = user.id === resolvedUserId;
                   const isBountyWinner = breakdown.proBounty > 0;
-                  
-                  // Calculate Display Rank (Competition Style: 1, 2, 2, 4...)
-                  // Note: Because PROs win ties and are unique ordinal ranks, 
-                  // regular players tied with each other will share the rank number of the highest in their group.
                   const displayRank = sortedUsers.find(u => u.score === user.score)?.rank || user.rank;
 
                   return (
