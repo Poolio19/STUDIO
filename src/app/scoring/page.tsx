@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -9,7 +8,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ShieldAlert, Trophy, Swords, Medal } from 'lucide-react';
+import { ShieldAlert, Trophy, Swords, Medal, Info } from 'lucide-react';
 
 export default function RulesAndScoringPage() {
   return (
@@ -77,16 +76,22 @@ export default function RulesAndScoringPage() {
                 </CardTitle>
                 <CardDescription>Extra rewards for outperforming the experts.</CardDescription>
             </CardHeader>
-            <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
+            <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
                     Any regular player who finishes the season ranked higher than <strong>ALL</strong> professional entities (BBC, Guardian, Supercomputer, etc.) will receive a share of the Pro-Slayer pool.
                 </p>
                 <div className="flex items-center justify-between p-3 bg-card rounded-md border shadow-sm">
                     <span className="font-bold">Shared Pro-Slayer Pool</span>
                     <span className="text-lg font-bold text-primary">£55.00</span>
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-3 italic">
-                    * The pool is capped at 10% of total entries (11) multiplied by the £5 entry fee. This total is divided equally amongst all successful Pro Slayers.
+                <Alert className="bg-background/50 border-primary/30">
+                    <Info className="size-4" />
+                    <AlertDescription className="text-xs">
+                        <strong>Top 10 Exclusion:</strong> Players qualifying for a Top 10 seasonal prize (rank 1-10) do not also qualify for the Pro-Slayer cashback.
+                    </AlertDescription>
+                </Alert>
+                <p className="text-[10px] text-muted-foreground italic">
+                    * The pool is calculated as 10% of total entries multiplied by the £5 entry fee. This total is divided equally amongst all eligible Pro Slayers.
                 </p>
             </CardContent>
         </Card>

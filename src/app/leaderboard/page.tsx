@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -24,7 +23,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { User, CurrentStanding, MonthlyMimoM, Match, Prediction } from '@/lib/types';
+import type { User, MonthlyMimoM, Match, Prediction } from '@/lib/types';
 import { getAvatarUrl } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { ArrowUp, ArrowDown, Minus, Loader2, Swords, Info } from 'lucide-react';
@@ -154,7 +153,8 @@ export default function LeaderboardPage() {
     const bountyCapCount = Math.ceil(totalRegularPlayers * 0.1); 
     const totalBountyPool = bountyCapCount * 5; 
     
-    const proSlayers = regularPlayers.filter(player => player.rank > 0 && player.rank < bestProRank);
+    // EXCLUSION RULE: Anyone qualifying for a Top 10 prize (ranks 1-10) does not qualify for Pro-Slayer cashback.
+    const proSlayers = regularPlayers.filter(player => player.rank > 10 && player.rank < bestProRank);
     const individualBounty = proSlayers.length > 0 ? (totalBountyPool / proSlayers.length) : 0;
 
     if (proPlayers.length > 0) {
@@ -163,7 +163,6 @@ export default function LeaderboardPage() {
           breakdown.set(player.id, { 
               ...current, 
               total: current.total + individualBounty, 
-              proSlayersCount: proSlayers.length, // Store for UI/Tooltip use if needed
               proBounty: current.proBounty + individualBounty 
           });
       });
@@ -192,8 +191,8 @@ export default function LeaderboardPage() {
             break;
     }
 
-    // Pro Slayer Blue: Only applied if strictly outranking every pro (no ties allowed)
-    if (user.rank < bestProRank) {
+    // Pro Slayer Blue: Only applied if strictly outranking every pro AND not in Top 10
+    if (user.rank > 10 && user.rank < bestProRank) {
         return 'bg-blue-300 text-blue-900 hover:bg-blue-300/90 dark:bg-blue-800/40 dark:text-blue-200';
     }
     
@@ -265,7 +264,7 @@ export default function LeaderboardPage() {
                   const ScoreIcon = getRankChangeIcon(user.scoreChange);
                   const breakdown = winningsBreakdownMap.get(user.id) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
                   const isCurrentUser = user.id === resolvedUserId;
-                  const isBeatingPros = breakdown.proBounty > 0;
+                  const isBountyWinner = breakdown.proBounty > 0;
                   
                   return (
                       <TableRow key={user.id} className={cn(getRankColour(user), { 'font-bold ring-2 ring-inset ring-primary z-10 relative': isCurrentUser })}>
@@ -278,11 +277,11 @@ export default function LeaderboardPage() {
                                 </Avatar>
                                 <span className="flex items-center gap-2">
                                     {user.isPro ? (user.name || '').toUpperCase() : user.name}
-                                    {isBeatingPros && !user.isPro && (
+                                    {isBountyWinner && !user.isPro && (
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger><Swords className="size-4 text-primary animate-pulse" /></TooltipTrigger>
-                                                <TooltipContent><p>Pro Slayer: Currently beating ALL professional entities!</p></TooltipContent>
+                                                <TooltipContent><p>Pro Slayer Bounty Winner!</p></TooltipContent>
                                             </Tooltip>
                                         </TooltipProvider>
                                     )}
@@ -304,9 +303,9 @@ export default function LeaderboardPage() {
                                                 <span>Monthly Awards:</span><span className="text-right">£{breakdown.monthly.toFixed(2)}</span>
                                                 <span className="font-bold text-primary">Pro Bounty:</span><span className="text-right font-bold text-primary">£{breakdown.proBounty.toFixed(2)}</span>
                                             </div>
-                                            {isBeatingPros && (
+                                            {isBountyWinner && (
                                                 <p className="text-[10px] text-muted-foreground pt-1 italic">
-                                                    * Bounty is your share of the shared £55 pool.
+                                                    * Bounty is your share of the shared Pro-Slayer pool.
                                                 </p>
                                             )}
                                         </TooltipContent>
