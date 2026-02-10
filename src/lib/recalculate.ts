@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -8,8 +9,7 @@ import {
   type Firestore,
   type WriteBatch,
 } from 'firebase/firestore';
-import type { Team, Prediction, User as UserProfile, UserHistory, CurrentStanding, PreviousSeasonStanding, Match } from '@/lib/types';
-import { allAwardPeriods } from '@/lib/award-periods';
+import type { Team, Prediction, User as UserProfile, UserHistory, Match } from '@/lib/types';
 import prevStandingsData from './previous-season-standings-24-25.json';
 import historicalPlayersData from './historical-players.json';
 
@@ -82,7 +82,8 @@ export async function recalculateAllDataClientSide(
           });
           userScores0[u.id] = score;
       });
-      const ranked0 = users.map(u => ({...u, score: userScores0[u.id]})).sort((a,b) => b.score - a.score || (a.isPro ? -1 : 1) || a.name.localeCompare(b.name));
+      const ranked0 = users.map(u => ({...u, score: userScores0[u.id]}))
+          .sort((a,b) => b.score - a.score || (a.isPro ? -1 : (b.isPro ? 1 : 0)) || a.name.localeCompare(b.name));
       ranked0.forEach((u, i) => allUserHistories[u.id].weeklyScores.push({ week: 0, score: u.score, rank: i + 1 }));
 
       const playedWeeks = [...new Set(allMatches.filter(m => m.homeScore > -1).map(m => m.week))].sort((a,b) => a-b);
@@ -114,7 +115,12 @@ export async function recalculateAllDataClientSide(
               uScores[u.id] = score;
           });
           const uRanked = users.map(u => ({...u, score: uScores[u.id]}))
-              .sort((a,b) => b.score - a.score || (a.isPro ? -1 : 1) || a.name.localeCompare(b.name));
+              .sort((a, b) => {
+                  if (b.score !== a.score) return b.score - a.score;
+                  if (a.isPro && !b.isPro) return -1;
+                  if (!a.isPro && b.isPro) return 1;
+                  return a.name.localeCompare(b.name);
+              });
           uRanked.forEach((u, i) => allUserHistories[u.id].weeklyScores.push({ week, score: u.score, rank: i + 1 }));
       }
 
