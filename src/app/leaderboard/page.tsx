@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -94,11 +95,6 @@ export default function LeaderboardPage() {
   const proPlayers = useMemo(() => sortedUsers.filter(u => u.isPro), [sortedUsers]);
   const regularPlayers = useMemo(() => sortedUsers.filter(u => !u.isPro), [sortedUsers]);
 
-  const bestProRank = useMemo(() => {
-    if (proPlayers.length === 0) return Infinity;
-    return Math.min(...proPlayers.map(p => p.rank));
-  }, [proPlayers]);
-
   const winningsBreakdownMap = useMemo(() => {
     if (!usersData || !monthlyMimoM) return new Map();
     const breakdown = new Map<string, { total: number, seasonal: number, monthly: number, proBounty: number }>();
@@ -106,7 +102,7 @@ export default function LeaderboardPage() {
     
     sortedUsers.forEach(u => breakdown.set(u.id, { total: 0, seasonal: 0, monthly: 0, proBounty: 0 }));
 
-    // 1. Calculate Monthly Awards
+    // 1. Monthly Awards
     const monthlyAwards: { [key: string]: { winners: string[], runnersUp: string[] } } = {};
     monthlyMimoM.forEach(m => {
         if (m.type !== 'winner' && m.type !== 'runner-up') return;
@@ -131,7 +127,7 @@ export default function LeaderboardPage() {
         }
     });
     
-    // 2. Calculate Seasonal Rank Prizes (with shared pool for ties)
+    // 2. Seasonal Rank Prizes (with "Pros Consuming Ranks" tie-breaking)
     const pointsGroups = new Map<number, string[]>();
     sortedUsers.forEach(u => {
         const group = pointsGroups.get(u.score) || [];
@@ -147,24 +143,24 @@ export default function LeaderboardPage() {
         processedScores.add(user.score);
 
         const groupUserIds = pointsGroups.get(user.score) || [];
-        const groupSize = groupUserIds.length;
-        const hasProInGroup = groupUserIds.some(id => userMap.get(id)?.isPro);
         const regularPlayersInGroup = groupUserIds.filter(id => !userMap.get(id)?.isPro);
+        const proPlayersInGroup = groupUserIds.filter(id => userMap.get(id)?.isPro);
         
         if (regularPlayersInGroup.length > 0) {
-            let individualShare = 0;
-            // RULE: Pro in group means no rank prize for regular players in that group
-            if (!hasProInGroup) {
-                const poolPrize = groupUserIds.reduce((sum, id, indexWithinGroup) => {
-                    const globalRankIndex = currentGlobalIndex + indexWithinGroup;
-                    if (globalRankIndex < prizeTiers.length) {
-                        return sum + prizeTiers[globalRankIndex];
-                    }
-                    return sum;
-                }, 0);
+            // PROs take the higher rank indices first within the group
+            const proCount = proPlayersInGroup.length;
+            
+            // Regular players share prizes for the rank indices THEY occupy
+            const poolPrize = regularPlayersInGroup.reduce((sum, id, indexWithinRegulars) => {
+                // Their rank index = start of group + pros who came before them + their own index
+                const globalRankIndex = currentGlobalIndex + proCount + indexWithinRegulars;
+                if (globalRankIndex < prizeTiers.length) {
+                    return sum + prizeTiers[globalRankIndex];
+                }
+                return sum;
+            }, 0);
 
-                individualShare = poolPrize / regularPlayersInGroup.length;
-            }
+            const individualShare = poolPrize / regularPlayersInGroup.length;
             
             regularPlayersInGroup.forEach(userId => {
                 const current = breakdown.get(userId) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
@@ -172,17 +168,17 @@ export default function LeaderboardPage() {
             });
         }
 
-        currentGlobalIndex += groupSize;
+        currentGlobalIndex += groupUserIds.length;
     });
 
-    // 3. Calculate Pro Slayer Bounty (Shared Pool)
-    // Formula: 10% of total entry count (109) = 11. 11 * £5 = £55.00 pool.
+    // 3. Pro Slayer Bounty (£55 Shared Pool)
     const totalBountyPool = 55.00;
+    const bestProRank = proPlayers.length > 0 ? Math.min(...proPlayers.map(p => p.rank)) : Infinity;
     
-    // Rule: Eligible if you strictly outscore all Pros AND didn't get a Top 10 rank prize
     const proSlayers = regularPlayers.filter(player => {
         const playerBreakdown = breakdown.get(player.id);
         const hasSeasonalPrize = (playerBreakdown?.seasonal || 0) > 0;
+        // Rules: must strictly outrank all Pros AND not receive a Top 10 rank prize
         return !hasSeasonalPrize && player.rank < bestProRank;
     });
 
@@ -198,7 +194,7 @@ export default function LeaderboardPage() {
     });
 
     return breakdown;
-  }, [regularPlayers, proPlayers, usersData, monthlyMimoM, bestProRank, sortedUsers]);
+  }, [sortedUsers, monthlyMimoM, proPlayers, regularPlayers]);
 
   const getRankColour = (user: User) => {
     if (user.isPro) {
@@ -209,13 +205,14 @@ export default function LeaderboardPage() {
     const groupBestRank = sortedUsers.find(u => u.score === user.score)?.rank || user.rank;
     
     if (breakdown && breakdown.seasonal > 0) {
+        // Tied players share the color of the highest prize rank they represent
         const effectiveRank = Math.min(groupBestRank, 10);
         
         switch (effectiveRank) {
-            case 1: return 'bg-red-800 text-yellow-300 hover:bg-red-800/90 dark:bg-red-900 dark:text-yellow-300 dark:hover:bg-red-900/90';
-            case 2: return 'bg-red-600 text-white hover:bg-red-600/90 dark:bg-red-700 dark:text-white dark:hover:bg-red-700/90';
-            case 3: return 'bg-orange-700 text-white hover:bg-orange-700/90 dark:bg-orange-800 dark:text-white dark:hover:bg-orange-800/90';
-            case 4: return 'bg-orange-500 text-white hover:bg-orange-500/90 dark:bg-orange-600 dark:text-white dark:hover:bg-orange-600/90';
+            case 1: return 'bg-red-800 text-yellow-300 hover:bg-red-800/90 dark:bg-red-900 dark:text-yellow-300';
+            case 2: return 'bg-red-600 text-white hover:bg-red-600/90 dark:bg-red-700 dark:text-white';
+            case 3: return 'bg-orange-700 text-white hover:bg-orange-700/90 dark:bg-orange-800 dark:text-white';
+            case 4: return 'bg-orange-500 text-white hover:bg-orange-500/90 dark:bg-orange-600 dark:text-white';
             case 5: return 'bg-orange-300 text-orange-900 hover:bg-orange-300/90 dark:bg-orange-500/50 dark:text-white';
             case 6: return 'bg-yellow-200 text-yellow-900 hover:bg-yellow-200/90 dark:bg-yellow-800/30 dark:text-yellow-200';
             case 7: return 'bg-green-200 text-green-900 hover:bg-green-200/90 dark:bg-green-800/30 dark:text-green-200';
@@ -291,14 +288,14 @@ export default function LeaderboardPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                sortedUsers.map((user, index) => {
+                sortedUsers.map((user) => {
                   const RankIcon = getRankChangeIcon(user.rankChange);
                   const ScoreIcon = getRankChangeIcon(user.scoreChange);
                   const breakdown = winningsBreakdownMap.get(user.id) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
                   const isCurrentUser = user.id === resolvedUserId;
                   const isBountyWinner = breakdown.proBounty > 0;
                   
-                  // Use Competition Ranking for display: find the first rank entry for this score
+                  // Use Competition Ranking for display: find the highest rank for this score
                   const displayRank = sortedUsers.find(u => u.score === user.score)?.rank || user.rank;
 
                   return (
@@ -340,7 +337,7 @@ export default function LeaderboardPage() {
                                             </div>
                                             {isBountyWinner && (
                                                 <p className="text-[10px] text-muted-foreground pt-1 italic">
-                                                    * Bounty is your share of the shared Pro-Slayer pool.
+                                                    * Bounty is your share of the shared £55 Pro-Slayer pool.
                                                 </p>
                                             )}
                                         </TooltipContent>
