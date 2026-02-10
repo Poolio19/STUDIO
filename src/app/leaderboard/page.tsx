@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -33,7 +32,6 @@ import { useCollection, useFirestore, useMemoFirebase, useResolvedUserId } from 
 import { collection, query, orderBy } from 'firebase/firestore';
 import historicalPlayersData from '@/lib/historical-players.json';
 
-
 const getRankChangeIcon = (change: number) => {
   if (change > 0) return ArrowUp;
   if (change < 0) return ArrowDown;
@@ -50,8 +48,6 @@ const formatPointsChange = (change: number) => {
     if (change > 0) return `+${change}`;
     return change;
 }
-
-const prizeTiers = [50, 41, 33, 26, 20, 18, 16, 14, 12, 10];
 
 export default function LeaderboardPage() {
   const firestore = useFirestore();
@@ -87,22 +83,19 @@ export default function LeaderboardPage() {
         .map(p => p.userId || p.id)
     );
 
+    // Filter for active entries and sort by Rank (ordinal rank set by engine)
     return [...usersData]
         .filter(u => u.name && (historicalUserIds.has(u.id) || u.isPro) && activeUserIds.has(u.id))
         .sort((a, b) => a.rank - b.rank);
   }, [usersData, predictionsData]);
-  
-  const proPlayers = useMemo(() => sortedUsers.filter(u => u.isPro), [sortedUsers]);
-  const regularPlayers = useMemo(() => sortedUsers.filter(u => !u.isPro), [sortedUsers]);
 
   const winningsBreakdownMap = useMemo(() => {
-    if (!usersData || !monthlyMimoM) return new Map();
-    const breakdown = new Map<string, { total: number, seasonal: number, monthly: number, proBounty: number }>();
-    const userMap = new Map(usersData.map(u => [u.id, u]));
+    if (!usersData || !monthlyMimoM || sortedUsers.length === 0) return new Map();
     
-    sortedUsers.forEach(u => breakdown.set(u.id, { total: 0, seasonal: 0, monthly: 0, proBounty: 0 }));
+    const breakdown = new Map<string, { total: number, seasonal: number, monthly: number, proBounty: number, visualRankId: number }>();
+    sortedUsers.forEach(u => breakdown.set(u.id, { total: 0, seasonal: 0, monthly: 0, proBounty: 0, visualRankId: 0 }));
 
-    // 1. Monthly Awards
+    // --- 1. Monthly Awards (£15 per month pool) ---
     const monthlyAwards: { [key: string]: { winners: string[], runnersUp: string[] } } = {};
     monthlyMimoM.forEach(m => {
         if (m.type !== 'winner' && m.type !== 'runner-up') return;
@@ -115,122 +108,106 @@ export default function LeaderboardPage() {
     Object.values(monthlyAwards).forEach(award => {
         const winnerPrize = 10 / (award.winners.length || 1);
         award.winners.forEach(userId => {
-            const current = breakdown.get(userId) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
-            breakdown.set(userId, { ...current, total: current.total + winnerPrize, monthly: current.monthly + winnerPrize });
+            const current = breakdown.get(userId)!;
+            current.total += winnerPrize;
+            current.monthly += winnerPrize;
         });
         if (award.winners.length === 1 && award.runnersUp.length > 0) {
             const runnerUpPrize = 5 / award.runnersUp.length;
             award.runnersUp.forEach(userId => {
-                const current = breakdown.get(userId) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
-                breakdown.set(userId, { ...current, total: current.total + runnerUpPrize, monthly: current.monthly + runnerUpPrize });
+                const current = breakdown.get(userId)!;
+                current.total += runnerUpPrize;
+                current.monthly += runnerUpPrize;
             });
         }
     });
+
+    // --- 2. Calculate Pro-Slayer Bounty Variance ---
+    // A regular player is a slayer if they strictly outrank ALL pros and are NOT in Top 10 (ordinal rank > 10)
+    const proRanks = sortedUsers.filter(u => u.isPro).map(u => u.rank);
+    const bestProRank = proRanks.length > 0 ? Math.min(...proRanks) : Infinity;
     
-    // 2. Seasonal Rank Prizes (with "Pros Consuming Ranks" tie-breaking)
-    const pointsGroups = new Map<number, string[]>();
+    const slayers = sortedUsers.filter(u => !u.isPro && u.rank < bestProRank && u.rank > 10);
+    const totalBountyReduction = slayers.length * 5;
+
+    // --- 3. Calculate Seasonal Prize Tiers ---
+    const totalPot = 530.00; // 106 players * £5
+    const fixedReductions = 150.00 + 10.00; // MiMoM (£150) + Xmas (£10)
+    const netSeasonalFund = totalPot - fixedReductions - totalBountyReduction;
+
+    const p10 = netSeasonalFund * 0.030073;
+    const tierPrizes: number[] = [p10];
+    for (let i = 0; i < 9; i++) {
+        tierPrizes.push(tierPrizes[i] * 1.25);
+    }
+    const seasonalPrizes = tierPrizes.reverse(); // [p1, p2, ..., p10]
+
+    // --- 4. Allocate Seasonal Rank Prizes (Pro Consumption) ---
+    const pointsGroups = new Map<number, User[]>();
     sortedUsers.forEach(u => {
         const group = pointsGroups.get(u.score) || [];
-        group.push(u.id);
+        group.push(u);
         pointsGroups.set(u.score, group);
     });
 
-    let currentGlobalIndex = 0;
-    const processedScores = new Set<number>();
+    pointsGroups.forEach((groupUsers) => {
+        const regularPlayersInGroup = groupUsers.filter(u => !u.isPro);
+        if (regularPlayersInGroup.length === 0) return;
 
-    sortedUsers.forEach((user) => {
-        if (processedScores.has(user.score)) return;
-        processedScores.add(user.score);
-
-        const groupUserIds = pointsGroups.get(user.score) || [];
-        const regularPlayersInGroup = groupUserIds.filter(id => !userMap.get(id)?.isPro);
-        const proPlayersInGroup = groupUserIds.filter(id => userMap.get(id)?.isPro);
+        // Group members sharing a prize will share the highest rank's color
+        const topOrdinalRankInGroup = Math.min(...groupUsers.map(u => u.rank));
         
-        if (regularPlayersInGroup.length > 0) {
-            // PROs take the higher rank indices first within the group
-            const proCount = proPlayersInGroup.length;
-            
-            // Regular players share prizes for the rank indices THEY occupy
-            const poolPrize = regularPlayersInGroup.reduce((sum, id, indexWithinRegulars) => {
-                // Their rank index = start of group + pros who came before them + their own index
-                const globalRankIndex = currentGlobalIndex + proCount + indexWithinRegulars;
-                if (globalRankIndex < prizeTiers.length) {
-                    return sum + prizeTiers[globalRankIndex];
-                }
-                return sum;
-            }, 0);
+        // Sum prizes for the specific ordinal ranks occupied by REGULAR players
+        const sharedPool = regularPlayersInGroup.reduce((sum, u) => {
+            if (u.rank <= 10) return sum + seasonalPrizes[u.rank - 1];
+            return sum;
+        }, 0);
 
-            const individualShare = poolPrize / regularPlayersInGroup.length;
-            
-            regularPlayersInGroup.forEach(userId => {
-                const current = breakdown.get(userId) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
-                breakdown.set(userId, { ...current, total: current.total + individualShare, seasonal: current.seasonal + individualShare });
+        if (sharedPool > 0) {
+            const individualShare = sharedPool / regularPlayersInGroup.length;
+            regularPlayersInGroup.forEach(u => {
+                const current = breakdown.get(u.id)!;
+                current.total += individualShare;
+                current.seasonal += individualShare;
+                // Assign visualRankId based on the highest rank in the SHARED PRIZE group
+                current.visualRankId = topOrdinalRankInGroup;
             });
         }
-
-        currentGlobalIndex += groupUserIds.length;
     });
 
-    // 3. Pro Slayer Bounty (£55 Shared Pool)
-    const totalBountyPool = 55.00;
-    const bestProRank = proPlayers.length > 0 ? Math.min(...proPlayers.map(p => p.rank)) : Infinity;
-    
-    const proSlayers = regularPlayers.filter(player => {
-        const playerBreakdown = breakdown.get(player.id);
-        const hasSeasonalPrize = (playerBreakdown?.seasonal || 0) > 0;
-        // Rules: must strictly outrank all Pros AND not receive a Top 10 rank prize
-        return !hasSeasonalPrize && player.rank < bestProRank;
-    });
-
-    const individualBounty = proSlayers.length > 0 ? (totalBountyPool / proSlayers.length) : 0;
-
-    proSlayers.forEach(player => {
-        const current = breakdown.get(player.id) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
-        breakdown.set(player.id, { 
-            ...current, 
-            total: current.total + individualBounty, 
-            proBounty: current.proBounty + individualBounty 
-        });
+    // --- 5. Apply Pro-Slayer Bounties ---
+    slayers.forEach(u => {
+        const current = breakdown.get(u.id)!;
+        current.total += 5.00;
+        current.proBounty += 5.00;
     });
 
     return breakdown;
-  }, [sortedUsers, monthlyMimoM, proPlayers, regularPlayers]);
+  }, [sortedUsers, monthlyMimoM]);
 
   const getRankColour = (user: User) => {
-    if (user.isPro) {
-        return 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200/80 dark:hover:bg-gray-700/80';
-    }
+    if (user.isPro) return 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
 
     const breakdown = winningsBreakdownMap.get(user.id);
-    const groupBestRank = sortedUsers.find(u => u.score === user.score)?.rank || user.rank;
-    
-    if (breakdown && breakdown.seasonal > 0) {
-        // Tied players share the color of the highest prize rank they represent
-        const effectiveRank = Math.min(groupBestRank, 10);
-        
-        switch (effectiveRank) {
-            case 1: return 'bg-red-800 text-yellow-300 hover:bg-red-800/90 dark:bg-red-900 dark:text-yellow-300';
-            case 2: return 'bg-red-600 text-white hover:bg-red-600/90 dark:bg-red-700 dark:text-white';
-            case 3: return 'bg-orange-700 text-white hover:bg-orange-700/90 dark:bg-orange-800 dark:text-white';
-            case 4: return 'bg-orange-500 text-white hover:bg-orange-500/90 dark:bg-orange-600 dark:text-white';
-            case 5: return 'bg-orange-300 text-orange-900 hover:bg-orange-300/90 dark:bg-orange-500/50 dark:text-white';
-            case 6: return 'bg-yellow-200 text-yellow-900 hover:bg-yellow-200/90 dark:bg-yellow-800/30 dark:text-yellow-200';
-            case 7: return 'bg-green-200 text-green-900 hover:bg-green-200/90 dark:bg-green-800/30 dark:text-green-200';
-            case 8: return 'bg-cyan-200 text-cyan-900 hover:bg-cyan-200/90 dark:bg-cyan-800/30 dark:text-green-200';
-            case 9: return 'bg-cyan-400 text-cyan-900 hover:bg-cyan-400/90 dark:bg-cyan-500/50 dark:text-white';
-            case 10: return 'bg-teal-400 text-teal-900 hover:bg-teal-400/90 dark:bg-teal-600/50 dark:text-white';
-        }
+    if (!breakdown || breakdown.visualRankId === 0) {
+        if (breakdown?.proBounty && breakdown.proBounty > 0) return 'bg-blue-300 text-blue-900';
+        return '';
     }
 
-    if (breakdown && breakdown.proBounty > 0) {
-        return 'bg-blue-300 text-blue-900 hover:bg-blue-300/90 dark:bg-blue-800/40 dark:text-blue-200';
+    // Color based on the highest rank in the shared points group
+    switch (breakdown.visualRankId) {
+        case 1: return 'bg-red-800 text-yellow-300 hover:bg-red-800/90';
+        case 2: return 'bg-red-600 text-white hover:bg-red-600/90';
+        case 3: return 'bg-orange-700 text-white hover:bg-orange-700/90';
+        case 4: return 'bg-orange-500 text-white hover:bg-orange-500/90';
+        case 5: return 'bg-orange-300 text-orange-900 hover:bg-orange-300/90';
+        case 6: return 'bg-yellow-200 text-yellow-900 hover:bg-yellow-200/90';
+        case 7: return 'bg-green-200 text-green-900 hover:bg-green-200/90';
+        case 8: return 'bg-cyan-200 text-cyan-900 hover:bg-cyan-200/90';
+        case 9: return 'bg-cyan-400 text-cyan-900 hover:bg-cyan-400/90';
+        case 10: return 'bg-teal-400 text-teal-900 hover:bg-teal-400/90';
+        default: return '';
     }
-    
-    if (breakdown && breakdown.total > 0) {
-        return 'bg-blue-100 text-blue-900 hover:bg-blue-100/90 dark:bg-blue-900/30 dark:text-blue-300';
-    }
-
-    return '';
 };
 
   return (
@@ -255,18 +232,7 @@ export default function LeaderboardPage() {
                 <TableHead className="w-[80px] bg-blue-50/50 dark:bg-blue-900/10 py-2">Position</TableHead>
                 <TableHead className="bg-blue-50/50 dark:bg-blue-900/10 py-2">Player</TableHead>
                 <TableHead className="text-center bg-blue-50/50 dark:bg-blue-900/10 py-2">Points</TableHead>
-                <TableHead className="text-center border-r bg-blue-50/50 dark:bg-blue-900/10 py-2">
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger className="flex items-center justify-center gap-1 w-full font-bold">
-                                Winnings <Info className="size-3" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Potential seasonal winnings including shared rank prizes, monthly awards, and Shared Pro Bounties.</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                </TableHead>
+                <TableHead className="text-center border-r bg-blue-50/50 dark:bg-blue-900/10 py-2">Winnings</TableHead>
                 <TableHead className="text-center bg-green-50/50 dark:bg-green-900/10 py-2">Was</TableHead>
                 <TableHead className="w-[130px] text-center border-r bg-green-50/50 dark:bg-green-900/10 py-2">Move</TableHead>
                 <TableHead className="text-center bg-green-50/50 dark:bg-green-900/10 py-2">Was</TableHead>
@@ -279,23 +245,15 @@ export default function LeaderboardPage() {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={12} className="text-center h-48">
-                    <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                      <Loader2 className="size-5 animate-spin" />
-                      <span>Loading leaderboard...</span>
-                    </div>
-                  </TableCell>
-                </TableRow>
+                <TableRow><TableCell colSpan={12} className="text-center h-48"><div className="flex items-center justify-center gap-2 text-muted-foreground"><Loader2 className="size-5 animate-spin" /><span>Loading leaderboard...</span></div></TableCell></TableRow>
               ) : (
                 sortedUsers.map((user) => {
+                  const breakdown = winningsBreakdownMap.get(user.id) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
                   const RankIcon = getRankChangeIcon(user.rankChange);
                   const ScoreIcon = getRankChangeIcon(user.scoreChange);
-                  const breakdown = winningsBreakdownMap.get(user.id) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
                   const isCurrentUser = user.id === resolvedUserId;
-                  const isBountyWinner = breakdown.proBounty > 0;
                   
-                  // Use Competition Ranking for display: find the highest rank for this score
+                  // Visual Display Rank: Highest ordinal rank in the points group
                   const displayRank = sortedUsers.find(u => u.score === user.score)?.rank || user.rank;
 
                   return (
@@ -309,14 +267,7 @@ export default function LeaderboardPage() {
                                 </Avatar>
                                 <span className="flex items-center gap-2">
                                     {user.isPro ? (user.name || '').toUpperCase() : user.name}
-                                    {isBountyWinner && !user.isPro && (
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger><Swords className="size-4 text-primary animate-pulse" /></TooltipTrigger>
-                                                <TooltipContent><p>Pro Slayer Bounty Winner!</p></TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                    )}
+                                    {breakdown.proBounty > 0 && <TooltipProvider><Tooltip><TooltipTrigger><Swords className="size-4 text-primary animate-pulse" /></TooltipTrigger><TooltipContent><p>Pro Slayer!</p></TooltipContent></Tooltip></TooltipProvider>}
                                 </span>
                             </div>
                           </TableCell>
@@ -329,17 +280,12 @@ export default function LeaderboardPage() {
                                             {breakdown.total > 0 ? `£${breakdown.total.toFixed(2)}` : '£0.00'}
                                         </TooltipTrigger>
                                         <TooltipContent side="left" className="space-y-1">
-                                            <p className="font-bold border-b pb-1 mb-1 text-xs">Prize Breakdown</p>
+                                            <p className="font-bold border-b pb-1 mb-1 text-xs">Breakdown</p>
                                             <div className="grid grid-cols-2 gap-x-4 text-xs">
-                                                <span>Seasonal Rank:</span><span className="text-right">£{breakdown.seasonal.toFixed(2)}</span>
-                                                <span>Monthly Awards:</span><span className="text-right">£{breakdown.monthly.toFixed(2)}</span>
-                                                <span className="font-bold text-primary">Pro Bounty:</span><span className="text-right font-bold text-primary">£{breakdown.proBounty.toFixed(2)}</span>
+                                                <span>Seasonal:</span><span className="text-right">£{breakdown.seasonal.toFixed(2)}</span>
+                                                <span>Monthly:</span><span className="text-right">£{breakdown.monthly.toFixed(2)}</span>
+                                                <span>Bounty:</span><span className="text-right">£{breakdown.proBounty.toFixed(2)}</span>
                                             </div>
-                                            {isBountyWinner && (
-                                                <p className="text-[10px] text-muted-foreground pt-1 italic">
-                                                    * Bounty is your share of the shared £55 Pro-Slayer pool.
-                                                </p>
-                                            )}
                                         </TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
