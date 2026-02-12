@@ -248,11 +248,11 @@ export default function ProfilePage() {
     }
   }
 
-  const { chartData, yAxisDomain } = React.useMemo(() => {
-    if (!allUserHistories || !userHistory || !userHistory.weeklyScores) return { chartData: [], yAxisDomain: [0, 0] };
+  const chartInfo = React.useMemo(() => {
+    if (!allUserHistories || !userHistory || !userHistory.weeklyScores) return { chartData: [], yAxisDomain: [0, 10] as [number, number] };
     const allWeeks = [...new Set(allUserHistories.flatMap(h => h.weeklyScores.map(w => w.week)))].filter(w => w > 0).sort((a, b) => a - b);
     const allScores = allUserHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.score));
-    if (allScores.length === 0) return { chartData: [], yAxisDomain: [0, 10] };
+    if (allScores.length === 0) return { chartData: [], yAxisDomain: [0, 10] as [number, number] };
     const minS = Math.min(...allScores);
     const maxS = Math.max(...allScores);
     return {
@@ -400,7 +400,7 @@ export default function ProfilePage() {
           </CardContent>
       </Card>
       
-      <ProfilePerformanceChart chartData={chartData} yAxisDomain={yAxisDomain} />
+      <ProfilePerformanceChart chartData={chartInfo.chartData} yAxisDomain={chartInfo.yAxisDomain} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card>

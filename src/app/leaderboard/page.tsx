@@ -135,7 +135,6 @@ export default function LeaderboardPage() {
     const slayers: string[] = [];
     sortedUsers.forEach((p, idx) => {
         const ord = idx + 1;
-        // Slayer logic: Regular who strictly outscores ALL Pros AND receives £0 from Top 10 fund
         if (!p.isPro && p.score > highestProScore && ord > 10) slayers.push(p.id);
     });
 
@@ -254,9 +253,9 @@ export default function LeaderboardPage() {
                   return (
                       <TableRow 
                         key={user.id} 
-                        className={cn(getRankColour(user), { 'ring-2 ring-inset ring-primary z-10 relative bg-primary/5 shadow-[0_0_15px_hsl(var(--primary)/0.2)]': isCurrentUser })}
+                        className={cn(getRankColour(user), isCurrentUser && 'ring-2 ring-inset ring-primary z-10 relative bg-primary/5 shadow-[0_0_15px_hsl(var(--primary)/0.2)]')}
                       >
-                          <TableCell className={cn("font-medium text-center py-1", isCurrentUser && "text-lg font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
+                          <TableCell className={cn("font-medium text-center py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
                             {competitionRank}
                           </TableCell>
                           <TableCell className="py-1">
@@ -265,13 +264,13 @@ export default function LeaderboardPage() {
                                 <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
                                 <AvatarFallback>{(user.name || '?').charAt(0)}</AvatarFallback>
                                 </Avatar>
-                                <span className={cn("flex items-center gap-2 transition-all", isCurrentUser && "text-[1.1rem] font-extrabold drop-shadow-[0_0_10px_hsl(var(--primary))]")}>
+                                <span className={cn("flex items-center gap-2 transition-all", isCurrentUser && "text-[1.1rem] font-extrabold drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
                                     {user.isPro ? (user.name || '').toUpperCase() : user.name}
                                     {b.proBounty > 0 && <TooltipProvider><Tooltip><TooltipTrigger asChild><Swords className="size-4 text-primary animate-pulse cursor-help" /></TooltipTrigger><TooltipContent><p>Pro Slayer!</p></TooltipContent></Tooltip></TooltipProvider>}
                                 </span>
                             </div>
                           </TableCell>
-                          <TableCell className={cn("text-center font-bold py-1", isCurrentUser ? "text-xl font-black drop-shadow-[0_0_10px_hsl(var(--primary))]" : "text-lg")}>{user.score}</TableCell>
+                          <TableCell className={cn("text-center font-bold py-1", isCurrentUser ? "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]" : "text-lg")}>{user.score}</TableCell>
                           <TableCell className={cn("text-center font-medium border-r py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
                             {user.isPro ? '-' : (
                                 <TooltipProvider>
