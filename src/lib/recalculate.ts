@@ -98,7 +98,6 @@ export async function recalculateAllDataClientSide(
               uScores[u.id] = score;
           });
           
-          // SORT for competition ranking: Score (Desc), Pros always take better ordinal (Desc), Name (Asc)
           const uRanked = users.map(u => ({...u, score: uScores[u.id]}))
               .sort((a, b) => {
                   if (b.score !== a.score) return b.score - a.score;
@@ -110,7 +109,6 @@ export async function recalculateAllDataClientSide(
           
           const scoresOnly = uRanked.map(u => u.score);
           uRanked.forEach((u) => {
-              // Visual rank uses competition ranking (1, 2, 2, 4)
               const visualRank = scoresOnly.indexOf(u.score) + 1;
               allHistories[u.id].weeklyScores.push({ week, score: u.score, rank: visualRank });
           });

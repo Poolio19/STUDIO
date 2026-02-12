@@ -41,21 +41,17 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser, useResolvedUserId, useAuth } from '@/firebase';
+import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser, useResolvedUserId } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { AuthForm } from '@/components/auth/auth-form';
 import { updatePassword, updateEmail } from 'firebase/auth';
 
 const profileFormSchema = z.object({
-  name: z.string().min(2, {
-    message: 'Name must be at least 2 characters.',
-  }),
+  name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   nickname: z.string().optional(),
   initials: z.string().optional(),
-  favouriteTeam: z.string({
-    required_error: 'Please select a team.',
-  }),
+  favouriteTeam: z.string({ required_error: 'Please select a team.' }),
   phoneNumber: z.string().optional(),
 });
 
@@ -78,7 +74,6 @@ type PasswordFormValues = z.infer<typeof passwordFormSchema>;
 
 export default function ProfilePage() {
   const { toast } = useToast();
-  const auth = useAuth();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
   const { user: authUser, isUserLoading: isAuthUserLoading } = useUser();
@@ -113,9 +108,7 @@ export default function ProfilePage() {
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
-    defaultValues: {
-      name: '', nickname: '', initials: '', favouriteTeam: 'team_1', phoneNumber: '',
-    },
+    defaultValues: { name: '', nickname: '', initials: '', favouriteTeam: 'team_1', phoneNumber: '', },
     mode: 'onChange',
   });
 
@@ -167,27 +160,32 @@ export default function ProfilePage() {
     });
 
     Object.values(awardsMap).forEach(award => {
-        if (award.winners.includes(profile.id)) {
-            bagged += 10 / award.winners.length;
-        }
-        if (award.winners.length === 1 && award.runnersUp.includes(profile.id)) {
-            bagged += 5 / award.runnersUp.length;
-        }
+        if (award.winners.includes(profile.id)) bagged += 10 / award.winners.length;
+        if (award.winners.length === 1 && award.runnersUp.includes(profile.id)) bagged += 5 / award.runnersUp.length;
     });
 
     let highestProScore = -1;
     sortedUsers.forEach(u => { if (u.isPro && u.score > highestProScore) highestProScore = u.score; });
 
     const pointsGroups: { score: number, players: User[], startOrdinal: number }[] = [];
-    let currentOrdinal = 1;
+    let curOrd = 1;
     sortedUsers.forEach((u, i) => {
         if (i === 0 || u.score !== sortedUsers[i-1].score) {
-            pointsGroups.push({ score: u.score, players: [u], startOrdinal: currentOrdinal });
+            pointsGroups.push({ score: u.score, players: [u], startOrdinal: curOrd });
         } else {
             pointsGroups[pointsGroups.length - 1].players.push(u);
         }
-        currentOrdinal++;
+        curOrd++;
     });
+
+    const slayers: string[] = [];
+    sortedUsers.forEach((p, idx) => {
+        const ord = idx + 1;
+        if (!p.isPro && p.score > highestProScore && ord > 10) slayers.push(p.id);
+    });
+
+    const slayerPoolTotal = Math.min(slayers.length * 5, 55);
+    const individualBounty = slayers.length > 0 ? slayerPoolTotal / slayers.length : 0;
 
     const calculateTopTenPrizes = (sPool: number) => {
         const netSeasonalFund = 530 - 150 - 10 - sPool;
@@ -197,46 +195,22 @@ export default function ProfilePage() {
         return prizes.reverse();
     };
 
-    const tempSlayers: string[] = [];
-    pointsGroups.forEach(group => {
-        const groupHasTopTenPrizes = group.players.some((pp, pIdx) => {
-            const ord = group.startOrdinal + pIdx;
-            return ord <= 10;
-        });
-
-        group.players.forEach((p, idx) => {
-            const ord = group.startOrdinal + idx;
-            if (!p.isPro && p.score > highestProScore && !groupHasTopTenPrizes && ord > 10) {
-                tempSlayers.push(p.id);
-            }
-        });
-    });
-
-    const slayerPoolTotal = Math.min(tempSlayers.length * 5, 55);
-    const individualBounty = tempSlayers.length > 0 ? slayerPoolTotal / tempSlayers.length : 0;
     const finalSeasonalPrizes = calculateTopTenPrizes(slayerPoolTotal);
 
     let potential = 0;
     pointsGroups.forEach(group => {
         const regulars = group.players.filter(p => !p.isPro);
-        if (regulars.length === 0) return;
-        
-        let groupRegPrizeTotal = 0;
-        group.players.forEach((p, idx) => {
-            const ord = group.startOrdinal + idx;
-            if (!p.isPro && ord <= 10) {
-                groupRegPrizeTotal += (finalSeasonalPrizes[ord-1] || 0);
-            }
-        });
-
-        if (regulars.some(r => r.id === profile.id)) {
-            potential = groupRegPrizeTotal / regulars.length;
+        if (regulars.length > 0) {
+            let groupRegPrizeTotal = 0;
+            group.players.forEach((p, idx) => {
+                const pOrd = group.startOrdinal + idx;
+                if (!p.isPro && pOrd <= 10) groupRegPrizeTotal += (finalSeasonalPrizes[pOrd-1] || 0);
+            });
+            if (regulars.some(r => r.id === profile.id)) potential = groupRegPrizeTotal / regulars.length;
         }
     });
 
-    if (tempSlayers.includes(profile.id)) {
-        potential += individualBounty;
-    }
+    if (slayers.includes(profile.id) && potential === 0) potential = individualBounty;
 
     return { bagged, potential };
   }, [profile, allUsers, monthlyMimoM, predictions]);
@@ -358,10 +332,46 @@ export default function ProfilePage() {
                               <h3 className="text-lg font-bold mb-4 text-center flex items-center justify-center gap-2 text-yellow-600 border-b pb-2"><Star className="size-5" /> Trophy Cabinet</h3>
                                <div className="flex justify-around items-end h-20">
                                   <TooltipProvider>
-                                      <Tooltip><TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-muted-foreground">2nd</span><Medal className={cn("size-8", (profile?.second ?? 0) > 0 ? "text-slate-400" : "text-slate-200")} /><span className="text-sm font-black">{profile?.second || 0}</span></div></TooltipTrigger><TooltipContent><p>Runner Up</p></TooltipContent></Tooltip>
-                                      <Tooltip><TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-xs font-black">1st</span><Trophy className={cn("size-10", (profile?.first ?? 0) > 0 ? "text-yellow-500" : "text-yellow-100")} /><span className="text-base font-black">{profile?.first || 0}</span></div></TooltipTrigger><TooltipContent><p>Champion</p></TooltipContent></Tooltip>
-                                      <Tooltip><TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-muted-foreground">3rd</span><Medal className={cn("size-7", (profile?.third ?? 0) > 0 ? "text-amber-700" : "text-amber-100")} /><span className="text-sm font-black">{profile?.third || 0}</span></div></TooltipTrigger><TooltipContent><p>3rd Place</p></TooltipContent></Tooltip>
-                                      <Tooltip><TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-muted-foreground">T10</span><Award className="size-7 text-primary/40" /><span className="text-sm font-black">{topTenCount}</span></div></TooltipTrigger><TooltipContent><p>Top 10 Finishes</p></TooltipContent></Tooltip>
+                                      <Tooltip>
+                                          <TooltipTrigger asChild>
+                                              <div className="flex flex-col items-center gap-1 w-12">
+                                                  <span className="text-[10px] font-bold text-muted-foreground">2nd</span>
+                                                  <Medal className={cn("size-8", (profile?.second ?? 0) > 0 ? "text-slate-400" : "text-slate-200")} />
+                                                  <span className="text-sm font-black">{profile?.second || 0}</span>
+                                              </div>
+                                          </TooltipTrigger>
+                                          <TooltipContent><p>Runner Up</p></TooltipContent>
+                                      </Tooltip>
+                                      <Tooltip>
+                                          <TooltipTrigger asChild>
+                                              <div className="flex flex-col items-center gap-1 w-12">
+                                                  <span className="text-xs font-black">1st</span>
+                                                  <Trophy className={cn("size-10", (profile?.first ?? 0) > 0 ? "text-yellow-500" : "text-yellow-100")} />
+                                                  <span className="text-base font-black">{profile?.first || 0}</span>
+                                              </div>
+                                          </TooltipTrigger>
+                                          <TooltipContent><p>Champion</p></TooltipContent>
+                                      </Tooltip>
+                                      <Tooltip>
+                                          <TooltipTrigger asChild>
+                                              <div className="flex flex-col items-center gap-1 w-12">
+                                                  <span className="text-[10px] font-bold text-muted-foreground">3rd</span>
+                                                  <Medal className={cn("size-7", (profile?.third ?? 0) > 0 ? "text-amber-700" : "text-amber-100")} />
+                                                  <span className="text-sm font-black">{profile?.third || 0}</span>
+                                              </div>
+                                          </TooltipTrigger>
+                                          <TooltipContent><p>3rd Place</p></TooltipContent>
+                                      </Tooltip>
+                                      <Tooltip>
+                                          <TooltipTrigger asChild>
+                                              <div className="flex flex-col items-center gap-1 w-12">
+                                                  <span className="text-[10px] font-bold text-muted-foreground">T10</span>
+                                                  <Award className="size-7 text-primary/40" />
+                                                  <span className="text-sm font-black">{topTenCount}</span>
+                                              </div>
+                                          </TooltipTrigger>
+                                          <TooltipContent><p>Top 10 Finishes</p></TooltipContent>
+                                      </Tooltip>
                                   </TooltipProvider>
                               </div>
                           </div>
