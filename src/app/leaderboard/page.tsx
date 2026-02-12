@@ -73,6 +73,7 @@ export default function LeaderboardPage() {
     return 0;
   }, [matchesData]);
 
+  // STRICT ORDINAL SORT: Score -> Pro Win Tie -> Name
   const sortedUsers = useMemo(() => {
     if (!usersData || !predictionsData) return [];
     const historicalUserIds = new Set(historicalPlayersData.map(p => p.id));
@@ -84,7 +85,7 @@ export default function LeaderboardPage() {
             if (b.score !== a.score) return b.score - a.score;
             const aIsPro = a.isPro ? 1 : 0;
             const bIsPro = b.isPro ? 1 : 0;
-            if (aIsPro !== bIsPro) return bIsPro - aIsPro; // Pros Win Ties
+            if (aIsPro !== bIsPro) return bIsPro - aIsPro; // Pros Win Ties (Take higher ordinal)
             return a.name.localeCompare(b.name);
         });
   }, [usersData, predictionsData]);
@@ -95,7 +96,7 @@ export default function LeaderboardPage() {
 
     sortedUsers.forEach(u => breakdown.set(u.id, { total: 0, seasonal: 0, monthly: 0, proBounty: 0 }));
 
-    // 1. Monthly Awards
+    // 1. Monthly Awards (£150 total fund handled via DB)
     const awardsMap: { [key: string]: { winners: string[], runnersUp: string[] } } = {};
     monthlyMimoM.forEach(m => {
         const key = m.special ? m.special : `${m.month}-${m.year}`;
@@ -119,7 +120,7 @@ export default function LeaderboardPage() {
         }
     });
 
-    // 2. Pro-Slayer shared Pool (Eligibility: Strict outscore Pros + £0 seasonal prize)
+    // 2. Pro-Slayer Shared Pool (£5 per slayer, capped at £55)
     let highestProScore = -1;
     sortedUsers.forEach(u => { if (u.isPro && u.score > highestProScore) highestProScore = u.score; });
 
@@ -133,6 +134,7 @@ export default function LeaderboardPage() {
 
     const slayers: string[] = [];
     pointsGroups.forEach(group => {
+        // Group gets Top 10 fund if any member is at ordinal 1-10
         const groupHasPrizes = group.players.some((pp, pIdx) => !pp.isPro && (group.startOrdinal + pIdx <= 10));
         group.players.forEach((p, idx) => {
             const ord = group.startOrdinal + idx;
@@ -193,6 +195,7 @@ export default function LeaderboardPage() {
     const b = winningsMap.get(user.id);
     if (!b) return '';
     if (b.seasonal > 0) {
+        // Find highest ordinal in the tied points group to determine color
         const topOfGroup = sortedUsers.find(u => u.score === user.score);
         const highestOrdinal = sortedUsers.indexOf(topOfGroup!) + 1;
 
@@ -254,9 +257,15 @@ export default function LeaderboardPage() {
                   const RankIcon = getRankChangeIcon(user.rankChange);
                   const isCurrentUser = user.id === resolvedUserId;
 
+                  // Use competition ranking for visual display (1, 2, 2, 4)
+                  const topOfGroup = sortedUsers.find(u => u.score === user.score);
+                  const competitionRank = sortedUsers.indexOf(topOfGroup!) + 1;
+
                   return (
                       <TableRow key={user.id} className={cn(getRankColour(user), { 'ring-2 ring-inset ring-primary z-10 relative': isCurrentUser })}>
-                          <TableCell className={cn("font-medium text-center py-1", isCurrentUser && "text-[1.05rem] font-black")}>{user.rank}</TableCell>
+                          <TableCell className={cn("font-medium text-center py-1", isCurrentUser && "text-[1.05rem] font-black")}>
+                            {competitionRank}
+                          </TableCell>
                           <TableCell className="py-1">
                             <div className="flex items-center gap-3">
                                 <Avatar className={cn("transition-transform", isCurrentUser ? "h-10 w-10 border-2 border-primary" : "h-8 w-8")}>
