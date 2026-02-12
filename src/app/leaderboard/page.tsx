@@ -120,18 +120,19 @@ export default function LeaderboardPage() {
         }
     });
 
-    // 2. Identify Pro-Slayer Bounty Pool
+    // 2. Determine Pro Benchmark
     let highestProScore = -1;
     sortedUsers.forEach(u => { if (u.isPro && u.score > highestProScore) highestProScore = u.score; });
 
-    // Ordinal-based preliminary seasonal distribution to identify slayers
-    const netSeasonalFundPlaceholder = 530 - 150 - 10 - 55; // Use max possible slayer pool for calc
-    const p10Placeholder = netSeasonalFundPlaceholder * 0.030073;
-    let prizesPlaceholder: number[] = [p10Placeholder];
-    for (let i = 0; i < 9; i++) prizesPlaceholder.push(prizesPlaceholder[i] * 1.25);
-    prizesPlaceholder = prizesPlaceholder.reverse();
+    // 3. Preliminary Seasonal Fund Distribution (Ordinal 1-10)
+    // Anchored at 3.0073% for 10th place
+    const getSeasonalPrizes = (netFund: number) => {
+        const p10 = netFund * 0.030073;
+        let prizes: number[] = [p10];
+        for (let i = 0; i < 9; i++) prizes.push(prizes[i] * 1.25);
+        return prizes.reverse(); // [1st, 2nd, ... 10th]
+    };
 
-    const slayers: string[] = [];
     const pointsGroups: { score: number, players: User[], startOrdinal: number }[] = [];
     let currentOrdinal = 1;
     sortedUsers.forEach((u, i) => {
@@ -140,24 +141,21 @@ export default function LeaderboardPage() {
         currentOrdinal++;
     });
 
-    // A player is a slayer if score > ALL professionals AND they receive £0 from Top 10
+    // Identify Slayers: Regulars with score > ALL pros AND seasonal prize share == £0
+    const slayers: string[] = [];
     pointsGroups.forEach(group => {
-        const regularsInGroup = group.players.filter(p => !p.isPro);
-        group.players.forEach((p, i) => {
-            const ord = group.startOrdinal + i;
+        const hasTop10Presence = group.startOrdinal <= 10;
+        group.players.forEach((p, idx) => {
+            const ord = group.startOrdinal + idx;
             if (!p.isPro && p.score > highestProScore) {
-                // If they are strictly in ordinal 11+ and outscore all pros, they are slayers
-                // Or if they share a points group but that group gets £0 prize total (all ordinals 11+)
-                const groupHasPrizes = group.players.some((_, idx) => group.startOrdinal + idx <= 10);
-                if (!groupHasPrizes || ord > 10) {
-                    // Check if this regular player actually receives £0
-                    // In a tie spanning 10 and 11, ord 11 gets share of ord 10 prize.
-                    // But if group is 11, 12, 13... they are slayers.
-                    if (ord > 10) {
-                        const ranksHeldByRegulars: number[] = [];
-                        group.players.forEach((pp, pIdx) => { if (!pp.isPro && group.startOrdinal + pIdx <= 10) ranksHeldByRegulars.push(group.startOrdinal + pIdx); });
-                        if (ranksHeldByRegulars.length === 0) slayers.push(p.id);
-                    }
+                // If they are strictly in ordinal 11+ and outrank all pros, they might be slayers
+                // Check if they actually get £0 from Top 10 (group spans 10-11)
+                const rankInGroup = idx + 1;
+                const ordinalRank = group.startOrdinal + idx;
+                if (ordinalRank > 10) {
+                    // They occupy rank 11 or below. Are any ranks 1-10 held by regulars in this group?
+                    const regularsInTop10 = group.players.filter((pp, pIdx) => !pp.isPro && (group.startOrdinal + pIdx <= 10));
+                    if (regularsInTop10.length === 0) slayers.push(p.id);
                 }
             }
         });
@@ -166,26 +164,27 @@ export default function LeaderboardPage() {
     const slayerPool = Math.min(slayers.length * 5, 55);
     const bountyPerSlayer = slayers.length > 0 ? slayerPool / slayers.length : 0;
 
-    // 3. Final Seasonal Prize Fund (1.25x Multiplier)
+    // 4. Final Distribution with dynamic slayer pool deduction
     const netSeasonalFund = 530 - 150 - 10 - slayerPool;
-    const p10 = netSeasonalFund * 0.030073;
-    let seasonalPrizes: number[] = [p10];
-    for (let i = 0; i < 9; i++) seasonalPrizes.push(seasonalPrizes[i] * 1.25);
-    seasonalPrizes = seasonalPrizes.reverse();
+    const seasonalPrizes = getSeasonalPrizes(netSeasonalFund);
 
     pointsGroups.forEach(group => {
         const regulars = group.players.filter(p => !p.isPro);
         if (regulars.length === 0) return;
-        const ranksHeldByRegulars: number[] = [];
-        group.players.forEach((p, i) => {
-            const ord = group.startOrdinal + i;
-            if (!p.isPro && ord <= 10) ranksHeldByRegulars.push(ord);
+        
+        // Sum prizes for ordinals 1-10 held by regulars
+        let totalPrizeForRegulars = 0;
+        group.players.forEach((p, idx) => {
+            const ord = group.startOrdinal + idx;
+            if (!p.isPro && ord <= 10) {
+                totalPrizeForRegulars += (seasonalPrizes[ord-1] || 0);
+            }
         });
-        if (ranksHeldByRegulars.length > 0) {
-            const totalSum = ranksHeldByRegulars.reduce((sum, ord) => sum + (seasonalPrizes[ord-1] || 0), 0);
+
+        if (totalPrizeForRegulars > 0) {
             regulars.forEach(r => {
                 const b = breakdown.get(r.id);
-                if (b) { b.total += totalSum / regulars.length; b.seasonal = totalSum / regulars.length; }
+                if (b) { b.total += totalPrizeForRegulars / regulars.length; b.seasonal = totalPrizeForRegulars / regulars.length; }
             });
         }
     });
@@ -268,21 +267,21 @@ export default function LeaderboardPage() {
 
                   return (
                       <TableRow key={user.id} className={cn(getRankColour(user), { 'font-bold ring-2 ring-inset ring-primary z-10 relative': isCurrentUser })}>
-                          <TableCell className="font-medium text-center py-1">{user.rank}</TableCell>
+                          <TableCell className={cn("font-medium text-center py-1", isCurrentUser && "text-[1.05rem]")}>{user.rank}</TableCell>
                           <TableCell className="py-1">
                             <div className="flex items-center gap-3">
-                                <Avatar className="h-8 w-8">
+                                <Avatar className={cn("transition-transform", isCurrentUser ? "h-10 w-10 border-2 border-primary" : "h-8 w-8")}>
                                 <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
                                 <AvatarFallback>{(user.name || '?').charAt(0)}</AvatarFallback>
                                 </Avatar>
-                                <span className="flex items-center gap-2">
+                                <span className={cn("flex items-center gap-2 transition-all", isCurrentUser && "text-[1.05rem] drop-shadow-[0_0_2px_hsl(var(--primary))]/50")}>
                                     {user.isPro ? (user.name || '').toUpperCase() : user.name}
                                     {b.proBounty > 0 && <TooltipProvider><Tooltip><TooltipTrigger><Swords className="size-4 text-primary animate-pulse" /></TooltipTrigger><TooltipContent><p>Pro Slayer!</p></TooltipContent></Tooltip></TooltipProvider>}
                                 </span>
                             </div>
                           </TableCell>
-                          <TableCell className="text-center font-bold text-lg py-1">{user.score}</TableCell>
-                          <TableCell className="text-center font-medium border-r py-1">
+                          <TableCell className={cn("text-center font-bold py-1", isCurrentUser ? "text-xl" : "text-lg")}>{user.score}</TableCell>
+                          <TableCell className={cn("text-center font-medium border-r py-1", isCurrentUser && "text-[1.05rem]")}>
                             {user.isPro ? '-' : (
                                 <TooltipProvider>
                                     <Tooltip>

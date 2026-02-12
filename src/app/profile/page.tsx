@@ -149,7 +149,6 @@ export default function ProfilePage() {
     }
   }, [user, form, emailForm, authUser]);
 
-  // --- Dynamic Prize Logic for "Potential" and "Bagged" ---
   const currentPrizes = React.useMemo(() => {
     if (!user || !allUsers || !monthlyMimoM || !predictions) return { bagged: 0, potential: 0 };
 
@@ -162,7 +161,6 @@ export default function ProfilePage() {
             return a.name.localeCompare(b.name);
         });
 
-    // 1. Bagged (Monthly & Xmas)
     let bagged = 0;
     const awardsMap: { [key: string]: { winners: string[], runnersUp: string[] } } = {};
     monthlyMimoM.forEach(m => {
@@ -180,21 +178,27 @@ export default function ProfilePage() {
         }
     });
 
-    // 2. Potential (Top 10 Pool & Bounty)
     let potential = 0;
     let highestProScore = -1;
     sortedUsers.forEach(u => { if (u.isPro && u.score > highestProScore) highestProScore = u.score; });
 
-    // Identify Slayers for the capped pool calculation
     const potentialSlayers: string[] = [];
+    const pointsGroups: { score: number, players: User[], startOrdinal: number }[] = [];
+    let currentOrdinal = 1;
     sortedUsers.forEach((u, i) => {
-        const ordinal = i + 1;
-        if (!u.isPro && u.score > highestProScore && ordinal > 10) {
-            // Need to check if they receive shared prize from Top 10 tie
-            const pointsGroup = sortedUsers.filter(uu => uu.score === u.score);
-            const groupStartsAt = sortedUsers.findIndex(uu => uu.score === u.score) + 1;
-            if (groupStartsAt > 10) potentialSlayers.push(u.id);
-        }
+        if (i === 0 || u.score !== sortedUsers[i-1].score) pointsGroups.push({ score: u.score, players: [u], startOrdinal: currentOrdinal });
+        else pointsGroups[pointsGroups.length - 1].players.push(u);
+        currentOrdinal++;
+    });
+
+    pointsGroups.forEach(group => {
+        group.players.forEach((p, idx) => {
+            const ord = group.startOrdinal + idx;
+            if (!p.isPro && p.score > highestProScore && ord > 10) {
+                const groupHasNoPrizes = group.players.filter((pp, pIdx) => !pp.isPro && group.startOrdinal + pIdx <= 10).length === 0;
+                if (groupHasNoPrizes) potentialSlayers.push(p.id);
+            }
+        });
     });
 
     const slayerPool = Math.min(potentialSlayers.length * 5, 55);
@@ -206,26 +210,14 @@ export default function ProfilePage() {
     for (let i = 0; i < 9; i++) seasonalPrizes.push(seasonalPrizes[i] * 1.25);
     seasonalPrizes = seasonalPrizes.reverse();
 
-    const pointsGroups: { score: number, players: User[], startOrdinal: number }[] = [];
-    let currentOrdinal = 1;
-    sortedUsers.forEach((u, i) => {
-        if (i === 0 || u.score !== sortedUsers[i-1].score) pointsGroups.push({ score: u.score, players: [u], startOrdinal: currentOrdinal });
-        else pointsGroups[pointsGroups.length - 1].players.push(u);
-        currentOrdinal++;
-    });
-
     pointsGroups.forEach(group => {
         const regulars = group.players.filter(p => !p.isPro);
-        if (regulars.length === 0) return;
-        const ranksHeldByRegulars: number[] = [];
-        group.players.forEach((p, i) => {
-            const ord = group.startOrdinal + i;
-            if (!p.isPro && ord <= 10) ranksHeldByRegulars.push(ord);
+        let groupTotal = 0;
+        group.players.forEach((p, idx) => {
+            const ord = group.startOrdinal + idx;
+            if (!p.isPro && ord <= 10) groupTotal += (seasonalPrizes[ord-1] || 0);
         });
-        if (ranksHeldByRegulars.length > 0) {
-            const totalSum = ranksHeldByRegulars.reduce((sum, ord) => sum + (seasonalPrizes[ord-1] || 0), 0);
-            if (regulars.some(r => r.id === user.id)) potential = totalSum / regulars.length;
-        }
+        if (regulars.some(r => r.id === user.id)) potential = groupTotal / regulars.length;
     });
 
     if (potentialSlayers.includes(user.id)) potential += bountyPerSlayer;
@@ -235,19 +227,6 @@ export default function ProfilePage() {
 
   async function onSubmit(data: ProfileFormValues) {
     if (!userDocRef || !resolvedUserId || !firestore) return;
-    const currentNameNormalized = (user?.name || '').trim().toLowerCase();
-    const newNameNormalized = data.name.trim().toLowerCase();
-    if (newNameNormalized !== currentNameNormalized) {
-        const usersRef = collection(firestore, 'users');
-        const q = query(usersRef, where("name", "==", data.name.trim()));
-        const querySnapshot = await getDocs(q);
-        let isNameTaken = false;
-        querySnapshot.forEach((doc) => { if (doc.id !== resolvedUserId) isNameTaken = true; });
-        if (isNameTaken) {
-          toast({ variant: 'destructive', title: 'Name already taken', description: `The name "${data.name}" is already in use.` });
-          return;
-        }
-    }
     setDocumentNonBlocking(userDocRef, {
         name: data.name.trim(), nickname: data.nickname?.trim(), initials: data.initials?.trim()?.toUpperCase(),
         favouriteTeam: data.favouriteTeam, phoneNumber: data.phoneNumber?.trim(),
@@ -324,7 +303,7 @@ export default function ProfilePage() {
           <CardContent className="p-0">
               <div className="flex flex-col lg:flex-row items-center lg:items-stretch">
                   <div className="p-8 flex flex-col items-center text-center lg:items-start lg:text-left gap-6 bg-muted/10 lg:w-1/3 border-b lg:border-b-0 lg:border-r">
-                      <Avatar className="h-48 w-40 rounded-lg border-4 border-primary shadow-xl">
+                      <Avatar className="h-48 w-48 rounded-lg border-4 border-primary shadow-xl">
                           <AvatarImage src={avatarPreview || getAvatarUrl(user?.avatar)} alt={user?.name} className="object-cover" />
                           <AvatarFallback className="text-4xl">{(user?.name || '?').charAt(0)}</AvatarFallback>
                       </Avatar>

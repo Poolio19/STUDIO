@@ -14,7 +14,7 @@ import prevStandingsData from './previous-season-standings-24-25.json';
 import historicalPlayersData from './historical-players.json';
 
 /**
- * Recalculates all derived data.
+ * Recalculates all derived data based on strict competition ranking and prize rules.
  * Logic:
  * 1. Pros win ties (Ordinal sorting: Score DESC, isPro DESC, Name ASC).
  * 2. Visual competition rank stored in history (1, 2, 2, 4...).
@@ -99,18 +99,19 @@ export async function recalculateAllDataClientSide(
               uScores[u.id] = score;
           });
           
-          // Sort for ordinal: Score (Desc), Pros (Desc), Name (Asc)
+          // CRITICAL: Sort for ordinal: Score (Desc), Pros (Desc), Name (Asc)
           const uRanked = users.map(u => ({...u, score: uScores[u.id]}))
               .sort((a, b) => {
                   if (b.score !== a.score) return b.score - a.score;
                   const aIsPro = a.isPro ? 1 : 0;
                   const bIsPro = b.isPro ? 1 : 0;
-                  if (aIsPro !== bIsPro) return bIsPro - aIsPro;
+                  if (aIsPro !== bIsPro) return bIsPro - aIsPro; // Pros always win ties
                   return a.name.localeCompare(b.name);
               });
           
           const scoresOnly = uRanked.map(u => u.score);
           uRanked.forEach((u) => {
+              // Visual rank uses competition ranking (1, 2, 2, 4)
               const visualRank = scoresOnly.indexOf(u.score) + 1;
               allHistories[u.id].weeklyScores.push({ week, score: u.score, rank: visualRank });
           });
