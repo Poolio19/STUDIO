@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -69,7 +68,7 @@ export async function recalculateAllDataClientSide(
       const playedWeeks = [0, ...new Set(allMatches.filter(m => m.homeScore > -1).map(m => m.week))].sort((a,b) => a-b);
       
       for (const week of playedWeeks) {
-          progressCallback(`Week ${week}...`);
+          progressCallback(`Processing Week ${week}...`);
           let tRanks = prevStandingsRankMap;
           if (week > 0) {
               const matches = allMatches.filter(m => m.week <= week && m.homeScore > -1);
@@ -99,13 +98,13 @@ export async function recalculateAllDataClientSide(
               uScores[u.id] = score;
           });
           
-          // CRITICAL: Sort for ordinal: Score (Desc), Pros (Desc), Name (Asc)
+          // SORT for competition ranking: Score (Desc), Pros always take better ordinal (Desc), Name (Asc)
           const uRanked = users.map(u => ({...u, score: uScores[u.id]}))
               .sort((a, b) => {
                   if (b.score !== a.score) return b.score - a.score;
                   const aIsPro = a.isPro ? 1 : 0;
                   const bIsPro = b.isPro ? 1 : 0;
-                  if (aIsPro !== bIsPro) return bIsPro - aIsPro; // Pros always win ties
+                  if (aIsPro !== bIsPro) return bIsPro - aIsPro;
                   return a.name.localeCompare(b.name);
               });
           
@@ -133,8 +132,8 @@ export async function recalculateAllDataClientSide(
           addOp(b => b.set(doc(firestore, 'userHistories', u.id), hist));
       }
 
-      progressCallback("Saving...");
+      progressCallback("Committing updated ranks...");
       await Promise.all(mainBatches.map(b => b.commit()));
-      progressCallback("Complete.");
+      progressCallback("Master Recalculation Complete.");
     } catch (e: any) { throw e; }
 }

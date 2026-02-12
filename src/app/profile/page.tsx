@@ -1,10 +1,9 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Mail, Upload, Trophy, Award, ShieldCheck, Loader2, Medal, DollarSign, Star, ShieldAlert, LogOut, Swords } from 'lucide-react';
+import { Mail, Trophy, Award, ShieldCheck, Loader2, Medal, Star, Upload as UploadIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,7 +27,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -37,7 +35,6 @@ import type { Team, User, UserHistory, MonthlyMimoM, Prediction } from '@/lib/ty
 import { ProfilePerformanceChart } from '@/components/charts/profile-performance-chart';
 import React from 'react';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
   TooltipContent,
@@ -45,11 +42,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser, useResolvedUserId, useAuth } from '@/firebase';
-import { collection, doc, query, where, getDocs } from 'firebase/firestore';
+import { collection, doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { AuthForm } from '@/components/auth/auth-form';
 import { updatePassword, updateEmail } from 'firebase/auth';
-
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -79,7 +75,6 @@ const passwordFormSchema = z.object({
 });
 
 type PasswordFormValues = z.infer<typeof passwordFormSchema>;
-
 
 export default function ProfilePage() {
   const { toast } = useToast();
@@ -129,7 +124,7 @@ export default function ProfilePage() {
     defaultValues: { email: authUser?.email || '' }
   });
 
-   const passwordForm = useForm<PasswordFormValues>({
+  const passwordForm = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordFormSchema),
     defaultValues: { password: "", confirmPassword: "" }
   });
@@ -156,8 +151,9 @@ export default function ProfilePage() {
         .filter(u => u.name && predictions.some(p => (p.userId || p.id) === u.id))
         .sort((a,b) => {
             if (b.score !== a.score) return b.score - a.score;
-            if (a.isPro && !b.isPro) return -1;
-            if (!a.isPro && b.isPro) return 1;
+            const aIsPro = a.isPro ? 1 : 0;
+            const bIsPro = b.isPro ? 1 : 0;
+            if (aIsPro !== bIsPro) return bIsPro - aIsPro;
             return a.name.localeCompare(b.name);
         });
 
@@ -178,11 +174,9 @@ export default function ProfilePage() {
         }
     });
 
-    let potential = 0;
     let highestProScore = -1;
     sortedUsers.forEach(u => { if (u.isPro && u.score > highestProScore) highestProScore = u.score; });
 
-    const potentialSlayers: string[] = [];
     const pointsGroups: { score: number, players: User[], startOrdinal: number }[] = [];
     let currentOrdinal = 1;
     sortedUsers.forEach((u, i) => {
@@ -191,36 +185,42 @@ export default function ProfilePage() {
         currentOrdinal++;
     });
 
+    const slayers: string[] = [];
     pointsGroups.forEach(group => {
         group.players.forEach((p, idx) => {
             const ord = group.startOrdinal + idx;
-            if (!p.isPro && p.score > highestProScore && ord > 10) {
-                const groupHasNoPrizes = group.players.filter((pp, pIdx) => !pp.isPro && group.startOrdinal + pIdx <= 10).length === 0;
-                if (groupHasNoPrizes) potentialSlayers.push(p.id);
+            const groupHasPrizes = group.players.some((pp, pIdx) => !pp.isPro && (group.startOrdinal + pIdx <= 10));
+            if (!p.isPro && p.score > highestProScore && ord > 10 && !groupHasPrizes) {
+                slayers.push(p.id);
             }
         });
     });
 
-    const slayerPool = Math.min(potentialSlayers.length * 5, 55);
-    const bountyPerSlayer = potentialSlayers.length > 0 ? slayerPool / potentialSlayers.length : 0;
+    const sPoolTotal = Math.min(slayers.length * 5, 55);
+    const individualBounty = slayers.length > 0 ? sPoolTotal / slayers.length : 0;
 
-    const netSeasonalFund = 530 - 150 - 10 - slayerPool;
-    const p10 = netSeasonalFund * 0.030073;
-    let seasonalPrizes: number[] = [p10];
-    for (let i = 0; i < 9; i++) seasonalPrizes.push(seasonalPrizes[i] * 1.25);
-    seasonalPrizes = seasonalPrizes.reverse();
+    const getPrizeLogic = (slPool: number) => {
+        const netSeasonalFund = 530 - 150 - 10 - slPool;
+        const p10 = netSeasonalFund * 0.030073;
+        let prizes: number[] = [p10];
+        for (let i = 0; i < 9; i++) prizes.push(prizes[i] * 1.25);
+        return prizes.reverse();
+    };
 
+    const finalSeasonalPrizes = getPrizeLogic(sPoolTotal);
+
+    let potential = 0;
     pointsGroups.forEach(group => {
         const regulars = group.players.filter(p => !p.isPro);
-        let groupTotal = 0;
+        let groupRegTotal = 0;
         group.players.forEach((p, idx) => {
             const ord = group.startOrdinal + idx;
-            if (!p.isPro && ord <= 10) groupTotal += (seasonalPrizes[ord-1] || 0);
+            if (!p.isPro && ord <= 10) groupRegTotal += (finalSeasonalPrizes[ord-1] || 0);
         });
-        if (regulars.some(r => r.id === user.id)) potential = groupTotal / regulars.length;
+        if (regulars.some(r => r.id === user.id)) potential = groupRegTotal / regulars.length;
     });
 
-    if (potentialSlayers.includes(user.id)) potential += bountyPerSlayer;
+    if (slayers.includes(user.id)) potential += individualBounty;
 
     return { bagged, potential };
   }, [user, allUsers, monthlyMimoM, predictions]);
@@ -263,7 +263,8 @@ export default function ProfilePage() {
     const allWeeks = [...new Set(allUserHistories.flatMap(h => h.weeklyScores.map(w => w.week)))].filter(w => w > 0).sort((a, b) => a - b);
     const allScores = allUserHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.score));
     if (allScores.length === 0) return { chartData: [], yAxisDomain: [0, 10] };
-    const yAxisDomain: [number, number] = [Math.min(...allScores) - 5, Math.max(...allScores) + 5];
+    const minS = Math.min(...allScores);
+    const maxS = Math.max(...allScores);
     return {
       chartData: allWeeks.map(week => {
         const scoresThisWeek = allUserHistories.map(h => h.weeklyScores.find(w => w.week === week)?.score).filter((s): s is number => s !== undefined);
@@ -274,7 +275,7 @@ export default function ProfilePage() {
           'Min Score': scoresThisWeek.length > 0 ? Math.min(...scoresThisWeek) : undefined,
         };
       }),
-      yAxisDomain
+      yAxisDomain: [minS - 5, maxS + 5] as [number, number]
     };
   }, [allUserHistories, userHistory]);
 
@@ -299,17 +300,17 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-8">
-      <Card className="overflow-hidden border-2">
+      <Card className="overflow-hidden border-2 shadow-lg">
           <CardContent className="p-0">
               <div className="flex flex-col lg:flex-row items-center lg:items-stretch">
-                  <div className="p-8 flex flex-col items-center text-center lg:items-start lg:text-left gap-6 bg-muted/10 lg:w-1/3 border-b lg:border-b-0 lg:border-r">
-                      <Avatar className="h-48 w-48 rounded-lg border-4 border-primary shadow-xl">
+                  <div className="p-10 flex flex-col items-center text-center lg:items-start lg:text-left gap-6 bg-muted/10 lg:w-1/3 border-b lg:border-b-0 lg:border-r">
+                      <Avatar className="h-48 w-48 rounded-xl border-4 border-primary shadow-2xl">
                           <AvatarImage src={avatarPreview || getAvatarUrl(user?.avatar)} alt={user?.name} className="object-cover" />
-                          <AvatarFallback className="text-4xl">{(user?.name || '?').charAt(0)}</AvatarFallback>
+                          <AvatarFallback className="text-5xl">{(user?.name || '?').charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div>
-                          <h2 className="text-3xl font-extrabold tracking-tight">{user?.name}</h2>
-                          {user?.nickname && <p className="text-xl text-muted-foreground italic font-medium mt-1">"{user.nickname}"</p>}
+                          <h2 className="text-3xl font-black tracking-tight">{user?.name}</h2>
+                          {user?.nickname && <p className="text-xl text-muted-foreground italic font-semibold mt-1">"{user.nickname}"</p>}
                       </div>
                   </div>
                   
@@ -319,8 +320,8 @@ export default function ProfilePage() {
                               <h3 className="text-lg font-bold mb-4 flex items-center justify-center gap-2 text-primary border-b pb-2"><ShieldCheck className="size-5" /> This Season's Stats</h3>
                               <div className="grid grid-cols-4 gap-x-2 text-center text-sm">
                                   <div /><div className="font-semibold text-muted-foreground text-xs uppercase">High</div><div className="font-semibold text-muted-foreground text-xs uppercase">Low</div><div className="font-semibold text-muted-foreground text-xs uppercase">Now</div>
-                                  <div className="font-bold text-muted-foreground text-left py-2 border-b">Pos</div><div className="font-bold text-green-600 py-2 border-b">{user?.minRank || '-'}</div><div className="font-bold text-red-600 py-2 border-b">{user?.maxRank || '-'}</div><div className="font-extrabold py-2 border-b">{user?.rank || '-'}</div>
-                                  <div className="font-bold text-muted-foreground text-left py-2">Pts</div><div className="font-bold text-green-600 py-2">{user?.maxScore || '-'}</div><div className="font-bold text-red-600 py-2">{user?.minScore || '-'}</div><div className="font-extrabold py-2">{user?.score || '-'}</div>
+                                  <div className="font-bold text-muted-foreground text-left py-2 border-b">Pos</div><div className="font-bold text-green-600 py-2 border-b">{user?.minRank || '-'}</div><div className="font-bold text-red-600 py-2 border-b">{user?.maxRank || '-'}</div><div className="font-extrabold py-2 border-b text-lg">{user?.rank || '-'}</div>
+                                  <div className="font-bold text-muted-foreground text-left py-2">Pts</div><div className="font-bold text-green-600 py-2">{user?.maxScore || '-'}</div><div className="font-bold text-red-600 py-2">{user?.minScore || '-'}</div><div className="font-extrabold py-2 text-lg">{user?.score || '-'}</div>
                               </div>
                           </div>
                           <div className="border-2 border-yellow-500/20 rounded-xl p-6 bg-card shadow-sm hover:shadow-md transition-shadow">
@@ -336,21 +337,21 @@ export default function ProfilePage() {
                           </div>
                       </div>
 
-                      <div className="w-full border-2 border-muted rounded-xl p-6 bg-primary/5 flex flex-col md:flex-row justify-between items-center gap-6">
+                      <div className="w-full border-2 border-primary/10 rounded-xl p-6 bg-primary/5 flex flex-col md:flex-row justify-between items-center gap-6 shadow-inner">
                           <div className="flex flex-col items-center md:items-start">
-                              <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Experience</span>
-                              <span className="text-2xl font-black">Seasons Played: {user?.seasonsPlayed || 0}</span>
+                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Experience</span>
+                              <span className="text-2xl font-black">Played: {user?.seasonsPlayed || 0}</span>
                           </div>
                           <div className="flex flex-col items-center md:items-start">
-                              <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Career Earnings</span>
+                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Career Earnings</span>
                               <span className="text-2xl font-black text-green-600">All Time: £{(user?.cashWinnings || 0).toFixed(2)}</span>
                           </div>
                           <div className="flex flex-col items-center md:items-start">
-                              <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">2025-26 Bagged</span>
+                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">2025-26 Bagged</span>
                               <span className="text-2xl font-black text-primary">£{currentPrizes.bagged.toFixed(2)}</span>
                           </div>
                           <div className="flex flex-col items-center md:items-start">
-                              <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">2025-26 Potential</span>
+                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">2025-26 Potential</span>
                               <span className="text-2xl font-black text-orange-600">£{currentPrizes.potential.toFixed(2)}</span>
                           </div>
                       </div>
@@ -370,18 +371,18 @@ export default function ProfilePage() {
                   <div className="space-y-2">
                       <Label>Avatar</Label>
                       <div className="flex items-center gap-4">
-                            <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}><Upload className="mr-2 h-4 w-4" />Upload Image</Button>
+                            <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}><UploadIcon className="mr-2 h-4 w-4" />Change Picture</Button>
                             <Input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload} />
                       </div>
                   </div>
-                <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="nickname" render={({ field }) => (<FormItem><FormLabel>Nickname</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="initials" render={({ field }) => (<FormItem><FormLabel>Initials</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="phoneNumber" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Real Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="nickname" render={({ field }) => (<FormItem><FormLabel>Display Nickname</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="initials" render={({ field }) => (<FormItem><FormLabel>Initials</FormLabel><FormControl><Input {...field} maxLength={4}/></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="phoneNumber" render={({ field }) => (<FormItem><FormLabel>Mobile Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="favouriteTeam" render={({ field }) => (
-                    <FormItem><FormLabel>Favourite Team</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="none">None</SelectItem>{teams?.map((team) => (<SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>))}</Select><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Supported Team</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="none">Neutral</SelectItem>{teams?.map((team) => (<SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>))}</Select><FormMessage /></FormItem>
                 )} />
-                <Button type="submit" disabled={form.formState.isSubmitting}>{form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Update Profile</Button>
+                <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">{form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save Profile Changes</Button>
               </form>
             </Form>
           </CardContent>
@@ -389,24 +390,24 @@ export default function ProfilePage() {
 
         <div className="space-y-8">
           <Card>
-            <CardHeader><CardTitle>Security: Login Email</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Account: Login Email</CardTitle></CardHeader>
             <CardContent>
               <Form {...emailForm}>
                 <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-4">
-                  <FormField control={emailForm.control} name="email" render={({ field }) => (<FormItem><FormLabel>New Login Email</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                  <Button type="submit" disabled={emailForm.formState.isSubmitting}>{emailForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />} Update Email</Button>
+                  <FormField control={emailForm.control} name="email" render={({ field }) => (<FormItem><FormLabel>Current Login Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                  <Button type="submit" disabled={emailForm.formState.isSubmitting} variant="outline" className="w-full">{emailForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />} Update Login Email</Button>
                 </form>
               </Form>
             </CardContent>
           </Card>
            <Card>
-            <CardHeader><CardTitle>Security: Password</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Account: Security</CardTitle></CardHeader>
             <CardContent>
               <Form {...passwordForm}>
                 <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
                   <FormField control={passwordForm.control} name="password" render={({ field }) => (<FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                  <FormField control={passwordForm.control} name="confirmPassword" render={({ field }) => (<FormItem><FormLabel>Confirm Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                  <Button type="submit" className="w-full" disabled={passwordForm.formState.isSubmitting}>{passwordForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Update Password</Button>
+                  <FormField control={passwordForm.control} name="confirmPassword" render={({ field }) => (<FormItem><FormLabel>Confirm New Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                  <Button type="submit" className="w-full" disabled={passwordForm.formState.isSubmitting}>{passwordForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Update Secure Password</Button>
                 </form>
               </Form>
             </CardContent>

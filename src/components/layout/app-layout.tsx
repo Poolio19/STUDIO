@@ -1,4 +1,3 @@
-
 'use client';
 
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
@@ -6,8 +5,7 @@ import { SidebarNav } from './sidebar-nav';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { useUser, useFirebaseConfigStatus, useFirestore, useMemoFirebase, useCollection, useDoc, useResolvedUserId } from '@/firebase';
-import { Loader2, AlertTriangle, RefreshCw, Menu } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { Loader2, RefreshCw, Menu } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import React, { useMemo, useEffect } from 'react';
 import { collection, doc } from 'firebase/firestore';
@@ -22,7 +20,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { recalculateAllDataClientSide } from '@/lib/recalculate';
@@ -114,7 +111,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     }
   };
 
-
   if (!isConfigured) return <div className="flex h-screen w-screen items-center justify-center p-4">Firebase not configured.</div>;
 
   if (isUserLoading || (user && isProfileLoading)) {
@@ -130,11 +126,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       )}
       <SidebarInset className="flex flex-col">
         <header className={cn("flex h-auto min-h-14 items-center gap-4 border-b bg-card px-6 py-3", { "hidden": mustChangePassword })}>
-          {!mustChangePassword && (
-            <SidebarTrigger className="flex shrink-0">
-              <Menu className="size-6" />
-            </SidebarTrigger>
-          )}
+          <SidebarTrigger className="flex shrink-0">
+            <Menu className="size-6" />
+          </SidebarTrigger>
           <div className="flex-1 overflow-hidden">
             <h1 className="text-lg font-semibold truncate">{title}</h1>
             {description && <p className="text-sm text-muted-foreground truncate">{description}</p>}
@@ -142,11 +136,15 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="ml-auto shrink-0">
             {isAdmin && !mustChangePassword && (
               <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm" disabled={isRecalculating}>{isRecalculating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}Recalculate</Button>
-                  </AlertDialogTrigger>
+                  <Button asChild variant="outline" size="sm" disabled={isRecalculating}>
+                    <div className="flex items-center gap-2 cursor-pointer">
+                        {isRecalculating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                        <span>Recalculate</span>
+                    </div>
+                  </Button>
                   <AlertDialogContent>
                       <AlertDialogHeader><AlertDialogTitle>Run master recalculation?</AlertDialogTitle></AlertDialogHeader>
+                      <AlertDialogDescription>This will update everyone's visual competition ranks and dynamic prize shares based on the latest rules.</AlertDialogDescription>
                       <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleRecalculate}>Recalculate Now</AlertDialogAction></AlertDialogFooter>
                   </AlertDialogContent>
               </AlertDialog>
