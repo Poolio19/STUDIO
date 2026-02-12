@@ -185,9 +185,20 @@ export default function ProfilePage() {
     let highestProScore = -1;
     sortedUsers.forEach(u => { if (u.isPro && u.score > highestProScore) highestProScore = u.score; });
 
-    const slayers = sortedUsers.filter(u => !u.isPro && u.score > highestProScore && sortedUsers.indexOf(u) + 1 > 10);
-    const slayerPool = Math.min(slayers.length * 5, 55);
-    const bountyPerSlayer = slayers.length > 0 ? slayerPool / slayers.length : 0;
+    // Identify Slayers for the capped pool calculation
+    const potentialSlayers: string[] = [];
+    sortedUsers.forEach((u, i) => {
+        const ordinal = i + 1;
+        if (!u.isPro && u.score > highestProScore && ordinal > 10) {
+            // Need to check if they receive shared prize from Top 10 tie
+            const pointsGroup = sortedUsers.filter(uu => uu.score === u.score);
+            const groupStartsAt = sortedUsers.findIndex(uu => uu.score === u.score) + 1;
+            if (groupStartsAt > 10) potentialSlayers.push(u.id);
+        }
+    });
+
+    const slayerPool = Math.min(potentialSlayers.length * 5, 55);
+    const bountyPerSlayer = potentialSlayers.length > 0 ? slayerPool / potentialSlayers.length : 0;
 
     const netSeasonalFund = 530 - 150 - 10 - slayerPool;
     const p10 = netSeasonalFund * 0.030073;
@@ -217,7 +228,7 @@ export default function ProfilePage() {
         }
     });
 
-    if (slayers.some(s => s.id === user.id)) potential += bountyPerSlayer;
+    if (potentialSlayers.includes(user.id)) potential += bountyPerSlayer;
 
     return { bagged, potential };
   }, [user, allUsers, monthlyMimoM, predictions]);
@@ -313,7 +324,7 @@ export default function ProfilePage() {
           <CardContent className="p-0">
               <div className="flex flex-col lg:flex-row items-center lg:items-stretch">
                   <div className="p-8 flex flex-col items-center text-center lg:items-start lg:text-left gap-6 bg-muted/10 lg:w-1/3 border-b lg:border-b-0 lg:border-r">
-                      <Avatar className="h-40 w-32 rounded-lg border-4 border-primary shadow-xl">
+                      <Avatar className="h-48 w-40 rounded-lg border-4 border-primary shadow-xl">
                           <AvatarImage src={avatarPreview || getAvatarUrl(user?.avatar)} alt={user?.name} className="object-cover" />
                           <AvatarFallback className="text-4xl">{(user?.name || '?').charAt(0)}</AvatarFallback>
                       </Avatar>
@@ -325,16 +336,16 @@ export default function ProfilePage() {
                   
                   <div className="flex-1 p-8 flex flex-col gap-8">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="border rounded-xl p-6 bg-card shadow-sm hover:shadow-md transition-shadow">
-                              <h3 className="text-lg font-bold mb-4 flex items-center justify-center gap-2 text-primary"><ShieldCheck className="size-5" /> This Season's Stats</h3>
+                          <div className="border-2 border-primary/20 rounded-xl p-6 bg-card shadow-sm hover:shadow-md transition-shadow">
+                              <h3 className="text-lg font-bold mb-4 flex items-center justify-center gap-2 text-primary border-b pb-2"><ShieldCheck className="size-5" /> This Season's Stats</h3>
                               <div className="grid grid-cols-4 gap-x-2 text-center text-sm">
                                   <div /><div className="font-semibold text-muted-foreground text-xs uppercase">High</div><div className="font-semibold text-muted-foreground text-xs uppercase">Low</div><div className="font-semibold text-muted-foreground text-xs uppercase">Now</div>
                                   <div className="font-bold text-muted-foreground text-left py-2 border-b">Pos</div><div className="font-bold text-green-600 py-2 border-b">{user?.minRank || '-'}</div><div className="font-bold text-red-600 py-2 border-b">{user?.maxRank || '-'}</div><div className="font-extrabold py-2 border-b">{user?.rank || '-'}</div>
                                   <div className="font-bold text-muted-foreground text-left py-2">Pts</div><div className="font-bold text-green-600 py-2">{user?.maxScore || '-'}</div><div className="font-bold text-red-600 py-2">{user?.minScore || '-'}</div><div className="font-extrabold py-2">{user?.score || '-'}</div>
                               </div>
                           </div>
-                          <div className="border rounded-xl p-6 bg-card shadow-sm hover:shadow-md transition-shadow">
-                              <h3 className="text-lg font-bold mb-4 text-center flex items-center justify-center gap-2 text-yellow-600"><Star className="size-5" /> Trophy Cabinet</h3>
+                          <div className="border-2 border-yellow-500/20 rounded-xl p-6 bg-card shadow-sm hover:shadow-md transition-shadow">
+                              <h3 className="text-lg font-bold mb-4 text-center flex items-center justify-center gap-2 text-yellow-600 border-b pb-2"><Star className="size-5" /> Trophy Cabinet</h3>
                                <div className="flex justify-around items-end h-20">
                                   <TooltipProvider>
                                       <Tooltip><TooltipTrigger><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-muted-foreground">2nd</span><Medal className={cn("size-8", (user?.second ?? 0) > 0 ? "text-slate-400" : "text-slate-200")} /><span className="text-sm font-black">{user?.second || 0}</span></div></TooltipTrigger><TooltipContent><p>Runner Up</p></TooltipContent></Tooltip>
@@ -346,7 +357,7 @@ export default function ProfilePage() {
                           </div>
                       </div>
 
-                      <div className="w-full border-2 border-primary/20 rounded-xl p-6 bg-primary/5 flex flex-col md:flex-row justify-between items-center gap-6">
+                      <div className="w-full border-2 border-muted rounded-xl p-6 bg-primary/5 flex flex-col md:flex-row justify-between items-center gap-6">
                           <div className="flex flex-col items-center md:items-start">
                               <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Experience</span>
                               <span className="text-2xl font-black">Seasons Played: {user?.seasonsPlayed || 0}</span>
@@ -389,7 +400,7 @@ export default function ProfilePage() {
                 <FormField control={form.control} name="initials" render={({ field }) => (<FormItem><FormLabel>Initials</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="phoneNumber" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="favouriteTeam" render={({ field }) => (
-                    <FormItem><FormLabel>Favourite Team</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="none">None</SelectItem>{teams?.map((team) => (<SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Favourite Team</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="none">None</SelectItem>{teams?.map((team) => (<SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>))}</Select><FormMessage /></FormItem>
                 )} />
                 <Button type="submit" disabled={form.formState.isSubmitting}>{form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Update Profile</Button>
               </form>

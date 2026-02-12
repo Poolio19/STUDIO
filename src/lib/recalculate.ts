@@ -16,7 +16,7 @@ import historicalPlayersData from './historical-players.json';
 /**
  * Recalculates all derived data.
  * Logic:
- * 1. Pros win ties (Ordinal sorting).
+ * 1. Pros win ties (Ordinal sorting: Score DESC, isPro DESC, Name ASC).
  * 2. Visual competition rank stored in history (1, 2, 2, 4...).
  */
 export async function recalculateAllDataClientSide(
@@ -103,8 +103,9 @@ export async function recalculateAllDataClientSide(
           const uRanked = users.map(u => ({...u, score: uScores[u.id]}))
               .sort((a, b) => {
                   if (b.score !== a.score) return b.score - a.score;
-                  if (a.isPro && !b.isPro) return -1;
-                  if (!a.isPro && b.isPro) return 1;
+                  const aIsPro = a.isPro ? 1 : 0;
+                  const bIsPro = b.isPro ? 1 : 0;
+                  if (aIsPro !== bIsPro) return bIsPro - aIsPro;
                   return a.name.localeCompare(b.name);
               });
           

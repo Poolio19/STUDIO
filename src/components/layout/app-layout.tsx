@@ -6,7 +6,7 @@ import { SidebarNav } from './sidebar-nav';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { useUser, useFirebaseConfigStatus, useFirestore, useMemoFirebase, useCollection, useDoc, useResolvedUserId } from '@/firebase';
-import { Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Loader2, AlertTriangle, RefreshCw, Menu } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { usePathname, useRouter } from 'next/navigation';
 import React, { useMemo, useEffect } from 'react';
@@ -130,7 +130,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       )}
       <SidebarInset className="flex flex-col">
         <header className={cn("flex h-auto min-h-14 items-center gap-4 border-b bg-card px-6 py-3", { "hidden": mustChangePassword })}>
-          {!mustChangePassword && <SidebarTrigger className="flex" />}
+          {!mustChangePassword && (
+            <SidebarTrigger className="flex">
+              <Menu className="size-6" />
+            </SidebarTrigger>
+          )}
           <div>
             <h1 className="text-lg font-semibold">{title}</h1>
             {description && <p className="text-sm text-muted-foreground">{description}</p>}
@@ -143,7 +147,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                       <AlertDialogHeader><AlertDialogTitle>Run master recalculation?</AlertDialogTitle></AlertDialogHeader>
-                      <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleRecalculate}>Recalculate</AlertDialogAction></AlertDialogFooter>
+                      <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleRecalculate}>Recalculate Now</AlertDialogAction></AlertDialogFooter>
                   </AlertDialogContent>
               </AlertDialog>
             )}
