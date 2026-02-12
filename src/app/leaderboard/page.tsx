@@ -96,7 +96,7 @@ export default function LeaderboardPage() {
 
     sortedUsers.forEach(u => breakdown.set(u.id, { total: 0, seasonal: 0, monthly: 0, proBounty: 0 }));
 
-    // 1. Monthly Awards (£150 total fund handled via DB)
+    // 1. Monthly Awards (£150 total fund)
     const awardsMap: { [key: string]: { winners: string[], runnersUp: string[] } } = {};
     monthlyMimoM.forEach(m => {
         const key = m.special ? m.special : `${m.month}-${m.year}`;
@@ -132,24 +132,8 @@ export default function LeaderboardPage() {
         currentOrdinal++;
     });
 
-    const slayers: string[] = [];
-    pointsGroups.forEach(group => {
-        // Group gets Top 10 fund if any member is at ordinal 1-10
-        const groupHasPrizes = group.players.some((pp, pIdx) => !pp.isPro && (group.startOrdinal + pIdx <= 10));
-        group.players.forEach((p, idx) => {
-            const ord = group.startOrdinal + idx;
-            // Slayer if: Regular player, strictly outscores all Pros, and receives £0 from Top 10 fund
-            if (!p.isPro && p.score > highestProScore && ord > 10 && !groupHasPrizes) {
-                slayers.push(p.id);
-            }
-        });
-    });
-
-    const slayerPoolTotal = Math.min(slayers.length * 5, 55);
-    const individualBounty = slayers.length > 0 ? slayerPoolTotal / slayers.length : 0;
-
-    // 3. Seasonal Prize fund with 1.25x multiplier
-    const getSeasonalPrizes = (sPool: number) => {
+    // Calculate Seasonal Prizes for Top 10 first to determine Slayer eligibility
+    const calculateTopTenPrizes = (sPool: number) => {
         const netSeasonalFund = 530 - 150 - 10 - sPool;
         const p10 = netSeasonalFund * 0.030073;
         let prizes: number[] = [p10];
@@ -157,7 +141,25 @@ export default function LeaderboardPage() {
         return prizes.reverse(); // [1st, 2nd, ... 10th]
     };
 
-    const finalSeasonalPrizes = getSeasonalPrizes(slayerPoolTotal);
+    // We need to find slayers first by checking if they are in top 10 prize positions
+    const tempSlayerList: string[] = [];
+    pointsGroups.forEach(group => {
+        // Group gets Top 10 fund if any member is at ordinal 1-10
+        const groupHasPrizes = group.players.some((pp, pIdx) => !pp.isPro && (group.startOrdinal + pIdx <= 10));
+        group.players.forEach((p, idx) => {
+            const ord = group.startOrdinal + idx;
+            // Slayer if: Regular player, strictly outscores all Pros, and receives £0 from Top 10 fund
+            if (!p.isPro && p.score > highestProScore && ord > 10 && !groupHasPrizes) {
+                tempSlayerList.push(p.id);
+            }
+        });
+    });
+
+    const slayerPoolTotal = Math.min(tempSlayerList.length * 5, 55);
+    const individualBounty = tempSlayerList.length > 0 ? slayerPoolTotal / tempSlayerList.length : 0;
+
+    // 3. Final Seasonal Prize distribution
+    const finalSeasonalPrizes = calculateTopTenPrizes(slayerPoolTotal);
 
     pointsGroups.forEach(group => {
         const regulars = group.players.filter(p => !p.isPro);
@@ -182,7 +184,7 @@ export default function LeaderboardPage() {
         }
     });
 
-    slayers.forEach(id => {
+    tempSlayerList.forEach(id => {
         const b = breakdown.get(id);
         if (b) { b.total += individualBounty; b.proBounty = individualBounty; }
     });
@@ -195,10 +197,8 @@ export default function LeaderboardPage() {
     const b = winningsMap.get(user.id);
     if (!b) return '';
     if (b.seasonal > 0) {
-        // Find highest ordinal in the tied points group to determine color
         const topOfGroup = sortedUsers.find(u => u.score === user.score);
         const highestOrdinal = sortedUsers.indexOf(topOfGroup!) + 1;
-
         if (highestOrdinal === 1) return 'bg-red-800 text-yellow-300';
         if (highestOrdinal <= 2) return 'bg-red-600 text-white';
         if (highestOrdinal <= 3) return 'bg-orange-700 text-white';
@@ -229,8 +229,8 @@ export default function LeaderboardPage() {
                 <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-blue-100/50 dark:bg-blue-900/20 py-2">Week {currentWeek}, Current Standings</TableHead>
                 <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-green-100/50 dark:bg-blue-900/20 py-2">Position</TableHead>
                 <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-green-100/50 dark:bg-blue-900/20 py-2">Points</TableHead>
-                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-purple-100/50 dark:bg-purple-900/20 py-2">Position</TableHead>
-                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground bg-purple-100/50 dark:bg-purple-900/20 py-2">Points</TableHead>
+                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-purple-100/50 dark:bg-blue-900/20 py-2">Position</TableHead>
+                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground bg-purple-100/50 dark:bg-blue-900/20 py-2">Points</TableHead>
               </TableRow>
               <TableRow>
                 <TableHead className="w-[80px] bg-blue-50/50 dark:bg-blue-900/10 py-2 text-center">Pos</TableHead>
@@ -257,29 +257,28 @@ export default function LeaderboardPage() {
                   const RankIcon = getRankChangeIcon(user.rankChange);
                   const isCurrentUser = user.id === resolvedUserId;
 
-                  // Use competition ranking for visual display (1, 2, 2, 4)
                   const topOfGroup = sortedUsers.find(u => u.score === user.score);
                   const competitionRank = sortedUsers.indexOf(topOfGroup!) + 1;
 
                   return (
-                      <TableRow key={user.id} className={cn(getRankColour(user), { 'ring-2 ring-inset ring-primary z-10 relative': isCurrentUser })}>
-                          <TableCell className={cn("font-medium text-center py-1", isCurrentUser && "text-[1.05rem] font-black")}>
+                      <TableRow key={user.id} className={cn(getRankColour(user), { 'ring-2 ring-inset ring-primary z-10 relative bg-primary/5': isCurrentUser })}>
+                          <TableCell className={cn("font-medium text-center py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
                             {competitionRank}
                           </TableCell>
                           <TableCell className="py-1">
                             <div className="flex items-center gap-3">
-                                <Avatar className={cn("transition-transform", isCurrentUser ? "h-10 w-10 border-2 border-primary" : "h-8 w-8")}>
+                                <Avatar className={cn("transition-transform", isCurrentUser ? "h-10 w-10 border-2 border-primary shadow-[0_0_15px_hsl(var(--primary)/0.5)]" : "h-8 w-8")}>
                                 <AvatarImage src={getAvatarUrl(user.avatar)} alt={user.name} data-ai-hint="person" />
                                 <AvatarFallback>{(user.name || '?').charAt(0)}</AvatarFallback>
                                 </Avatar>
-                                <span className={cn("flex items-center gap-2 transition-all", isCurrentUser && "text-[1.05rem] font-extrabold drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
+                                <span className={cn("flex items-center gap-2 transition-all", isCurrentUser && "text-[1.1rem] font-extrabold drop-shadow-[0_0_10px_hsl(var(--primary))]")}>
                                     {user.isPro ? (user.name || '').toUpperCase() : user.name}
                                     {b.proBounty > 0 && <TooltipProvider><Tooltip><TooltipTrigger><Swords className="size-4 text-primary animate-pulse" /></TooltipTrigger><TooltipContent><p>Pro Slayer!</p></TooltipContent></Tooltip></TooltipProvider>}
                                 </span>
                             </div>
                           </TableCell>
-                          <TableCell className={cn("text-center font-bold py-1", isCurrentUser ? "text-xl font-black drop-shadow-[0_0_8px_hsl(var(--primary))]" : "text-lg")}>{user.score}</TableCell>
-                          <TableCell className={cn("text-center font-medium border-r py-1", isCurrentUser && "text-[1.05rem] font-black")}>
+                          <TableCell className={cn("text-center font-bold py-1", isCurrentUser ? "text-xl font-black drop-shadow-[0_0_10px_hsl(var(--primary))]" : "text-lg")}>{user.score}</TableCell>
+                          <TableCell className={cn("text-center font-medium border-r py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
                             {user.isPro ? '-' : (
                                 <TooltipProvider>
                                     <Tooltip>
@@ -298,24 +297,24 @@ export default function LeaderboardPage() {
                                 </TooltipProvider>
                             )}
                           </TableCell>
-                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "font-black")}>{user.previousRank}</TableCell>
+                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.previousRank}</TableCell>
                           <TableCell className={cn("font-bold text-center border-r py-1", getRankChangeColour(user.rankChange))}>
-                              <div className="flex items-center justify-center gap-2">
-                                  <span className={isCurrentUser ? "font-black" : ""}>{Math.abs(user.rankChange)}</span>
+                              <div className={cn("flex items-center justify-center gap-2", isCurrentUser && "drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
+                                  <span className={isCurrentUser ? "text-[1.1rem] font-black" : ""}>{Math.abs(user.rankChange)}</span>
                                   <RankIcon className="size-5" />
                               </div>
                           </TableCell>
-                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "font-black")}>{user.previousScore}</TableCell>
+                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.previousScore}</TableCell>
                           <TableCell className={cn("font-bold text-center border-r py-1", getRankChangeColour(user.scoreChange))}>
-                              <div className="flex items-center justify-center gap-2">
-                                  <span className={isCurrentUser ? "font-black" : ""}>{formatPointsChange(user.scoreChange)}</span>
+                              <div className={cn("flex items-center justify-center gap-2", isCurrentUser && "drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
+                                  <span className={isCurrentUser ? "text-[1.1rem] font-black" : ""}>{formatPointsChange(user.scoreChange)}</span>
                                   <ScoreIcon className="size-5" />
                               </div>
                           </TableCell>
-                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "font-black")}>{user.minRank}</TableCell>
-                          <TableCell className={cn("text-center font-medium border-r py-1", isCurrentUser && "font-black")}>{user.maxRank}</TableCell>
-                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "font-black")}>{user.maxScore}</TableCell>
-                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "font-black")}>{user.minScore}</TableCell>
+                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.minRank}</TableCell>
+                          <TableCell className={cn("text-center font-medium border-r py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.maxRank}</TableCell>
+                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.maxScore}</TableCell>
+                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.minScore}</TableCell>
                       </TableRow>
                   );
                 })

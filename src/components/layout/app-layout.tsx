@@ -32,6 +32,7 @@ const pageInfoMap: { [key: string]: { title: string; description: string | ((sea
           ? 'The season has started. Your predictions are locked in.'
           : 'Drag and drop the teams to create your PremPred entry; then sit back and pray for glory'
   },
+  '/forum': { title: 'Chat Forum', description: 'Discuss predictions and talk trash with fellow players.' },
   '/most-improved': { title: 'MiMoM', description: 'Celebrating the mid-season heroes of the PremPred.' },
   '/standings': { title: 'Premier League', description: 'Official league standings and form guide.' },
   '/stats': { title: 'PredStats', description: "A detailed breakdown of each player's prediction scores." },
@@ -124,11 +125,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </Sidebar>
       )}
       <SidebarInset className="flex flex-col">
-        <header className={cn("flex h-auto min-h-14 items-center gap-4 border-b bg-card px-6 py-3", { "hidden": mustChangePassword })}>
+        <header className={cn("flex h-auto min-h-14 items-center gap-4 border-b bg-card px-6 py-3", { "flex": true, "hidden": mustChangePassword })}>
           <div className="flex items-center gap-2">
-            <SidebarTrigger className="flex shrink-0">
-              <Menu className="size-6" />
-            </SidebarTrigger>
+            <SidebarTrigger className="-ml-1" />
           </div>
           <div className="flex-1 overflow-hidden">
             <h1 className="text-lg font-semibold truncate">{title}</h1>

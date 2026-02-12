@@ -43,7 +43,7 @@ export async function recalculateAllDataClientSide(
       const users = allUsers.filter(u => activeUserIds.has(u.id) && (historicalUserIds.has(u.id) || u.isPro));
       const prevStandingsRankMap = new Map(prevStandingsData.map(s => [s.teamId, s.rank]));
 
-      progressCallback('Clearing tables...');
+      progressCallback('Clearing existing derived tables...');
       const collections = ['standings', 'playerTeamScores', 'teamRecentResults', 'weeklyTeamStandings', 'userHistories', 'monthlyMimoM', 'seasonMonths'];
       for (const colName of collections) {
           const snap = await getDocs(collection(firestore, colName));
@@ -105,7 +105,7 @@ export async function recalculateAllDataClientSide(
                   const aIsPro = a.isPro ? 1 : 0;
                   const bIsPro = b.isPro ? 1 : 0;
                   if (aIsPro !== bIsPro) return bIsPro - aIsPro;
-                  return a.name.localeCompare(b.name);
+                  return (a.name || '').localeCompare(b.name || '');
               });
           
           const scoresOnly = uRanked.map(u => u.score);
@@ -132,7 +132,7 @@ export async function recalculateAllDataClientSide(
           addOp(b => b.set(doc(firestore, 'userHistories', u.id), hist));
       }
 
-      progressCallback("Committing updated ranks...");
+      progressCallback("Committing updates to database...");
       await Promise.all(mainBatches.map(b => b.commit()));
       progressCallback("Master Recalculation Complete.");
     } catch (e: any) { throw e; }
