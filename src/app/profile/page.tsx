@@ -187,17 +187,17 @@ export default function ProfilePage() {
 
     const slayers: string[] = [];
     pointsGroups.forEach(group => {
+        const groupHasPrizes = group.players.some((pp, pIdx) => !pp.isPro && (group.startOrdinal + pIdx <= 10));
         group.players.forEach((p, idx) => {
             const ord = group.startOrdinal + idx;
-            const groupHasPrizes = group.players.some((pp, pIdx) => !pp.isPro && (group.startOrdinal + pIdx <= 10));
             if (!p.isPro && p.score > highestProScore && ord > 10 && !groupHasPrizes) {
                 slayers.push(p.id);
             }
         });
     });
 
-    const sPoolTotal = Math.min(slayers.length * 5, 55);
-    const individualBounty = slayers.length > 0 ? sPoolTotal / slayers.length : 0;
+    const slayerPoolTotal = Math.min(slayers.length * 5, 55);
+    const individualBounty = slayers.length > 0 ? slayerPoolTotal / slayers.length : 0;
 
     const getPrizeLogic = (slPool: number) => {
         const netSeasonalFund = 530 - 150 - 10 - slPool;
@@ -207,7 +207,7 @@ export default function ProfilePage() {
         return prizes.reverse();
     };
 
-    const finalSeasonalPrizes = getPrizeLogic(sPoolTotal);
+    const finalSeasonalPrizes = getPrizeLogic(slayerPoolTotal);
 
     let potential = 0;
     pointsGroups.forEach(group => {
@@ -293,8 +293,22 @@ export default function ProfilePage() {
     }
   };
   
-  if (isAuthUserLoading) return <div className="flex h-screen w-screen items-center justify-center"><Loader2 className="mr-2 h-8 w-8 animate-spin" /><p>Loading profile...</p></div>;
-  if (!authUser) return <div className="flex h-full w-full items-center justify-center"><AuthForm /></div>;
+  if (isAuthUserLoading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center">
+        <Loader2 className="mr-2 h-8 w-8 animate-spin" />
+        <p className="ml-2">Loading profile...</p>
+      </div>
+    );
+  }
+
+  if (!authUser) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <AuthForm />
+      </div>
+    );
+  }
 
   const topTenCount = (user?.first || 0) + (user?.second || 0) + (user?.third || 0) + (user?.fourth || 0) + (user?.fifth || 0) + (user?.sixth || 0) + (user?.seventh || 0) + (user?.eighth || 0) + (user?.ninth || 0) + (user?.tenth || 0);
 

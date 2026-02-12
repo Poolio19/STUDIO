@@ -84,7 +84,7 @@ export default function LeaderboardPage() {
             if (b.score !== a.score) return b.score - a.score;
             const aIsPro = a.isPro ? 1 : 0;
             const bIsPro = b.isPro ? 1 : 0;
-            if (aIsPro !== bIsPro) return bIsPro - aIsPro; // Pros win ties
+            if (aIsPro !== bIsPro) return bIsPro - aIsPro; // Pros Win Ties
             return a.name.localeCompare(b.name);
         });
   }, [usersData, predictionsData]);
@@ -119,7 +119,7 @@ export default function LeaderboardPage() {
         }
     });
 
-    // 2. Pro-Slayer Logic
+    // 2. Pro-Slayer shared Pool (Eligibility: Strict outscore Pros + £0 seasonal prize)
     let highestProScore = -1;
     sortedUsers.forEach(u => { if (u.isPro && u.score > highestProScore) highestProScore = u.score; });
 
@@ -133,10 +133,10 @@ export default function LeaderboardPage() {
 
     const slayers: string[] = [];
     pointsGroups.forEach(group => {
+        const groupHasPrizes = group.players.some((pp, pIdx) => !pp.isPro && (group.startOrdinal + pIdx <= 10));
         group.players.forEach((p, idx) => {
             const ord = group.startOrdinal + idx;
-            const groupHasPrizes = group.players.some((pp, pIdx) => !pp.isPro && (group.startOrdinal + pIdx <= 10));
-            // Slayer if: Regular player, strictly outscores all Pros, and receives £0 from Top 10 ordinal fund
+            // Slayer if: Regular player, strictly outscores all Pros, and receives £0 from Top 10 fund
             if (!p.isPro && p.score > highestProScore && ord > 10 && !groupHasPrizes) {
                 slayers.push(p.id);
             }
@@ -269,7 +269,7 @@ export default function LeaderboardPage() {
                                 </span>
                             </div>
                           </TableCell>
-                          <TableCell className={cn("text-center font-bold py-1", isCurrentUser ? "text-xl font-black" : "text-lg")}>{user.score}</TableCell>
+                          <TableCell className={cn("text-center font-bold py-1", isCurrentUser ? "text-xl font-black drop-shadow-[0_0_8px_hsl(var(--primary))]" : "text-lg")}>{user.score}</TableCell>
                           <TableCell className={cn("text-center font-medium border-r py-1", isCurrentUser && "text-[1.05rem] font-black")}>
                             {user.isPro ? '-' : (
                                 <TooltipProvider>
