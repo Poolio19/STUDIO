@@ -4,7 +4,7 @@ import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from '@/compon
 import { SidebarNav } from './sidebar-nav';
 import { cn } from '@/lib/utils';
 import { useUser, useFirebaseConfigStatus, useFirestore, useMemoFirebase, useCollection, useDoc, useResolvedUserId } from '@/firebase';
-import { Loader2, RefreshCw, Menu } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import React, { useMemo, useEffect } from 'react';
 import { collection, doc } from 'firebase/firestore';
@@ -55,11 +55,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
   const [isRecalculating, setIsRecalculating] = React.useState(false);
 
-  const userDocRef = useMemoFirebase(() => {
-    if (!firestore || !resolvedUserId) return null;
-    return doc(firestore, 'users', resolvedUserId);
-  }, [firestore, resolvedUserId]);
-
+  const userDocRef = useMemoFirebase(() => (firestore && resolvedUserId) ? doc(firestore, 'users', resolvedUserId) : null, [firestore, resolvedUserId]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<User>(userDocRef);
 
   const isAdmin = user?.email === 'jim.poole@prempred.com';
@@ -83,16 +79,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   }, [matchesData]);
 
   const seasonStarted = currentWeek > 0;
-
   const pageInfo = pageInfoMap[pathname];
   const title = pageInfo ? pageInfo.title : 'PremPred 2025-2026';
   let description = '';
   if (pageInfo) {
-      if (typeof pageInfo.description === 'function') {
-          description = pageInfo.description(seasonStarted);
-      } else {
-          description = pageInfo.description;
-      }
+      description = typeof pageInfo.description === 'function' ? pageInfo.description(seasonStarted) : pageInfo.description;
   }
   
   const handleRecalculate = async () => {
@@ -112,10 +103,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   };
 
   if (!isConfigured) return <div className="flex h-screen w-screen items-center justify-center p-4">Firebase not configured.</div>;
-
-  if (isUserLoading || (user && isProfileLoading)) {
-    return <div className="flex h-screen w-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /><p className="ml-2">Connecting...</p></div>;
-  }
+  if (isUserLoading || (user && isProfileLoading)) return <div className="flex h-screen w-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /><p className="ml-2">Connecting...</p></div>;
   
   return (
     <SidebarProvider>
@@ -127,9 +115,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <SidebarInset className="flex flex-col">
         <header className={cn("flex h-auto min-h-14 items-center gap-4 border-b bg-card px-6 py-3", mustChangePassword && "hidden")}>
           <div className="flex items-center gap-2">
-            <SidebarTrigger>
-                <Menu className="h-6 w-6" />
-            </SidebarTrigger>
+            <SidebarTrigger className="-ml-1" />
           </div>
           <div className="flex-1 overflow-hidden">
             <h1 className="text-lg font-semibold truncate">{title}</h1>

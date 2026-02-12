@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -33,7 +34,6 @@ import {
 import { getAvatarUrl } from '@/lib/placeholder-images';
 import type { Team, User, UserHistory, MonthlyMimoM, Prediction } from '@/lib/types';
 import { ProfilePerformanceChart } from '@/components/charts/profile-performance-chart';
-import React from 'react';
 import { Label } from '@/components/ui/label';
 import {
   Tooltip,
@@ -55,12 +55,9 @@ const profileFormSchema = z.object({
   phoneNumber: z.string().optional(),
 });
 
-type ProfileFormValues = z.infer<typeof profileFormSchema>;
-
 const emailFormSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
 });
-type EmailFormValues = z.infer<typeof emailFormSchema>;
 
 const passwordFormSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters."),
@@ -70,6 +67,8 @@ const passwordFormSchema = z.object({
   path: ["confirmPassword"],
 });
 
+type ProfileFormValues = z.infer<typeof profileFormSchema>;
+type EmailFormValues = z.infer<typeof emailFormSchema>;
 type PasswordFormValues = z.infer<typeof passwordFormSchema>;
 
 export default function ProfilePage() {
@@ -80,16 +79,8 @@ export default function ProfilePage() {
   const firestore = useFirestore();
   const resolvedUserId = useResolvedUserId();
   
-  const userDocRef = useMemoFirebase(() => {
-    if (!firestore || !resolvedUserId) return null;
-    return doc(firestore, 'users', resolvedUserId);
-  }, [firestore, resolvedUserId]);
-
-  const userHistoryDocRef = useMemoFirebase(() => {
-    if (!firestore || !resolvedUserId) return null; 
-    return doc(firestore, 'userHistories', resolvedUserId);
-  }, [firestore, resolvedUserId]);
-
+  const userDocRef = useMemoFirebase(() => (firestore && resolvedUserId) ? doc(firestore, 'users', resolvedUserId) : null, [firestore, resolvedUserId]);
+  const userHistoryDocRef = useMemoFirebase(() => (firestore && resolvedUserId) ? doc(firestore, 'userHistories', resolvedUserId) : null, [firestore, resolvedUserId]);
   const allUserHistoriesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'userHistories') : null, [firestore]);
   const teamsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teams') : null, [firestore]);
   const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
@@ -108,8 +99,7 @@ export default function ProfilePage() {
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
-    defaultValues: { name: '', nickname: '', initials: '', favouriteTeam: 'team_1', phoneNumber: '', },
-    mode: 'onChange',
+    defaultValues: { name: '', nickname: '', initials: '', favouriteTeam: 'none', phoneNumber: '' },
   });
 
   const emailForm = useForm<EmailFormValues>({
@@ -135,22 +125,21 @@ export default function ProfilePage() {
         email: profile.email || authUser?.email || '',
       });
     }
-  }, [profile, form, emailForm, authUser]);
+  }, [profile, authUser, form, emailForm]);
 
   const currentPrizes = React.useMemo(() => {
     if (!profile || !allUsers || !monthlyMimoM || !predictions) return { bagged: 0, potential: 0 };
 
     const activeUsers = allUsers.filter(u => u.name && predictions.some(p => (p.userId || p.id) === u.id));
-    const sortedUsers = [...activeUsers]
-        .sort((a,b) => {
-            if (b.score !== a.score) return b.score - a.score;
-            const aIsPro = a.isPro ? 1 : 0;
-            const bIsPro = b.isPro ? 1 : 0;
-            if (aIsPro !== bIsPro) return bIsPro - aIsPro;
-            return a.name.localeCompare(b.name);
-        });
+    const sortedUsersList = [...activeUsers].sort((a,b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        const aIsPro = a.isPro ? 1 : 0;
+        const bIsPro = b.isPro ? 1 : 0;
+        if (aIsPro !== bIsPro) return bIsPro - aIsPro;
+        return (a.name || '').localeCompare(b.name || '');
+    });
 
-    let bagged = 0;
+    let baggedAmount = 0;
     const awardsMap: Record<string, { winners: string[], runnersUp: string[] }> = {};
     monthlyMimoM.forEach(m => {
         const key = m.special || `${m.month}-${m.year}`;
@@ -160,116 +149,112 @@ export default function ProfilePage() {
     });
 
     Object.values(awardsMap).forEach(award => {
-        if (award.winners.includes(profile.id)) bagged += 10 / award.winners.length;
-        if (award.winners.length === 1 && award.runnersUp.includes(profile.id)) bagged += 5 / award.runnersUp.length;
+        if (award.winners.includes(profile.id)) baggedAmount += 10 / (award.winners.length || 1);
+        if (award.winners.length === 1 && award.runnersUp.includes(profile.id)) baggedAmount += 5 / (award.runnersUp.length || 1);
     });
 
-    let highestProScore = -1;
-    sortedUsers.forEach(u => { if (u.isPro && u.score > highestProScore) highestProScore = u.score; });
+    let highestProScoreVal = -1;
+    sortedUsersList.forEach(u => { if (u.isPro && u.score > highestProScoreVal) highestProScoreVal = u.score; });
 
-    const pointsGroups: { score: number, players: User[], startOrdinal: number }[] = [];
-    let curOrd = 1;
-    sortedUsers.forEach((u, i) => {
-        if (i === 0 || u.score !== sortedUsers[i-1].score) {
-            pointsGroups.push({ score: u.score, players: [u], startOrdinal: curOrd });
+    const pGroups: { score: number, players: User[], startOrdinal: number }[] = [];
+    let curOrdVal = 1;
+    sortedUsersList.forEach((u, i) => {
+        if (i === 0 || u.score !== sortedUsersList[i-1].score) {
+            pGroups.push({ score: u.score, players: [u], startOrdinal: curOrdVal });
         } else {
-            pointsGroups[pointsGroups.length - 1].players.push(u);
+            pGroups[pGroups.length - 1].players.push(u);
         }
-        curOrd++;
+        curOrdVal++;
     });
 
-    const slayers: string[] = [];
-    sortedUsers.forEach((p, idx) => {
+    const slayersList: string[] = [];
+    sortedUsersList.forEach((p, idx) => {
         const ord = idx + 1;
-        if (!p.isPro && p.score > highestProScore && ord > 10) slayers.push(p.id);
+        if (!p.isPro && p.score > highestProScoreVal && ord > 10) slayersList.push(p.id);
     });
 
-    const slayerPoolTotal = Math.min(slayers.length * 5, 55);
-    const individualBounty = slayers.length > 0 ? slayerPoolTotal / slayers.length : 0;
+    const sPoolTotal = Math.min(slayersList.length * 5, 55);
+    const indBounty = slayersList.length > 0 ? sPoolTotal / slayersList.length : 0;
 
-    const calculateTopTenPrizes = (sPool: number) => {
-        const netSeasonalFund = 530 - 150 - 10 - sPool;
-        const p10 = netSeasonalFund * 0.030073;
-        let prizes: number[] = [p10];
-        for (let i = 0; i < 9; i++) prizes.push(prizes[i] * 1.25);
-        return prizes.reverse();
-    };
+    const netSFund = 530 - 150 - 10 - sPoolTotal;
+    const weightSum = 33.2529;
+    const p10Val = netSFund / weightSum;
+    let pArr: number[] = [p10Val];
+    for (let i = 0; i < 9; i++) pArr.push(pArr[i] * 1.25);
+    const fSeasonalPrizes = pArr.reverse();
 
-    const finalSeasonalPrizes = calculateTopTenPrizes(slayerPoolTotal);
-
-    let potential = 0;
-    pointsGroups.forEach(group => {
-        const regulars = group.players.filter(p => !p.isPro);
-        if (regulars.length > 0) {
-            let groupRegPrizeTotal = 0;
+    let potentialAmount = 0;
+    pGroups.forEach(group => {
+        const regs = group.players.filter(p => !p.isPro);
+        if (regs.length > 0) {
+            let gRegPrizeTotal = 0;
             group.players.forEach((p, idx) => {
                 const pOrd = group.startOrdinal + idx;
-                if (!p.isPro && pOrd <= 10) groupRegPrizeTotal += (finalSeasonalPrizes[pOrd-1] || 0);
+                if (!p.isPro && pOrd <= 10) gRegPrizeTotal += (fSeasonalPrizes[pOrd-1] || 0);
             });
-            if (regulars.some(r => r.id === profile.id)) potential = groupRegPrizeTotal / regulars.length;
+            if (regs.some(r => r.id === profile.id)) potentialAmount = gRegPrizeTotal / regs.length;
         }
     });
 
-    if (slayers.includes(profile.id) && potential === 0) potential = individualBounty;
+    if (slayersList.includes(profile.id) && potentialAmount === 0) potentialAmount = indBounty;
 
-    return { bagged, potential };
+    return { bagged: baggedAmount, potential: potentialAmount };
   }, [profile, allUsers, monthlyMimoM, predictions]);
 
-  async function onSubmit(data: ProfileFormValues) {
-    if (!userDocRef || !resolvedUserId || !firestore) return;
-    setDocumentNonBlocking(userDocRef, {
-        name: data.name.trim(), nickname: data.nickname?.trim(), initials: data.initials?.trim()?.toUpperCase(),
-        favouriteTeam: data.favouriteTeam, phoneNumber: data.phoneNumber?.trim(),
-    }, { merge: true });
-    toast({ title: 'Profile Updated!' });
-  }
-
-  async function onEmailSubmit(data: EmailFormValues) {
-    if (!authUser || !userDocRef) return;
-    try {
-      await updateEmail(authUser, data.email);
-      setDocumentNonBlocking(userDocRef, { email: data.email }, { merge: true });
-      toast({ title: 'Login Email Updated!' });
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
-    }
-  }
-
-  async function onPasswordSubmit(data: PasswordFormValues) {
-    if (!authUser || !userDocRef) return;
-    try {
-      await authUser.reload();
-      await updatePassword(authUser, data.password);
-      setDocumentNonBlocking(userDocRef, { mustChangePassword: false }, { merge: true });
-      toast({ title: 'Password Updated!' });
-      passwordForm.reset();
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Update Failed', description: "Re-authentication required." });
-    }
-  }
-
-  const chartInfo = React.useMemo(() => {
+  const cInfo = React.useMemo(() => {
     if (!allUserHistories || !userHistory || !userHistory.weeklyScores) return { chartData: [], yAxisDomain: [0, 10] as [number, number] };
-    const allWeeks = [...new Set(allUserHistories.flatMap(h => h.weeklyScores.map(w => w.week)))].filter(w => w > 0).sort((a, b) => a - b);
-    const allScores = allUserHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.score));
-    if (allScores.length === 0) return { chartData: [], yAxisDomain: [0, 10] as [number, number] };
-    const minS = Math.min(...allScores);
-    const maxS = Math.max(...allScores);
+    const aWeeks = [...new Set(allUserHistories.flatMap(h => h.weeklyScores.map(w => w.week)))].filter(w => w > 0).sort((a, b) => a - b);
+    const aScores = allUserHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.score));
+    if (aScores.length === 0) return { chartData: [], yAxisDomain: [0, 10] as [number, number] };
+    const mS = Math.min(...aScores);
+    const XS = Math.max(...aScores);
     return {
-      chartData: allWeeks.map(week => {
-        const scoresThisWeek = allUserHistories.map(h => h.weeklyScores.find(w => w.week === week)?.score).filter((s): s is number => s !== undefined);
+      chartData: aWeeks.map(week => {
+        const sThisWk = allUserHistories.map(h => h.weeklyScores.find(w => w.week === week)?.score).filter((s): s is number => s !== undefined);
         return {
           week: `Wk ${week}`,
           'Your Score': userHistory.weeklyScores.find(w => w.week === week)?.score,
-          'Max Score': scoresThisWeek.length > 0 ? Math.max(...scoresThisWeek) : undefined,
-          'Min Score': scoresThisWeek.length > 0 ? Math.min(...scoresThisWeek) : undefined,
+          'Max Score': sThisWk.length > 0 ? Math.max(...sThisWk) : undefined,
+          'Min Score': sThisWk.length > 0 ? Math.min(...sThisWk) : undefined,
         };
       }),
-      yAxisDomain: [minS - 5, maxS + 5] as [number, number]
+      yAxisDomain: [mS - 5, XS + 5] as [number, number]
     };
   }, [allUserHistories, userHistory]);
 
-  const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const onProfileSave = async (values: ProfileFormValues) => {
+    if (userDocRef) {
+      setDocumentNonBlocking(userDocRef, values, { merge: true });
+      toast({ title: 'Profile Updated!' });
+    }
+  };
+
+  const onEmailUpdate = async (values: EmailFormValues) => {
+    if (authUser) {
+      try {
+        await updateEmail(authUser, values.email);
+        if (userDocRef) setDocumentNonBlocking(userDocRef, { email: values.email }, { merge: true });
+        toast({ title: 'Email Address Updated!' });
+      } catch (e: any) {
+        toast({ variant: 'destructive', title: 'Update Failed', description: e.message });
+      }
+    }
+  };
+
+  const onPasswordUpdate = async (values: PasswordFormValues) => {
+    if (authUser) {
+      try {
+        await updatePassword(authUser, values.password);
+        if (userDocRef) setDocumentNonBlocking(userDocRef, { mustChangePassword: false }, { merge: true });
+        toast({ title: 'Password Updated Successfully!' });
+        passwordForm.reset();
+      } catch (e: any) {
+        toast({ variant: 'destructive', title: 'Security Update Failed', description: e.message });
+      }
+    }
+  };
+
+  const handleAvatarSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && userDocRef) {
       const reader = new FileReader();
@@ -283,24 +268,10 @@ export default function ProfilePage() {
     }
   };
   
-  if (isAuthUserLoading) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center">
-        <Loader2 className="mr-2 h-8 w-8 animate-spin" />
-        <p className="ml-2">Loading profile...</p>
-      </div>
-    );
-  }
+  if (isAuthUserLoading) return <div className="flex h-96 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /><p className="ml-2">Loading profile...</p></div>;
+  if (!authUser) return <div className="flex h-full w-full items-center justify-center"><AuthForm /></div>;
 
-  if (!authUser) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <AuthForm />
-      </div>
-    );
-  }
-
-  const topTenCount = (profile?.first || 0) + (profile?.second || 0) + (profile?.third || 0) + (profile?.fourth || 0) + (profile?.fifth || 0) + (profile?.sixth || 0) + (profile?.seventh || 0) + (profile?.eighth || 0) + (profile?.ninth || 0) + (profile?.tenth || 0);
+  const ttCount = (profile?.first || 0) + (profile?.second || 0) + (profile?.third || 0) + (profile?.fourth || 0) + (profile?.fifth || 0) + (profile?.sixth || 0) + (profile?.seventh || 0) + (profile?.eighth || 0) + (profile?.ninth || 0) + (profile?.tenth || 0);
 
   return (
     <div className="space-y-8">
@@ -320,7 +291,7 @@ export default function ProfilePage() {
                   
                   <div className="flex-1 p-8 flex flex-col gap-8">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="border-2 border-primary/20 rounded-xl p-6 bg-card shadow-sm hover:shadow-md transition-shadow">
+                          <div className="border-2 border-primary/20 rounded-xl p-6 bg-card shadow-sm">
                               <h3 className="text-lg font-bold mb-4 flex items-center justify-center gap-2 text-primary border-b pb-2"><ShieldCheck className="size-5" /> This Season's Stats</h3>
                               <div className="grid grid-cols-4 gap-x-2 text-center text-sm">
                                   <div /><div className="font-semibold text-muted-foreground text-xs uppercase">High</div><div className="font-semibold text-muted-foreground text-xs uppercase">Low</div><div className="font-semibold text-muted-foreground text-xs uppercase">Now</div>
@@ -328,48 +299,24 @@ export default function ProfilePage() {
                                   <div className="font-bold text-muted-foreground text-left py-2">Pts</div><div className="font-bold text-green-600 py-2">{profile?.maxScore || '-'}</div><div className="font-bold text-red-600 py-2">{profile?.minScore || '-'}</div><div className="font-extrabold py-2 text-lg">{profile?.score || '-'}</div>
                               </div>
                           </div>
-                          <div className="border-2 border-yellow-500/20 rounded-xl p-6 bg-card shadow-sm hover:shadow-md transition-shadow">
+                          <div className="border-2 border-yellow-500/20 rounded-xl p-6 bg-card shadow-sm">
                               <h3 className="text-lg font-bold mb-4 text-center flex items-center justify-center gap-2 text-yellow-600 border-b pb-2"><Star className="size-5" /> Trophy Cabinet</h3>
                                <div className="flex justify-around items-end h-20">
                                   <TooltipProvider>
                                       <Tooltip>
-                                          <TooltipTrigger asChild>
-                                              <div className="flex flex-col items-center gap-1 w-12">
-                                                  <span className="text-[10px] font-bold text-muted-foreground">2nd</span>
-                                                  <Medal className={cn("size-8", (profile?.second ?? 0) > 0 ? "text-slate-400" : "text-slate-200")} />
-                                                  <span className="text-sm font-black">{profile?.second || 0}</span>
-                                              </div>
-                                          </TooltipTrigger>
+                                          <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-muted-foreground">2nd</span><Medal className={cn("size-8", (profile?.second ?? 0) > 0 ? "text-slate-400" : "text-slate-200")} /><span className="text-sm font-black">{profile?.second || 0}</span></div></TooltipTrigger>
                                           <TooltipContent><p>Runner Up</p></TooltipContent>
                                       </Tooltip>
                                       <Tooltip>
-                                          <TooltipTrigger asChild>
-                                              <div className="flex flex-col items-center gap-1 w-12">
-                                                  <span className="text-xs font-black">1st</span>
-                                                  <Trophy className={cn("size-10", (profile?.first ?? 0) > 0 ? "text-yellow-500" : "text-yellow-100")} />
-                                                  <span className="text-base font-black">{profile?.first || 0}</span>
-                                              </div>
-                                          </TooltipTrigger>
+                                          <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-xs font-black">1st</span><Trophy className={cn("size-10", (profile?.first ?? 0) > 0 ? "text-yellow-500" : "text-yellow-100")} /><span className="text-base font-black">{profile?.first || 0}</span></div></TooltipTrigger>
                                           <TooltipContent><p>Champion</p></TooltipContent>
                                       </Tooltip>
                                       <Tooltip>
-                                          <TooltipTrigger asChild>
-                                              <div className="flex flex-col items-center gap-1 w-12">
-                                                  <span className="text-[10px] font-bold text-muted-foreground">3rd</span>
-                                                  <Medal className={cn("size-7", (profile?.third ?? 0) > 0 ? "text-amber-700" : "text-amber-100")} />
-                                                  <span className="text-sm font-black">{profile?.third || 0}</span>
-                                              </div>
-                                          </TooltipTrigger>
+                                          <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-muted-foreground">3rd</span><Medal className={cn("size-7", (profile?.third ?? 0) > 0 ? "text-amber-700" : "text-amber-100")} /><span className="text-sm font-black">{profile?.third || 0}</span></div></TooltipTrigger>
                                           <TooltipContent><p>3rd Place</p></TooltipContent>
                                       </Tooltip>
                                       <Tooltip>
-                                          <TooltipTrigger asChild>
-                                              <div className="flex flex-col items-center gap-1 w-12">
-                                                  <span className="text-[10px] font-bold text-muted-foreground">T10</span>
-                                                  <Award className="size-7 text-primary/40" />
-                                                  <span className="text-sm font-black">{topTenCount}</span>
-                                              </div>
-                                          </TooltipTrigger>
+                                          <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-muted-foreground">T10</span><Award className="size-7 text-primary/40" /><span className="text-sm font-black">{ttCount}</span></div></TooltipTrigger>
                                           <TooltipContent><p>Top 10 Finishes</p></TooltipContent>
                                       </Tooltip>
                                   </TooltipProvider>
@@ -378,41 +325,29 @@ export default function ProfilePage() {
                       </div>
 
                       <div className="w-full border-2 border-primary/10 rounded-xl p-6 bg-primary/5 flex flex-col md:flex-row justify-between items-center gap-6 shadow-inner">
-                          <div className="flex flex-col items-center md:items-start">
-                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Experience</span>
-                              <span className="text-2xl font-black">Played: {profile?.seasonsPlayed || 0}</span>
-                          </div>
-                          <div className="flex flex-col items-center md:items-start">
-                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Career Earnings</span>
-                              <span className="text-2xl font-black text-green-600">All Time: £{(profile?.cashWinnings || 0).toFixed(2)}</span>
-                          </div>
-                          <div className="flex flex-col items-center md:items-start">
-                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">2025-26 Bagged</span>
-                              <span className="text-2xl font-black text-primary">£{currentPrizes.bagged.toFixed(2)}</span>
-                          </div>
-                          <div className="flex flex-col items-center md:items-start">
-                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">2025-26 Potential</span>
-                              <span className="text-2xl font-black text-orange-600">£{currentPrizes.potential.toFixed(2)}</span>
-                          </div>
+                          <div className="flex flex-col items-center md:items-start"><span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Experience</span><span className="text-2xl font-black">Played: {profile?.seasonsPlayed || 0}</span></div>
+                          <div className="flex flex-col items-center md:items-start"><span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Career Earnings</span><span className="text-2xl font-black text-green-600">All Time: £{(profile?.cashWinnings || 0).toFixed(2)}</span></div>
+                          <div className="flex flex-col items-center md:items-start"><span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">2025-26 Bagged</span><span className="text-2xl font-black text-primary">£{currentPrizes.bagged.toFixed(2)}</span></div>
+                          <div className="flex flex-col items-center md:items-start"><span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">2025-26 Potential</span><span className="text-2xl font-black text-orange-600">£{currentPrizes.potential.toFixed(2)}</span></div>
                       </div>
                   </div>
               </div>
           </CardContent>
       </Card>
       
-      <ProfilePerformanceChart chartData={chartInfo.chartData} yAxisDomain={chartInfo.yAxisDomain} />
+      <ProfilePerformanceChart chartData={cInfo.chartData} yAxisDomain={cInfo.yAxisDomain} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card>
           <CardHeader><CardTitle>Profile Information</CardTitle></CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form onSubmit={form.handleSubmit(onProfileSave)} className="space-y-4">
                   <div className="space-y-2">
                       <Label>Avatar</Label>
                       <div className="flex items-center gap-4">
                             <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}><UploadIcon className="mr-2 h-4 w-4" />Change Picture</Button>
-                            <Input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload} />
+                            <Input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarSelect} />
                       </div>
                   </div>
                 <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Real Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -433,7 +368,7 @@ export default function ProfilePage() {
             <CardHeader><CardTitle>Account: Login Email</CardTitle></CardHeader>
             <CardContent>
               <Form {...emailForm}>
-                <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-4">
+                <form onSubmit={emailForm.handleSubmit(onEmailUpdate)} className="space-y-4">
                   <FormField control={emailForm.control} name="email" render={({ field }) => (<FormItem><FormLabel>Current Login Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                   <Button type="submit" disabled={emailForm.formState.isSubmitting} variant="outline" className="w-full">{emailForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />} Update Login Email</Button>
                 </form>
@@ -444,7 +379,7 @@ export default function ProfilePage() {
             <CardHeader><CardTitle>Account: Security</CardTitle></CardHeader>
             <CardContent>
               <Form {...passwordForm}>
-                <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+                <form onSubmit={passwordForm.handleSubmit(onPasswordUpdate)} className="space-y-4">
                   <FormField control={passwordForm.control} name="password" render={({ field }) => (<FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
                   <FormField control={passwordForm.control} name="confirmPassword" render={({ field }) => (<FormItem><FormLabel>Confirm New Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
                   <Button type="submit" className="w-full" disabled={passwordForm.formState.isSubmitting}>{passwordForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Update Secure Password</Button>

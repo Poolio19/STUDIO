@@ -110,7 +110,7 @@ export default function LeaderboardPage() {
             if (b) { b.total += winnerPrize; b.monthly += winnerPrize; }
         });
         if (award.winners.length === 1 && award.runnersUp.length > 0) {
-            const runnerUpPrize = 5 / award.runnersUp.length;
+            const runnerUpPrize = 5 / (award.runnersUp.length || 1);
             award.runnersUp.forEach(id => {
                 const b = breakdown.get(id);
                 if (b) { b.total += runnerUpPrize; b.monthly += runnerUpPrize; }
@@ -143,7 +143,8 @@ export default function LeaderboardPage() {
 
     const calculateTopTenPrizes = (sPool: number) => {
         const netSeasonalFund = 530 - 150 - 10 - sPool;
-        const p10 = netSeasonalFund * 0.030073;
+        const weightSum = 33.2529;
+        const p10 = netSeasonalFund / weightSum;
         let prizes: number[] = [p10];
         for (let i = 0; i < 9; i++) prizes.push(prizes[i] * 1.25);
         return prizes.reverse();
@@ -181,28 +182,6 @@ export default function LeaderboardPage() {
 
     return breakdown;
   }, [sortedUsers, monthlyMimoM]);
-
-  const getRankColour = (user: User) => {
-    if (user.isPro) return 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-    const b = winningsMap.get(user.id);
-    if (!b) return '';
-    if (b.seasonal > 0) {
-        const topOfGroup = sortedUsers.find(u => u.score === user.score);
-        const compRank = sortedUsers.indexOf(topOfGroup!) + 1;
-        if (compRank === 1) return 'bg-red-800 text-yellow-300';
-        if (compRank <= 2) return 'bg-red-600 text-white';
-        if (compRank <= 3) return 'bg-orange-700 text-white';
-        if (compRank <= 4) return 'bg-orange-500 text-white';
-        if (compRank <= 5) return 'bg-orange-300 text-orange-900';
-        if (compRank <= 6) return 'bg-yellow-200 text-yellow-900';
-        if (compRank <= 7) return 'bg-green-200 text-green-900';
-        if (compRank <= 8) return 'bg-cyan-200 text-cyan-900';
-        if (compRank <= 9) return 'bg-cyan-400 text-cyan-900';
-        return 'bg-teal-400 text-teal-900';
-    }
-    if (b.proBounty > 0) return 'bg-blue-300 text-blue-900';
-    return '';
-  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -247,13 +226,13 @@ export default function LeaderboardPage() {
                   const RankIcon = getRankChangeIcon(user.rankChange);
                   const isCurrentUser = user.id === resolvedUserId;
 
-                  const topOfGroup = sortedUsers.find(u => u.score === user.score);
-                  const competitionRank = sortedUsers.indexOf(topOfGroup!) + 1;
+                  const scoresOnlyArr = sortedUsers.map(u => u.score);
+                  const competitionRank = scoresOnlyArr.indexOf(user.score) + 1;
 
                   return (
                       <TableRow 
                         key={user.id} 
-                        className={cn(getRankColour(user), isCurrentUser && 'ring-2 ring-inset ring-primary z-10 relative bg-primary/5 shadow-[0_0_15px_hsl(var(--primary)/0.2)]')}
+                        className={cn(isCurrentUser && 'ring-2 ring-inset ring-primary z-10 relative bg-primary/5 shadow-[0_0_15px_hsl(var(--primary)/0.2)]')}
                       >
                           <TableCell className={cn("font-medium text-center py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
                             {competitionRank}
