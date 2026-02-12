@@ -141,14 +141,11 @@ export default function LeaderboardPage() {
         return prizes.reverse(); // [1st, 2nd, ... 10th]
     };
 
-    // We need to find slayers first by checking if they are in top 10 prize positions
     const tempSlayerList: string[] = [];
     pointsGroups.forEach(group => {
-        // Group gets Top 10 fund if any member is at ordinal 1-10
         const groupHasPrizes = group.players.some((pp, pIdx) => !pp.isPro && (group.startOrdinal + pIdx <= 10));
         group.players.forEach((p, idx) => {
             const ord = group.startOrdinal + idx;
-            // Slayer if: Regular player, strictly outscores all Pros, and receives £0 from Top 10 fund
             if (!p.isPro && p.score > highestProScore && ord > 10 && !groupHasPrizes) {
                 tempSlayerList.push(p.id);
             }
@@ -261,7 +258,7 @@ export default function LeaderboardPage() {
                   const competitionRank = sortedUsers.indexOf(topOfGroup!) + 1;
 
                   return (
-                      <TableRow key={user.id} className={cn(getRankColour(user), { 'ring-2 ring-inset ring-primary z-10 relative bg-primary/5': isCurrentUser })}>
+                      <TableRow key={user.id} className={cn(getRankColour(user), { 'ring-2 ring-inset ring-primary z-10 relative bg-primary/5 shadow-[0_0_15px_hsl(var(--primary)/0.2)]': isCurrentUser })}>
                           <TableCell className={cn("font-medium text-center py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
                             {competitionRank}
                           </TableCell>
@@ -273,7 +270,7 @@ export default function LeaderboardPage() {
                                 </Avatar>
                                 <span className={cn("flex items-center gap-2 transition-all", isCurrentUser && "text-[1.1rem] font-extrabold drop-shadow-[0_0_10px_hsl(var(--primary))]")}>
                                     {user.isPro ? (user.name || '').toUpperCase() : user.name}
-                                    {b.proBounty > 0 && <TooltipProvider><Tooltip><TooltipTrigger><Swords className="size-4 text-primary animate-pulse" /></TooltipTrigger><TooltipContent><p>Pro Slayer!</p></TooltipContent></Tooltip></TooltipProvider>}
+                                    {b.proBounty > 0 && <TooltipProvider><Tooltip><TooltipTrigger asChild><Swords className="size-4 text-primary animate-pulse cursor-help" /></TooltipTrigger><TooltipContent><p>Pro Slayer!</p></TooltipContent></Tooltip></TooltipProvider>}
                                 </span>
                             </div>
                           </TableCell>
@@ -304,7 +301,7 @@ export default function LeaderboardPage() {
                                   <RankIcon className="size-5" />
                               </div>
                           </TableCell>
-                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.previousScore}</TableCell>
+                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow(0 0 8px hsl(var(--primary)))")}>{user.previousScore}</TableCell>
                           <TableCell className={cn("font-bold text-center border-r py-1", getRankChangeColour(user.scoreChange))}>
                               <div className={cn("flex items-center justify-center gap-2", isCurrentUser && "drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
                                   <span className={isCurrentUser ? "text-[1.1rem] font-black" : ""}>{formatPointsChange(user.scoreChange)}</span>

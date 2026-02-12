@@ -125,7 +125,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </Sidebar>
       )}
       <SidebarInset className="flex flex-col">
-        <header className={cn("flex h-auto min-h-14 items-center gap-4 border-b bg-card px-6 py-3", { "flex": true, "hidden": mustChangePassword })}>
+        <header className={cn("flex h-auto min-h-14 items-center gap-4 border-b bg-card px-6 py-3", mustChangePassword && "hidden")}>
           <div className="flex items-center gap-2">
             <SidebarTrigger className="-ml-1" />
           </div>
