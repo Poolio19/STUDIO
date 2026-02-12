@@ -101,7 +101,7 @@ export default function ProfilePage() {
   const mimoMQuery = useMemoFirebase(() => firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore]);
   const predictionsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'predictions') : null, [firestore]);
 
-  const { data: user, isLoading: userLoading } = useDoc<User>(userDocRef);
+  const { data: profile, isLoading: profileLoading } = useDoc<User>(userDocRef);
   const { data: userHistory, isLoading: historyLoading } = useDoc<UserHistory>(userHistoryDocRef);
   const { data: allUserHistories, isLoading: allHistoriesLoading } = useCollection<UserHistory>(allUserHistoriesQuery);
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
@@ -109,7 +109,7 @@ export default function ProfilePage() {
   const { data: monthlyMimoM } = useCollection<MonthlyMimoM>(mimoMQuery);
   const { data: predictions } = useCollection<Prediction>(predictionsQuery);
 
-  const isLoading = isAuthUserLoading || userLoading || historyLoading || teamsLoading || allHistoriesLoading;
+  const isLoading = isAuthUserLoading || profileLoading || historyLoading || teamsLoading || allHistoriesLoading;
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -130,25 +130,25 @@ export default function ProfilePage() {
   });
 
   React.useEffect(() => {
-    if (user) {
+    if (profile) {
       form.reset({
-        name: user.name || '',
-        nickname: user.nickname || '',
-        initials: user.initials || '',
-        favouriteTeam: user.favouriteTeam || 'none',
-        phoneNumber: user.phoneNumber || '',
+        name: profile.name || '',
+        nickname: profile.nickname || '',
+        initials: profile.initials || '',
+        favouriteTeam: profile.favouriteTeam || 'none',
+        phoneNumber: profile.phoneNumber || '',
       });
       emailForm.reset({
-        email: user.email || authUser?.email || '',
+        email: profile.email || authUser?.email || '',
       });
     }
-  }, [user, form, emailForm, authUser]);
+  }, [profile, form, emailForm, authUser]);
 
   const currentPrizes = React.useMemo(() => {
-    if (!user || !allUsers || !monthlyMimoM || !predictions) return { bagged: 0, potential: 0 };
+    if (!profile || !allUsers || !monthlyMimoM || !predictions) return { bagged: 0, potential: 0 };
 
-    const sortedUsers = [...allUsers]
-        .filter(u => u.name && predictions.some(p => (p.userId || p.id) === u.id))
+    const activeUsers = allUsers.filter(u => u.name && predictions.some(p => (p.userId || p.id) === u.id));
+    const sortedUsers = [...activeUsers]
         .sort((a,b) => {
             if (b.score !== a.score) return b.score - a.score;
             const aIsPro = a.isPro ? 1 : 0;
@@ -158,19 +158,20 @@ export default function ProfilePage() {
         });
 
     let bagged = 0;
-    const awardsMap: { [key: string]: { winners: string[], runnersUp: string[] } } = {};
+    const awardsMap: Record<string, { winners: string[], runnersUp: string[] }> = {};
     monthlyMimoM.forEach(m => {
-        const key = m.special ? m.special : `${m.month}-${m.year}`;
+        const key = m.special || `${m.month}-${m.year}`;
         if (!awardsMap[key]) awardsMap[key] = { winners: [], runnersUp: [] };
         if (m.type === 'winner') awardsMap[key].winners.push(m.userId);
         else if (m.type === 'runner-up') awardsMap[key].runnersUp.push(m.userId);
     });
 
     Object.values(awardsMap).forEach(award => {
-        const winnerPrize = 10 / (award.winners.length || 1);
-        if (award.winners.includes(user.id)) bagged += winnerPrize;
-        if (award.winners.length === 1 && award.runnersUp.includes(user.id)) {
-            bagged += (5 / (award.runnersUp.length || 1));
+        if (award.winners.includes(profile.id)) {
+            bagged += 10 / award.winners.length;
+        }
+        if (award.winners.length === 1 && award.runnersUp.includes(profile.id)) {
+            bagged += 5 / award.runnersUp.length;
         }
     });
 
@@ -180,50 +181,65 @@ export default function ProfilePage() {
     const pointsGroups: { score: number, players: User[], startOrdinal: number }[] = [];
     let currentOrdinal = 1;
     sortedUsers.forEach((u, i) => {
-        if (i === 0 || u.score !== sortedUsers[i-1].score) pointsGroups.push({ score: u.score, players: [u], startOrdinal: currentOrdinal });
-        else pointsGroups[pointsGroups.length - 1].players.push(u);
+        if (i === 0 || u.score !== sortedUsers[i-1].score) {
+            pointsGroups.push({ score: u.score, players: [u], startOrdinal: currentOrdinal });
+        } else {
+            pointsGroups[pointsGroups.length - 1].players.push(u);
+        }
         currentOrdinal++;
     });
 
-    const slayers: string[] = [];
-    pointsGroups.forEach(group => {
-        const groupHasPrizes = group.players.some((pp, pIdx) => !pp.isPro && (group.startOrdinal + pIdx <= 10));
-        group.players.forEach((p, idx) => {
-            const ord = group.startOrdinal + idx;
-            if (!p.isPro && p.score > highestProScore && ord > 10 && !groupHasPrizes) {
-                slayers.push(p.id);
-            }
-        });
-    });
-
-    const slayerPoolTotal = Math.min(slayers.length * 5, 55);
-    const individualBounty = slayers.length > 0 ? slayerPoolTotal / slayers.length : 0;
-
-    const getPrizeLogic = (slPool: number) => {
-        const netSeasonalFund = 530 - 150 - 10 - slPool;
+    const calculateTopTenPrizes = (sPool: number) => {
+        const netSeasonalFund = 530 - 150 - 10 - sPool;
         const p10 = netSeasonalFund * 0.030073;
         let prizes: number[] = [p10];
         for (let i = 0; i < 9; i++) prizes.push(prizes[i] * 1.25);
         return prizes.reverse();
     };
 
-    const finalSeasonalPrizes = getPrizeLogic(slayerPoolTotal);
+    const tempSlayers: string[] = [];
+    pointsGroups.forEach(group => {
+        const groupHasTopTenPrizes = group.players.some((pp, pIdx) => {
+            const ord = group.startOrdinal + pIdx;
+            return ord <= 10;
+        });
+
+        group.players.forEach((p, idx) => {
+            const ord = group.startOrdinal + idx;
+            if (!p.isPro && p.score > highestProScore && !groupHasTopTenPrizes && ord > 10) {
+                tempSlayers.push(p.id);
+            }
+        });
+    });
+
+    const slayerPoolTotal = Math.min(tempSlayers.length * 5, 55);
+    const individualBounty = tempSlayers.length > 0 ? slayerPoolTotal / tempSlayers.length : 0;
+    const finalSeasonalPrizes = calculateTopTenPrizes(slayerPoolTotal);
 
     let potential = 0;
     pointsGroups.forEach(group => {
         const regulars = group.players.filter(p => !p.isPro);
-        let groupRegTotal = 0;
+        if (regulars.length === 0) return;
+        
+        let groupRegPrizeTotal = 0;
         group.players.forEach((p, idx) => {
             const ord = group.startOrdinal + idx;
-            if (!p.isPro && ord <= 10) groupRegTotal += (finalSeasonalPrizes[ord-1] || 0);
+            if (!p.isPro && ord <= 10) {
+                groupRegPrizeTotal += (finalSeasonalPrizes[ord-1] || 0);
+            }
         });
-        if (regulars.some(r => r.id === user.id)) potential = groupRegTotal / regulars.length;
+
+        if (regulars.some(r => r.id === profile.id)) {
+            potential = groupRegPrizeTotal / regulars.length;
+        }
     });
 
-    if (slayers.includes(user.id)) potential += individualBounty;
+    if (tempSlayers.includes(profile.id)) {
+        potential += individualBounty;
+    }
 
     return { bagged, potential };
-  }, [user, allUsers, monthlyMimoM, predictions]);
+  }, [profile, allUsers, monthlyMimoM, predictions]);
 
   async function onSubmit(data: ProfileFormValues) {
     if (!userDocRef || !resolvedUserId || !firestore) return;
@@ -310,7 +326,7 @@ export default function ProfilePage() {
     );
   }
 
-  const topTenCount = (user?.first || 0) + (user?.second || 0) + (user?.third || 0) + (user?.fourth || 0) + (user?.fifth || 0) + (user?.sixth || 0) + (user?.seventh || 0) + (user?.eighth || 0) + (user?.ninth || 0) + (user?.tenth || 0);
+  const topTenCount = (profile?.first || 0) + (profile?.second || 0) + (profile?.third || 0) + (profile?.fourth || 0) + (profile?.fifth || 0) + (profile?.sixth || 0) + (profile?.seventh || 0) + (profile?.eighth || 0) + (profile?.ninth || 0) + (profile?.tenth || 0);
 
   return (
     <div className="space-y-8">
@@ -319,12 +335,12 @@ export default function ProfilePage() {
               <div className="flex flex-col lg:flex-row items-center lg:items-stretch">
                   <div className="p-10 flex flex-col items-center text-center lg:items-start lg:text-left gap-6 bg-muted/10 lg:w-1/3 border-b lg:border-b-0 lg:border-r">
                       <Avatar className="h-48 w-48 rounded-xl border-4 border-primary shadow-2xl">
-                          <AvatarImage src={avatarPreview || getAvatarUrl(user?.avatar)} alt={user?.name} className="object-cover" />
-                          <AvatarFallback className="text-5xl">{(user?.name || '?').charAt(0)}</AvatarFallback>
+                          <AvatarImage src={avatarPreview || getAvatarUrl(profile?.avatar)} alt={profile?.name} className="object-cover" />
+                          <AvatarFallback className="text-5xl">{(profile?.name || '?').charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div>
-                          <h2 className="text-3xl font-black tracking-tight">{user?.name}</h2>
-                          {user?.nickname && <p className="text-xl text-muted-foreground italic font-semibold mt-1">"{user.nickname}"</p>}
+                          <h2 className="text-3xl font-black tracking-tight">{profile?.name}</h2>
+                          {profile?.nickname && <p className="text-xl text-muted-foreground italic font-semibold mt-1">"{profile.nickname}"</p>}
                       </div>
                   </div>
                   
@@ -334,17 +350,17 @@ export default function ProfilePage() {
                               <h3 className="text-lg font-bold mb-4 flex items-center justify-center gap-2 text-primary border-b pb-2"><ShieldCheck className="size-5" /> This Season's Stats</h3>
                               <div className="grid grid-cols-4 gap-x-2 text-center text-sm">
                                   <div /><div className="font-semibold text-muted-foreground text-xs uppercase">High</div><div className="font-semibold text-muted-foreground text-xs uppercase">Low</div><div className="font-semibold text-muted-foreground text-xs uppercase">Now</div>
-                                  <div className="font-bold text-muted-foreground text-left py-2 border-b">Pos</div><div className="font-bold text-green-600 py-2 border-b">{user?.minRank || '-'}</div><div className="font-bold text-red-600 py-2 border-b">{user?.maxRank || '-'}</div><div className="font-extrabold py-2 border-b text-lg">{user?.rank || '-'}</div>
-                                  <div className="font-bold text-muted-foreground text-left py-2">Pts</div><div className="font-bold text-green-600 py-2">{user?.maxScore || '-'}</div><div className="font-bold text-red-600 py-2">{user?.minScore || '-'}</div><div className="font-extrabold py-2 text-lg">{user?.score || '-'}</div>
+                                  <div className="font-bold text-muted-foreground text-left py-2 border-b">Pos</div><div className="font-bold text-green-600 py-2 border-b">{profile?.minRank || '-'}</div><div className="font-bold text-red-600 py-2 border-b">{profile?.maxRank || '-'}</div><div className="font-extrabold py-2 border-b text-lg">{profile?.rank || '-'}</div>
+                                  <div className="font-bold text-muted-foreground text-left py-2">Pts</div><div className="font-bold text-green-600 py-2">{profile?.maxScore || '-'}</div><div className="font-bold text-red-600 py-2">{profile?.minScore || '-'}</div><div className="font-extrabold py-2 text-lg">{profile?.score || '-'}</div>
                               </div>
                           </div>
                           <div className="border-2 border-yellow-500/20 rounded-xl p-6 bg-card shadow-sm hover:shadow-md transition-shadow">
                               <h3 className="text-lg font-bold mb-4 text-center flex items-center justify-center gap-2 text-yellow-600 border-b pb-2"><Star className="size-5" /> Trophy Cabinet</h3>
                                <div className="flex justify-around items-end h-20">
                                   <TooltipProvider>
-                                      <Tooltip><TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-muted-foreground">2nd</span><Medal className={cn("size-8", (user?.second ?? 0) > 0 ? "text-slate-400" : "text-slate-200")} /><span className="text-sm font-black">{user?.second || 0}</span></div></TooltipTrigger><TooltipContent><p>Runner Up</p></TooltipContent></Tooltip>
-                                      <Tooltip><TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-xs font-black">1st</span><Trophy className={cn("size-10", (user?.first ?? 0) > 0 ? "text-yellow-500" : "text-yellow-100")} /><span className="text-base font-black">{user?.first || 0}</span></div></TooltipTrigger><TooltipContent><p>Champion</p></TooltipContent></Tooltip>
-                                      <Tooltip><TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-muted-foreground">3rd</span><Medal className={cn("size-7", (user?.third ?? 0) > 0 ? "text-amber-700" : "text-amber-100")} /><span className="text-sm font-black">{user?.third || 0}</span></div></TooltipTrigger><TooltipContent><p>3rd Place</p></TooltipContent></Tooltip>
+                                      <Tooltip><TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-muted-foreground">2nd</span><Medal className={cn("size-8", (profile?.second ?? 0) > 0 ? "text-slate-400" : "text-slate-200")} /><span className="text-sm font-black">{profile?.second || 0}</span></div></TooltipTrigger><TooltipContent><p>Runner Up</p></TooltipContent></Tooltip>
+                                      <Tooltip><TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-xs font-black">1st</span><Trophy className={cn("size-10", (profile?.first ?? 0) > 0 ? "text-yellow-500" : "text-yellow-100")} /><span className="text-base font-black">{profile?.first || 0}</span></div></TooltipTrigger><TooltipContent><p>Champion</p></TooltipContent></Tooltip>
+                                      <Tooltip><TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-muted-foreground">3rd</span><Medal className={cn("size-7", (profile?.third ?? 0) > 0 ? "text-amber-700" : "text-amber-100")} /><span className="text-sm font-black">{profile?.third || 0}</span></div></TooltipTrigger><TooltipContent><p>3rd Place</p></TooltipContent></Tooltip>
                                       <Tooltip><TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-muted-foreground">T10</span><Award className="size-7 text-primary/40" /><span className="text-sm font-black">{topTenCount}</span></div></TooltipTrigger><TooltipContent><p>Top 10 Finishes</p></TooltipContent></Tooltip>
                                   </TooltipProvider>
                               </div>
@@ -354,11 +370,11 @@ export default function ProfilePage() {
                       <div className="w-full border-2 border-primary/10 rounded-xl p-6 bg-primary/5 flex flex-col md:flex-row justify-between items-center gap-6 shadow-inner">
                           <div className="flex flex-col items-center md:items-start">
                               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Experience</span>
-                              <span className="text-2xl font-black">Played: {user?.seasonsPlayed || 0}</span>
+                              <span className="text-2xl font-black">Played: {profile?.seasonsPlayed || 0}</span>
                           </div>
                           <div className="flex flex-col items-center md:items-start">
                               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Career Earnings</span>
-                              <span className="text-2xl font-black text-green-600">All Time: £{(user?.cashWinnings || 0).toFixed(2)}</span>
+                              <span className="text-2xl font-black text-green-600">All Time: £{(profile?.cashWinnings || 0).toFixed(2)}</span>
                           </div>
                           <div className="flex flex-col items-center md:items-start">
                               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">2025-26 Bagged</span>

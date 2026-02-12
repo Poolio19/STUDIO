@@ -73,7 +73,6 @@ export default function LeaderboardPage() {
     return 0;
   }, [matchesData]);
 
-  // STRICT ORDINAL SORT: Score -> Pro Win Tie -> Name
   const sortedUsers = useMemo(() => {
     if (!usersData || !predictionsData) return [];
     const historicalUserIds = new Set(historicalPlayersData.map(p => p.id));
@@ -85,7 +84,7 @@ export default function LeaderboardPage() {
             if (b.score !== a.score) return b.score - a.score;
             const aIsPro = a.isPro ? 1 : 0;
             const bIsPro = b.isPro ? 1 : 0;
-            if (aIsPro !== bIsPro) return bIsPro - aIsPro; // Pros Win Ties (Take higher ordinal)
+            if (aIsPro !== bIsPro) return bIsPro - aIsPro;
             return a.name.localeCompare(b.name);
         });
   }, [usersData, predictionsData]);
@@ -96,10 +95,9 @@ export default function LeaderboardPage() {
 
     sortedUsers.forEach(u => breakdown.set(u.id, { total: 0, seasonal: 0, monthly: 0, proBounty: 0 }));
 
-    // 1. Monthly Awards (£150 total fund)
-    const awardsMap: { [key: string]: { winners: string[], runnersUp: string[] } } = {};
+    const awardsMap: Record<string, { winners: string[], runnersUp: string[] }> = {};
     monthlyMimoM.forEach(m => {
-        const key = m.special ? m.special : `${m.month}-${m.year}`;
+        const key = m.special || `${m.month}-${m.year}`;
         if (!awardsMap[key]) awardsMap[key] = { winners: [], runnersUp: [] };
         if (m.type === 'winner') awardsMap[key].winners.push(m.userId);
         else if (m.type === 'runner-up') awardsMap[key].runnersUp.push(m.userId);
@@ -120,33 +118,38 @@ export default function LeaderboardPage() {
         }
     });
 
-    // 2. Pro-Slayer Shared Pool (£5 per slayer, capped at £55)
     let highestProScore = -1;
     sortedUsers.forEach(u => { if (u.isPro && u.score > highestProScore) highestProScore = u.score; });
 
     const pointsGroups: { score: number, players: User[], startOrdinal: number }[] = [];
     let currentOrdinal = 1;
     sortedUsers.forEach((u, i) => {
-        if (i === 0 || u.score !== sortedUsers[i-1].score) pointsGroups.push({ score: u.score, players: [u], startOrdinal: currentOrdinal });
-        else pointsGroups[pointsGroups.length - 1].players.push(u);
+        if (i === 0 || u.score !== sortedUsers[i-1].score) {
+            pointsGroups.push({ score: u.score, players: [u], startOrdinal: currentOrdinal });
+        } else {
+            pointsGroups[pointsGroups.length - 1].players.push(u);
+        }
         currentOrdinal++;
     });
 
-    // Calculate Seasonal Prizes for Top 10 first to determine Slayer eligibility
     const calculateTopTenPrizes = (sPool: number) => {
         const netSeasonalFund = 530 - 150 - 10 - sPool;
         const p10 = netSeasonalFund * 0.030073;
         let prizes: number[] = [p10];
         for (let i = 0; i < 9; i++) prizes.push(prizes[i] * 1.25);
-        return prizes.reverse(); // [1st, 2nd, ... 10th]
+        return prizes.reverse();
     };
 
     const tempSlayerList: string[] = [];
     pointsGroups.forEach(group => {
-        const groupHasPrizes = group.players.some((pp, pIdx) => !pp.isPro && (group.startOrdinal + pIdx <= 10));
+        const groupHasTopTenPrizes = group.players.some((pp, pIdx) => {
+            const ord = group.startOrdinal + pIdx;
+            return ord <= 10;
+        });
+
         group.players.forEach((p, idx) => {
             const ord = group.startOrdinal + idx;
-            if (!p.isPro && p.score > highestProScore && ord > 10 && !groupHasPrizes) {
+            if (!p.isPro && p.score > highestProScore && !groupHasTopTenPrizes && ord > 10) {
                 tempSlayerList.push(p.id);
             }
         });
@@ -154,8 +157,6 @@ export default function LeaderboardPage() {
 
     const slayerPoolTotal = Math.min(tempSlayerList.length * 5, 55);
     const individualBounty = tempSlayerList.length > 0 ? slayerPoolTotal / tempSlayerList.length : 0;
-
-    // 3. Final Seasonal Prize distribution
     const finalSeasonalPrizes = calculateTopTenPrizes(slayerPoolTotal);
 
     pointsGroups.forEach(group => {
@@ -195,16 +196,16 @@ export default function LeaderboardPage() {
     if (!b) return '';
     if (b.seasonal > 0) {
         const topOfGroup = sortedUsers.find(u => u.score === user.score);
-        const highestOrdinal = sortedUsers.indexOf(topOfGroup!) + 1;
-        if (highestOrdinal === 1) return 'bg-red-800 text-yellow-300';
-        if (highestOrdinal <= 2) return 'bg-red-600 text-white';
-        if (highestOrdinal <= 3) return 'bg-orange-700 text-white';
-        if (highestOrdinal <= 4) return 'bg-orange-500 text-white';
-        if (highestOrdinal <= 5) return 'bg-orange-300 text-orange-900';
-        if (highestOrdinal <= 6) return 'bg-yellow-200 text-yellow-900';
-        if (highestOrdinal <= 7) return 'bg-green-200 text-green-900';
-        if (highestOrdinal <= 8) return 'bg-cyan-200 text-cyan-900';
-        if (highestOrdinal <= 9) return 'bg-cyan-400 text-cyan-900';
+        const compRank = sortedUsers.indexOf(topOfGroup!) + 1;
+        if (compRank === 1) return 'bg-red-800 text-yellow-300';
+        if (compRank <= 2) return 'bg-red-600 text-white';
+        if (compRank <= 3) return 'bg-orange-700 text-white';
+        if (compRank <= 4) return 'bg-orange-500 text-white';
+        if (compRank <= 5) return 'bg-orange-300 text-orange-900';
+        if (compRank <= 6) return 'bg-yellow-200 text-yellow-900';
+        if (compRank <= 7) return 'bg-green-200 text-green-900';
+        if (compRank <= 8) return 'bg-cyan-200 text-cyan-900';
+        if (compRank <= 9) return 'bg-cyan-400 text-cyan-900';
         return 'bg-teal-400 text-teal-900';
     }
     if (b.proBounty > 0) return 'bg-blue-300 text-blue-900';
