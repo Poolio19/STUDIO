@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -103,6 +102,7 @@ export function AuthForm() {
       const result = await emergencyAdminReset();
       if (result.success) {
         toast({ title: 'Admin Access Reset', description: result.message });
+        // Use either login email
         form.setValue('email', 'jim.poole@prempred.com');
         form.setValue('password', 'Password');
       } else {

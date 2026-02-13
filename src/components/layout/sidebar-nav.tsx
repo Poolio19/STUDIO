@@ -50,7 +50,8 @@ export function SidebarNav() {
 
   const { data: userProfile } = useDoc<User>(userDocRef);
 
-  const isAdmin = authUser?.email === 'jim.poole@prempred.com';
+  // Recognition by email OR canonical UID
+  const isAdmin = authUser?.email === 'jim.poole@prempred.com' || authUser?.uid === 'usr_009';
 
   const visibleNavItems = navItems.filter(item => {
     if (item.href === '/admin') {
@@ -149,5 +150,3 @@ export function SidebarNav() {
     </>
   );
 }
-
-  

@@ -58,7 +58,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const userDocRef = useMemoFirebase(() => (firestore && resolvedUserId) ? doc(firestore, 'users', resolvedUserId) : null, [firestore, resolvedUserId]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<User>(userDocRef);
 
-  const isAdmin = user?.email === 'jim.poole@prempred.com';
+  // Admin recognized by email OR the canonical UID (survives email changes)
+  const isAdmin = user?.email === 'jim.poole@prempred.com' || user?.uid === 'usr_009';
   const mustChangePassword = userProfile?.mustChangePassword === true;
 
   useEffect(() => {

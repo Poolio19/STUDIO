@@ -15,6 +15,7 @@ import historicalMimoAwardsData from './historical-mimo-awards.json';
 
 /**
  * Recalculates all derived data and seeds historical records.
+ * Optimized to strictly apply competition ranking (1, 2, 2, 4) and restore missing tables.
  */
 export async function recalculateAllDataClientSide(
   firestore: Firestore,

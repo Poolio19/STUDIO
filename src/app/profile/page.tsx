@@ -97,6 +97,7 @@ export default function ProfilePage() {
     }
   }, [profile, authUser, form, emailForm]);
 
+  // Robust parsing of MiMoM certificates
   const awardCerts = React.useMemo(() => {
     if (!profile || !monthlyMimoMAwards) return [];
     return monthlyMimoMAwards
@@ -114,6 +115,7 @@ export default function ProfilePage() {
         });
   }, [profile, monthlyMimoMAwards]);
 
+  // Combined prize calculation
   const currentPrizes = React.useMemo(() => {
     if (!profile || !allUsers || !monthlyMimoMAwards || !predictions) return { bagged: 0, potential: 0 };
     const activeUsers = allUsers.filter(u => u.name && predictions.some(p => (p.userId || (p as any).id) === u.id));
@@ -151,6 +153,7 @@ export default function ProfilePage() {
     return { bagged: baggedAmount, potential: potentialAmount };
   }, [profile, allUsers, monthlyMimoMAwards, predictions]);
 
+  // Performance chart data parsing
   const cInfo = React.useMemo(() => {
     if (!allUserHistories || !userHistory?.weeklyScores) return { chartData: [], yAxisDomain: [0, 10] as [number, number] };
     const aWeeks = [...new Set(allUserHistories.flatMap(h => h.weeklyScores.map(w => w.week)))].filter(w => w >= 0).sort((a, b) => a - b);
@@ -166,6 +169,7 @@ export default function ProfilePage() {
   }, [allUserHistories, userHistory]);
 
   const onProfileSave = (values: z.infer<typeof profileFormSchema>) => { if (userDocRef) { setDocumentNonBlocking(userDocRef, values, { merge: true }); toast({ title: 'Profile Updated!' }); } };
+  
   const onEmailUpdate = async (values: z.infer<typeof emailFormSchema>) => {
     if (authUser) {
       try {
@@ -177,6 +181,7 @@ export default function ProfilePage() {
       }
     }
   };
+
   const onPasswordUpdate = async (values: z.infer<typeof passwordFormSchema>) => {
     if (authUser) {
       try {

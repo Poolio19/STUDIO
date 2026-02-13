@@ -88,8 +88,10 @@ export default function AdminPage() {
   const [teamsMap, setTeamsMap] = React.useState<Map<string, Team>>(new Map());
 
   // --- Security Redirect ---
+  // Recognize admin by email OR canonical UID
   React.useEffect(() => {
-    if (!isUserLoading && (!user || user.email !== 'jim.poole@prempred.com')) {
+    const isAdmin = user?.email === 'jim.poole@prempred.com' || user?.uid === 'usr_009';
+    if (!isUserLoading && (!user || !isAdmin)) {
       router.replace('/leaderboard');
     }
   }, [user, isUserLoading, router]);
@@ -103,7 +105,8 @@ export default function AdminPage() {
   
   React.useEffect(() => {
     async function fetchAllData() {
-      if (!firestore || !user || user.email !== 'jim.poole@prempred.com') return;
+      const isAdmin = user?.email === 'jim.poole@prempred.com' || user?.uid === 'usr_009';
+      if (!firestore || !user || !isAdmin) return;
       const teamsSnap = await getDocs(query(collection(firestore, 'teams')));
       const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
       setTeamsMap(new Map(teams.map(t => [t.id, t])));
@@ -315,7 +318,8 @@ export default function AdminPage() {
     { key: 'cashWinnings', label: '£', tooltip: 'Total Cash Winnings' },
   ];
 
-  if (isUserLoading || !user || user.email !== 'jim.poole@prempred.com') {
+  const isAdmin = user?.email === 'jim.poole@prempred.com' || user?.uid === 'usr_009';
+  if (isUserLoading || !user || !isAdmin) {
     return (
       <div className="flex h-96 items-center justify-center">
         <Loader2 className="size-12 animate-spin text-muted-foreground" />

@@ -3,8 +3,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // Helper to check if the user is the administrator (Jim Poole)
+    // Now checks both email and the canonical UID to survive email changes
     function isAdmin() {
-      return request.auth != null && request.auth.token.email == 'jim.poole@prempred.com';
+      return request.auth != null && (
+        request.auth.token.email == 'jim.poole@prempred.com' || 
+        request.auth.uid == 'usr_009'
+      );
     }
 
     // Helper to check if the user is accessing their own data
