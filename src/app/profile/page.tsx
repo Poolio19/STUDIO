@@ -4,7 +4,7 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { ShieldCheck, Loader2, Medal, Star, Upload as UploadIcon } from 'lucide-react';
+import { ShieldCheck, Loader2, Medal, Star, Upload as UploadIcon, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,7 +35,7 @@ import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser, useResol
 import { collection, doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { AuthForm } from '@/components/auth/auth-form';
-import { updatePassword, updateEmail } from 'firebase/auth';
+import { updatePassword, verifyBeforeUpdateEmail } from 'firebase/auth';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -148,8 +148,20 @@ export default function ProfilePage() {
   }, [allUserHistories, userHistory]);
 
   const onProfileSave = (values: z.infer<typeof profileFormSchema>) => { if (userDocRef) { setDocumentNonBlocking(userDocRef, values, { merge: true }); toast({ title: 'Profile Updated!' }); } };
-  const onEmailUpdate = async (values: z.infer<typeof emailFormSchema>) => { if (authUser) { try { await updateEmail(authUser, values.email); if (userDocRef) setDocumentNonBlocking(userDocRef, { email: values.email }, { merge: true }); toast({ title: 'Email Updated!' }); } catch (e: any) { toast({ variant: 'destructive', title: 'Fail', description: e.message }); } } };
+  
+  const onEmailUpdate = async (values: z.infer<typeof emailFormSchema>) => { 
+    if (authUser) { 
+      try { 
+        await verifyBeforeUpdateEmail(authUser, values.email); 
+        toast({ title: 'Verification Sent', description: 'Please check your new inbox to verify the change.' }); 
+      } catch (e: any) { 
+        toast({ variant: 'destructive', title: 'Fail', description: e.message }); 
+      } 
+    } 
+  };
+
   const onPasswordUpdate = async (values: z.infer<typeof passwordFormSchema>) => { if (authUser) { try { await updatePassword(authUser, values.password); if (userDocRef) setDocumentNonBlocking(userDocRef, { mustChangePassword: false }, { merge: true }); toast({ title: 'Security Updated!' }); passwordForm.reset(); } catch (e: any) { toast({ variant: 'destructive', title: 'Fail', description: e.message }); } } };
+  
   const handleAvatarSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && userDocRef) {
@@ -166,17 +178,20 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-8">
-      <Card className="overflow-hidden border-2 shadow-lg">
+      <Card className="overflow-hidden border-2 shadow-xl">
           <CardContent className="p-0">
               <div className="flex flex-col lg:flex-row items-center lg:items-stretch">
-                  <div className="p-10 flex flex-col items-center text-center lg:items-start lg:text-left gap-6 bg-muted/10 lg:w-1/3 border-b lg:border-b-0 lg:border-r">
-                      <Avatar className="h-48 w-48 rounded-xl border-4 border-primary shadow-2xl">
-                          <AvatarImage src={avatarPreview || getAvatarUrl(profile?.avatar)} alt={profile?.name} className="object-cover" />
-                          <AvatarFallback className="text-5xl">{(profile?.name || '?').charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                          <h2 className="text-3xl font-black tracking-tight">{profile?.name}</h2>
-                          {profile?.nickname && <p className="text-xl text-muted-foreground italic font-semibold mt-1">"{profile.nickname}"</p>}
+                  {/* Avatar & Gaudy Gold Frame Section */}
+                  <div className="p-1 lg:w-1/3 flex flex-col items-center justify-center border-b lg:border-b-0 lg:border-r bg-muted/5">
+                      <div className="relative p-4 rounded-xl shadow-2xl bg-gradient-to-tr from-yellow-600 via-yellow-200 to-yellow-600 border-4 border-yellow-700 w-full h-full flex flex-col items-center justify-center">
+                          <Avatar className="h-60 w-60 rounded-lg border-8 border-yellow-900 shadow-inner bg-card">
+                              <AvatarImage src={avatarPreview || getAvatarUrl(profile?.avatar)} alt={profile?.name} className="object-cover" />
+                              <AvatarFallback className="text-6xl">{(profile?.name || '?').charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <div className="mt-6 text-center text-yellow-950">
+                              <h2 className="text-3xl font-black tracking-tight drop-shadow-sm uppercase">{profile?.name}</h2>
+                              {profile?.nickname && <p className="text-xl italic font-bold mt-1">"{profile.nickname}"</p>}
+                          </div>
                       </div>
                   </div>
                   
@@ -195,12 +210,12 @@ export default function ProfilePage() {
                                <div className="flex justify-around items-end h-20">
                                   <TooltipProvider>
                                       <Tooltip>
-                                          <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-muted-foreground">2nd</span><Medal className={cn("size-8", (profile?.second ?? 0) > 0 ? "text-slate-400" : "text-slate-200")} /><span className="text-sm font-black">{profile?.second || 0}</span></div></TooltipTrigger>
-                                          <TooltipContent><p>Runner Up</p></TooltipContent>
+                                          <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-xs font-black">1st</span><Trophy className={cn("size-10", (profile?.first ?? 0) > 0 ? "text-yellow-500" : "text-yellow-100")} /><span className="text-base font-black">{profile?.first || 0}</span></div></TooltipTrigger>
+                                          <TooltipContent><p>Champion</p></TooltipContent>
                                       </Tooltip>
                                       <Tooltip>
-                                          <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-xs font-black">1st</span><Star className={cn("size-10", (profile?.first ?? 0) > 0 ? "text-yellow-500" : "text-yellow-100")} /><span className="text-base font-black">{profile?.first || 0}</span></div></TooltipTrigger>
-                                          <TooltipContent><p>Champion</p></TooltipContent>
+                                          <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-muted-foreground">2nd</span><Medal className={cn("size-8", (profile?.second ?? 0) > 0 ? "text-slate-400" : "text-slate-200")} /><span className="text-sm font-black">{profile?.second || 0}</span></div></TooltipTrigger>
+                                          <TooltipContent><p>Runner Up</p></TooltipContent>
                                       </Tooltip>
                                       <Tooltip>
                                           <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-muted-foreground">3rd</span><Medal className={cn("size-7", (profile?.third ?? 0) > 0 ? "text-amber-700" : "text-amber-100")} /><span className="text-sm font-black">{profile?.third || 0}</span></div></TooltipTrigger>
