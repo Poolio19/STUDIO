@@ -15,6 +15,7 @@ import historicalPlayersData from './historical-players.json';
 /**
  * Recalculates all derived data based on strict competition ranking and prize rules.
  * Standard Competition Ranking (1, 2, 2, 4) is applied to all history.
+ * Populates: standings, playerTeamScores, weeklyTeamStandings, teamRecentResults, userHistories.
  */
 export async function recalculateAllDataClientSide(
   firestore: Firestore,
@@ -42,8 +43,8 @@ export async function recalculateAllDataClientSide(
       const prevStandingsRankMap = new Map(prevStandingsData.map(s => [s.teamId, s.rank]));
 
       progressCallback('Clearing existing derived tables...');
-      const collections = ['standings', 'playerTeamScores', 'teamRecentResults', 'weeklyTeamStandings', 'userHistories', 'monthlyMimoM', 'seasonMonths'];
-      for (const colName of collections) {
+      const derivedCollections = ['standings', 'playerTeamScores', 'teamRecentResults', 'weeklyTeamStandings', 'userHistories'];
+      for (const colName of derivedCollections) {
           const snap = await getDocs(collection(firestore, colName));
           let batch = writeBatch(firestore); let count = 0;
           for (const d of snap.docs) {
@@ -64,25 +65,50 @@ export async function recalculateAllDataClientSide(
       };
 
       const playedWeeks = [0, ...new Set(allMatches.filter(m => m.homeScore > -1).map(m => m.week))].sort((a,b) => a-b);
+      const latestWeek = playedWeeks[playedWeeks.length - 1];
       
       for (const week of playedWeeks) {
           progressCallback(`Processing Week ${week}...`);
           let tRanks = prevStandingsRankMap;
+          const tStats: { [tId: string]: any } = {};
+          teams.forEach(t => tStats[t.id] = { points: 0, gd: 0, gf: 0, ga: 0, wins: 0, draws: 0, losses: 0, gamesPlayed: 0 });
+
           if (week > 0) {
-              const matches = allMatches.filter(m => m.week <= week && m.homeScore > -1);
-              const tStats: { [tId: string]: any } = {};
-              teams.forEach(t => tStats[t.id] = { points: 0, gd: 0, gf: 0 });
-              matches.forEach(m => {
+              const weekMatches = allMatches.filter(m => m.week <= week && m.homeScore > -1);
+              weekMatches.forEach(m => {
                   const h = tStats[m.homeTeamId]; const a = tStats[m.awayTeamId];
-                  h.gf += m.homeScore; h.gd += (m.homeScore - m.awayScore);
-                  a.gf += m.awayScore; a.gd += (m.awayScore - m.homeScore);
-                  if (m.homeScore > m.awayScore) h.points += 3;
-                  else if (m.homeScore < m.awayScore) a.points += 3;
-                  else { h.points++; a.points++; }
+                  h.gf += m.homeScore; h.ga += m.awayScore; h.gd += (m.homeScore - m.awayScore); h.gamesPlayed++;
+                  a.gf += m.awayScore; a.ga += m.homeScore; a.gd += (m.awayScore - m.homeScore); a.gamesPlayed++;
+                  if (m.homeScore > m.awayScore) { h.points += 3; h.wins++; a.losses++; }
+                  else if (m.homeScore < m.awayScore) { a.points += 3; a.wins++; h.losses++; }
+                  else { h.points++; h.draws++; a.points++; a.draws++; }
               });
               const tRanked = Object.entries(tStats).map(([tId, s]) => ({ tId, ...s, name: teamMap.get(tId)?.name || '' }))
                   .sort((a,b) => b.points - a.points || b.gd - a.gd || b.gf - a.gf || a.name.localeCompare(b.name));
               tRanks = new Map(tRanked.map((s, i) => [s.tId, i + 1]));
+
+              // Populate weekly standings for the graph
+              tRanked.forEach((s, idx) => {
+                  addOp(b => b.set(doc(firestore, 'weeklyTeamStandings', `wk${week}-${s.tId}`), { week, teamId: s.tId, rank: idx + 1 }));
+              });
+
+              // If this is the LATEST week, populate the main standings table
+              if (week === latestWeek) {
+                  tRanked.forEach((s, idx) => {
+                      addOp(b => b.set(doc(firestore, 'standings', s.tId), { ...s, rank: idx + 1 }));
+                      
+                      // Recent Results (Last 6 matches)
+                      const teamMatches = allMatches.filter(m => (m.homeTeamId === s.tId || m.awayTeamId === s.tId) && m.homeScore > -1)
+                          .sort((a,b) => b.week - a.week).slice(0, 6);
+                      const results = teamMatches.reverse().map(m => {
+                          if (m.homeScore === m.awayScore) return 'D';
+                          if (m.homeTeamId === s.tId) return m.homeScore > m.awayScore ? 'W' : 'L';
+                          return m.awayScore > m.homeScore ? 'W' : 'L';
+                      });
+                      while (results.length < 6) results.unshift('-');
+                      addOp(b => b.set(doc(firestore, 'teamRecentResults', s.tId), { teamId: s.tId, results }));
+                  });
+              }
           }
 
           const uScores: { [uId: string]: number } = {};
@@ -91,7 +117,14 @@ export async function recalculateAllDataClientSide(
               let score = 0;
               pred?.rankings.forEach((tId, idx) => {
                   const actual = tRanks.get(tId);
-                  if (actual) score += (5 - Math.abs((idx + 1) - actual));
+                  if (actual) {
+                      const points = (5 - Math.abs((idx + 1) - actual));
+                      score += points;
+                      // Only save breakdown for the latest week
+                      if (week === latestWeek) {
+                          addOp(b => b.set(doc(firestore, 'playerTeamScores', `${u.id}-${tId}`), { userId: u.id, teamId: tId, score: points }));
+                      }
+                  }
               });
               uScores[u.id] = score;
           });
