@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -90,7 +91,7 @@ export default function AdminPage() {
   // --- Security Redirect ---
   // Recognize admin by email OR canonical UID
   React.useEffect(() => {
-    const isAdmin = user?.email === 'jim.poole@prempred.com' || user?.uid === 'usr_009';
+    const isAdmin = user?.email === 'jim.poole@prempred.com' || user?.email === 'jimpoolio@hotmail.com' || user?.uid === 'usr_009';
     if (!isUserLoading && (!user || !isAdmin)) {
       router.replace('/leaderboard');
     }
@@ -105,7 +106,7 @@ export default function AdminPage() {
   
   React.useEffect(() => {
     async function fetchAllData() {
-      const isAdmin = user?.email === 'jim.poole@prempred.com' || user?.uid === 'usr_009';
+      const isAdmin = user?.email === 'jim.poole@prempred.com' || user?.email === 'jimpoolio@hotmail.com' || user?.uid === 'usr_009';
       if (!firestore || !user || !isAdmin) return;
       const teamsSnap = await getDocs(query(collection(firestore, 'teams')));
       const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
@@ -318,7 +319,7 @@ export default function AdminPage() {
     { key: 'cashWinnings', label: '£', tooltip: 'Total Cash Winnings' },
   ];
 
-  const isAdmin = user?.email === 'jim.poole@prempred.com' || user?.uid === 'usr_009';
+  const isAdmin = user?.email === 'jim.poole@prempred.com' || user?.email === 'jimpoolio@hotmail.com' || user?.uid === 'usr_009';
   if (isUserLoading || !user || !isAdmin) {
     return (
       <div className="flex h-96 items-center justify-center">

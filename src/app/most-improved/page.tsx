@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -147,7 +148,7 @@ export default function MostImprovedPage() {
         let runnersUp: (User & { improvement: number })[] = [];
         
         if (isPastPeriod) {
-            const periodAwards = monthlyMimoMAwards.filter(a => a.id.startsWith(period.id));
+            const periodAwards = monthlyMimoMAwards.filter(a => a.id.includes(period.id) && (a.year >= 2025));
             const winnerAwards = periodAwards.filter(a => a.type === 'winner');
             const runnerUpAwards = periodAwards.filter(a => a.type === 'runner-up');
             

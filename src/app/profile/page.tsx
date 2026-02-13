@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -97,7 +98,6 @@ export default function ProfilePage() {
     }
   }, [profile, authUser, form, emailForm]);
 
-  // Robust parsing of MiMoM certificates
   const awardCerts = React.useMemo(() => {
     if (!profile || !monthlyMimoMAwards) return [];
     return monthlyMimoMAwards
@@ -115,7 +115,6 @@ export default function ProfilePage() {
         });
   }, [profile, monthlyMimoMAwards]);
 
-  // Combined prize calculation
   const currentPrizes = React.useMemo(() => {
     if (!profile || !allUsers || !monthlyMimoMAwards || !predictions) return { bagged: 0, potential: 0 };
     const activeUsers = allUsers.filter(u => u.name && predictions.some(p => (p.userId || (p as any).id) === u.id));
@@ -123,7 +122,7 @@ export default function ProfilePage() {
 
     let baggedAmount = 0;
     const awardsMap: Record<string, { winners: string[], runnersUp: string[] }> = {};
-    monthlyMimoMAwards.forEach(m => {
+    monthlyMimoMAwards.filter(m => m.year >= 2025).forEach(m => {
         const key = m.special || `${m.month}-${m.year}`;
         if (!awardsMap[key]) awardsMap[key] = { winners: [], runnersUp: [] };
         if (m.type === 'winner') awardsMap[key].winners.push(m.userId);
@@ -153,7 +152,6 @@ export default function ProfilePage() {
     return { bagged: baggedAmount, potential: potentialAmount };
   }, [profile, allUsers, monthlyMimoMAwards, predictions]);
 
-  // Performance chart data parsing
   const cInfo = React.useMemo(() => {
     if (!allUserHistories || !userHistory?.weeklyScores) return { chartData: [], yAxisDomain: [0, 10] as [number, number] };
     const aWeeks = [...new Set(allUserHistories.flatMap(h => h.weeklyScores.map(w => w.week)))].filter(w => w >= 0).sort((a, b) => a - b);
@@ -222,7 +220,11 @@ export default function ProfilePage() {
                           </Avatar>
                           <div className="mt-6 text-center text-yellow-950">
                               <h2 className="text-3xl font-black tracking-tight drop-shadow-md uppercase">{profile?.name}</h2>
-                              {profile?.nickname && <p className="text-xl italic font-bold mt-1 opacity-90">"{profile.nickname}"</p>}
+                              {profile?.nickname && <p className="text-xl italic font-bold mt-1 opacity-90">{profile.nickname}</p>}
+                              {profile?.initials && <p className="text-lg font-bold opacity-80">{profile.initials}</p>}
+                          </div>
+                          <div className="absolute bottom-2 left-0 right-0 text-center">
+                              <span className="text-[10px] font-mono text-yellow-950/40 uppercase">User ID: {profile?.id}</span>
                           </div>
                       </div>
                   </div>

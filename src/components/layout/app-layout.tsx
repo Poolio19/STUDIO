@@ -1,3 +1,4 @@
+
 'use client';
 
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
@@ -59,7 +60,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<User>(userDocRef);
 
   // Admin recognized by email OR the canonical UID (survives email changes)
-  const isAdmin = user?.email === 'jim.poole@prempred.com' || user?.uid === 'usr_009';
+  const isAdmin = user?.email === 'jim.poole@prempred.com' || user?.email === 'jimpoolio@hotmail.com' || user?.uid === 'usr_009';
   const mustChangePassword = userProfile?.mustChangePassword === true;
 
   useEffect(() => {

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -51,7 +52,7 @@ export function SidebarNav() {
   const { data: userProfile } = useDoc<User>(userDocRef);
 
   // Recognition by email OR canonical UID
-  const isAdmin = authUser?.email === 'jim.poole@prempred.com' || authUser?.uid === 'usr_009';
+  const isAdmin = authUser?.email === 'jim.poole@prempred.com' || authUser?.email === 'jimpoolio@hotmail.com' || authUser?.uid === 'usr_009';
 
   const visibleNavItems = navItems.filter(item => {
     if (item.href === '/admin') {

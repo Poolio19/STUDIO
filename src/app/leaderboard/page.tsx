@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -89,9 +90,9 @@ export default function LeaderboardPage() {
 
     sortedUsers.forEach(u => breakdown.set(u.id, { total: 0, seasonal: 0, monthly: 0, proBounty: 0 }));
 
-    // 1. Monthly Awards (Fixed)
+    // 1. Monthly Awards (CURRENT SEASON ONLY - year 2025/2026)
     const awardsMap: Record<string, { winners: string[], runnersUp: string[] }> = {};
-    monthlyMimoM.forEach(m => {
+    monthlyMimoM.filter(m => m.year >= 2025).forEach(m => {
         const key = m.special || `${m.month}-${m.year}`;
         if (!awardsMap[key]) awardsMap[key] = { winners: [], runnersUp: [] };
         if (m.type === 'winner') awardsMap[key].winners.push(m.userId);
@@ -204,7 +205,10 @@ export default function LeaderboardPage() {
                   return (
                       <TableRow 
                         key={user.id} 
-                        className={cn(isCurrentUser && 'ring-2 ring-inset ring-primary z-10 relative bg-primary/5 shadow-[0_0_15px_hsl(var(--primary)/0.2)]')}
+                        className={cn(
+                            "even:bg-muted/30",
+                            isCurrentUser && 'ring-2 ring-inset ring-primary z-10 relative bg-primary/5 shadow-[0_0_15px_hsl(var(--primary)/0.2)]'
+                        )}
                       >
                           <TableCell className={cn("font-medium text-center py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
                             {competitionRank}
