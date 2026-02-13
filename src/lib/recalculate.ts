@@ -12,6 +12,7 @@ import type { Team, Prediction, User as UserProfile, UserHistory, Match, Monthly
 import prevStandingsData from './previous-season-standings-24-25.json';
 import historicalPlayersData from './historical-players.json';
 import historicalMimoAwardsData from './historical-mimo-awards.json';
+import { allAwardPeriods } from './award-periods';
 
 /**
  * Recalculates all derived data and seeds historical records.
@@ -168,6 +169,7 @@ export async function recalculateAllDataClientSide(
           });
       }
 
+      // --- Write Final User Profile Stats ---
       for (const u of users) {
           const hist = allHistories[u.id];
           const latest = hist.weeklyScores[hist.weeklyScores.length - 1];
@@ -183,6 +185,56 @@ export async function recalculateAllDataClientSide(
               minRank: ranks.length > 0 ? Math.max(...ranks) : 0
           }, { merge: true }));
           addOp(b => b.set(doc(firestore, 'userHistories', u.id), hist));
+      }
+
+      // --- Determine Current Season (2025-26) MiMoM Awards ---
+      progressCallback("Locking in 2025-26 MiMoM Winners...");
+      for (const period of allAwardPeriods) {
+          if (latestWeek < period.endWeek) continue;
+          
+          const periodScores: { uId: string, improvement: number, score: number }[] = [];
+          users.filter(u => !u.isPro).forEach(u => {
+              const h = allHistories[u.id];
+              const sData = h.weeklyScores.find(ws => ws.week === period.startWeek);
+              const eData = h.weeklyScores.find(ws => ws.week === period.endWeek);
+              if (sData && eData) {
+                  periodScores.push({ uId: u.id, improvement: eData.score - sData.score, score: eData.score });
+              }
+          });
+
+          if (periodScores.length > 0) {
+              periodScores.sort((a,b) => b.improvement - a.improvement || b.score - a.score);
+              const topImp = periodScores[0].improvement;
+              const winners = periodScores.filter(s => s.improvement === topImp);
+              
+              winners.forEach(w => {
+                  addOp(b => b.set(doc(firestore, 'monthlyMimoM', `2025-${period.id}-${w.uId}`), {
+                      id: `2025-${period.id}-${w.uId}`,
+                      userId: w.uId,
+                      month: period.id,
+                      year: 2025,
+                      type: 'winner',
+                      improvement: w.improvement
+                  }));
+              });
+
+              if (winners.length === 1 && periodScores.length > 1) {
+                  const runnerUpImp = periodScores.find(s => s.improvement < topImp)?.improvement;
+                  if (runnerUpImp !== undefined) {
+                      const runnersUp = periodScores.filter(s => s.improvement === runnerUpImp);
+                      runnersUp.forEach(ru => {
+                          addOp(b => b.set(doc(firestore, 'monthlyMimoM', `2025-${period.id}-ru-${ru.uId}`), {
+                              id: `2025-${period.id}-ru-${ru.uId}`,
+                              userId: ru.uId,
+                              month: period.id,
+                              year: 2025,
+                              type: 'runner-up',
+                              improvement: ru.improvement
+                          }));
+                      });
+                  }
+              }
+          }
       }
 
       progressCallback("Writing final updates to database...");

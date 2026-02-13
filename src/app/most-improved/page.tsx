@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -140,15 +139,12 @@ export default function MostImprovedPage() {
     return allAwardPeriods.map(period => {
         const isCurrentPeriod = currentAwardPeriod?.id === period.id;
         const isPastPeriod = period.endWeek <= currentWeek && !isCurrentPeriod;
-        
-        // Show TBC until the 2nd match week of the month has been played (results in).
         const isTooEarly = isCurrentPeriod && currentWeek < (period.startWeek + 2);
 
         let winners: (User & { improvement: number })[] = [];
         let runnersUp: (User & { improvement: number })[] = [];
         
         if (isPastPeriod) {
-            // Fix: Filter by Case-Insensitive month name and Year >= 2025
             const periodAwards = monthlyMimoMAwards.filter(a => 
                 a.year >= 2025 && 
                 (a.month.toLowerCase() === period.id.toLowerCase() || 
@@ -156,26 +152,21 @@ export default function MostImprovedPage() {
                  a.id.toLowerCase().includes(period.id.toLowerCase()))
             );
             
-            const winnerAwards = periodAwards.filter(a => a.type === 'winner');
-            const runnerUpAwards = periodAwards.filter(a => a.type === 'runner-up');
-            
-            winners = winnerAwards.map(award => {
-                const user = userMap.get(award.userId);
-                return user ? { ...user, improvement: award.improvement || 0 } : null;
+            winners = periodAwards.filter(a => a.type === 'winner').map(a => {
+                const u = userMap.get(a.userId);
+                return u ? { ...u, improvement: a.improvement || 0 } : null;
             }).filter((u): u is User & { improvement: number } => !!u);
 
-            runnersUp = runnerUpAwards.map(award => {
-                const user = userMap.get(award.userId);
-                return user ? { ...user, improvement: award.improvement || 0 } : null;
+            runnersUp = periodAwards.filter(a => a.type === 'runner-up').map(a => {
+                const u = userMap.get(a.userId);
+                return u ? { ...u, improvement: a.improvement || 0 } : null;
             }).filter((u): u is User & { improvement: number } => !!u);
         } else if (isCurrentPeriod && !isTooEarly) {
             if (ladderData.firstPlaceImprovement !== undefined) {
-                winners = ladderData.ladderWithRanks
-                    .filter(u => u.improvement === ladderData.firstPlaceImprovement) as (User & { improvement: number })[];
+                winners = ladderData.ladderWithRanks.filter(u => u.improvement === ladderData.firstPlaceImprovement) as any;
             }
-             if (ladderData.secondPlaceImprovement !== undefined && winners.length === 1) {
-                runnersUp = ladderData.ladderWithRanks
-                    .filter(u => u.improvement === ladderData.secondPlaceImprovement) as (User & { improvement: number })[];
+            if (ladderData.secondPlaceImprovement !== undefined && winners.length === 1) {
+                runnersUp = ladderData.ladderWithRanks.filter(u => u.improvement === ladderData.secondPlaceImprovement) as any;
             }
         }
         
@@ -305,7 +296,7 @@ export default function MostImprovedPage() {
                                                 </Avatar>
                                                 <div className="text-left">
                                                     <p className="text-sm font-bold">{winner.name}
-                                                        {typeof winner.improvement === 'number' && <span className="font-normal text-muted-foreground"> ({winner.improvement >= 0 ? '+' : ''}{winner.improvement}pts)</span>}
+                                                        {typeof winner.improvement === 'number' && <span className="font-normal text-muted-foreground"> (+{winner.improvement}pts)</span>}
                                                     </p>
                                                     <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">
                                                         {monthlyAward.isCurrentMonth ? (isTie ? 'Current JoMiMoM' : 'Current Leader') : (isTie ? 'JoMiMoM' : 'MiMoM')}
@@ -322,7 +313,7 @@ export default function MostImprovedPage() {
                                                 </Avatar>
                                                 <div className="text-left">
                                                     <p className="text-sm font-bold">{runnerUp.name}
-                                                        {typeof runnerUp.improvement === 'number' && <span className="font-normal text-muted-foreground"> ({runnerUp.improvement >= 0 ? '+' : ''}{runnerUp.improvement}pts)</span>}
+                                                        {typeof runnerUp.improvement === 'number' && <span className="font-normal text-muted-foreground"> (+{runnerUp.improvement}pts)</span>}
                                                     </p>
                                                     <p className="text-xs font-semibold text-slate-800/80 dark:text-slate-200/80">
                                                         {monthlyAward.isCurrentMonth ? 'Current Runner-Up' : (monthlyAward.runnersUp.length > 1 ? 'JoRuMiMoM' : 'RuMiMoM')}

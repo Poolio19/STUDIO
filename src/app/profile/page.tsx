@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -105,8 +104,8 @@ export default function ProfilePage() {
         .map(a => {
             const shortYear = String(a.year).slice(-2);
             const m = a.month.slice(0, 3);
-            const monthMap: Record<string, string> = { 'Jan':'01','Feb':'02','Mar':'03','Apr':'04','May':'05','Jun':'06','Jul':'07','Aug':'08','Sep':'09','Oct':'10','Nov':'11','Dec':'12' };
-            const monthPad = monthMap[m] || '00';
+            const monthMap: Record<string, string> = { 'Jan':'01','Feb':'02','Mar':'03','Apr':'04','May':'05','Jun':'06','Jul':'07','Aug':'08','Sep':'09','Oct':'10','Nov':'11','Dec':'12','aug':'08','sep':'09','oct':'10','nov':'11','dec':'12' };
+            const monthPad = monthMap[m.toLowerCase()] || '00';
             let code = 'MiM';
             if (a.special === 'Winner' || a.type === 'winner') code = 'MiM';
             else if (a.special === 'Runner-Up' || a.type === 'runner-up') code = 'RuM';
@@ -122,7 +121,7 @@ export default function ProfilePage() {
 
     let baggedAmount = 0;
     const awardsMap: Record<string, { winners: string[], runnersUp: string[] }> = {};
-    monthlyMimoMAwards.filter(m => m.year >= 2025).forEach(m => {
+    monthlyMimoMAwards.filter(m => m.year === 2025).forEach(m => {
         const key = m.special || `${m.month}-${m.year}`;
         if (!awardsMap[key]) awardsMap[key] = { winners: [], runnersUp: [] };
         if (m.type === 'winner') awardsMap[key].winners.push(m.userId);
@@ -135,7 +134,11 @@ export default function ProfilePage() {
 
     let highestProScoreVal = -1;
     sortedList.forEach(u => { if (u.isPro && u.score > highestProScoreVal) highestProScoreVal = u.score; });
-    const slayersList = sortedList.filter((p, idx) => !p.isPro && p.score > highestProScoreVal && (idx + 1) > 10).map(p => p.id);
+    
+    const scoresOnly = sortedList.map(u => u.score);
+    const getCompRank = (s: number) => scoresOnly.indexOf(s) + 1;
+
+    const slayersList = sortedList.filter(p => !p.isPro && p.score > highestProScoreVal && getCompRank(p.score) > 10).map(p => p.id);
     const totalSlayerBounty = Math.min(slayersList.length * 5, 55);
     const indBounty = slayersList.length > 0 ? totalSlayerBounty / slayersList.length : 0;
 
@@ -145,8 +148,14 @@ export default function ProfilePage() {
     const finalSeasonalPrizes = pArr.reverse();
 
     let potentialAmount = 0;
-    const myOrd = sortedList.findIndex(u => u.id === profile.id) + 1;
-    if (!profile.isPro && myOrd <= 10 && myOrd > 0) potentialAmount = finalSeasonalPrizes[myOrd - 1] || 0;
+    const myRank = getCompRank(profile.score);
+    const myIdx = sortedList.findIndex(u => u.id === profile.id);
+    if (!profile.isPro && myRank <= 10 && myRank > 0) {
+        let pool = 0;
+        sortedList.forEach((u, i) => { if (getCompRank(u.score) === myRank && i < 10) pool += finalSeasonalPrizes[i] || 0; });
+        const sharers = sortedList.filter(u => !u.isPro && getCompRank(u.score) === myRank).length;
+        potentialAmount = pool / (sharers || 1);
+    }
     if (slayersList.includes(profile.id) && potentialAmount === 0) potentialAmount = indBounty;
 
     return { bagged: baggedAmount, potential: potentialAmount };
@@ -213,7 +222,7 @@ export default function ProfilePage() {
           <CardContent className="p-0">
               <div className="flex flex-col lg:flex-row items-center lg:items-stretch">
                   <div className="p-1 lg:w-1/3 flex flex-col items-center justify-center border-b lg:border-b-0 lg:border-r bg-muted/5">
-                      <div className="relative p-6 rounded-xl shadow-2xl bg-gradient-to-tr from-yellow-600 via-yellow-200 to-yellow-600 border-[16px] border-yellow-700 w-full h-full flex flex-col items-center justify-center min-h-[400px]">
+                      <div className="relative p-6 rounded-xl shadow-2xl bg-gradient-to-tr from-yellow-600 via-yellow-200 to-yellow-600 border-[16px] border-yellow-700 w-full h-full flex flex-col items-center justify-center min-h-[450px]">
                           <Avatar className="h-60 w-60 rounded-lg border-8 border-yellow-900 shadow-inner bg-card">
                               <AvatarImage src={avatarPreview || getAvatarUrl(profile?.avatar)} alt={profile?.name} className="object-cover" />
                               <AvatarFallback className="text-6xl">{(profile?.name || '?').charAt(0)}</AvatarFallback>
@@ -221,10 +230,10 @@ export default function ProfilePage() {
                           <div className="mt-6 text-center text-yellow-950">
                               <h2 className="text-3xl font-black tracking-tight drop-shadow-md uppercase">{profile?.name}</h2>
                               {profile?.nickname && <p className="text-xl italic font-bold mt-1 opacity-90">{profile.nickname}</p>}
-                              {profile?.initials && <p className="text-lg font-bold opacity-80">{profile.initials}</p>}
+                              {profile?.initials && <p className="text-lg font-bold opacity-80 uppercase">{profile.initials}</p>}
                           </div>
                           <div className="absolute bottom-2 left-0 right-0 text-center">
-                              <span className="text-[10px] font-mono text-yellow-950/40 uppercase">User ID: {profile?.id}</span>
+                              <span className="text-[10px] font-mono text-yellow-950/40 uppercase tracking-widest">User ID: {profile?.id}</span>
                           </div>
                       </div>
                   </div>
@@ -237,7 +246,7 @@ export default function ProfilePage() {
                                   <div className="grid grid-cols-4 gap-x-2 text-center text-sm">
                                       <div /><div className="font-semibold text-muted-foreground text-xs uppercase">High</div><div className="font-semibold text-muted-foreground text-xs uppercase">Low</div><div className="font-semibold text-muted-foreground text-xs uppercase">Now</div>
                                       <div className="font-bold text-muted-foreground text-left py-2 border-b">Pos</div><div className="font-bold text-green-600 py-2 border-b">{profile?.minRank || '-'}</div><div className="font-bold text-red-600 py-2 border-b">{profile?.maxRank || '-'}</div><div className="font-extrabold py-2 border-b text-lg">{profile?.rank || '-'}</div>
-                                      <div className="font-bold text-muted-foreground text-left py-2">Pts</div><div className="font-bold text-green-600 py-2">{profile?.maxScore || '-'}</div><div className="font-bold text-red-600 py-2">{profile?.minScore || '-'}</div><div className="font-extrabold py-2 text-lg">{profile?.score || '-'}</div>
+                                      <div className="font-bold text-muted-foreground text-left py-2">Pts</div><div className="font-bold text-green-600 py-2">{profile?.maxScore || '-'}</div><div className="font-bold text-red-600 py-2">{profile?.minScore || '-'}</div><div className="font-extrabold py-2 border-b text-lg">{profile?.score || '-'}</div>
                                   </div>
                               </div>
                           </div>

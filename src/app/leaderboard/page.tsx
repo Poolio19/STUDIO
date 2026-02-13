@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -79,7 +78,6 @@ export default function LeaderboardPage() {
     const historicalUserIds = new Set(historicalPlayersData.map(p => p.id));
     const activeUserIds = new Set(predictionsData.filter(p => p.rankings?.length === 20).map(p => p.userId || (p as any).id));
     
-    // Pro Rule: Pros win ties (Pros first in sort for tie-breaking)
     return [...usersData]
         .filter(u => u.name && (historicalUserIds.has(u.id) || u.isPro) && activeUserIds.has(u.id))
         .sort((a, b) => b.score - a.score || (a.isPro ? -1 : 1) || (a.name || '').localeCompare(b.name || ''));
@@ -91,9 +89,9 @@ export default function LeaderboardPage() {
 
     sortedUsers.forEach(u => breakdown.set(u.id, { total: 0, seasonal: 0, monthly: 0, proBounty: 0 }));
 
-    // 1. Monthly Awards (CURRENT SEASON ONLY - year 2025/2026)
+    // 1. Monthly Awards (CURRENT SEASON ONLY - year 2025)
     const awardsMap: Record<string, { winners: string[], runnersUp: string[] }> = {};
-    monthlyMimoM.filter(m => m.year >= 2025).forEach(m => {
+    monthlyMimoM.filter(m => m.year === 2025).forEach(m => {
         const key = m.special || `${m.month}-${m.year}`;
         if (!awardsMap[key]) awardsMap[key] = { winners: [], runnersUp: [] };
         if (m.type === 'winner') awardsMap[key].winners.push(m.userId);
@@ -115,16 +113,12 @@ export default function LeaderboardPage() {
         }
     });
 
-    // Competition Ranks helper
     const scoresOnlyArr = sortedUsers.map(u => u.score);
     const getCompRank = (score: number) => scoresOnlyArr.indexOf(score) + 1;
 
-    // 2. Pro-Slayer Logic (Capped at £55.00 Total)
     let highestProScore = -1;
     sortedUsers.forEach(u => { if (u.isPro && u.score > highestProScore) highestProScore = u.score; });
 
-    // 3. Seasonal Fund Logic
-    // Step A: Determine Slayers temporarily to estimate fund
     const tempSlayers = sortedUsers.filter((p, idx) => {
         const rank = getCompRank(p.score);
         return !p.isPro && p.score > highestProScore && rank > 10;
@@ -134,9 +128,8 @@ export default function LeaderboardPage() {
     
     let prizes: number[] = [netSeasonalFund / 33.2529];
     for (let i = 0; i < 9; i++) prizes.push(prizes[i] * 1.25);
-    const finalSeasonalPrizes = prizes.reverse(); // [1st, 2nd, ..., 10th]
+    const finalSeasonalPrizes = prizes.reverse();
 
-    // Step B: Distribute prizes with Pro Rule & Shared Ranks
     const rankGroups: Record<number, number[]> = {};
     sortedUsers.forEach((u, i) => {
         const r = getCompRank(u.score);
@@ -149,10 +142,9 @@ export default function LeaderboardPage() {
         const regulars = indices.filter(i => !sortedUsers[i].isPro);
         if (regulars.length === 0) return;
 
-        // Sum up prize slots occupied by this rank group
         let totalPrizeForGroup = 0;
         indices.forEach(idx => {
-            const ord = idx + 1; // Ordinal position in sorted list (incl. Pros)
+            const ord = idx + 1; 
             if (ord <= 10) totalPrizeForGroup += finalSeasonalPrizes[ord - 1] || 0;
         });
 
@@ -167,10 +159,10 @@ export default function LeaderboardPage() {
         });
     });
 
-    // Step C: Finalize Slayers (Regulars who beat all Pros AND got £0 seasonal prize)
     const finalSlayers = sortedUsers.filter(p => {
         const b = breakdown.get(p.id);
-        return !p.isPro && p.score > highestProScore && (!b || b.seasonal === 0);
+        const rank = getCompRank(p.score);
+        return !p.isPro && p.score > highestProScore && rank > 10 && (!b || b.seasonal === 0);
     });
     
     const individualBounty = finalSlayers.length > 0 ? slayerPoolTotal / finalSlayers.length : 0;
@@ -185,8 +177,14 @@ export default function LeaderboardPage() {
   const scoresOnlyArr = useMemo(() => sortedUsers.map(u => u.score), [sortedUsers]);
   const prevScoresOnlyArr = useMemo(() => sortedUsers.map(u => u.previousScore).sort((a,b) => b - a), [sortedUsers]);
   
-  let highestProScore = -1;
-  sortedUsers.forEach(u => { if (u.isPro && u.score > highestProScore) highestProScore = u.score; });
+  const getRowStyle = (rank: number) => {
+      const total = Math.max(sortedUsers.length, 1);
+      const ratio = (rank - 1) / (total - 1);
+      const hue = 180 - (ratio * 180); // 180 (Teal) to 0 (Red)
+      const saturation = 70;
+      const lightness = 40;
+      return { backgroundColor: `hsla(${hue}, ${saturation}%, ${lightness}%, 0.15)` };
+  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -241,11 +239,12 @@ export default function LeaderboardPage() {
                   return (
                       <TableRow 
                         key={user.id} 
+                        style={getRowStyle(competitionRank)}
                         className={cn(
-                            "even:bg-muted/30 transition-colors",
-                            isCurrentUser && 'ring-2 ring-inset ring-primary z-10 relative bg-primary/5 shadow-[0_0_15px_hsl(var(--primary)/0.2)]',
-                            isPrizeWinner && !isCurrentUser && 'bg-yellow-500/10 hover:bg-yellow-500/20',
-                            isSlayer && !isCurrentUser && 'bg-primary/5 hover:bg-primary/10'
+                            "transition-colors",
+                            isCurrentUser && 'ring-2 ring-inset ring-primary z-10 relative bg-primary/10 shadow-[0_0_20px_hsl(var(--primary)/0.3)]',
+                            isPrizeWinner && !isCurrentUser && 'bg-yellow-500/20 hover:bg-yellow-500/30 border-y-2 border-yellow-500/20',
+                            isSlayer && !isCurrentUser && 'bg-primary/10 hover:bg-primary/20'
                         )}
                       >
                           <TableCell className={cn("font-medium text-center py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
