@@ -80,13 +80,7 @@ export default function LeaderboardPage() {
     
     return [...usersData]
         .filter(u => u.name && (historicalUserIds.has(u.id) || u.isPro) && activeUserIds.has(u.id))
-        .sort((a, b) => {
-            if (b.score !== a.score) return b.score - a.score;
-            const aIsPro = a.isPro ? 1 : 0;
-            const bIsPro = b.isPro ? 1 : 0;
-            if (aIsPro !== bIsPro) return bIsPro - aIsPro; // Pros always win ties
-            return (a.name || '').localeCompare(b.name || '');
-        });
+        .sort((a, b) => b.score - a.score || (a.isPro ? -1 : 1) || (a.name || '').localeCompare(b.name || ''));
   }, [usersData, predictionsData]);
 
   const winningsMap = useMemo(() => {
@@ -119,7 +113,7 @@ export default function LeaderboardPage() {
         }
     });
 
-    // Pro-Slayer Logic
+    // Pro-Slayer Logic (Regulars who outscore ALL Pros and miss Top 10)
     let highestProScore = -1;
     sortedUsers.forEach(u => { if (u.isPro && u.score > highestProScore) highestProScore = u.score; });
 
@@ -129,46 +123,22 @@ export default function LeaderboardPage() {
         if (!p.isPro && p.score > highestProScore && ord > 10) slayers.push(p.id);
     });
 
+    // Capped Slayer Bounty: £5 per slayer, max total pool £55.00
     const slayerPoolTotal = Math.min(slayers.length * 5, 55);
     const individualBounty = slayers.length > 0 ? slayerPoolTotal / slayers.length : 0;
 
     // Seasonal Fund Logic
     const netSeasonalFund = 530 - 150 - 10 - slayerPoolTotal;
-    const weightSum = 33.2529;
-    const p10 = netSeasonalFund / weightSum;
-    let prizes: number[] = [p10];
+    let prizes: number[] = [netSeasonalFund / 33.2529];
     for (let i = 0; i < 9; i++) prizes.push(prizes[i] * 1.25);
     const finalSeasonalPrizes = prizes.reverse();
 
-    const pointsGroups: { score: number, players: User[], startOrdinal: number }[] = [];
-    let curOrd = 1;
-    sortedUsers.forEach((u, i) => {
-        if (i === 0 || u.score !== sortedUsers[i-1].score) {
-            pointsGroups.push({ score: u.score, players: [u], startOrdinal: curOrd });
-        } else {
-            pointsGroups[pointsGroups.length - 1].players.push(u);
-        }
-        curOrd++;
-    });
-
-    pointsGroups.forEach(group => {
-        const regulars = group.players.filter(p => !p.isPro);
-        if (regulars.length === 0) return;
-        
-        let groupRegPrizeTotal = 0;
-        group.players.forEach((p, idx) => {
-            const pOrd = group.startOrdinal + idx;
-            if (!p.isPro && pOrd <= 10) groupRegPrizeTotal += (finalSeasonalPrizes[pOrd-1] || 0);
-        });
-
-        if (groupRegPrizeTotal > 0) {
-            regulars.forEach(r => {
-                const b = breakdown.get(r.id);
-                if (b) { 
-                    const share = groupRegPrizeTotal / regulars.length;
-                    b.total += share; b.seasonal = share; 
-                }
-            });
+    sortedUsers.forEach((p, idx) => {
+        const ord = idx + 1;
+        if (!p.isPro && ord <= 10) {
+            const prize = finalSeasonalPrizes[ord - 1] || 0;
+            const b = breakdown.get(p.id);
+            if (b) { b.total += prize; b.seasonal = prize; }
         }
     });
 
@@ -193,7 +163,7 @@ export default function LeaderboardPage() {
                <TableRow>
                 <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-blue-200/50 dark:bg-blue-800/30 py-2">PremPred Standings</TableHead>
                 <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-green-200/50 dark:bg-green-800/30 py-2">Change In The Past Week</TableHead>
-                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground bg-purple-200/50 dark:bg-purple-800/30 py-2">Seasons Highs And Lows</TableHead>
+                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground bg-purple-200/50 dark:bg-purple-800/30 py-2">Season Highs And Lows</TableHead>
               </TableRow>
               <TableRow>
                 <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-blue-100/50 dark:bg-blue-900/20 py-2">Week {currentWeek}, Current Standings</TableHead>
@@ -226,7 +196,6 @@ export default function LeaderboardPage() {
                   const ScoreIcon = getRankChangeIcon(user.scoreChange);
                   const RankIcon = getRankChangeIcon(user.rankChange);
                   const isCurrentUser = user.id === resolvedUserId;
-
                   const competitionRank = scoresOnlyArr.indexOf(user.score) + 1;
 
                   return (

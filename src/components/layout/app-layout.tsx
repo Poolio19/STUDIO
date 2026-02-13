@@ -4,7 +4,7 @@ import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from '@/compon
 import { SidebarNav } from './sidebar-nav';
 import { cn } from '@/lib/utils';
 import { useUser, useFirebaseConfigStatus, useFirestore, useMemoFirebase, useCollection, useDoc, useResolvedUserId } from '@/firebase';
-import { Loader2, RefreshCw, Menu } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import React, { useMemo, useEffect } from 'react';
 import { collection, doc } from 'firebase/firestore';
@@ -90,33 +90,33 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     setIsRecalculating(true);
     try {
       await recalculateAllDataClientSide(firestore, (message: string) => {
-        toast({ title: 'Recalculation Progress', description: message });
+        toast({ title: 'Overhaul Status', description: message });
       });
       toast({ title: 'Recalculation Complete!' });
       window.location.reload();
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Recalculation Failed', description: error.message });
+      toast({ variant: 'destructive', title: 'Process Failed', description: error.message });
     } finally {
       setIsRecalculating(false);
     }
   };
 
-  if (!isConfigured) return <div className="flex h-screen w-screen items-center justify-center p-4">Firebase not configured.</div>;
+  if (!isConfigured) return <div className="flex h-screen w-screen items-center justify-center p-4">Firebase missing configuration.</div>;
   if (isUserLoading || (user && isProfileLoading)) return <div className="flex h-screen w-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /><p className="ml-2">Connecting...</p></div>;
   
   return (
     <SidebarProvider>
       {!mustChangePassword && (
-        <Sidebar>
+        <Sidebar className="z-50">
           <SidebarNav />
         </Sidebar>
       )}
       <SidebarInset className="flex flex-col overflow-hidden">
-        <header className={cn("flex h-16 shrink-0 items-center gap-2 border-b bg-card px-4", mustChangePassword && "hidden")}>
-          <SidebarTrigger className="flex" />
+        <header className={cn("flex h-16 shrink-0 items-center gap-2 border-b bg-card px-4 sticky top-0 z-40", mustChangePassword && "hidden")}>
+          <SidebarTrigger className="flex -ml-1" />
           <div className="flex-1 overflow-hidden ml-2">
             <h1 className="text-lg font-semibold truncate leading-tight">{title}</h1>
-            {description && <p className="text-xs text-muted-foreground truncate hidden sm:block">{description}</p>}
+            {description && <p className="text-xs text-muted-foreground truncate hidden md:block">{description}</p>}
           </div>
           <div className="ml-auto shrink-0 flex items-center gap-2">
             {isAdmin && !mustChangePassword && (
@@ -129,7 +129,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   </Button>
                   <AlertDialogContent>
                       <AlertDialogHeader><AlertDialogTitle>Run master recalculation?</AlertDialogTitle></AlertDialogHeader>
-                      <AlertDialogDescription>This will update everyone's visual competition ranks and dynamic prize shares based on the latest rules.</AlertDialogDescription>
+                      <AlertDialogDescription>This will restore all tables and apply strictly enforced competition ranks and prize rules.</AlertDialogDescription>
                       <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleRecalculate}>Recalculate Now</AlertDialogAction></AlertDialogFooter>
                   </AlertDialogContent>
               </AlertDialog>

@@ -4,7 +4,7 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Mail, Trophy, Award, ShieldCheck, Loader2, Medal, Star, Upload as UploadIcon, Shield } from 'lucide-react';
+import { Mail, ShieldCheck, Loader2, Medal, Star, Upload as UploadIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,22 +25,12 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getAvatarUrl } from '@/lib/placeholder-images';
 import type { Team, User, UserHistory, MonthlyMimoM, Prediction } from '@/lib/types';
 import { ProfilePerformanceChart } from '@/components/charts/profile-performance-chart';
 import { Label } from '@/components/ui/label';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser, useResolvedUserId } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -55,21 +45,11 @@ const profileFormSchema = z.object({
   phoneNumber: z.string().optional(),
 });
 
-const emailFormSchema = z.object({
-  email: z.string().email("Please enter a valid email address."),
-});
-
+const emailFormSchema = z.object({ email: z.string().email("Invalid email address.") });
 const passwordFormSchema = z.object({
-  password: z.string().min(6, "Password must be at least 6 characters."),
+  password: z.string().min(6, "Must be at least 6 chars."),
   confirmPassword: z.string()
-}).refine(data => data.password === data.confirmPassword, {
-  message: "Passwords don't match.",
-  path: ["confirmPassword"],
-});
-
-type ProfileFormValues = z.infer<typeof profileFormSchema>;
-type EmailFormValues = z.infer<typeof emailFormSchema>;
-type PasswordFormValues = z.infer<typeof passwordFormSchema>;
+}).refine(data => data.password === data.confirmPassword, { message: "Match error", path: ["confirmPassword"] });
 
 export default function ProfilePage() {
   const { toast } = useToast();
@@ -95,47 +75,32 @@ export default function ProfilePage() {
   const { data: monthlyMimoM } = useCollection<MonthlyMimoM>(mimoMQuery);
   const { data: predictions } = useCollection<Prediction>(predictionsQuery);
 
-  const form = useForm<ProfileFormValues>({
+  const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: { name: '', nickname: '', initials: '', favouriteTeam: 'none', phoneNumber: '' },
   });
 
-  const emailForm = useForm<EmailFormValues>({
+  const emailForm = useForm<z.infer<typeof emailFormSchema>>({
     resolver: zodResolver(emailFormSchema),
     defaultValues: { email: authUser?.email || '' }
   });
 
-  const passwordForm = useForm<PasswordFormValues>({
+  const passwordForm = useForm<z.infer<typeof passwordFormSchema>>({
     resolver: zodResolver(passwordFormSchema),
     defaultValues: { password: "", confirmPassword: "" }
   });
 
   React.useEffect(() => {
     if (profile) {
-      form.reset({
-        name: profile.name || '',
-        nickname: profile.nickname || '',
-        initials: profile.initials || '',
-        favouriteTeam: profile.favouriteTeam || 'none',
-        phoneNumber: profile.phoneNumber || '',
-      });
-      emailForm.reset({
-        email: profile.email || authUser?.email || '',
-      });
+      form.reset({ name: profile.name || '', nickname: profile.nickname || '', initials: profile.initials || '', favouriteTeam: profile.favouriteTeam || 'none', phoneNumber: profile.phoneNumber || '' });
+      emailForm.reset({ email: profile.email || authUser?.email || '' });
     }
   }, [profile, authUser, form, emailForm]);
 
   const currentPrizes = React.useMemo(() => {
     if (!profile || !allUsers || !monthlyMimoM || !predictions) return { bagged: 0, potential: 0 };
-
     const activeUsers = allUsers.filter(u => u.name && predictions.some(p => (p.userId || (p as any).id) === u.id));
-    const sortedList = [...activeUsers].sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score;
-        const aIsPro = a.isPro ? 1 : 0;
-        const bIsPro = b.isPro ? 1 : 0;
-        if (aIsPro !== bIsPro) return bIsPro - aIsPro;
-        return (a.name || '').localeCompare(b.name || '');
-    });
+    const sortedList = [...activeUsers].sort((a, b) => b.score - a.score || (a.isPro ? -1 : 1) || (a.name || '').localeCompare(b.name || ''));
 
     let baggedAmount = 0;
     const awardsMap: Record<string, { winners: string[], runnersUp: string[] }> = {};
@@ -145,7 +110,6 @@ export default function ProfilePage() {
         if (m.type === 'winner') awardsMap[key].winners.push(m.userId);
         else if (m.type === 'runner-up') awardsMap[key].runnersUp.push(m.userId);
     });
-
     Object.values(awardsMap).forEach(award => {
         if (award.winners.includes(profile.id)) baggedAmount += 10 / (award.winners.length || 1);
         if (award.winners.length === 1 && award.runnersUp.includes(profile.id)) baggedAmount += 5 / (award.runnersUp.length || 1);
@@ -153,135 +117,50 @@ export default function ProfilePage() {
 
     let highestProScoreVal = -1;
     sortedList.forEach(u => { if (u.isPro && u.score > highestProScoreVal) highestProScoreVal = u.score; });
+    const slayersList = sortedList.filter((p, idx) => !p.isPro && p.score > highestProScoreVal && (idx + 1) > 10).map(p => p.id);
+    const indBounty = slayersList.length > 0 ? Math.min(slayersList.length * 5, 55) / slayersList.length : 0;
 
-    const pGroups: { score: number, players: User[], startOrdinal: number }[] = [];
-    let curOrdVal = 1;
-    sortedList.forEach((u, i) => {
-        if (i === 0 || u.score !== sortedList[i-1].score) {
-            pGroups.push({ score: u.score, players: [u], startOrdinal: curOrdVal });
-        } else {
-            pGroups[pGroups.length - 1].players.push(u);
-        }
-        curOrdVal++;
-    });
-
-    const slayersList: string[] = [];
-    sortedList.forEach((p, idx) => {
-        const ord = idx + 1;
-        if (!p.isPro && p.score > highestProScoreVal && ord > 10) slayersList.push(p.id);
-    });
-
-    const sPoolTotal = Math.min(slayersList.length * 5, 55);
-    const indBounty = slayersList.length > 0 ? sPoolTotal / slayersList.length : 0;
-
-    const weightSum = 33.2529;
-    const netSFund = 530 - 150 - 10 - sPoolTotal;
-    const p10Val = netSFund / weightSum;
-    let pArr: number[] = [p10Val];
+    const netSFund = 530 - 150 - 10 - Math.min(slayersList.length * 5, 55);
+    let pArr: number[] = [netSFund / 33.2529];
     for (let i = 0; i < 9; i++) pArr.push(pArr[i] * 1.25);
-    const fSeasonalPrizes = pArr.reverse();
+    const finalSeasonalPrizes = pArr.reverse();
 
     let potentialAmount = 0;
-    pGroups.forEach(group => {
-        const regs = group.players.filter(p => !p.isPro);
-        if (regs.length > 0) {
-            let gRegPrizeTotal = 0;
-            group.players.forEach((p, idx) => {
-                const pOrd = group.startOrdinal + idx;
-                if (!p.isPro && pOrd <= 10) gRegPrizeTotal += (fSeasonalPrizes[pOrd-1] || 0);
-            });
-            if (regs.some(r => r.id === profile.id)) potentialAmount = gRegPrizeTotal / regs.length;
-        }
-    });
-
+    const myOrd = sortedList.findIndex(u => u.id === profile.id) + 1;
+    if (!profile.isPro && myOrd <= 10) potentialAmount = finalSeasonalPrizes[myOrd - 1] || 0;
     if (slayersList.includes(profile.id) && potentialAmount === 0) potentialAmount = indBounty;
 
     return { bagged: baggedAmount, potential: potentialAmount };
   }, [profile, allUsers, monthlyMimoM, predictions]);
 
   const cInfo = React.useMemo(() => {
-    if (!allUserHistories || !userHistory || !userHistory.weeklyScores) return { chartData: [], yAxisDomain: [0, 10] as [number, number] };
-    const aWeeks = [...new Set(allUserHistories.flatMap(h => h.weeklyScores.map(w => w.week)))].filter(w => w > 0).sort((a, b) => a - b);
-    const aScores = allUserHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.score));
+    if (!allUserHistories || !userHistory?.weeklyScores) return { chartData: [], yAxisDomain: [0, 10] as [number, number] };
+    const aWeeks = [...new Set(allUserHistories.flatMap(h => h.weeklyScores.map(w => w.week)))].filter(w => w >= 0).sort((a, b) => a - b);
+    const aScores = allUserHistories.flatMap(h => h.weeklyScores.map(w => w.score));
     if (aScores.length === 0) return { chartData: [], yAxisDomain: [0, 10] as [number, number] };
-    const mS = Math.min(...aScores);
-    const XS = Math.max(...aScores);
     return {
       chartData: aWeeks.map(week => {
-        const sThisWk = allUserHistories.map(h => h.weeklyScores.find(w => w.week === week)?.score).filter((s): s is number => s !== undefined);
-        return {
-          week: `Wk ${week}`,
-          'Your Score': userHistory.weeklyScores.find(w => w.week === week)?.score,
-          'Max Score': sThisWk.length > 0 ? Math.max(...sThisWk) : undefined,
-          'Min Score': sThisWk.length > 0 ? Math.min(...sThisWk) : undefined,
-        };
+        const s = allUserHistories.map(h => h.weeklyScores.find(w => w.week === week)?.score).filter((v): v is number => v !== undefined);
+        return { week: `Wk ${week}`, 'Your Score': userHistory.weeklyScores.find(w => w.week === week)?.score, 'Max Score': s.length > 0 ? Math.max(...s) : undefined, 'Min Score': s.length > 0 ? Math.min(...s) : undefined };
       }),
-      yAxisDomain: [mS - 5, XS + 5] as [number, number]
+      yAxisDomain: [Math.min(...aScores) - 5, Math.max(...aScores) + 5] as [number, number]
     };
   }, [allUserHistories, userHistory]);
 
-  const onProfileSave = async (values: ProfileFormValues) => {
-    if (userDocRef) {
-      setDocumentNonBlocking(userDocRef, values, { merge: true });
-      toast({ title: 'Profile Updated!' });
-    }
-  };
-
-  const onEmailUpdate = async (values: EmailFormValues) => {
-    if (authUser) {
-      try {
-        await updateEmail(authUser, values.email);
-        if (userDocRef) setDocumentNonBlocking(userDocRef, { email: values.email }, { merge: true });
-        toast({ title: 'Email Address Updated!' });
-      } catch (e: any) {
-        toast({ variant: 'destructive', title: 'Update Failed', description: e.message });
-      }
-    }
-  };
-
-  const onPasswordUpdate = async (values: PasswordFormValues) => {
-    if (authUser) {
-      try {
-        await updatePassword(authUser, values.password);
-        if (userDocRef) setDocumentNonBlocking(userDocRef, { mustChangePassword: false }, { merge: true });
-        toast({ title: 'Password Updated Successfully!' });
-        passwordForm.reset();
-      } catch (e: any) {
-        toast({ variant: 'destructive', title: 'Security Update Failed', description: e.message });
-      }
-    }
-  };
-
+  const onProfileSave = (values: z.infer<typeof profileFormSchema>) => { if (userDocRef) { setDocumentNonBlocking(userDocRef, values, { merge: true }); toast({ title: 'Profile Updated!' }); } };
+  const onEmailUpdate = async (values: z.infer<typeof emailFormSchema>) => { if (authUser) { try { await updateEmail(authUser, values.email); if (userDocRef) setDocumentNonBlocking(userDocRef, { email: values.email }, { merge: true }); toast({ title: 'Email Updated!' }); } catch (e: any) { toast({ variant: 'destructive', title: 'Fail', description: e.message }); } } };
+  const onPasswordUpdate = async (values: z.infer<typeof passwordFormSchema>) => { if (authUser) { try { await updatePassword(authUser, values.password); if (userDocRef) setDocumentNonBlocking(userDocRef, { mustChangePassword: false }, { merge: true }); toast({ title: 'Security Updated!' }); passwordForm.reset(); } catch (e: any) { toast({ variant: 'destructive', title: 'Fail', description: e.message }); } } };
   const handleAvatarSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && userDocRef) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setAvatarPreview(result);
-        setDocumentNonBlocking(userDocRef, { avatar: result }, { merge: true });
-        toast({ title: 'Avatar Updated!' });
-      };
+      reader.onloadend = () => { const res = reader.result as string; setAvatarPreview(res); setDocumentNonBlocking(userDocRef, { avatar: res }, { merge: true }); toast({ title: 'Avatar Updated!' }); };
       reader.readAsDataURL(file);
     }
   };
   
-  if (isAuthUserLoading || profileLoading || historyLoading || teamsLoading || allHistoriesLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        <p className="ml-2">Loading profile...</p>
-      </div>
-    );
-  }
-
-  if (!authUser) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <AuthForm />
-      </div>
-    );
-  }
+  if (isAuthUserLoading || profileLoading || historyLoading || teamsLoading || allHistoriesLoading) return <div className="flex h-96 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /><p className="ml-2">Connecting...</p></div>;
+  if (!authUser) return <div className="flex h-full w-full items-center justify-center"><AuthForm /></div>;
 
   const ttCount = (profile?.first || 0) + (profile?.second || 0) + (profile?.third || 0) + (profile?.fourth || 0) + (profile?.fifth || 0) + (profile?.sixth || 0) + (profile?.seventh || 0) + (profile?.eighth || 0) + (profile?.ninth || 0) + (profile?.tenth || 0);
 
@@ -320,7 +199,7 @@ export default function ProfilePage() {
                                           <TooltipContent><p>Runner Up</p></TooltipContent>
                                       </Tooltip>
                                       <Tooltip>
-                                          <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-xs font-black">1st</span><Trophy className={cn("size-10", (profile?.first ?? 0) > 0 ? "text-yellow-500" : "text-yellow-100")} /><span className="text-base font-black">{profile?.first || 0}</span></div></TooltipTrigger>
+                                          <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-xs font-black">1st</span><Star className={cn("size-10", (profile?.first ?? 0) > 0 ? "text-yellow-500" : "text-yellow-100")} /><span className="text-base font-black">{profile?.first || 0}</span></div></TooltipTrigger>
                                           <TooltipContent><p>Champion</p></TooltipContent>
                                       </Tooltip>
                                       <Tooltip>
@@ -328,7 +207,7 @@ export default function ProfilePage() {
                                           <TooltipContent><p>3rd Place</p></TooltipContent>
                                       </Tooltip>
                                       <Tooltip>
-                                          <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-muted-foreground">T10</span><Award className="size-7 text-primary/40" /><span className="text-sm font-black">{ttCount}</span></div></TooltipTrigger>
+                                          <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-muted-foreground">T10</span><Medal className="size-7 text-primary/40" /><span className="text-sm font-black">{ttCount}</span></div></TooltipTrigger>
                                           <TooltipContent><p>Top 10 Finishes</p></TooltipContent>
                                       </Tooltip>
                                   </TooltipProvider>
@@ -363,29 +242,23 @@ export default function ProfilePage() {
                       </div>
                   </div>
                 <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Real Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="nickname" render={({ field }) => (<FormItem><FormLabel>Display Nickname</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="nickname" render={({ field }) => (<FormItem><FormLabel>Nickname</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="initials" render={({ field }) => (<FormItem><FormLabel>Initials</FormLabel><FormControl><Input {...field} maxLength={4}/></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="phoneNumber" render={({ field }) => (<FormItem><FormLabel>Mobile Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="phoneNumber" render={({ field }) => (<FormItem><FormLabel>Mobile</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="favouriteTeam" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Supported Team</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
+                      <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                       <SelectContent>
                         <SelectItem value="none">Neutral</SelectItem>
-                        {teams?.map((team) => (
-                          <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
-                        ))}
+                        {teams?.map((team) => (<SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )} />
-                <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">{form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save Profile Changes</Button>
+                <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">Save Changes</Button>
               </form>
             </Form>
           </CardContent>
@@ -397,8 +270,8 @@ export default function ProfilePage() {
             <CardContent>
               <Form {...emailForm}>
                 <form onSubmit={emailForm.handleSubmit(onEmailUpdate)} className="space-y-4">
-                  <FormField control={emailForm.control} name="email" render={({ field }) => (<FormItem><FormLabel>Current Login Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                  <Button type="submit" disabled={emailForm.formState.isSubmitting} variant="outline" className="w-full">{emailForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />} Update Login Email</Button>
+                  <FormField control={emailForm.control} name="email" render={({ field }) => (<FormItem><FormLabel>Login Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                  <Button type="submit" disabled={emailForm.formState.isSubmitting} variant="outline" className="w-full">Update Email</Button>
                 </form>
               </Form>
             </CardContent>
@@ -409,8 +282,8 @@ export default function ProfilePage() {
               <Form {...passwordForm}>
                 <form onSubmit={passwordForm.handleSubmit(onPasswordUpdate)} className="space-y-4">
                   <FormField control={passwordForm.control} name="password" render={({ field }) => (<FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                  <FormField control={passwordForm.control} name="confirmPassword" render={({ field }) => (<FormItem><FormLabel>Confirm New Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                  <Button type="submit" className="w-full" disabled={passwordForm.formState.isSubmitting}>{passwordForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Update Secure Password</Button>
+                  <FormField control={passwordForm.control} name="confirmPassword" render={({ field }) => (<FormItem><FormLabel>Confirm</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                  <Button type="submit" className="w-full" disabled={passwordForm.formState.isSubmitting}>Update Password</Button>
                 </form>
               </Form>
             </CardContent>
