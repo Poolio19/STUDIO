@@ -37,7 +37,7 @@ export async function recalculateAllDataClientSide(
       const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
       
       const historicalUserIds = new Set(historicalPlayersData.map(p => p.id));
-      const activeUserIds = new Set(predictions.filter(p => p.rankings?.length === 20).map(p => p.userId));
+      const activeUserIds = new Set(predictions.filter(p => p.rankings?.length === 20).map(p => p.userId || (p as any).id));
       const users = allUsers.filter(u => activeUserIds.has(u.id) && (historicalUserIds.has(u.id) || u.isPro));
       const prevStandingsRankMap = new Map(prevStandingsData.map(s => [s.teamId, s.rank]));
 

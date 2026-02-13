@@ -128,7 +128,7 @@ export default function ProfilePage() {
   const currentPrizes = React.useMemo(() => {
     if (!profile || !allUsers || !monthlyMimoM || !predictions) return { bagged: 0, potential: 0 };
 
-    const activeUsers = allUsers.filter(u => u.name && predictions.some(p => (p.userId || p.id) === u.id));
+    const activeUsers = allUsers.filter(u => u.name && predictions.some(p => (p.userId || (p as any).id) === u.id));
     const sortedList = [...activeUsers].sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
         const aIsPro = a.isPro ? 1 : 0;
@@ -275,7 +275,13 @@ export default function ProfilePage() {
     );
   }
 
-  if (!authUser) return <div className="flex h-full w-full items-center justify-center"><AuthForm /></div>;
+  if (!authUser) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <AuthForm />
+      </div>
+    );
+  }
 
   const ttCount = (profile?.first || 0) + (profile?.second || 0) + (profile?.third || 0) + (profile?.fourth || 0) + (profile?.fifth || 0) + (profile?.sixth || 0) + (profile?.seventh || 0) + (profile?.eighth || 0) + (profile?.ninth || 0) + (profile?.tenth || 0);
 

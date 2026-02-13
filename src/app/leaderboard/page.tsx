@@ -76,7 +76,7 @@ export default function LeaderboardPage() {
   const sortedUsers = useMemo(() => {
     if (!usersData || !predictionsData) return [];
     const historicalUserIds = new Set(historicalPlayersData.map(p => p.id));
-    const activeUserIds = new Set(predictionsData.filter(p => p.rankings?.length === 20).map(p => p.userId || p.id));
+    const activeUserIds = new Set(predictionsData.filter(p => p.rankings?.length === 20).map(p => p.userId || (p as any).id));
     
     return [...usersData]
         .filter(u => u.name && (historicalUserIds.has(u.id) || u.isPro) && activeUserIds.has(u.id))
@@ -85,7 +85,7 @@ export default function LeaderboardPage() {
             const aIsPro = a.isPro ? 1 : 0;
             const bIsPro = b.isPro ? 1 : 0;
             if (aIsPro !== bIsPro) return bIsPro - aIsPro; // Pros always win ties
-            return a.name.localeCompare(b.name);
+            return (a.name || '').localeCompare(b.name || '');
         });
   }, [usersData, predictionsData]);
 
@@ -95,6 +95,7 @@ export default function LeaderboardPage() {
 
     sortedUsers.forEach(u => breakdown.set(u.id, { total: 0, seasonal: 0, monthly: 0, proBounty: 0 }));
 
+    // Monthly Logic
     const awardsMap: Record<string, { winners: string[], runnersUp: string[] }> = {};
     monthlyMimoM.forEach(m => {
         const key = m.special || `${m.month}-${m.year}`;
@@ -118,8 +119,26 @@ export default function LeaderboardPage() {
         }
     });
 
+    // Pro-Slayer Logic
     let highestProScore = -1;
     sortedUsers.forEach(u => { if (u.isPro && u.score > highestProScore) highestProScore = u.score; });
+
+    const slayers: string[] = [];
+    sortedUsers.forEach((p, idx) => {
+        const ord = idx + 1;
+        if (!p.isPro && p.score > highestProScore && ord > 10) slayers.push(p.id);
+    });
+
+    const slayerPoolTotal = Math.min(slayers.length * 5, 55);
+    const individualBounty = slayers.length > 0 ? slayerPoolTotal / slayers.length : 0;
+
+    // Seasonal Fund Logic
+    const netSeasonalFund = 530 - 150 - 10 - slayerPoolTotal;
+    const weightSum = 33.2529;
+    const p10 = netSeasonalFund / weightSum;
+    let prizes: number[] = [p10];
+    for (let i = 0; i < 9; i++) prizes.push(prizes[i] * 1.25);
+    const finalSeasonalPrizes = prizes.reverse();
 
     const pointsGroups: { score: number, players: User[], startOrdinal: number }[] = [];
     let curOrd = 1;
@@ -131,23 +150,6 @@ export default function LeaderboardPage() {
         }
         curOrd++;
     });
-
-    const slayers: string[] = [];
-    sortedUsers.forEach((p, idx) => {
-        const ord = idx + 1;
-        if (!p.isPro && p.score > highestProScore && ord > 10) slayers.push(p.id);
-    });
-
-    // Share pool strictly capped at £55
-    const slayerPoolTotal = Math.min(slayers.length * 5, 55);
-    const individualBounty = slayers.length > 0 ? slayerPoolTotal / slayers.length : 0;
-
-    const netSeasonalFund = 530 - 150 - 10 - slayerPoolTotal;
-    const weightSum = 33.2529;
-    const p10 = netSeasonalFund / weightSum;
-    let prizes: number[] = [p10];
-    for (let i = 0; i < 9; i++) prizes.push(prizes[i] * 1.25);
-    const finalSeasonalPrizes = prizes.reverse();
 
     pointsGroups.forEach(group => {
         const regulars = group.players.filter(p => !p.isPro);
@@ -179,6 +181,8 @@ export default function LeaderboardPage() {
 
     return breakdown;
   }, [sortedUsers, monthlyMimoM]);
+
+  const scoresOnlyArr = useMemo(() => sortedUsers.map(u => u.score), [sortedUsers]);
 
   return (
     <div className="flex flex-col gap-8">
@@ -223,7 +227,6 @@ export default function LeaderboardPage() {
                   const RankIcon = getRankChangeIcon(user.rankChange);
                   const isCurrentUser = user.id === resolvedUserId;
 
-                  const scoresOnlyArr = sortedUsers.map(u => u.score);
                   const competitionRank = scoresOnlyArr.indexOf(user.score) + 1;
 
                   return (
