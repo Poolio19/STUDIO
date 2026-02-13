@@ -1,10 +1,11 @@
+
 'use client';
 
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { ShieldCheck, Loader2, Medal, Star, Upload as UploadIcon, Trophy } from 'lucide-react';
+import { ShieldCheck, Loader2, Medal, Star, Upload as UploadIcon, Trophy, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -72,7 +73,7 @@ export default function ProfilePage() {
   const { data: allUserHistories, isLoading: allHistoriesLoading } = useCollection<UserHistory>(allUserHistoriesQuery);
   const { data: teams, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
   const { data: allUsers } = useCollection<User>(usersQuery);
-  const { data: monthlyMimoM } = useCollection<MonthlyMimoM>(mimoMQuery);
+  const { data: monthlyMimoMAwards } = useCollection<MonthlyMimoM>(mimoMQuery);
   const { data: predictions } = useCollection<Prediction>(predictionsQuery);
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
@@ -97,14 +98,30 @@ export default function ProfilePage() {
     }
   }, [profile, authUser, form, emailForm]);
 
+  const awardCerts = React.useMemo(() => {
+    if (!profile || !monthlyMimoMAwards) return [];
+    return monthlyMimoMAwards
+        .filter(a => a.userId === profile.id)
+        .map(a => {
+            const shortYear = String(a.year).slice(-2);
+            const monthPad = String(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].indexOf(a.month) + 1).padStart(2, '0');
+            const code = a.type === 'winner' ? 'MiM' : 'RuM';
+            return {
+                id: a.id,
+                label: `${code}: ${monthPad}/${shortYear}`,
+                isWinner: a.type === 'winner'
+            };
+        });
+  }, [profile, monthlyMimoMAwards]);
+
   const currentPrizes = React.useMemo(() => {
-    if (!profile || !allUsers || !monthlyMimoM || !predictions) return { bagged: 0, potential: 0 };
+    if (!profile || !allUsers || !monthlyMimoMAwards || !predictions) return { bagged: 0, potential: 0 };
     const activeUsers = allUsers.filter(u => u.name && predictions.some(p => (p.userId || (p as any).id) === u.id));
     const sortedList = [...activeUsers].sort((a, b) => b.score - a.score || (a.isPro ? -1 : 1) || (a.name || '').localeCompare(b.name || ''));
 
     let baggedAmount = 0;
     const awardsMap: Record<string, { winners: string[], runnersUp: string[] }> = {};
-    monthlyMimoM.forEach(m => {
+    monthlyMimoMAwards.forEach(m => {
         const key = m.special || `${m.month}-${m.year}`;
         if (!awardsMap[key]) awardsMap[key] = { winners: [], runnersUp: [] };
         if (m.type === 'winner') awardsMap[key].winners.push(m.userId);
@@ -132,7 +149,7 @@ export default function ProfilePage() {
     if (slayersList.includes(profile.id) && potentialAmount === 0) potentialAmount = indBounty;
 
     return { bagged: baggedAmount, potential: potentialAmount };
-  }, [profile, allUsers, monthlyMimoM, predictions]);
+  }, [profile, allUsers, monthlyMimoMAwards, predictions]);
 
   const cInfo = React.useMemo(() => {
     if (!allUserHistories || !userHistory?.weeklyScores) return { chartData: [], yAxisDomain: [0, 10] as [number, number] };
@@ -149,18 +166,7 @@ export default function ProfilePage() {
   }, [allUserHistories, userHistory]);
 
   const onProfileSave = (values: z.infer<typeof profileFormSchema>) => { if (userDocRef) { setDocumentNonBlocking(userDocRef, values, { merge: true }); toast({ title: 'Profile Updated!' }); } };
-  
-  const onEmailUpdate = async (values: z.infer<typeof emailFormSchema>) => { 
-    if (authUser) { 
-      try { 
-        await verifyBeforeUpdateEmail(authUser, values.email); 
-        toast({ title: 'Verification Sent', description: 'Please check your new inbox to verify the change.' }); 
-      } catch (e: any) { 
-        toast({ variant: 'destructive', title: 'Fail', description: e.message }); 
-      } 
-    } 
-  };
-
+  const onEmailUpdate = async (values: z.infer<typeof emailFormSchema>) => { if (authUser) { try { await verifyBeforeUpdateEmail(authUser, values.email); toast({ title: 'Verification Sent', description: 'Please check your new inbox to verify the change.' }); } catch (e: any) { toast({ variant: 'destructive', title: 'Fail', description: e.message }); } } };
   const onPasswordUpdate = async (values: z.infer<typeof passwordFormSchema>) => { if (authUser) { try { await updatePassword(authUser, values.password); if (userDocRef) setDocumentNonBlocking(userDocRef, { mustChangePassword: false }, { merge: true }); toast({ title: 'Security Updated!' }); passwordForm.reset(); } catch (e: any) { toast({ variant: 'destructive', title: 'Fail', description: e.message }); } } };
   
   const handleAvatarSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -184,7 +190,7 @@ export default function ProfilePage() {
               <div className="flex flex-col lg:flex-row items-center lg:items-stretch">
                   {/* Avatar & Gaudy Gold Frame Section */}
                   <div className="p-1 lg:w-1/3 flex flex-col items-center justify-center border-b lg:border-b-0 lg:border-r bg-muted/5">
-                      <div className="relative p-6 rounded-xl shadow-2xl bg-gradient-to-tr from-yellow-600 via-yellow-200 to-yellow-600 border-4 border-yellow-700 w-full h-full flex flex-col items-center justify-center min-h-[400px]">
+                      <div className="relative p-6 rounded-xl shadow-2xl bg-gradient-to-tr from-yellow-600 via-yellow-200 to-yellow-600 border-[16px] border-yellow-700 w-full h-full flex flex-col items-center justify-center min-h-[400px]">
                           <Avatar className="h-60 w-60 rounded-lg border-8 border-yellow-900 shadow-inner bg-card">
                               <AvatarImage src={avatarPreview || getAvatarUrl(profile?.avatar)} alt={profile?.name} className="object-cover" />
                               <AvatarFallback className="text-6xl">{(profile?.name || '?').charAt(0)}</AvatarFallback>
@@ -198,21 +204,25 @@ export default function ProfilePage() {
                   
                   <div className="flex-1 p-8 flex flex-col gap-8">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="border-2 border-primary/20 rounded-xl p-6 bg-card shadow-sm">
-                              <h3 className="text-lg font-bold mb-4 flex items-center justify-center gap-2 text-primary border-b pb-2"><ShieldCheck className="size-5" /> This Season's Stats</h3>
-                              <div className="grid grid-cols-4 gap-x-2 text-center text-sm">
-                                  <div /><div className="font-semibold text-muted-foreground text-xs uppercase">High</div><div className="font-semibold text-muted-foreground text-xs uppercase">Low</div><div className="font-semibold text-muted-foreground text-xs uppercase">Now</div>
-                                  <div className="font-bold text-muted-foreground text-left py-2 border-b">Pos</div><div className="font-bold text-green-600 py-2 border-b">{profile?.minRank || '-'}</div><div className="font-bold text-red-600 py-2 border-b">{profile?.maxRank || '-'}</div><div className="font-extrabold py-2 border-b text-lg">{profile?.rank || '-'}</div>
-                                  <div className="font-bold text-muted-foreground text-left py-2">Pts</div><div className="font-bold text-green-600 py-2">{profile?.maxScore || '-'}</div><div className="font-bold text-red-600 py-2">{profile?.minScore || '-'}</div><div className="font-extrabold py-2 text-lg">{profile?.score || '-'}</div>
+                          <div className="space-y-6">
+                              <div className="border-2 border-primary/20 rounded-xl p-6 bg-card shadow-sm">
+                                  <h3 className="text-lg font-bold mb-4 flex items-center justify-center gap-2 text-primary border-b pb-2"><ShieldCheck className="size-5" /> This Season's Stats</h3>
+                                  <div className="grid grid-cols-4 gap-x-2 text-center text-sm">
+                                      <div /><div className="font-semibold text-muted-foreground text-xs uppercase">High</div><div className="font-semibold text-muted-foreground text-xs uppercase">Low</div><div className="font-semibold text-muted-foreground text-xs uppercase">Now</div>
+                                      <div className="font-bold text-muted-foreground text-left py-2 border-b">Pos</div><div className="font-bold text-green-600 py-2 border-b">{profile?.minRank || '-'}</div><div className="font-bold text-red-600 py-2 border-b">{profile?.maxRank || '-'}</div><div className="font-extrabold py-2 border-b text-lg">{profile?.rank || '-'}</div>
+                                      <div className="font-bold text-muted-foreground text-left py-2">Pts</div><div className="font-bold text-green-600 py-2">{profile?.maxScore || '-'}</div><div className="font-bold text-red-600 py-2">{profile?.minScore || '-'}</div><div className="font-extrabold py-2 text-lg">{profile?.score || '-'}</div>
+                                  </div>
                               </div>
                           </div>
                           
                           {/* Wood & Glass Trophy Cabinet */}
-                          <div className="border-[12px] border-amber-950 bg-amber-900 rounded-xl shadow-2xl p-1 relative">
-                              <div className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded h-full p-6 shadow-inner overflow-hidden">
+                          <div className="border-[12px] border-amber-950 bg-amber-900 rounded-xl shadow-2xl p-1 relative h-full">
+                              <div className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded h-full p-6 shadow-inner overflow-hidden flex flex-col gap-6">
                                   {/* Glass Glare */}
                                   <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none z-10" />
-                                  <h3 className="text-sm font-black mb-4 text-center flex items-center justify-center gap-2 text-white/90 border-b border-white/20 pb-2 relative z-20">TROPHY CABINET</h3>
+                                  <h3 className="text-sm font-black text-center flex items-center justify-center gap-2 text-white/90 border-b border-white/20 pb-2 relative z-20">TROPHY CABINET</h3>
+                                  
+                                  {/* Top Shelf: Majors */}
                                   <div className="flex justify-around items-end h-20 relative z-20">
                                       <TooltipProvider>
                                           <Tooltip>
@@ -232,6 +242,24 @@ export default function ProfilePage() {
                                               <TooltipContent><p>Top 10 Finishes</p></TooltipContent>
                                           </Tooltip>
                                       </TooltipProvider>
+                                  </div>
+
+                                  {/* Bottom Shelf: Certificates (MiMoMs) */}
+                                  <div className="relative z-20 border-t border-white/10 pt-4">
+                                      <div className="flex flex-wrap justify-center gap-2 max-h-32 overflow-y-auto pr-1">
+                                          {awardCerts.length > 0 ? awardCerts.map((cert) => (
+                                              <div key={cert.id} className={cn(
+                                                  "px-2 py-1 rounded border-2 text-[10px] font-black uppercase tracking-tighter shadow-sm whitespace-nowrap",
+                                                  cert.isWinner 
+                                                    ? "bg-yellow-100 border-yellow-500 text-yellow-900" 
+                                                    : "bg-slate-100 border-slate-400 text-slate-900"
+                                              )}>
+                                                  {cert.label}
+                                              </div>
+                                          )) : (
+                                              <p className="text-[10px] text-white/20 italic">No certificates yet.</p>
+                                          )}
+                                      </div>
                                   </div>
                               </div>
                           </div>
@@ -260,7 +288,7 @@ export default function ProfilePage() {
                       <Label>Avatar</Label>
                       <div className="flex items-center gap-4">
                             <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}><UploadIcon className="mr-2 h-4 w-4" />Change Picture</Button>
-                            <Input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarSelect} />
+                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarSelect} />
                       </div>
                   </div>
                 <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Real Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
