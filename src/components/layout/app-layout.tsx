@@ -1,11 +1,10 @@
-
 'use client';
 
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { SidebarNav } from './sidebar-nav';
 import { cn } from '@/lib/utils';
 import { useUser, useFirebaseConfigStatus, useFirestore, useMemoFirebase, useCollection, useDoc, useResolvedUserId } from '@/firebase';
-import { Loader2, RefreshCw, Menu } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import React, { useMemo, useEffect } from 'react';
 import { collection, doc } from 'firebase/firestore';
@@ -134,7 +133,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   <AlertDialogContent>
                       <AlertDialogHeader><AlertDialogTitle>Run master recalculation?</AlertDialogTitle></AlertDialogHeader>
                       <AlertDialogDescription>This will restore all tables and apply strictly enforced competition ranks and prize rules.</AlertDialogDescription>
-                      <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleRecalculate}>Recalculate Now</AlertDialogAction></AlertDialogFooter>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleRecalculate}>Recalculate Now</AlertDialogAction>
+                      </AlertDialogFooter>
                   </AlertDialogContent>
               </AlertDialog>
             )}

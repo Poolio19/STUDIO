@@ -1,11 +1,10 @@
-
 'use client';
 
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { ShieldCheck, Loader2, Medal, Star, Upload as UploadIcon, Trophy, Award } from 'lucide-react';
+import { ShieldCheck, Loader2, Medal, Upload as UploadIcon, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -104,8 +103,18 @@ export default function ProfilePage() {
         .filter(a => a.userId === profile.id)
         .map(a => {
             const shortYear = String(a.year).slice(-2);
-            const monthPad = String(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].indexOf(a.month) + 1).padStart(2, '0');
-            const code = a.type === 'winner' ? 'MiM' : 'RuM';
+            const m = a.month.slice(0, 3);
+            const monthMap: Record<string, string> = { 'Jan':'01','Feb':'02','Mar':'03','Apr':'04','May':'05','Jun':'06','Jul':'07','Aug':'08','Sep':'09','Oct':'10','Nov':'11','Dec':'12' };
+            const monthPad = monthMap[m] || '00';
+            let code = 'MiM';
+            if (a.special === 'Winner') code = 'MiM';
+            else if (a.special === 'Runner-Up') code = 'RuM';
+            else if (a.type === 'winner') code = 'MiM';
+            else if (a.type === 'runner-up') code = 'RuM';
+            
+            // Check for Joint awards
+            if (a.special && a.special.toLowerCase().includes('jo')) code = 'J' + code;
+
             return {
                 id: a.id,
                 label: `${code}: ${monthPad}/${shortYear}`,
@@ -188,7 +197,7 @@ export default function ProfilePage() {
       <Card className="overflow-hidden border-2 shadow-2xl">
           <CardContent className="p-0">
               <div className="flex flex-col lg:flex-row items-center lg:items-stretch">
-                  {/* Avatar & Gaudy Gold Frame Section */}
+                  {/* Gaudy Gold Frame Section */}
                   <div className="p-1 lg:w-1/3 flex flex-col items-center justify-center border-b lg:border-b-0 lg:border-r bg-muted/5">
                       <div className="relative p-6 rounded-xl shadow-2xl bg-gradient-to-tr from-yellow-600 via-yellow-200 to-yellow-600 border-[16px] border-yellow-700 w-full h-full flex flex-col items-center justify-center min-h-[400px]">
                           <Avatar className="h-60 w-60 rounded-lg border-8 border-yellow-900 shadow-inner bg-card">
@@ -218,11 +227,9 @@ export default function ProfilePage() {
                           {/* Wood & Glass Trophy Cabinet */}
                           <div className="border-[12px] border-amber-950 bg-amber-900 rounded-xl shadow-2xl p-1 relative h-full">
                               <div className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded h-full p-6 shadow-inner overflow-hidden flex flex-col gap-6">
-                                  {/* Glass Glare */}
                                   <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none z-10" />
-                                  <h3 className="text-sm font-black text-center flex items-center justify-center gap-2 text-white/90 border-b border-white/20 pb-2 relative z-20">TROPHY CABINET</h3>
+                                  <h3 className="text-sm font-black text-center flex items-center justify-center gap-2 text-white/90 border-b border-white/20 pb-2 relative z-20 uppercase">Trophy Cabinet</h3>
                                   
-                                  {/* Top Shelf: Majors */}
                                   <div className="flex justify-around items-end h-20 relative z-20">
                                       <TooltipProvider>
                                           <Tooltip>
@@ -244,7 +251,6 @@ export default function ProfilePage() {
                                       </TooltipProvider>
                                   </div>
 
-                                  {/* Bottom Shelf: Certificates (MiMoMs) */}
                                   <div className="relative z-20 border-t border-white/10 pt-4">
                                       <div className="flex flex-wrap justify-center gap-2 max-h-32 overflow-y-auto pr-1">
                                           {awardCerts.length > 0 ? awardCerts.map((cert) => (

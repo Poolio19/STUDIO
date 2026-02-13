@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -9,14 +8,13 @@ import {
   type Firestore,
   type WriteBatch,
 } from 'firebase/firestore';
-import type { Team, Prediction, User as UserProfile, UserHistory, Match } from '@/lib/types';
+import type { Team, Prediction, User as UserProfile, UserHistory, Match, MonthlyMimoM } from '@/lib/types';
 import prevStandingsData from './previous-season-standings-24-25.json';
 import historicalPlayersData from './historical-players.json';
+import historicalMimoAwardsData from './historical-mimo-awards.json';
 
 /**
- * Recalculates all derived data based on strict competition ranking and prize rules.
- * Populates: standings, playerTeamScores, weeklyTeamStandings, teamRecentResults, userHistories.
- * Robustly handles Week 0 (start of season) to ensure no empty tables.
+ * Recalculates all derived data and seeds historical records.
  */
 export async function recalculateAllDataClientSide(
   firestore: Firestore,
@@ -44,7 +42,7 @@ export async function recalculateAllDataClientSide(
       const prevStandingsRankMap = new Map(prevStandingsData.map(s => [s.teamId, s.rank]));
 
       progressCallback('Clearing derived database tables...');
-      const derivedCollections = ['standings', 'playerTeamScores', 'teamRecentResults', 'weeklyTeamStandings', 'userHistories'];
+      const derivedCollections = ['standings', 'playerTeamScores', 'teamRecentResults', 'weeklyTeamStandings', 'userHistories', 'monthlyMimoM'];
       for (const colName of derivedCollections) {
           const snap = await getDocs(collection(firestore, colName));
           let batch = writeBatch(firestore); let count = 0;
@@ -64,6 +62,30 @@ export async function recalculateAllDataClientSide(
           op(mainBatches[bIdx]); opCount++;
           if (opCount >= 499) { mainBatches.push(writeBatch(firestore)); bIdx++; opCount = 0; }
       };
+
+      // --- Seed Historical Certificates ---
+      progressCallback('Seeding historical award records...');
+      const userByName = new Map(historicalPlayersData.map(p => [p.name, p.id]));
+      historicalMimoAwardsData.forEach((monthData: any) => {
+          const year = parseInt(monthData.season.split('-')[0]);
+          monthData.awards.forEach((award: any) => {
+              const uId = userByName.get(award.name);
+              if (uId) {
+                  let type: 'winner' | 'runner-up' = 'winner';
+                  if (award.type.toLowerCase().includes('ru')) type = 'runner-up';
+                  
+                  addOp(b => b.set(doc(firestore, 'monthlyMimoM', `${uId}-${monthData.season}-${monthData.month}`), {
+                      id: `${uId}-${monthData.season}-${monthData.month}`,
+                      userId: uId,
+                      month: monthData.month,
+                      year: year,
+                      type: type,
+                      special: award.type, // Store original "JoMiMoM" etc for parsing
+                      improvement: award.improvement || 0
+                  }));
+              }
+          });
+      });
 
       const playedMatches = allMatches.filter(m => m.homeScore > -1 && m.awayScore > -1);
       const playedWeeks = [0, ...new Set(playedMatches.map(m => m.week))].sort((a,b) => a-b);
@@ -94,7 +116,6 @@ export async function recalculateAllDataClientSide(
               });
           }
 
-          // CRITICAL: populate main tables for the LATEST week (restores standings, scores, results)
           if (week === latestWeek) {
               teams.forEach(t => {
                   const s = tStats[t.id];
@@ -135,7 +156,7 @@ export async function recalculateAllDataClientSide(
                   if (b.score !== a.score) return b.score - a.score;
                   const aIsPro = a.isPro ? 1 : 0;
                   const bIsPro = b.isPro ? 1 : 0;
-                  if (aIsPro !== bIsPro) return bIsPro - aIsPro; // Pro Rule: Pros take higher spot in ties
+                  if (aIsPro !== bIsPro) return bIsPro - aIsPro; // Pro Rule
                   return (a.name || '').localeCompare(b.name || '');
               });
           
