@@ -63,7 +63,8 @@ export async function recalculateAllDataClientSide(
           if (opCount >= 499) { mainBatches.push(writeBatch(firestore)); bIdx++; opCount = 0; }
       };
 
-      const playedWeeks = [0, ...new Set(allMatches.filter(m => m.homeScore > -1).map(m => m.week))].sort((a,b) => a-b);
+      const playedMatches = allMatches.filter(m => m.homeScore > -1 && m.awayScore > -1);
+      const playedWeeks = [0, ...new Set(playedMatches.map(m => m.week))].sort((a,b) => a-b);
       const latestWeek = playedWeeks[playedWeeks.length - 1];
       
       for (const week of playedWeeks) {
@@ -73,7 +74,7 @@ export async function recalculateAllDataClientSide(
           teams.forEach(t => tStats[t.id] = { points: 0, goalDifference: 0, goalsFor: 0, goalsAgainst: 0, wins: 0, draws: 0, losses: 0, gamesPlayed: 0 });
 
           if (week > 0) {
-              const weekMatches = allMatches.filter(m => m.week <= week && m.homeScore > -1);
+              const weekMatches = playedMatches.filter(m => m.week <= week);
               weekMatches.forEach(m => {
                   const h = tStats[m.homeTeamId]; const a = tStats[m.awayTeamId];
                   h.goalsFor += m.homeScore; h.goalsAgainst += m.awayScore; h.goalDifference += (m.homeScore - m.awayScore); h.gamesPlayed++;
@@ -92,14 +93,13 @@ export async function recalculateAllDataClientSide(
               });
           }
 
-          // CRITICAL: Always populate main tables for the LATEST week, even if it is week 0
+          // Populate main tables for the LATEST week (restores standings, scores, results)
           if (week === latestWeek) {
               teams.forEach(t => {
                   const s = tStats[t.id];
                   const rank = tRanks.get(t.id) || 20;
                   addOp(b => b.set(doc(firestore, 'standings', t.id), { teamId: t.id, rank, ...s }));
                   
-                  // Recent Results (Last 6 matches)
                   const teamMatches = allMatches.filter(m => (m.homeTeamId === t.id || m.awayTeamId === t.id) && m.homeScore > -1)
                       .sort((a,b) => b.week - a.week).slice(0, 6);
                   const results = teamMatches.reverse().map(m => {
@@ -134,7 +134,7 @@ export async function recalculateAllDataClientSide(
                   if (b.score !== a.score) return b.score - a.score;
                   const aIsPro = a.isPro ? 1 : 0;
                   const bIsPro = b.isPro ? 1 : 0;
-                  if (aIsPro !== bIsPro) return bIsPro - aIsPro; // Pro-Consumption logic
+                  if (aIsPro !== bIsPro) return bIsPro - aIsPro; // Pro Rule: Pros take higher spot in ties
                   return (a.name || '').localeCompare(b.name || '');
               });
           
@@ -156,7 +156,8 @@ export async function recalculateAllDataClientSide(
               score: latest.score, rank: latest.rank, previousScore: prev.score, previousRank: prev.rank,
               scoreChange: latest.score - prev.score, rankChange: prev.rank > 0 ? prev.rank - latest.rank : 0,
               maxScore: Math.max(...scores), minScore: Math.min(...scores),
-              maxRank: Math.min(...ranks), minRank: Math.max(...ranks)
+              maxRank: ranks.length > 0 ? Math.min(...ranks) : 0, 
+              minRank: ranks.length > 0 ? Math.max(...ranks) : 0
           }, { merge: true }));
           addOp(b => b.set(doc(firestore, 'userHistories', u.id), hist));
       }

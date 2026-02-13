@@ -4,7 +4,7 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Mail, ShieldCheck, Loader2, Medal, Star, Upload as UploadIcon } from 'lucide-react';
+import { ShieldCheck, Loader2, Medal, Star, Upload as UploadIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {

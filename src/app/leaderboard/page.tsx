@@ -89,7 +89,7 @@ export default function LeaderboardPage() {
 
     sortedUsers.forEach(u => breakdown.set(u.id, { total: 0, seasonal: 0, monthly: 0, proBounty: 0 }));
 
-    // Monthly Logic
+    // 1. Monthly Awards (Fixed)
     const awardsMap: Record<string, { winners: string[], runnersUp: string[] }> = {};
     monthlyMimoM.forEach(m => {
         const key = m.special || `${m.month}-${m.year}`;
@@ -113,7 +113,7 @@ export default function LeaderboardPage() {
         }
     });
 
-    // Pro-Slayer Logic (Regulars who outscore ALL Pros and miss Top 10)
+    // 2. Pro-Slayer Logic (Capped at £55.00 Total)
     let highestProScore = -1;
     sortedUsers.forEach(u => { if (u.isPro && u.score > highestProScore) highestProScore = u.score; });
 
@@ -123,11 +123,10 @@ export default function LeaderboardPage() {
         if (!p.isPro && p.score > highestProScore && ord > 10) slayers.push(p.id);
     });
 
-    // Capped Slayer Bounty: £5 per slayer, max total pool £55.00
     const slayerPoolTotal = Math.min(slayers.length * 5, 55);
     const individualBounty = slayers.length > 0 ? slayerPoolTotal / slayers.length : 0;
 
-    // Seasonal Fund Logic
+    // 3. Seasonal Fund Logic
     const netSeasonalFund = 530 - 150 - 10 - slayerPoolTotal;
     let prizes: number[] = [netSeasonalFund / 33.2529];
     for (let i = 0; i < 9; i++) prizes.push(prizes[i] * 1.25);
@@ -252,8 +251,8 @@ export default function LeaderboardPage() {
                                   <ScoreIcon className="size-5" />
                               </div>
                           </TableCell>
-                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.minRank}</TableCell>
-                          <TableCell className={cn("text-center font-medium border-r py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.maxRank}</TableCell>
+                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.minRank || '-'}</TableCell>
+                          <TableCell className={cn("text-center font-medium border-r py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.maxRank || '-'}</TableCell>
                           <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.maxScore}</TableCell>
                           <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.minScore}</TableCell>
                       </TableRow>
