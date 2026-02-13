@@ -15,6 +15,7 @@ import historicalPlayersData from './historical-players.json';
 /**
  * Recalculates all derived data based on strict competition ranking and prize rules.
  * Populates: standings, playerTeamScores, weeklyTeamStandings, teamRecentResults, userHistories.
+ * Robustly handles Week 0 (start of season) to ensure no empty tables.
  */
 export async function recalculateAllDataClientSide(
   firestore: Firestore,
@@ -65,7 +66,7 @@ export async function recalculateAllDataClientSide(
 
       const playedMatches = allMatches.filter(m => m.homeScore > -1 && m.awayScore > -1);
       const playedWeeks = [0, ...new Set(playedMatches.map(m => m.week))].sort((a,b) => a-b);
-      const latestWeek = playedWeeks[playedWeeks.length - 1];
+      const latestWeek = Math.max(0, ...playedWeeks);
       
       for (const week of playedWeeks) {
           progressCallback(`Processing History: Week ${week}...`);
@@ -87,13 +88,12 @@ export async function recalculateAllDataClientSide(
                   .sort((a,b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.name.localeCompare(b.name));
               tRanks = new Map(tRanked.map((s, i) => [s.teamId, i + 1]));
 
-              // Populate weekly standings for charts
               tRanked.forEach((s, idx) => {
                   addOp(b => b.set(doc(firestore, 'weeklyTeamStandings', `wk${week}-${s.teamId}`), { week, teamId: s.teamId, rank: idx + 1 }));
               });
           }
 
-          // Populate main tables for the LATEST week (restores standings, scores, results)
+          // CRITICAL: populate main tables for the LATEST week (restores standings, scores, results)
           if (week === latestWeek) {
               teams.forEach(t => {
                   const s = tStats[t.id];

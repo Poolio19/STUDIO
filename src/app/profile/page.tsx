@@ -118,16 +118,17 @@ export default function ProfilePage() {
     let highestProScoreVal = -1;
     sortedList.forEach(u => { if (u.isPro && u.score > highestProScoreVal) highestProScoreVal = u.score; });
     const slayersList = sortedList.filter((p, idx) => !p.isPro && p.score > highestProScoreVal && (idx + 1) > 10).map(p => p.id);
-    const indBounty = slayersList.length > 0 ? Math.min(slayersList.length * 5, 55) / slayersList.length : 0;
+    const totalSlayerBounty = Math.min(slayersList.length * 5, 55);
+    const indBounty = slayersList.length > 0 ? totalSlayerBounty / slayersList.length : 0;
 
-    const netSFund = 530 - 150 - 10 - Math.min(slayersList.length * 5, 55);
+    const netSFund = 530 - 150 - 10 - totalSlayerBounty;
     let pArr: number[] = [netSFund / 33.2529];
     for (let i = 0; i < 9; i++) pArr.push(pArr[i] * 1.25);
     const finalSeasonalPrizes = pArr.reverse();
 
     let potentialAmount = 0;
     const myOrd = sortedList.findIndex(u => u.id === profile.id) + 1;
-    if (!profile.isPro && myOrd <= 10) potentialAmount = finalSeasonalPrizes[myOrd - 1] || 0;
+    if (!profile.isPro && myOrd <= 10 && myOrd > 0) potentialAmount = finalSeasonalPrizes[myOrd - 1] || 0;
     if (slayersList.includes(profile.id) && potentialAmount === 0) potentialAmount = indBounty;
 
     return { bagged: baggedAmount, potential: potentialAmount };
@@ -171,26 +172,26 @@ export default function ProfilePage() {
     }
   };
   
-  if (isAuthUserLoading || profileLoading || historyLoading || teamsLoading || allHistoriesLoading) return <div className="flex h-96 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /><p className="ml-2">Connecting...</p></div>;
+  if (isAuthUserLoading || profileLoading || historyLoading || teamsLoading || allHistoriesLoading) return <div className="flex h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /><p className="ml-2 text-lg">Connecting to PredCentral...</p></div>;
   if (!authUser) return <div className="flex h-full w-full items-center justify-center"><AuthForm /></div>;
 
   const ttCount = (profile?.first || 0) + (profile?.second || 0) + (profile?.third || 0) + (profile?.fourth || 0) + (profile?.fifth || 0) + (profile?.sixth || 0) + (profile?.seventh || 0) + (profile?.eighth || 0) + (profile?.ninth || 0) + (profile?.tenth || 0);
 
   return (
     <div className="space-y-8">
-      <Card className="overflow-hidden border-2 shadow-xl">
+      <Card className="overflow-hidden border-2 shadow-2xl">
           <CardContent className="p-0">
               <div className="flex flex-col lg:flex-row items-center lg:items-stretch">
                   {/* Avatar & Gaudy Gold Frame Section */}
                   <div className="p-1 lg:w-1/3 flex flex-col items-center justify-center border-b lg:border-b-0 lg:border-r bg-muted/5">
-                      <div className="relative p-4 rounded-xl shadow-2xl bg-gradient-to-tr from-yellow-600 via-yellow-200 to-yellow-600 border-4 border-yellow-700 w-full h-full flex flex-col items-center justify-center">
+                      <div className="relative p-6 rounded-xl shadow-2xl bg-gradient-to-tr from-yellow-600 via-yellow-200 to-yellow-600 border-4 border-yellow-700 w-full h-full flex flex-col items-center justify-center min-h-[400px]">
                           <Avatar className="h-60 w-60 rounded-lg border-8 border-yellow-900 shadow-inner bg-card">
                               <AvatarImage src={avatarPreview || getAvatarUrl(profile?.avatar)} alt={profile?.name} className="object-cover" />
                               <AvatarFallback className="text-6xl">{(profile?.name || '?').charAt(0)}</AvatarFallback>
                           </Avatar>
                           <div className="mt-6 text-center text-yellow-950">
-                              <h2 className="text-3xl font-black tracking-tight drop-shadow-sm uppercase">{profile?.name}</h2>
-                              {profile?.nickname && <p className="text-xl italic font-bold mt-1">"{profile.nickname}"</p>}
+                              <h2 className="text-3xl font-black tracking-tight drop-shadow-md uppercase">{profile?.name}</h2>
+                              {profile?.nickname && <p className="text-xl italic font-bold mt-1 opacity-90">"{profile.nickname}"</p>}
                           </div>
                       </div>
                   </div>
@@ -205,27 +206,33 @@ export default function ProfilePage() {
                                   <div className="font-bold text-muted-foreground text-left py-2">Pts</div><div className="font-bold text-green-600 py-2">{profile?.maxScore || '-'}</div><div className="font-bold text-red-600 py-2">{profile?.minScore || '-'}</div><div className="font-extrabold py-2 text-lg">{profile?.score || '-'}</div>
                               </div>
                           </div>
-                          <div className="border-2 border-yellow-500/20 rounded-xl p-6 bg-card shadow-sm">
-                              <h3 className="text-lg font-bold mb-4 text-center flex items-center justify-center gap-2 text-yellow-600 border-b pb-2"><Star className="size-5" /> Trophy Cabinet</h3>
-                               <div className="flex justify-around items-end h-20">
-                                  <TooltipProvider>
-                                      <Tooltip>
-                                          <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-xs font-black">1st</span><Trophy className={cn("size-10", (profile?.first ?? 0) > 0 ? "text-yellow-500" : "text-yellow-100")} /><span className="text-base font-black">{profile?.first || 0}</span></div></TooltipTrigger>
-                                          <TooltipContent><p>Champion</p></TooltipContent>
-                                      </Tooltip>
-                                      <Tooltip>
-                                          <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-muted-foreground">2nd</span><Medal className={cn("size-8", (profile?.second ?? 0) > 0 ? "text-slate-400" : "text-slate-200")} /><span className="text-sm font-black">{profile?.second || 0}</span></div></TooltipTrigger>
-                                          <TooltipContent><p>Runner Up</p></TooltipContent>
-                                      </Tooltip>
-                                      <Tooltip>
-                                          <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-muted-foreground">3rd</span><Medal className={cn("size-7", (profile?.third ?? 0) > 0 ? "text-amber-700" : "text-amber-100")} /><span className="text-sm font-black">{profile?.third || 0}</span></div></TooltipTrigger>
-                                          <TooltipContent><p>3rd Place</p></TooltipContent>
-                                      </Tooltip>
-                                      <Tooltip>
-                                          <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-muted-foreground">T10</span><Medal className="size-7 text-primary/40" /><span className="text-sm font-black">{ttCount}</span></div></TooltipTrigger>
-                                          <TooltipContent><p>Top 10 Finishes</p></TooltipContent>
-                                      </Tooltip>
-                                  </TooltipProvider>
+                          
+                          {/* Wood & Glass Trophy Cabinet */}
+                          <div className="border-[12px] border-amber-950 bg-amber-900 rounded-xl shadow-2xl p-1 relative">
+                              <div className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded h-full p-6 shadow-inner overflow-hidden">
+                                  {/* Glass Glare */}
+                                  <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none z-10" />
+                                  <h3 className="text-sm font-black mb-4 text-center flex items-center justify-center gap-2 text-white/90 border-b border-white/20 pb-2 relative z-20">TROPHY CABINET</h3>
+                                  <div className="flex justify-around items-end h-20 relative z-20">
+                                      <TooltipProvider>
+                                          <Tooltip>
+                                              <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-black text-yellow-400">1st</span><Trophy className={cn("size-10 transition-all", (profile?.first ?? 0) > 0 ? "text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)] scale-110" : "text-white/10")} /><span className="text-sm font-black text-white">{profile?.first || 0}</span></div></TooltipTrigger>
+                                              <TooltipContent><p>Champion</p></TooltipContent>
+                                          </Tooltip>
+                                          <Tooltip>
+                                              <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-slate-300">2nd</span><Medal className={cn("size-8 transition-all", (profile?.second ?? 0) > 0 ? "text-slate-300 drop-shadow-[0_0_8px_rgba(203,213,225,0.6)] scale-105" : "text-white/10")} /><span className="text-sm font-black text-white">{profile?.second || 0}</span></div></TooltipTrigger>
+                                              <TooltipContent><p>Runner Up</p></TooltipContent>
+                                          </Tooltip>
+                                          <Tooltip>
+                                              <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-amber-600">3rd</span><Medal className={cn("size-7 transition-all", (profile?.third ?? 0) > 0 ? "text-amber-700 drop-shadow-[0_0_8px_rgba(180,83,9,0.6)]" : "text-white/10")} /><span className="text-sm font-black text-white">{profile?.third || 0}</span></div></TooltipTrigger>
+                                              <TooltipContent><p>3rd Place</p></TooltipContent>
+                                          </Tooltip>
+                                          <Tooltip>
+                                              <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-primary/60">T10</span><Medal className={cn("size-7 transition-all", ttCount > 0 ? "text-primary/40" : "text-white/10")} /><span className="text-sm font-black text-white">{ttCount}</span></div></TooltipTrigger>
+                                              <TooltipContent><p>Top 10 Finishes</p></TooltipContent>
+                                          </Tooltip>
+                                      </TooltipProvider>
+                                  </div>
                               </div>
                           </div>
                       </div>
