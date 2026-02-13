@@ -147,7 +147,8 @@ export default function MostImprovedPage() {
     return allAwardPeriods.map(period => {
         const isCurrentPeriod = currentAwardPeriod?.id === period.id;
         const isPastPeriod = period.endWeek <= currentWeek && !isCurrentPeriod;
-        const isTooEarly = isCurrentPeriod && currentWeek < (period.startWeek + 2);
+        // LOWERED THRESHOLD: Show leaders after 1 week of fixtures instead of 2.
+        const isTooEarly = isCurrentPeriod && currentWeek < (period.startWeek + 1);
 
         let winners: (User & { improvement: number, special?: string })[] = [];
         let runnersUp: (User & { improvement: number })[] = [];

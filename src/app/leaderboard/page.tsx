@@ -228,13 +228,16 @@ export default function LeaderboardPage() {
 
                   const isMimoMWinner = monthlyMimoM?.some(a => a.userId === user.id && a.year === 2025);
 
-                  // REINSTATED COLOUR CODE PER INSTRUCTION
                   const getRowStatusClasses = () => {
+                    // PROS ARE GREY
+                    if (user.isPro) return 'bg-slate-200 dark:bg-slate-800 text-muted-foreground font-medium';
+
                     const userScore = user.score;
                     const topOfGroup = sortedUsers.find(u => u.score === userScore);
                     const highestOrdinal = sortedUsers.indexOf(topOfGroup!) + 1;
 
-                    if (b.seasonal > 0 || (user.isPro && highestOrdinal <= 10)) {
+                    // STATUS COLOURS FOR PRIZE WINNERS
+                    if (b.seasonal > 0) {
                         if (highestOrdinal === 1) return 'bg-red-800 text-yellow-300 font-black';
                         if (highestOrdinal <= 2) return 'bg-red-600 text-white font-bold';
                         if (highestOrdinal <= 3) return 'bg-orange-700 text-white font-bold';
