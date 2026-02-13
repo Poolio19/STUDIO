@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -89,7 +90,7 @@ export default function LeaderboardPage() {
 
     sortedUsers.forEach(u => breakdown.set(u.id, { total: 0, seasonal: 0, monthly: 0, proBounty: 0 }));
 
-    // 1. Monthly Awards (CURRENT SEASON ONLY - year 2025)
+    // 1. Monthly Awards (Current Season 2025 only)
     const awardsMap: Record<string, { winners: string[], runnersUp: string[] }> = {};
     monthlyMimoM.filter(m => m.year === 2025).forEach(m => {
         const key = m.special || `${m.month}-${m.year}`;
@@ -180,10 +181,19 @@ export default function LeaderboardPage() {
   const getRowStyle = (rank: number) => {
       const total = Math.max(sortedUsers.length, 1);
       const ratio = (rank - 1) / (total - 1);
-      const hue = 180 - (ratio * 180); // 180 (Teal) to 0 (Red)
+      const hue = (ratio * 180); // 0 (Dark Red) to 180 (Teal)
       const saturation = 70;
       const lightness = 40;
-      return { backgroundColor: `hsla(${hue}, ${saturation}%, ${lightness}%, 0.15)` };
+      
+      const style: React.CSSProperties = { backgroundColor: `hsla(${hue}, ${saturation}%, ${lightness}%, 0.15)` };
+      
+      // If Rank 1, use Dark Yellow font as requested
+      if (rank === 1) {
+          style.color = '#B8860B'; // Dark Yellow / Gold
+          style.fontWeight = '900';
+      }
+      
+      return style;
   };
 
   return (
@@ -239,7 +249,7 @@ export default function LeaderboardPage() {
                   return (
                       <TableRow 
                         key={user.id} 
-                        style={getRowStyle(competitionRank)}
+                        style={(!isPrizeWinner && !isSlayer && !isCurrentUser) ? getRowStyle(competitionRank) : undefined}
                         className={cn(
                             "transition-colors",
                             isCurrentUser && 'ring-2 ring-inset ring-primary z-10 relative bg-primary/10 shadow-[0_0_20px_hsl(var(--primary)/0.3)]',

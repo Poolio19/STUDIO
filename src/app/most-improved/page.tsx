@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -148,7 +149,6 @@ export default function MostImprovedPage() {
             const periodAwards = monthlyMimoMAwards.filter(a => 
                 a.year >= 2025 && 
                 (a.month.toLowerCase() === period.id.toLowerCase() || 
-                 a.month.toLowerCase() === (period.month || '').toLowerCase() ||
                  a.id.toLowerCase().includes(period.id.toLowerCase()))
             );
             

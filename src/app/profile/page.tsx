@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -149,7 +150,6 @@ export default function ProfilePage() {
 
     let potentialAmount = 0;
     const myRank = getCompRank(profile.score);
-    const myIdx = sortedList.findIndex(u => u.id === profile.id);
     if (!profile.isPro && myRank <= 10 && myRank > 0) {
         let pool = 0;
         sortedList.forEach((u, i) => { if (getCompRank(u.score) === myRank && i < 10) pool += finalSeasonalPrizes[i] || 0; });
