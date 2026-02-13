@@ -80,7 +80,7 @@ export async function recalculateAllDataClientSide(
                       month: monthData.month,
                       year: year,
                       type: type,
-                      special: award.type, // Store original "JoMiMoM" etc for parsing
+                      special: award.type,
                       improvement: award.improvement || 0
                   }));
               }

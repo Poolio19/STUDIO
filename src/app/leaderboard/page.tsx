@@ -152,6 +152,7 @@ export default function LeaderboardPage() {
   }, [sortedUsers, monthlyMimoM]);
 
   const scoresOnlyArr = useMemo(() => sortedUsers.map(u => u.score), [sortedUsers]);
+  const prevScoresOnlyArr = useMemo(() => sortedUsers.map(u => u.previousScore).sort((a,b) => b - a), [sortedUsers]);
 
   return (
     <div className="flex flex-col gap-8">
@@ -193,9 +194,12 @@ export default function LeaderboardPage() {
                 sortedUsers.map((user) => {
                   const b = winningsMap.get(user.id) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
                   const ScoreIcon = getRankChangeIcon(user.scoreChange);
-                  const RankIcon = getRankChangeIcon(user.rankChange);
+                  
                   const isCurrentUser = user.id === resolvedUserId;
                   const competitionRank = scoresOnlyArr.indexOf(user.score) + 1;
+                  const competitionWasRank = prevScoresOnlyArr.indexOf(user.previousScore) + 1;
+                  const competitionRankChange = competitionWasRank - competitionRank;
+                  const RankIcon = getRankChangeIcon(competitionRankChange);
 
                   return (
                       <TableRow 
@@ -237,10 +241,10 @@ export default function LeaderboardPage() {
                                 </TooltipProvider>
                             )}
                           </TableCell>
-                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.previousRank}</TableCell>
-                          <TableCell className={cn("font-bold text-center border-r py-1", getRankChangeColour(user.rankChange))}>
+                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{competitionWasRank}</TableCell>
+                          <TableCell className={cn("font-bold text-center border-r py-1", getRankChangeColour(competitionRankChange))}>
                               <div className={cn("flex items-center justify-center gap-2", isCurrentUser && "drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
-                                  <span className={isCurrentUser ? "text-[1.1rem] font-black" : ""}>{Math.abs(user.rankChange)}</span>
+                                  <span className={isCurrentUser ? "text-[1.1rem] font-black" : ""}>{Math.abs(competitionRankChange)}</span>
                                   <RankIcon className="size-5" />
                               </div>
                           </TableCell>

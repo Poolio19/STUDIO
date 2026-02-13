@@ -107,19 +107,10 @@ export default function ProfilePage() {
             const monthMap: Record<string, string> = { 'Jan':'01','Feb':'02','Mar':'03','Apr':'04','May':'05','Jun':'06','Jul':'07','Aug':'08','Sep':'09','Oct':'10','Nov':'11','Dec':'12' };
             const monthPad = monthMap[m] || '00';
             let code = 'MiM';
-            if (a.special === 'Winner') code = 'MiM';
-            else if (a.special === 'Runner-Up') code = 'RuM';
-            else if (a.type === 'winner') code = 'MiM';
-            else if (a.type === 'runner-up') code = 'RuM';
-            
-            // Check for Joint awards
+            if (a.special === 'Winner' || a.type === 'winner') code = 'MiM';
+            else if (a.special === 'Runner-Up' || a.type === 'runner-up') code = 'RuM';
             if (a.special && a.special.toLowerCase().includes('jo')) code = 'J' + code;
-
-            return {
-                id: a.id,
-                label: `${code}: ${monthPad}/${shortYear}`,
-                isWinner: a.type === 'winner'
-            };
+            return { id: a.id, label: `${code}: ${monthPad}/${shortYear}`, isWinner: a.type === 'winner' };
         });
   }, [profile, monthlyMimoMAwards]);
 
@@ -175,8 +166,29 @@ export default function ProfilePage() {
   }, [allUserHistories, userHistory]);
 
   const onProfileSave = (values: z.infer<typeof profileFormSchema>) => { if (userDocRef) { setDocumentNonBlocking(userDocRef, values, { merge: true }); toast({ title: 'Profile Updated!' }); } };
-  const onEmailUpdate = async (values: z.infer<typeof emailFormSchema>) => { if (authUser) { try { await verifyBeforeUpdateEmail(authUser, values.email); toast({ title: 'Verification Sent', description: 'Please check your new inbox to verify the change.' }); } catch (e: any) { toast({ variant: 'destructive', title: 'Fail', description: e.message }); } } };
-  const onPasswordUpdate = async (values: z.infer<typeof passwordFormSchema>) => { if (authUser) { try { await updatePassword(authUser, values.password); if (userDocRef) setDocumentNonBlocking(userDocRef, { mustChangePassword: false }, { merge: true }); toast({ title: 'Security Updated!' }); passwordForm.reset(); } catch (e: any) { toast({ variant: 'destructive', title: 'Fail', description: e.message }); } } };
+  const onEmailUpdate = async (values: z.infer<typeof emailFormSchema>) => {
+    if (authUser) {
+      try {
+        await verifyBeforeUpdateEmail(authUser, values.email);
+        toast({ title: 'Verification Sent', description: 'Check your new inbox to verify the change.' });
+      } catch (e: any) {
+        if (e.code === 'auth/requires-recent-login') toast({ variant: 'destructive', title: 'Security Timeout', description: 'Please sign out and back in to change your email.' });
+        else toast({ variant: 'destructive', title: 'Fail', description: e.message });
+      }
+    }
+  };
+  const onPasswordUpdate = async (values: z.infer<typeof passwordFormSchema>) => {
+    if (authUser) {
+      try {
+        await updatePassword(authUser, values.password);
+        if (userDocRef) setDocumentNonBlocking(userDocRef, { mustChangePassword: false }, { merge: true });
+        toast({ title: 'Security Updated!' }); passwordForm.reset();
+      } catch (e: any) {
+        if (e.code === 'auth/requires-recent-login') toast({ variant: 'destructive', title: 'Security Timeout', description: 'Please sign out and back in to change your password.' });
+        else toast({ variant: 'destructive', title: 'Fail', description: e.message });
+      }
+    }
+  };
   
   const handleAvatarSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -197,7 +209,6 @@ export default function ProfilePage() {
       <Card className="overflow-hidden border-2 shadow-2xl">
           <CardContent className="p-0">
               <div className="flex flex-col lg:flex-row items-center lg:items-stretch">
-                  {/* Gaudy Gold Frame Section */}
                   <div className="p-1 lg:w-1/3 flex flex-col items-center justify-center border-b lg:border-b-0 lg:border-r bg-muted/5">
                       <div className="relative p-6 rounded-xl shadow-2xl bg-gradient-to-tr from-yellow-600 via-yellow-200 to-yellow-600 border-[16px] border-yellow-700 w-full h-full flex flex-col items-center justify-center min-h-[400px]">
                           <Avatar className="h-60 w-60 rounded-lg border-8 border-yellow-900 shadow-inner bg-card">
@@ -224,53 +235,30 @@ export default function ProfilePage() {
                               </div>
                           </div>
                           
-                          {/* Wood & Glass Trophy Cabinet */}
                           <div className="border-[12px] border-amber-950 bg-amber-900 rounded-xl shadow-2xl p-1 relative h-full">
                               <div className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded h-full p-6 shadow-inner overflow-hidden flex flex-col gap-6">
                                   <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none z-10" />
                                   <h3 className="text-sm font-black text-center flex items-center justify-center gap-2 text-white/90 border-b border-white/20 pb-2 relative z-20 uppercase">Trophy Cabinet</h3>
-                                  
                                   <div className="flex justify-around items-end h-20 relative z-20">
                                       <TooltipProvider>
-                                          <Tooltip>
-                                              <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-black text-yellow-400">1st</span><Trophy className={cn("size-10 transition-all", (profile?.first ?? 0) > 0 ? "text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)] scale-110" : "text-white/10")} /><span className="text-sm font-black text-white">{profile?.first || 0}</span></div></TooltipTrigger>
-                                              <TooltipContent><p>Champion</p></TooltipContent>
-                                          </Tooltip>
-                                          <Tooltip>
-                                              <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-slate-300">2nd</span><Medal className={cn("size-8 transition-all", (profile?.second ?? 0) > 0 ? "text-slate-300 drop-shadow-[0_0_8px_rgba(203,213,225,0.6)] scale-105" : "text-white/10")} /><span className="text-sm font-black text-white">{profile?.second || 0}</span></div></TooltipTrigger>
-                                              <TooltipContent><p>Runner Up</p></TooltipContent>
-                                          </Tooltip>
-                                          <Tooltip>
-                                              <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-amber-600">3rd</span><Medal className={cn("size-7 transition-all", (profile?.third ?? 0) > 0 ? "text-amber-700 drop-shadow-[0_0_8px_rgba(180,83,9,0.6)]" : "text-white/10")} /><span className="text-sm font-black text-white">{profile?.third || 0}</span></div></TooltipTrigger>
-                                              <TooltipContent><p>3rd Place</p></TooltipContent>
-                                          </Tooltip>
-                                          <Tooltip>
-                                              <TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-primary/60">T10</span><Medal className={cn("size-7 transition-all", ttCount > 0 ? "text-primary/40" : "text-white/10")} /><span className="text-sm font-black text-white">{ttCount}</span></div></TooltipTrigger>
-                                              <TooltipContent><p>Top 10 Finishes</p></TooltipContent>
-                                          </Tooltip>
+                                          <Tooltip><TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-black text-yellow-400">1st</span><Trophy className={cn("size-10 transition-all", (profile?.first ?? 0) > 0 ? "text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)] scale-110" : "text-white/10")} /><span className="text-sm font-black text-white">{profile?.first || 0}</span></div></TooltipTrigger><TooltipContent><p>Champion</p></TooltipContent></Tooltip>
+                                          <Tooltip><TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-slate-300">2nd</span><Medal className={cn("size-8 transition-all", (profile?.second ?? 0) > 0 ? "text-slate-300 drop-shadow-[0_0_8px_rgba(203,213,225,0.6)] scale-105" : "text-white/10")} /><span className="text-sm font-black text-white">{profile?.second || 0}</span></div></TooltipTrigger><TooltipContent><p>Runner Up</p></TooltipContent></Tooltip>
+                                          <Tooltip><TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-amber-600">3rd</span><Medal className={cn("size-7 transition-all", (profile?.third ?? 0) > 0 ? "text-amber-700 drop-shadow-[0_0_8px_rgba(180,83,9,0.6)]" : "text-white/10")} /><span className="text-sm font-black text-white">{profile?.third || 0}</span></div></TooltipTrigger><TooltipContent><p>3rd Place</p></TooltipContent></Tooltip>
+                                          <Tooltip><TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-primary/60">T10</span><Medal className={cn("size-7 transition-all", ttCount > 0 ? "text-primary/40" : "text-white/10")} /><span className="text-sm font-black text-white">{ttCount}</span></div></TooltipTrigger><TooltipContent><p>Top 10 Finishes</p></TooltipContent></Tooltip>
                                       </TooltipProvider>
                                   </div>
-
                                   <div className="relative z-20 border-t border-white/10 pt-4">
                                       <div className="flex flex-wrap justify-center gap-2 max-h-32 overflow-y-auto pr-1">
                                           {awardCerts.length > 0 ? awardCerts.map((cert) => (
-                                              <div key={cert.id} className={cn(
-                                                  "px-2 py-1 rounded border-2 text-[10px] font-black uppercase tracking-tighter shadow-sm whitespace-nowrap",
-                                                  cert.isWinner 
-                                                    ? "bg-yellow-100 border-yellow-500 text-yellow-900" 
-                                                    : "bg-slate-100 border-slate-400 text-slate-900"
-                                              )}>
+                                              <div key={cert.id} className={cn("px-2 py-1 rounded border-2 text-[10px] font-black uppercase tracking-tighter shadow-sm whitespace-nowrap", cert.isWinner ? "bg-yellow-100 border-yellow-500 text-yellow-900" : "bg-slate-100 border-slate-400 text-slate-900")}>
                                                   {cert.label}
                                               </div>
-                                          )) : (
-                                              <p className="text-[10px] text-white/20 italic">No certificates yet.</p>
-                                          )}
+                                          )) : <p className="text-[10px] text-white/20 italic">No certificates yet.</p>}
                                       </div>
                                   </div>
                               </div>
                           </div>
                       </div>
-
                       <div className="w-full border-2 border-primary/10 rounded-xl p-6 bg-primary/5 flex flex-col md:flex-row justify-between items-center gap-6 shadow-inner">
                           <div className="flex flex-col items-center md:items-start"><span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Experience</span><span className="text-2xl font-black">Played: {profile?.seasonsPlayed || 0}</span></div>
                           <div className="flex flex-col items-center md:items-start"><span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Career Earnings</span><span className="text-2xl font-black text-green-600">All Time: £{(profile?.cashWinnings || 0).toFixed(2)}</span></div>
