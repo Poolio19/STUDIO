@@ -227,10 +227,10 @@ export default function ProfilePage() {
                               <AvatarImage src={avatarPreview || getAvatarUrl(profile?.avatar)} alt={profile?.name} className="object-cover" />
                               <AvatarFallback className="text-6xl">{(profile?.name || '?').charAt(0)}</AvatarFallback>
                           </Avatar>
-                          <div className="mt-6 text-center text-yellow-950">
+                          <div className="mt-6 text-center text-yellow-950 flex flex-col items-center">
                               <h2 className="text-3xl font-black tracking-tight drop-shadow-md uppercase">{profile?.name}</h2>
                               {profile?.nickname && <p className="text-xl italic font-bold mt-1 opacity-90">{profile.nickname}</p>}
-                              {profile?.initials && <p className="text-lg font-bold opacity-80 uppercase">{profile.initials}</p>}
+                              {profile?.initials && <p className="text-lg font-bold opacity-80 uppercase mt-1">{profile.initials}</p>}
                           </div>
                           <div className="absolute bottom-2 left-0 right-0 text-center">
                               <span className="text-[10px] font-mono text-yellow-950/40 uppercase tracking-widest">User ID: {profile?.id}</span>

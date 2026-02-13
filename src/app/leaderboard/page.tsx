@@ -90,7 +90,7 @@ export default function LeaderboardPage() {
 
     sortedUsers.forEach(u => breakdown.set(u.id, { total: 0, seasonal: 0, monthly: 0, proBounty: 0 }));
 
-    // 1. Monthly Awards (Current Season 2025 only)
+    // 1. Monthly Awards (CURRENT SEASON 2025-26 ONLY)
     const awardsMap: Record<string, { winners: string[], runnersUp: string[] }> = {};
     monthlyMimoM.filter(m => m.year === 2025).forEach(m => {
         const key = m.special || `${m.month}-${m.year}`;
@@ -146,7 +146,9 @@ export default function LeaderboardPage() {
         let totalPrizeForGroup = 0;
         indices.forEach(idx => {
             const ord = idx + 1; 
-            if (ord <= 10) totalPrizeForGroup += finalSeasonalPrizes[ord - 1] || 0;
+            if (ord <= 10 && !sortedUsers[idx].isPro) {
+                totalPrizeForGroup += finalSeasonalPrizes[ord - 1] || 0;
+            }
         });
 
         const prizePerRegular = totalPrizeForGroup / regulars.length;
@@ -179,21 +181,30 @@ export default function LeaderboardPage() {
   const prevScoresOnlyArr = useMemo(() => sortedUsers.map(u => u.previousScore).sort((a,b) => b - a), [sortedUsers]);
   
   const getRowStyle = (rank: number) => {
-      const total = Math.max(sortedUsers.length, 1);
-      const ratio = (rank - 1) / (total - 1);
-      const hue = (ratio * 180); // 0 (Dark Red) to 180 (Teal)
-      const saturation = 70;
-      const lightness = 40;
-      
-      const style: React.CSSProperties = { backgroundColor: `hsla(${hue}, ${saturation}%, ${lightness}%, 0.15)` };
-      
-      // If Rank 1, use Dark Yellow font as requested
-      if (rank === 1) {
-          style.color = '#B8860B'; // Dark Yellow / Gold
-          style.fontWeight = '900';
-      }
-      
-      return style;
+      // Only Top 10 Ranks have distinct background colors
+      if (rank > 10) return {};
+
+      const rankColors: Record<number, { bg: string, text?: string }> = {
+        1: { bg: '#450a0a', text: '#B8860B' }, // Dark Red, Dark Yellow font
+        2: { bg: 'rgba(212, 175, 55, 0.15)' }, // Gold tint
+        3: { bg: 'rgba(192, 192, 192, 0.15)' }, // Silver tint
+        4: { bg: 'rgba(205, 127, 50, 0.15)' }, // Bronze tint
+        5: { bg: 'rgba(173, 216, 230, 0.15)' }, // Rank 5 tint
+        6: { bg: 'rgba(144, 238, 144, 0.15)' }, // Rank 6 tint
+        7: { bg: 'rgba(255, 182, 193, 0.15)' }, // Rank 7 tint
+        8: { bg: 'rgba(255, 255, 224, 0.15)' }, // Rank 8 tint
+        9: { bg: 'rgba(230, 230, 250, 0.15)' }, // Rank 9 tint
+        10: { bg: 'rgba(255, 218, 185, 0.15)' }, // Rank 10 tint
+      };
+
+      const style = rankColors[rank];
+      if (!style) return {};
+
+      return {
+          backgroundColor: style.bg,
+          color: style.text,
+          fontWeight: rank === 1 ? '900' : undefined
+      };
   };
 
   return (
@@ -245,16 +256,18 @@ export default function LeaderboardPage() {
 
                   const isPrizeWinner = !user.isPro && b.seasonal > 0;
                   const isSlayer = !user.isPro && b.proBounty > 0;
+                  const isMimoMWinner = !user.isPro && b.monthly > 0;
 
                   return (
                       <TableRow 
                         key={user.id} 
-                        style={(!isPrizeWinner && !isSlayer && !isCurrentUser) ? getRowStyle(competitionRank) : undefined}
+                        style={(!isPrizeWinner && !isSlayer && !isCurrentUser && !isMimoMWinner) ? getRowStyle(competitionRank) : undefined}
                         className={cn(
                             "transition-colors",
-                            isCurrentUser && 'ring-2 ring-inset ring-primary z-10 relative bg-primary/10 shadow-[0_0_20px_hsl(var(--primary)/0.3)]',
-                            isPrizeWinner && !isCurrentUser && 'bg-yellow-500/20 hover:bg-yellow-500/30 border-y-2 border-yellow-500/20',
-                            isSlayer && !isCurrentUser && 'bg-primary/10 hover:bg-primary/20'
+                            isCurrentUser && 'ring-2 ring-inset ring-primary z-10 relative bg-primary/10 shadow-[0_0_25px_hsl(var(--primary)/0.4)]',
+                            isPrizeWinner && !isCurrentUser && 'bg-yellow-500/15 hover:bg-yellow-500/25 border-y border-yellow-500/30',
+                            isSlayer && !isCurrentUser && 'bg-primary/10 hover:bg-primary/20',
+                            isMimoMWinner && !isCurrentUser && !isPrizeWinner && 'bg-accent/20 hover:bg-accent/30'
                         )}
                       >
                           <TableCell className={cn("font-medium text-center py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>

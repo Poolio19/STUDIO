@@ -4,7 +4,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // Helper to check if the user is the administrator (Jim Poole)
-    // Now checks multiple email options and the canonical UID to survive email changes
+    // Anchored to immutable UID and verified emails
     function isAdmin() {
       return request.auth != null && (
         request.auth.token.email == 'jim.poole@prempred.com' || 
