@@ -4,7 +4,7 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Mail, Trophy, Award, ShieldCheck, Loader2, Medal, Star, Upload as UploadIcon } from 'lucide-react';
+import { Mail, Trophy, Award, ShieldCheck, Loader2, Medal, Star, Upload as UploadIcon, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -95,8 +95,6 @@ export default function ProfilePage() {
   const { data: monthlyMimoM } = useCollection<MonthlyMimoM>(mimoMQuery);
   const { data: predictions } = useCollection<Prediction>(predictionsQuery);
 
-  const isLoading = isAuthUserLoading || profileLoading || historyLoading || teamsLoading || allHistoriesLoading;
-
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: { name: '', nickname: '', initials: '', favouriteTeam: 'none', phoneNumber: '' },
@@ -131,7 +129,7 @@ export default function ProfilePage() {
     if (!profile || !allUsers || !monthlyMimoM || !predictions) return { bagged: 0, potential: 0 };
 
     const activeUsers = allUsers.filter(u => u.name && predictions.some(p => (p.userId || p.id) === u.id));
-    const sortedUsersList = [...activeUsers].sort((a,b) => {
+    const sortedList = [...activeUsers].sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
         const aIsPro = a.isPro ? 1 : 0;
         const bIsPro = b.isPro ? 1 : 0;
@@ -154,12 +152,12 @@ export default function ProfilePage() {
     });
 
     let highestProScoreVal = -1;
-    sortedUsersList.forEach(u => { if (u.isPro && u.score > highestProScoreVal) highestProScoreVal = u.score; });
+    sortedList.forEach(u => { if (u.isPro && u.score > highestProScoreVal) highestProScoreVal = u.score; });
 
     const pGroups: { score: number, players: User[], startOrdinal: number }[] = [];
     let curOrdVal = 1;
-    sortedUsersList.forEach((u, i) => {
-        if (i === 0 || u.score !== sortedUsersList[i-1].score) {
+    sortedList.forEach((u, i) => {
+        if (i === 0 || u.score !== sortedList[i-1].score) {
             pGroups.push({ score: u.score, players: [u], startOrdinal: curOrdVal });
         } else {
             pGroups[pGroups.length - 1].players.push(u);
@@ -168,7 +166,7 @@ export default function ProfilePage() {
     });
 
     const slayersList: string[] = [];
-    sortedUsersList.forEach((p, idx) => {
+    sortedList.forEach((p, idx) => {
         const ord = idx + 1;
         if (!p.isPro && p.score > highestProScoreVal && ord > 10) slayersList.push(p.id);
     });
@@ -176,8 +174,8 @@ export default function ProfilePage() {
     const sPoolTotal = Math.min(slayersList.length * 5, 55);
     const indBounty = slayersList.length > 0 ? sPoolTotal / slayersList.length : 0;
 
-    const netSFund = 530 - 150 - 10 - sPoolTotal;
     const weightSum = 33.2529;
+    const netSFund = 530 - 150 - 10 - sPoolTotal;
     const p10Val = netSFund / weightSum;
     let pArr: number[] = [p10Val];
     for (let i = 0; i < 9; i++) pArr.push(pArr[i] * 1.25);
@@ -268,7 +266,15 @@ export default function ProfilePage() {
     }
   };
   
-  if (isAuthUserLoading) return <div className="flex h-96 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /><p className="ml-2">Loading profile...</p></div>;
+  if (isAuthUserLoading || profileLoading || historyLoading || teamsLoading || allHistoriesLoading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className="ml-2">Loading profile...</p>
+      </div>
+    );
+  }
+
   if (!authUser) return <div className="flex h-full w-full items-center justify-center"><AuthForm /></div>;
 
   const ttCount = (profile?.first || 0) + (profile?.second || 0) + (profile?.third || 0) + (profile?.fourth || 0) + (profile?.fifth || 0) + (profile?.sixth || 0) + (profile?.seventh || 0) + (profile?.eighth || 0) + (profile?.ninth || 0) + (profile?.tenth || 0);

@@ -84,7 +84,7 @@ export default function LeaderboardPage() {
             if (b.score !== a.score) return b.score - a.score;
             const aIsPro = a.isPro ? 1 : 0;
             const bIsPro = b.isPro ? 1 : 0;
-            if (aIsPro !== bIsPro) return bIsPro - aIsPro;
+            if (aIsPro !== bIsPro) return bIsPro - aIsPro; // Pros always win ties
             return a.name.localeCompare(b.name);
         });
   }, [usersData, predictionsData]);
@@ -138,19 +138,16 @@ export default function LeaderboardPage() {
         if (!p.isPro && p.score > highestProScore && ord > 10) slayers.push(p.id);
     });
 
+    // Share pool strictly capped at £55
     const slayerPoolTotal = Math.min(slayers.length * 5, 55);
     const individualBounty = slayers.length > 0 ? slayerPoolTotal / slayers.length : 0;
 
-    const calculateTopTenPrizes = (sPool: number) => {
-        const netSeasonalFund = 530 - 150 - 10 - sPool;
-        const weightSum = 33.2529;
-        const p10 = netSeasonalFund / weightSum;
-        let prizes: number[] = [p10];
-        for (let i = 0; i < 9; i++) prizes.push(prizes[i] * 1.25);
-        return prizes.reverse();
-    };
-
-    const finalSeasonalPrizes = calculateTopTenPrizes(slayerPoolTotal);
+    const netSeasonalFund = 530 - 150 - 10 - slayerPoolTotal;
+    const weightSum = 33.2529;
+    const p10 = netSeasonalFund / weightSum;
+    let prizes: number[] = [p10];
+    for (let i = 0; i < 9; i++) prizes.push(prizes[i] * 1.25);
+    const finalSeasonalPrizes = prizes.reverse();
 
     pointsGroups.forEach(group => {
         const regulars = group.players.filter(p => !p.isPro);
@@ -186,7 +183,7 @@ export default function LeaderboardPage() {
   return (
     <div className="flex flex-col gap-8">
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 overflow-x-auto">
           <Table>
             <TableHeader>
                <TableRow>

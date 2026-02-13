@@ -4,7 +4,7 @@ import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from '@/compon
 import { SidebarNav } from './sidebar-nav';
 import { cn } from '@/lib/utils';
 import { useUser, useFirebaseConfigStatus, useFirestore, useMemoFirebase, useCollection, useDoc, useResolvedUserId } from '@/firebase';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2, RefreshCw, Menu } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import React, { useMemo, useEffect } from 'react';
 import { collection, doc } from 'firebase/firestore';
@@ -19,7 +19,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { recalculateAllDataClientSide } from '@/lib/recalculate';
@@ -112,26 +111,24 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <SidebarNav />
         </Sidebar>
       )}
-      <SidebarInset className="flex flex-col">
-        <header className={cn("flex h-auto min-h-14 items-center gap-4 border-b bg-card px-6 py-3", mustChangePassword && "hidden")}>
+      <SidebarInset className="flex flex-col overflow-hidden">
+        <header className={cn("flex h-16 shrink-0 items-center gap-2 border-b bg-card px-4", mustChangePassword && "hidden")}>
           <div className="flex items-center gap-2">
             <SidebarTrigger className="-ml-1" />
           </div>
-          <div className="flex-1 overflow-hidden">
-            <h1 className="text-lg font-semibold truncate">{title}</h1>
-            {description && <p className="text-sm text-muted-foreground truncate">{description}</p>}
+          <div className="flex-1 overflow-hidden ml-2">
+            <h1 className="text-lg font-semibold truncate leading-tight">{title}</h1>
+            {description && <p className="text-xs text-muted-foreground truncate hidden sm:block">{description}</p>}
           </div>
           <div className="ml-auto shrink-0 flex items-center gap-2">
             {isAdmin && !mustChangePassword && (
               <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="outline" size="sm" disabled={isRecalculating}>
-                        <div className="flex items-center gap-2">
-                            {isRecalculating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                            <span className="hidden sm:inline">Recalculate</span>
-                        </div>
-                    </Button>
-                  </AlertDialogTrigger>
+                  <Button asChild variant="outline" size="sm" disabled={isRecalculating}>
+                    <div className="flex items-center gap-2 cursor-pointer">
+                        {isRecalculating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                        <span className="hidden sm:inline">Recalculate</span>
+                    </div>
+                  </Button>
                   <AlertDialogContent>
                       <AlertDialogHeader><AlertDialogTitle>Run master recalculation?</AlertDialogTitle></AlertDialogHeader>
                       <AlertDialogDescription>This will update everyone's visual competition ranks and dynamic prize shares based on the latest rules.</AlertDialogDescription>

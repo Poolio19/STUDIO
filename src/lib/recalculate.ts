@@ -14,9 +14,7 @@ import historicalPlayersData from './historical-players.json';
 
 /**
  * Recalculates all derived data based on strict competition ranking and prize rules.
- * Logic:
- * 1. Pros win ties (Ordinal sorting: Score DESC, isPro DESC, Name ASC).
- * 2. Visual competition rank stored in history (1, 2, 2, 4...).
+ * Standard Competition Ranking (1, 2, 2, 4) is applied to all history.
  */
 export async function recalculateAllDataClientSide(
   firestore: Firestore,
@@ -89,7 +87,7 @@ export async function recalculateAllDataClientSide(
 
           const uScores: { [uId: string]: number } = {};
           users.forEach(u => {
-              const pred = predictions.find(p => p.userId === u.id);
+              const pred = predictions.find(p => (p.userId || (p as any).id) === u.id);
               let score = 0;
               pred?.rankings.forEach((tId, idx) => {
                   const actual = tRanks.get(tId);
@@ -103,14 +101,14 @@ export async function recalculateAllDataClientSide(
                   if (b.score !== a.score) return b.score - a.score;
                   const aIsPro = a.isPro ? 1 : 0;
                   const bIsPro = b.isPro ? 1 : 0;
-                  if (aIsPro !== bIsPro) return bIsPro - aIsPro;
+                  if (aIsPro !== bIsPro) return bIsPro - aIsPro; // Pros win ties
                   return (a.name || '').localeCompare(b.name || '');
               });
           
           const scoresOnly = uRanked.map(u => u.score);
           uRanked.forEach((u) => {
-              const visualRank = scoresOnly.indexOf(u.score) + 1;
-              allHistories[u.id].weeklyScores.push({ week, score: u.score, rank: visualRank });
+              const competitionRank = scoresOnly.indexOf(u.score) + 1;
+              allHistories[u.id].weeklyScores.push({ week, score: u.score, rank: competitionRank });
           });
       }
 
