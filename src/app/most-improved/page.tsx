@@ -146,8 +146,9 @@ export default function MostImprovedPage() {
         let runnersUp: (User & { improvement: number })[] = [];
         
         if (isPastPeriod) {
+            // Updated filtering to be case-insensitive and robust for 2025-26 awards
             const periodAwards = monthlyMimoMAwards.filter(a => 
-                a.year >= 2025 && 
+                a.year === 2025 && 
                 (a.month.toLowerCase() === period.id.toLowerCase() || 
                  a.id.toLowerCase().includes(period.id.toLowerCase()))
             );

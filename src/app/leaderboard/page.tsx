@@ -177,36 +177,8 @@ export default function LeaderboardPage() {
     return breakdown;
   }, [sortedUsers, monthlyMimoM]);
 
-  const scoresOnlyArr = useMemo(() => sortedUsers.map(u => u.score), [sortedUsers]);
   const prevScoresOnlyArr = useMemo(() => sortedUsers.map(u => u.previousScore).sort((a,b) => b - a), [sortedUsers]);
   
-  const getRowStyle = (rank: number) => {
-      // Only Top 10 Ranks have distinct background colors
-      if (rank > 10) return {};
-
-      const rankColors: Record<number, { bg: string, text?: string }> = {
-        1: { bg: '#450a0a', text: '#B8860B' }, // Dark Red, Dark Yellow font
-        2: { bg: 'rgba(212, 175, 55, 0.15)' }, // Gold tint
-        3: { bg: 'rgba(192, 192, 192, 0.15)' }, // Silver tint
-        4: { bg: 'rgba(205, 127, 50, 0.15)' }, // Bronze tint
-        5: { bg: 'rgba(173, 216, 230, 0.15)' }, // Rank 5 tint
-        6: { bg: 'rgba(144, 238, 144, 0.15)' }, // Rank 6 tint
-        7: { bg: 'rgba(255, 182, 193, 0.15)' }, // Rank 7 tint
-        8: { bg: 'rgba(255, 255, 224, 0.15)' }, // Rank 8 tint
-        9: { bg: 'rgba(230, 230, 250, 0.15)' }, // Rank 9 tint
-        10: { bg: 'rgba(255, 218, 185, 0.15)' }, // Rank 10 tint
-      };
-
-      const style = rankColors[rank];
-      if (!style) return {};
-
-      return {
-          backgroundColor: style.bg,
-          color: style.text,
-          fontWeight: rank === 1 ? '900' : undefined
-      };
-  };
-
   return (
     <div className="flex flex-col gap-8">
       <Card>
@@ -249,28 +221,48 @@ export default function LeaderboardPage() {
                   const ScoreIcon = getRankChangeIcon(user.scoreChange);
                   
                   const isCurrentUser = user.id === resolvedUserId;
-                  const competitionRank = scoresOnlyArr.indexOf(user.score) + 1;
+                  const competitionRank = sortedUsers.findIndex(u => u.score === user.score) + 1;
                   const competitionWasRank = prevScoresOnlyArr.indexOf(user.previousScore) + 1;
                   const competitionRankChange = competitionWasRank - competitionRank;
                   const RankIcon = getRankChangeIcon(competitionRankChange);
 
-                  const isPrizeWinner = !user.isPro && b.seasonal > 0;
-                  const isSlayer = !user.isPro && b.proBounty > 0;
-                  const isMimoMWinner = !user.isPro && b.monthly > 0;
+                  const isMimoMWinner = b.monthly > 0;
+
+                  // REINSTATED COLOUR CODE
+                  const getRowStatusClasses = () => {
+                    const userScore = user.score;
+                    const topOfGroup = sortedUsers.find(u => u.score === userScore);
+                    const highestOrdinal = sortedUsers.indexOf(topOfGroup!) + 1;
+
+                    if (b.seasonal > 0) {
+                        if (highestOrdinal === 1) return 'bg-red-800 text-yellow-300 font-black';
+                        if (highestOrdinal <= 2) return 'bg-red-600 text-white font-bold';
+                        if (highestOrdinal <= 3) return 'bg-orange-700 text-white font-bold';
+                        if (highestOrdinal <= 4) return 'bg-orange-500 text-white font-bold';
+                        if (highestOrdinal <= 5) return 'bg-orange-300 text-orange-900 font-bold';
+                        if (highestOrdinal <= 6) return 'bg-yellow-200 text-yellow-900 font-bold';
+                        if (highestOrdinal <= 7) return 'bg-green-200 text-green-900 font-bold';
+                        if (highestOrdinal <= 8) return 'bg-cyan-200 text-cyan-900 font-bold';
+                        if (highestOrdinal <= 9) return 'bg-cyan-400 text-cyan-900 font-bold';
+                        return 'bg-teal-400 text-teal-900 font-bold';
+                    }
+                    if (b.proBounty > 0) return 'bg-blue-300 text-blue-900 font-bold';
+                    if (isMimoMWinner) return 'bg-accent/20 font-bold';
+                    return '';
+                  };
+
+                  const rowClasses = getRowStatusClasses();
 
                   return (
                       <TableRow 
                         key={user.id} 
-                        style={(!isPrizeWinner && !isSlayer && !isCurrentUser && !isMimoMWinner) ? getRowStyle(competitionRank) : undefined}
                         className={cn(
                             "transition-colors",
-                            isCurrentUser && 'ring-2 ring-inset ring-primary z-10 relative bg-primary/10 shadow-[0_0_25px_hsl(var(--primary)/0.4)]',
-                            isPrizeWinner && !isCurrentUser && 'bg-yellow-500/15 hover:bg-yellow-500/25 border-y border-yellow-500/30',
-                            isSlayer && !isCurrentUser && 'bg-primary/10 hover:bg-primary/20',
-                            isMimoMWinner && !isCurrentUser && !isPrizeWinner && 'bg-accent/20 hover:bg-accent/30'
+                            rowClasses,
+                            isCurrentUser && 'ring-2 ring-inset ring-primary z-10 relative bg-primary/10 shadow-[0_0_25px_hsl(var(--primary)/0.4)]'
                         )}
                       >
-                          <TableCell className={cn("font-medium text-center py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
+                          <TableCell className={cn("text-center py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
                             {competitionRank}
                           </TableCell>
                           <TableCell className="py-1">
@@ -281,11 +273,11 @@ export default function LeaderboardPage() {
                                 </Avatar>
                                 <span className={cn("flex items-center gap-2 transition-all", isCurrentUser && "text-[1.1rem] font-extrabold drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
                                     {user.isPro ? (user.name || '').toUpperCase() : user.name}
-                                    {isSlayer && <TooltipProvider><Tooltip><TooltipTrigger asChild><Swords className="size-4 text-primary animate-pulse cursor-help" /></TooltipTrigger><TooltipContent><p>Pro Slayer!</p></TooltipContent></Tooltip></TooltipProvider>}
+                                    {b.proBounty > 0 && <TooltipProvider><Tooltip><TooltipTrigger asChild><Swords className="size-4 text-primary animate-pulse cursor-help" /></TooltipTrigger><TooltipContent><p>Pro Slayer!</p></TooltipContent></Tooltip></TooltipProvider>}
                                 </span>
                             </div>
                           </TableCell>
-                          <TableCell className={cn("text-center font-bold py-1", isCurrentUser ? "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]" : "text-lg")}>{user.score}</TableCell>
+                          <TableCell className={cn("text-center py-1", isCurrentUser ? "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]" : "text-lg font-bold")}>{user.score}</TableCell>
                           <TableCell className={cn("text-center font-medium border-r py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
                             {user.isPro ? '-' : (
                                 <TooltipProvider>
