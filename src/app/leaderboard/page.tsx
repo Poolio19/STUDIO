@@ -226,15 +226,15 @@ export default function LeaderboardPage() {
                   const competitionRankChange = competitionWasRank - competitionRank;
                   const RankIcon = getRankChangeIcon(competitionRankChange);
 
-                  const isMimoMWinner = b.monthly > 0;
+                  const isMimoMWinner = monthlyMimoM?.some(a => a.userId === user.id && a.year === 2025);
 
-                  // REINSTATED COLOUR CODE
+                  // REINSTATED COLOUR CODE PER INSTRUCTION
                   const getRowStatusClasses = () => {
                     const userScore = user.score;
                     const topOfGroup = sortedUsers.find(u => u.score === userScore);
                     const highestOrdinal = sortedUsers.indexOf(topOfGroup!) + 1;
 
-                    if (b.seasonal > 0) {
+                    if (b.seasonal > 0 || (user.isPro && highestOrdinal <= 10)) {
                         if (highestOrdinal === 1) return 'bg-red-800 text-yellow-300 font-black';
                         if (highestOrdinal <= 2) return 'bg-red-600 text-white font-bold';
                         if (highestOrdinal <= 3) return 'bg-orange-700 text-white font-bold';

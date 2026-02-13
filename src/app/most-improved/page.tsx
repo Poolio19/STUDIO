@@ -84,6 +84,13 @@ export default function MostImprovedPage() {
       return { ladderWithRanks: [], firstPlaceImprovement: undefined, secondPlaceImprovement: undefined };
     }
 
+    if (currentAwardPeriod.id === 'xmas') {
+        // Special case for Xmas No 1: Just show current ranks
+        const xmasLadder = users.filter(u => !u.isPro).map(u => ({ ...u, improvement: 0, rankChangeInMonth: 0, displayRank: u.rank }));
+        xmasLadder.sort((a,b) => a.rank - b.rank);
+        return { ladderWithRanks: xmasLadder, firstPlaceImprovement: undefined, secondPlaceImprovement: undefined };
+    }
+
     const startWeek = currentAwardPeriod.startWeek;
     const endWeek = currentWeek;
 
@@ -142,32 +149,34 @@ export default function MostImprovedPage() {
         const isPastPeriod = period.endWeek <= currentWeek && !isCurrentPeriod;
         const isTooEarly = isCurrentPeriod && currentWeek < (period.startWeek + 2);
 
-        let winners: (User & { improvement: number })[] = [];
+        let winners: (User & { improvement: number, special?: string })[] = [];
         let runnersUp: (User & { improvement: number })[] = [];
         
         if (isPastPeriod) {
-            // Updated filtering to be case-insensitive and robust for 2025-26 awards
             const periodAwards = monthlyMimoMAwards.filter(a => 
                 a.year === 2025 && 
-                (a.month.toLowerCase() === period.id.toLowerCase() || 
-                 a.id.toLowerCase().includes(period.id.toLowerCase()))
+                (a.month.toLowerCase() === period.id.toLowerCase() || a.id.includes(period.id))
             );
             
             winners = periodAwards.filter(a => a.type === 'winner').map(a => {
                 const u = userMap.get(a.userId);
-                return u ? { ...u, improvement: a.improvement || 0 } : null;
-            }).filter((u): u is User & { improvement: number } => !!u);
+                return u ? { ...u, improvement: a.improvement || 0, special: a.special } : null;
+            }).filter((u): u is User & { improvement: number, special?: string } => !!u);
 
             runnersUp = periodAwards.filter(a => a.type === 'runner-up').map(a => {
                 const u = userMap.get(a.userId);
                 return u ? { ...u, improvement: a.improvement || 0 } : null;
             }).filter((u): u is User & { improvement: number } => !!u);
         } else if (isCurrentPeriod && !isTooEarly) {
-            if (ladderData.firstPlaceImprovement !== undefined) {
-                winners = ladderData.ladderWithRanks.filter(u => u.improvement === ladderData.firstPlaceImprovement) as any;
-            }
-            if (ladderData.secondPlaceImprovement !== undefined && winners.length === 1) {
-                runnersUp = ladderData.ladderWithRanks.filter(u => u.improvement === ladderData.secondPlaceImprovement) as any;
+            if (period.id === 'xmas') {
+                winners = ladderData.ladderWithRanks.filter(u => u.displayRank === 1) as any;
+            } else {
+                if (ladderData.firstPlaceImprovement !== undefined) {
+                    winners = ladderData.ladderWithRanks.filter(u => u.improvement === ladderData.firstPlaceImprovement) as any;
+                }
+                if (ladderData.secondPlaceImprovement !== undefined && winners.length === 1) {
+                    runnersUp = ladderData.ladderWithRanks.filter(u => u.improvement === ladderData.secondPlaceImprovement) as any;
+                }
             }
         }
         
@@ -184,6 +193,10 @@ export default function MostImprovedPage() {
 
 
   const getLadderRankColour = (user: (typeof ladderData.ladderWithRanks)[0]) => {
+    if (currentAwardPeriod?.id === 'xmas') {
+        if (user.displayRank === 1) return 'bg-yellow-400/20';
+        return '';
+    }
     if (ladderData.firstPlaceImprovement !== undefined && user.improvement === ladderData.firstPlaceImprovement) return 'bg-yellow-400/20';
     if (ladderData.secondPlaceImprovement !== undefined && user.improvement === ladderData.secondPlaceImprovement && ladderData.secondPlaceImprovement !== ladderData.firstPlaceImprovement) return 'bg-slate-400/20';
     return '';
@@ -208,7 +221,7 @@ export default function MostImprovedPage() {
             <div className="flex flex-col gap-8 lg:col-span-2">
                 <Card>
                     <CardHeader className="bg-gradient-to-r from-yellow-400/20 via-yellow-400/5 to-slate-400/20">
-                    <CardTitle>In-Month MiMoM Standings</CardTitle>
+                    <CardTitle>{currentAwardPeriod?.id === 'xmas' ? 'Christmas No. 1 Race' : 'In-Month MiMoM Standings'}</CardTitle>
                     <CardDescription>Current standings for {currentMonthName}</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -271,6 +284,7 @@ export default function MostImprovedPage() {
                         {hallOfFameData.map((monthlyAward) => {
                             const isFuture = monthlyAward.isFuture;
                             const isTie = monthlyAward.winners.length > 1;
+                            const isXmas = monthlyAward.id === 'xmas';
 
                             return (
                             <div key={monthlyAward.id} className={cn("p-3 border rounded-lg flex flex-col items-center justify-start text-center", {
@@ -281,11 +295,13 @@ export default function MostImprovedPage() {
                                 {isFuture ? (
                                      <div className="w-full space-y-2">
                                         <div className="bg-yellow-400/20 p-2 rounded-md flex items-center justify-center h-[60px]">
-                                            <p className="text-sm font-bold text-yellow-800/80 dark:text-yellow-200/80">MiMoM - TBC</p>
+                                            <p className="text-sm font-bold text-yellow-800/80 dark:text-yellow-200/80">{isXmas ? 'No. 1 - TBC' : 'MiMoM - TBC'}</p>
                                         </div>
-                                        <div className="bg-slate-400/20 p-2 rounded-md flex items-center justify-center h-[60px]">
-                                            <p className="text-sm font-bold text-slate-800/80 dark:text-slate-200/80">RuMiMoM - TBC</p>
-                                        </div>
+                                        {!isXmas && (
+                                            <div className="bg-slate-400/20 p-2 rounded-md flex items-center justify-center h-[60px]">
+                                                <p className="text-sm font-bold text-slate-800/80 dark:text-slate-200/80">RuMiMoM - TBC</p>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="w-full space-y-2">
@@ -297,10 +313,10 @@ export default function MostImprovedPage() {
                                                 </Avatar>
                                                 <div className="text-left">
                                                     <p className="text-sm font-bold">{winner.name}
-                                                        {typeof winner.improvement === 'number' && <span className="font-normal text-muted-foreground"> (+{winner.improvement}pts)</span>}
+                                                        {!isXmas && typeof winner.improvement === 'number' && <span className="font-normal text-muted-foreground"> (+{winner.improvement}pts)</span>}
                                                     </p>
                                                     <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">
-                                                        {monthlyAward.isCurrentMonth ? (isTie ? 'Current JoMiMoM' : 'Current Leader') : (isTie ? 'JoMiMoM' : 'MiMoM')}
+                                                        {isXmas ? (monthlyAward.isCurrentMonth ? 'Leader' : 'Xmas No. 1') : (monthlyAward.isCurrentMonth ? (isTie ? 'Current JoMiMoM' : 'Current Leader') : (isTie ? 'JoMiMoM' : 'MiMoM'))}
                                                     </p>
                                                 </div>
                                             </div>

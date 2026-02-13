@@ -188,51 +188,72 @@ export async function recalculateAllDataClientSide(
           addOp(b => b.set(doc(firestore, 'userHistories', u.id), hist));
       }
 
-      // --- Determine Current Season (2025-26) MiMoM Awards ---
-      progressCallback("Locking in 2025-26 MiMoM Winners...");
+      // --- Determine Current Season (2025-26) Awards ---
+      progressCallback("Locking in 2025-26 Award Winners...");
       for (const period of allAwardPeriods) {
           if (latestWeek < period.endWeek) continue;
           
-          const periodScores: { uId: string, improvement: number, score: number }[] = [];
-          users.filter(u => !u.isPro).forEach(u => {
-              const h = allHistories[u.id];
-              const sData = h.weeklyScores.find(ws => ws.week === period.startWeek);
-              const eData = h.weeklyScores.find(ws => ws.week === period.endWeek);
-              if (sData && eData) {
-                  periodScores.push({ uId: u.id, improvement: eData.score - sData.score, score: eData.score });
-              }
-          });
+          if (period.id === 'xmas') {
+              // Christmas No. 1: Leader(s) at Week 17
+              const xmasRanks = users.map(u => {
+                  const h = allHistories[u.id];
+                  return { uId: u.id, ...h.weeklyScores.find(ws => ws.week === period.endWeek) };
+              }).filter(r => r.rank === 1);
 
-          if (periodScores.length > 0) {
-              periodScores.sort((a,b) => b.improvement - a.improvement || b.score - a.score);
-              const topImp = periodScores[0].improvement;
-              const winners = periodScores.filter(s => s.improvement === topImp);
-              
-              winners.forEach(w => {
-                  addOp(b => b.set(doc(firestore, 'monthlyMimoM', `2025-${period.id}-${w.uId}`), {
-                      id: `2025-${period.id}-${w.uId}`,
-                      userId: w.uId,
-                      month: period.id,
+              xmasRanks.forEach(winner => {
+                  addOp(b => b.set(doc(firestore, 'monthlyMimoM', `2025-xmas-${winner.uId}`), {
+                      id: `2025-xmas-${winner.uId}`,
+                      userId: winner.uId,
+                      month: 'xmas',
                       year: 2025,
                       type: 'winner',
-                      improvement: w.improvement
+                      special: 'Xmas No 1',
+                      improvement: 0 
                   }));
               });
+          } else {
+              // Regular MiMoM: Most Improved
+              const periodScores: { uId: string, improvement: number, score: number }[] = [];
+              users.filter(u => !u.isPro).forEach(u => {
+                  const h = allHistories[u.id];
+                  const sData = h.weeklyScores.find(ws => ws.week === period.startWeek);
+                  const eData = h.weeklyScores.find(ws => ws.week === period.endWeek);
+                  if (sData && eData) {
+                      periodScores.push({ uId: u.id, improvement: eData.score - sData.score, score: eData.score });
+                  }
+              });
 
-              if (winners.length === 1 && periodScores.length > 1) {
-                  const runnerUpImp = periodScores.find(s => s.improvement < topImp)?.improvement;
-                  if (runnerUpImp !== undefined) {
-                      const runnersUp = periodScores.filter(s => s.improvement === runnerUpImp);
-                      runnersUp.forEach(ru => {
-                          addOp(b => b.set(doc(firestore, 'monthlyMimoM', `2025-${period.id}-ru-${ru.uId}`), {
-                              id: `2025-${period.id}-ru-${ru.uId}`,
-                              userId: ru.uId,
-                              month: period.id,
-                              year: 2025,
-                              type: 'runner-up',
-                              improvement: ru.improvement
-                          }));
-                      });
+              if (periodScores.length > 0) {
+                  periodScores.sort((a,b) => b.improvement - a.improvement || b.score - a.score);
+                  const topImp = periodScores[0].improvement;
+                  const winners = periodScores.filter(s => s.improvement === topImp);
+                  
+                  winners.forEach(w => {
+                      addOp(b => b.set(doc(firestore, 'monthlyMimoM', `2025-${period.id}-${w.uId}`), {
+                          id: `2025-${period.id}-${w.uId}`,
+                          userId: w.uId,
+                          month: period.id,
+                          year: 2025,
+                          type: 'winner',
+                          improvement: w.improvement
+                      }));
+                  });
+
+                  if (winners.length === 1 && periodScores.length > 1) {
+                      const runnerUpImp = periodScores.find(s => s.improvement < topImp)?.improvement;
+                      if (runnerUpImp !== undefined) {
+                          const runnersUp = periodScores.filter(s => s.improvement === runnerUpImp);
+                          runnersUp.forEach(ru => {
+                              addOp(b => b.set(doc(firestore, 'monthlyMimoM', `2025-${period.id}-ru-${ru.uId}`), {
+                                  id: `2025-${period.id}-ru-${ru.uId}`,
+                                  userId: ru.uId,
+                                  month: period.id,
+                                  year: 2025,
+                                  type: 'runner-up',
+                                  improvement: ru.improvement
+                              }));
+                          });
+                      }
                   }
               }
           }

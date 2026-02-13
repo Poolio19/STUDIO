@@ -105,12 +105,13 @@ export default function ProfilePage() {
         .map(a => {
             const shortYear = String(a.year).slice(-2);
             const m = a.month.slice(0, 3);
-            const monthMap: Record<string, string> = { 'Jan':'01','Feb':'02','Mar':'03','Apr':'04','May':'05','Jun':'06','Jul':'07','Aug':'08','Sep':'09','Oct':'10','Nov':'11','Dec':'12','aug':'08','sep':'09','oct':'10','nov':'11','dec':'12' };
-            const monthPad = monthMap[m.toLowerCase()] || '00';
+            const monthMap: Record<string, string> = { 'aug':'08','sep':'09','oct':'10','nov':'11','dec':'12','jan':'01','feb':'02','mar':'03','apr':'04','may':'05','xmas':'XM' };
+            const monthPad = monthMap[m.toLowerCase()] || m.toUpperCase();
             let code = 'MiM';
             if (a.special === 'Winner' || a.type === 'winner') code = 'MiM';
             else if (a.special === 'Runner-Up' || a.type === 'runner-up') code = 'RuM';
             if (a.special && a.special.toLowerCase().includes('jo')) code = 'J' + code;
+            if (a.special === 'Xmas No 1') code = 'XM1';
             return { id: a.id, label: `${code}: ${monthPad}/${shortYear}`, isWinner: a.type === 'winner' };
         });
   }, [profile, monthlyMimoMAwards]);
@@ -227,10 +228,10 @@ export default function ProfilePage() {
                               <AvatarImage src={avatarPreview || getAvatarUrl(profile?.avatar)} alt={profile?.name} className="object-cover" />
                               <AvatarFallback className="text-6xl">{(profile?.name || '?').charAt(0)}</AvatarFallback>
                           </Avatar>
-                          <div className="mt-6 text-center text-yellow-950 flex flex-col items-center">
-                              <h2 className="text-3xl font-black tracking-tight drop-shadow-md uppercase">{profile?.name}</h2>
-                              {profile?.nickname && <p className="text-xl italic font-bold mt-1 opacity-90">{profile.nickname}</p>}
-                              {profile?.initials && <p className="text-lg font-bold opacity-80 uppercase mt-1">{profile.initials}</p>}
+                          <div className="mt-6 text-center text-yellow-950 flex flex-col items-center w-full">
+                              <h2 className="text-3xl font-black tracking-tight drop-shadow-md uppercase text-center">{profile?.name}</h2>
+                              {profile?.nickname && <p className="text-xl italic font-bold mt-1 opacity-90 text-center">{profile.nickname}</p>}
+                              {profile?.initials && <p className="text-lg font-black opacity-80 uppercase mt-1 text-center">{profile.initials}</p>}
                           </div>
                           <div className="absolute bottom-2 left-0 right-0 text-center">
                               <span className="text-[10px] font-mono text-yellow-950/40 uppercase tracking-widest">User ID: {profile?.id}</span>
