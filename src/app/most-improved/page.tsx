@@ -21,13 +21,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { User, UserHistory, SeasonMonth, Match, MonthlyMimoM } from '@/lib/types';
+import type { User, UserHistory, Match, MonthlyMimoM } from '@/lib/types';
 import { getAvatarUrl } from '@/lib/placeholder-images';
 import { ArrowUp, ArrowDown, Minus, Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase, useResolvedUserId } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { collection } from 'firebase/firestore';
 import { allAwardPeriods } from '@/lib/award-periods';
 
 
@@ -148,19 +148,26 @@ export default function MostImprovedPage() {
         let runnersUp: (User & { improvement: number })[] = [];
         
         if (isPastPeriod) {
-            const periodAwards = monthlyMimoMAwards.filter(a => a.id.includes(period.id) && (a.year >= 2025));
+            // Fix: Filter by Case-Insensitive month name and Year >= 2025
+            const periodAwards = monthlyMimoMAwards.filter(a => 
+                a.year >= 2025 && 
+                (a.month.toLowerCase() === period.id.toLowerCase() || 
+                 a.month.toLowerCase() === (period.month || '').toLowerCase() ||
+                 a.id.toLowerCase().includes(period.id.toLowerCase()))
+            );
+            
             const winnerAwards = periodAwards.filter(a => a.type === 'winner');
             const runnerUpAwards = periodAwards.filter(a => a.type === 'runner-up');
             
             winners = winnerAwards.map(award => {
                 const user = userMap.get(award.userId);
-                return { ...user, improvement: award.improvement || 0 } as User & { improvement: number };
-            }).filter(u => u.id);
+                return user ? { ...user, improvement: award.improvement || 0 } : null;
+            }).filter((u): u is User & { improvement: number } => !!u);
 
             runnersUp = runnerUpAwards.map(award => {
                 const user = userMap.get(award.userId);
-                return { ...user, improvement: award.improvement || 0 } as User & { improvement: number };
-            }).filter(u => u.id);
+                return user ? { ...user, improvement: award.improvement || 0 } : null;
+            }).filter((u): u is User & { improvement: number } => !!u);
         } else if (isCurrentPeriod && !isTooEarly) {
             if (ladderData.firstPlaceImprovement !== undefined) {
                 winners = ladderData.ladderWithRanks
@@ -189,10 +196,6 @@ export default function MostImprovedPage() {
     if (ladderData.secondPlaceImprovement !== undefined && user.improvement === ladderData.secondPlaceImprovement && ladderData.secondPlaceImprovement !== ladderData.firstPlaceImprovement) return 'bg-slate-400/20';
     return '';
   };
-
-  const currentMonthAbbreviation = useMemo(() => {
-    return currentAwardPeriod?.abbreviation || currentMonthName.slice(0, 4).toUpperCase();
-  }, [currentAwardPeriod, currentMonthName]);
 
   if (isLoading) {
     return (
