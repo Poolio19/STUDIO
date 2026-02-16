@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -194,14 +193,17 @@ export async function recalculateAllDataClientSide(
           if (latestWeek < period.endWeek) continue;
           
           if (period.id === 'xmas') {
-              // Christmas No. 1: Leader(s) at Week 17 (covering Dec 25th)
+              // Christmas No. 1: Leader(s) at Week 17
               const xmasRanks = users.map(u => {
                   const h = allHistories[u.id];
-                  const weekData = h.weeklyScores.find(ws => ws.week === period.endWeek);
+                  const weekData = h.weeklyScores.find(ws => ws.week === 17);
                   return { uId: u.id, rank: weekData?.rank || 999 };
-              }).filter(r => r.rank === 1);
+              });
+              
+              const topRank = Math.min(...xmasRanks.map(r => r.rank));
+              const winners = xmasRanks.filter(r => r.rank === topRank);
 
-              xmasRanks.forEach(winner => {
+              winners.forEach(winner => {
                   addOp(b => b.set(doc(firestore, 'monthlyMimoM', `2025-xmas-${winner.uId}`), {
                       id: `2025-xmas-${winner.uId}`,
                       userId: winner.uId,

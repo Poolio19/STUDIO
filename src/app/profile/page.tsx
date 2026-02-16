@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -130,7 +129,7 @@ export default function ProfilePage() {
         else if (m.type === 'runner-up') awardsMap[key].runnersUp.push(m.userId);
     });
     Object.values(awardsMap).forEach(award => {
-        if (award.winners.includes(profile.id)) baggedAmount += 10 / (award.winners.length || 1);
+        if (award.winners.includes(profile.id)) baggedAmount += (award.special === 'Xmas No 1' ? 10 : 10 / (award.winners.length || 1));
         if (award.winners.length === 1 && award.runnersUp.includes(profile.id)) baggedAmount += 5 / (award.runnersUp.length || 1);
     });
 
@@ -221,8 +220,9 @@ export default function ProfilePage() {
     <div className="space-y-8">
       <Card className="overflow-hidden border-2 shadow-2xl">
           <CardContent className="p-0">
-              <div className="flex flex-col lg:flex-row items-center lg:items-stretch">
-                  <div className="p-1 lg:w-1/3 flex flex-col items-center justify-center border-b lg:border-b-0 lg:border-r bg-muted/5">
+              <div className="grid grid-cols-1 lg:grid-cols-3 items-stretch">
+                  {/* Column 1: Avatar */}
+                  <div className="p-1 flex flex-col items-center justify-center border-b lg:border-b-0 lg:border-r bg-muted/5">
                       <div className="relative p-6 rounded-xl shadow-2xl bg-gradient-to-tr from-yellow-600 via-yellow-200 to-yellow-600 border-[16px] border-yellow-700 w-full h-full flex flex-col items-center justify-center min-h-[450px]">
                           <Avatar className="h-60 w-60 rounded-lg border-8 border-yellow-900 shadow-inner bg-card">
                               <AvatarImage src={avatarPreview || getAvatarUrl(profile?.avatar)} alt={profile?.name} className="object-cover" />
@@ -239,48 +239,62 @@ export default function ProfilePage() {
                       </div>
                   </div>
                   
-                  <div className="flex-1 p-8 flex flex-col gap-8">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-6">
-                              <div className="border-2 border-primary/20 rounded-xl p-6 bg-card shadow-sm">
-                                  <h3 className="text-lg font-bold mb-4 flex items-center justify-center gap-2 text-primary border-b pb-2"><ShieldCheck className="size-5" /> This Season's Stats</h3>
-                                  <div className="grid grid-cols-4 gap-x-2 text-center text-sm">
-                                      <div /><div className="font-semibold text-muted-foreground text-xs uppercase">High</div><div className="font-semibold text-muted-foreground text-xs uppercase">Low</div><div className="font-semibold text-muted-foreground text-xs uppercase">Now</div>
-                                      <div className="font-bold text-muted-foreground text-left py-2 border-b">Pos</div><div className="font-bold text-green-600 py-2 border-b">{profile?.minRank || '-'}</div><div className="font-bold text-red-600 py-2 border-b">{profile?.maxRank || '-'}</div><div className="font-extrabold py-2 border-b text-lg">{profile?.rank || '-'}</div>
-                                      <div className="font-bold text-muted-foreground text-left py-2">Pts</div><div className="font-bold text-green-600 py-2">{profile?.maxScore || '-'}</div><div className="font-bold text-red-600 py-2">{profile?.minScore || '-'}</div><div className="font-extrabold py-2 border-b text-lg">{profile?.score || '-'}</div>
-                                  </div>
+                  {/* Column 2: Stats Zone */}
+                  <div className="flex-1 p-8 flex flex-col gap-8 border-r">
+                      <div className="space-y-4">
+                          <h3 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] border-b pb-2">Overall Data</h3>
+                          <div className="grid grid-cols-2 gap-4">
+                              <div className="bg-primary/5 p-4 rounded-lg border border-primary/10">
+                                  <span className="text-[10px] font-bold text-muted-foreground uppercase">Played</span>
+                                  <p className="text-xl font-black">{profile?.seasonsPlayed || 0} Seasons</p>
                               </div>
-                          </div>
-                          
-                          <div className="border-[12px] border-amber-950 bg-amber-900 rounded-xl shadow-2xl p-1 relative h-full">
-                              <div className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded h-full p-6 shadow-inner overflow-hidden flex flex-col gap-6">
-                                  <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none z-10" />
-                                  <h3 className="text-sm font-black text-center flex items-center justify-center gap-2 text-white/90 border-b border-white/20 pb-2 relative z-20 uppercase">Trophy Cabinet</h3>
-                                  <div className="flex justify-around items-end h-20 relative z-20">
-                                      <TooltipProvider>
-                                          <Tooltip><TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-black text-yellow-400">1st</span><Trophy className={cn("size-10 transition-all", (profile?.first ?? 0) > 0 ? "text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)] scale-110" : "text-white/10")} /><span className="text-sm font-black text-white">{profile?.first || 0}</span></div></TooltipTrigger><TooltipContent><p>Champion</p></TooltipContent></Tooltip>
-                                          <Tooltip><TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-slate-300">2nd</span><Medal className={cn("size-8 transition-all", (profile?.second ?? 0) > 0 ? "text-slate-300 drop-shadow-[0_0_8px_rgba(203,213,225,0.6)] scale-105" : "text-white/10")} /><span className="text-sm font-black text-white">{profile?.second || 0}</span></div></TooltipTrigger><TooltipContent><p>Runner Up</p></TooltipContent></Tooltip>
-                                          <Tooltip><TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-amber-600">3rd</span><Medal className={cn("size-7 transition-all", (profile?.third ?? 0) > 0 ? "text-amber-700 drop-shadow-[0_0_8px_rgba(180,83,9,0.6)]" : "text-white/10")} /><span className="text-sm font-black text-white">{profile?.third || 0}</span></div></TooltipTrigger><TooltipContent><p>3rd Place</p></TooltipContent></Tooltip>
-                                          <Tooltip><TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-primary/60">T10</span><Medal className={cn("size-7 transition-all", ttCount > 0 ? "text-primary/40" : "text-white/10")} /><span className="text-sm font-black text-white">{ttCount}</span></div></TooltipTrigger><TooltipContent><p>Top 10 Finishes</p></TooltipContent></Tooltip>
-                                      </TooltipProvider>
-                                  </div>
-                                  <div className="relative z-20 border-t border-white/10 pt-4">
-                                      <div className="flex flex-wrap justify-center gap-2 max-h-32 overflow-y-auto pr-1">
-                                          {awardCerts.length > 0 ? awardCerts.map((cert) => (
-                                              <div key={cert.id} className={cn("px-2 py-1 rounded border-2 text-[10px] font-black uppercase tracking-tighter shadow-sm whitespace-nowrap", cert.isWinner ? "bg-yellow-100 border-yellow-500 text-yellow-900" : "bg-slate-100 border-slate-400 text-slate-900")}>
-                                                  {cert.label}
-                                              </div>
-                                          )) : <p className="text-[10px] text-white/20 italic">No certificates yet.</p>}
-                                      </div>
-                                  </div>
+                              <div className="bg-primary/5 p-4 rounded-lg border border-primary/10">
+                                  <span className="text-[10px] font-bold text-muted-foreground uppercase">Earnings</span>
+                                  <p className="text-xl font-black text-green-600">£{(profile?.cashWinnings || 0).toFixed(2)}</p>
+                              </div>
+                              <div className="bg-primary/5 p-4 rounded-lg border border-primary/10">
+                                  <span className="text-[10px] font-bold text-muted-foreground uppercase">Bagged</span>
+                                  <p className="text-xl font-black text-primary">£{currentPrizes.bagged.toFixed(2)}</p>
+                              </div>
+                              <div className="bg-primary/5 p-4 rounded-lg border border-primary/10">
+                                  <span className="text-[10px] font-bold text-muted-foreground uppercase">Potential</span>
+                                  <p className="text-xl font-black text-orange-600">£{currentPrizes.potential.toFixed(2)}</p>
                               </div>
                           </div>
                       </div>
-                      <div className="w-full border-2 border-primary/10 rounded-xl p-6 bg-primary/5 flex flex-col md:flex-row justify-between items-center gap-6 shadow-inner">
-                          <div className="flex flex-col items-center md:items-start"><span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Experience</span><span className="text-2xl font-black">Played: {profile?.seasonsPlayed || 0}</span></div>
-                          <div className="flex flex-col items-center md:items-start"><span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Career Earnings</span><span className="text-2xl font-black text-green-600">All Time: £{(profile?.cashWinnings || 0).toFixed(2)}</span></div>
-                          <div className="flex flex-col items-center md:items-start"><span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">2025-26 Bagged</span><span className="text-2xl font-black text-primary">£{currentPrizes.bagged.toFixed(2)}</span></div>
-                          <div className="flex flex-col items-center md:items-start"><span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">2025-26 Potential</span><span className="text-2xl font-black text-orange-600">£{currentPrizes.potential.toFixed(2)}</span></div>
+
+                      <div className="border-2 border-primary/20 rounded-xl p-6 bg-card shadow-sm">
+                          <h3 className="text-sm font-bold mb-4 flex items-center justify-center gap-2 text-primary border-b pb-2"><ShieldCheck className="size-4" /> This Season's Stats</h3>
+                          <div className="grid grid-cols-4 gap-x-2 text-center text-xs">
+                              <div /><div className="font-semibold text-muted-foreground text-[10px] uppercase">High</div><div className="font-semibold text-muted-foreground text-[10px] uppercase">Low</div><div className="font-semibold text-muted-foreground text-[10px] uppercase">Now</div>
+                              <div className="font-bold text-muted-foreground text-left py-2 border-b">Pos</div><div className="font-bold text-green-600 py-2 border-b">{profile?.minRank || '-'}</div><div className="font-bold text-red-600 py-2 border-b">{profile?.maxRank || '-'}</div><div className="font-extrabold py-2 border-b text-base">{profile?.rank || '-'}</div>
+                              <div className="font-bold text-muted-foreground text-left py-2">Pts</div><div className="font-bold text-green-600 py-2">{profile?.maxScore || '-'}</div><div className="font-bold text-red-600 py-2">{profile?.minScore || '-'}</div><div className="font-extrabold py-2 text-base">{profile?.score || '-'}</div>
+                          </div>
+                      </div>
+                  </div>
+
+                  {/* Column 3: Trophy Cabinet */}
+                  <div className="border-[12px] border-amber-950 bg-amber-900 shadow-2xl p-1 relative min-h-[450px]">
+                      <div className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded h-full p-6 shadow-inner overflow-hidden flex flex-col gap-6">
+                          <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none z-10" />
+                          <h3 className="text-sm font-black text-center flex items-center justify-center gap-2 text-white/90 border-b border-white/20 pb-2 relative z-20 uppercase">Trophy Cabinet</h3>
+                          <div className="flex justify-around items-end h-20 relative z-20">
+                              <TooltipProvider>
+                                  <Tooltip><TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-black text-yellow-400">1st</span><Trophy className={cn("size-10 transition-all", (profile?.first ?? 0) > 0 ? "text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)] scale-110" : "text-white/10")} /><span className="text-sm font-black text-white">{profile?.first || 0}</span></div></TooltipTrigger><TooltipContent><p>Champion</p></TooltipContent></Tooltip>
+                                  <Tooltip><TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-slate-300">2nd</span><Medal className={cn("size-8 transition-all", (profile?.second ?? 0) > 0 ? "text-slate-300 drop-shadow-[0_0_8px_rgba(203,213,225,0.6)] scale-105" : "text-white/10")} /><span className="text-sm font-black text-white">{profile?.second || 0}</span></div></TooltipTrigger><TooltipContent><p>Runner Up</p></TooltipContent></Tooltip>
+                                  <Tooltip><TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-amber-600">3rd</span><Medal className={cn("size-7 transition-all", (profile?.third ?? 0) > 0 ? "text-amber-700 drop-shadow-[0_0_8px_rgba(180,83,9,0.6)]" : "text-white/10")} /><span className="text-sm font-black text-white">{profile?.third || 0}</span></div></TooltipTrigger><TooltipContent><p>3rd Place</p></TooltipContent></Tooltip>
+                                  <Tooltip><TooltipTrigger asChild><div className="flex flex-col items-center gap-1 w-12"><span className="text-[10px] font-bold text-primary/60">T10</span><Medal className={cn("size-7 transition-all", ttCount > 0 ? "text-primary/40" : "text-white/10")} /><span className="text-sm font-black text-white">{ttCount}</span></div></TooltipTrigger><TooltipContent><p>Top 10 Finishes</p></TooltipContent></Tooltip>
+                              </TooltipProvider>
+                          </div>
+                          <div className="relative z-20 border-t border-white/10 pt-4 flex-1">
+                              <div className="flex flex-wrap justify-center gap-2 max-h-[300px] overflow-y-auto pr-1">
+                                  {awardCerts.length > 0 ? awardCerts.map((cert) => (
+                                      <div key={cert.id} className={cn("px-2 py-1 rounded border-2 text-[10px] font-black uppercase tracking-tighter shadow-sm whitespace-nowrap", cert.isWinner ? "bg-yellow-100 border-yellow-500 text-yellow-900" : "bg-slate-100 border-slate-400 text-slate-900")}>
+                                          {cert.label}
+                                      </div>
+                                  )) : <p className="text-[10px] text-white/20 italic">No certificates yet.</p>}
+                              </div>
+                          </div>
                       </div>
                   </div>
               </div>
