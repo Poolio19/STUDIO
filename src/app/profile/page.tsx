@@ -118,7 +118,6 @@ export default function ProfilePage() {
                 line2 = 'No 1';
                 line3 = String(a.year);
             } else {
-                // Award type (MiMoM, RuMiMoM, JoMiMoM, etc)
                 line1 = a.special || (a.type === 'winner' ? 'MiMoM' : 'RuMiMoM');
                 line2 = String(a.year);
                 line3 = a.month.charAt(0).toUpperCase() + a.month.slice(1, 3).toLowerCase();
@@ -303,7 +302,7 @@ export default function ProfilePage() {
                               <div className="flex flex-wrap justify-center gap-3 max-h-[300px] overflow-y-auto pr-1">
                                   {awardCerts.length > 0 ? awardCerts.map((cert) => (
                                       <div key={cert.id} className={cn(
-                                          "w-16 h-20 flex flex-col items-center justify-center rounded border-2 text-[9px] font-black uppercase tracking-tighter shadow-md text-center leading-tight", 
+                                          "w-20 h-24 flex flex-col items-center justify-center rounded border-2 text-[11px] font-black uppercase shadow-md text-center leading-tight", 
                                           cert.isXmas 
                                             ? "bg-red-600 border-green-600 text-white" 
                                             : cert.isWinner ? "bg-yellow-100 border-yellow-500 text-yellow-900" : "bg-slate-100 border-slate-400 text-slate-900"
