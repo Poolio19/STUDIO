@@ -102,20 +102,29 @@ export default function ProfilePage() {
     if (!profile || !monthlyMimoMAwards) return [];
     return monthlyMimoMAwards
         .filter(a => a.userId === profile.id)
+        .sort((a, b) => {
+            if (b.year !== a.year) return b.year - a.year;
+            return b.month.localeCompare(a.month);
+        })
         .map(a => {
-            const shortYear = String(a.year).slice(-2);
-            const m = a.month.slice(0, 3);
-            const monthMap: Record<string, string> = { 'aug':'08','sep':'09','oct':'10','nov':'11','dec':'12','jan':'01','feb':'02','mar':'03','apr':'04','may':'05','xmas':'XM' };
-            const monthPad = monthMap[m.toLowerCase()] || m.toUpperCase();
-            let code = 'MiM';
-            if (a.special === 'Winner' || a.type === 'winner') code = 'MiM';
-            else if (a.special === 'Runner-Up' || a.type === 'runner-up') code = 'RuM';
-            if (a.special && a.special.toLowerCase().includes('jo')) code = 'J' + code;
+            const isXmas = a.special === 'Xmas No 1' || a.month.toLowerCase() === 'xmas' || a.id.includes('xmas');
             
-            const isXmas = a.special === 'Xmas No 1';
-            if (isXmas) code = 'XM1';
+            let line1 = '';
+            let line2 = '';
+            let line3 = '';
+
+            if (isXmas) {
+                line1 = 'XMAS';
+                line2 = 'No 1';
+                line3 = String(a.year);
+            } else {
+                // Award type (MiMoM, RuMiMoM, JoMiMoM, etc)
+                line1 = a.special || (a.type === 'winner' ? 'MiMoM' : 'RuMiMoM');
+                line2 = String(a.year);
+                line3 = a.month.charAt(0).toUpperCase() + a.month.slice(1, 3).toLowerCase();
+            }
             
-            return { id: a.id, label: `${code}: ${monthPad}/${shortYear}`, isWinner: a.type === 'winner', isXmas };
+            return { id: a.id, line1, line2, line3, isWinner: a.type === 'winner', isXmas };
         });
   }, [profile, monthlyMimoMAwards]);
 
@@ -291,15 +300,17 @@ export default function ProfilePage() {
                               </TooltipProvider>
                           </div>
                           <div className="relative z-20 border-t border-white/10 pt-4 flex-1">
-                              <div className="flex flex-wrap justify-center gap-2 max-h-[300px] overflow-y-auto pr-1">
+                              <div className="flex flex-wrap justify-center gap-3 max-h-[300px] overflow-y-auto pr-1">
                                   {awardCerts.length > 0 ? awardCerts.map((cert) => (
                                       <div key={cert.id} className={cn(
-                                          "px-2 py-1 rounded border-2 text-[10px] font-black uppercase tracking-tighter shadow-sm whitespace-nowrap", 
+                                          "w-16 h-20 flex flex-col items-center justify-center rounded border-2 text-[9px] font-black uppercase tracking-tighter shadow-md text-center leading-tight", 
                                           cert.isXmas 
-                                            ? "bg-red-100 border-green-600 text-red-800" 
+                                            ? "bg-red-600 border-green-600 text-white" 
                                             : cert.isWinner ? "bg-yellow-100 border-yellow-500 text-yellow-900" : "bg-slate-100 border-slate-400 text-slate-900"
                                       )}>
-                                          {cert.label}
+                                          <div className="truncate w-full px-0.5">{cert.line1}</div>
+                                          <div className="truncate w-full px-0.5">{cert.line2}</div>
+                                          <div className="truncate w-full px-0.5">{cert.line3}</div>
                                       </div>
                                   )) : <p className="text-[10px] text-white/20 italic">No certificates yet.</p>}
                               </div>
