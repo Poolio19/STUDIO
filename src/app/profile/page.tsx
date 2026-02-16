@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -110,8 +111,11 @@ export default function ProfilePage() {
             if (a.special === 'Winner' || a.type === 'winner') code = 'MiM';
             else if (a.special === 'Runner-Up' || a.type === 'runner-up') code = 'RuM';
             if (a.special && a.special.toLowerCase().includes('jo')) code = 'J' + code;
-            if (a.special === 'Xmas No 1') code = 'XM1';
-            return { id: a.id, label: `${code}: ${monthPad}/${shortYear}`, isWinner: a.type === 'winner' };
+            
+            const isXmas = a.special === 'Xmas No 1';
+            if (isXmas) code = 'XM1';
+            
+            return { id: a.id, label: `${code}: ${monthPad}/${shortYear}`, isWinner: a.type === 'winner', isXmas };
         });
   }, [profile, monthlyMimoMAwards]);
 
@@ -121,10 +125,10 @@ export default function ProfilePage() {
     const sortedList = [...activeUsers].sort((a, b) => b.score - a.score || (a.isPro ? -1 : 1) || (a.name || '').localeCompare(b.name || ''));
 
     let baggedAmount = 0;
-    const awardsMap: Record<string, { winners: string[], runnersUp: string[] }> = {};
+    const awardsMap: Record<string, { winners: string[], runnersUp: string[], special?: string }> = {};
     monthlyMimoMAwards.filter(m => m.year === 2025).forEach(m => {
         const key = m.special || `${m.month}-${m.year}`;
-        if (!awardsMap[key]) awardsMap[key] = { winners: [], runnersUp: [] };
+        if (!awardsMap[key]) awardsMap[key] = { winners: [], runnersUp: [], special: m.special };
         if (m.type === 'winner') awardsMap[key].winners.push(m.userId);
         else if (m.type === 'runner-up') awardsMap[key].runnersUp.push(m.userId);
     });
@@ -221,7 +225,7 @@ export default function ProfilePage() {
       <Card className="overflow-hidden border-2 shadow-2xl">
           <CardContent className="p-0">
               <div className="grid grid-cols-1 lg:grid-cols-3 items-stretch">
-                  {/* Column 1: Avatar */}
+                  {/* Column 1: Avatar Section */}
                   <div className="p-1 flex flex-col items-center justify-center border-b lg:border-b-0 lg:border-r bg-muted/5">
                       <div className="relative p-6 rounded-xl shadow-2xl bg-gradient-to-tr from-yellow-600 via-yellow-200 to-yellow-600 border-[16px] border-yellow-700 w-full h-full flex flex-col items-center justify-center min-h-[450px]">
                           <Avatar className="h-60 w-60 rounded-lg border-8 border-yellow-900 shadow-inner bg-card">
@@ -263,7 +267,7 @@ export default function ProfilePage() {
                           </div>
                       </div>
 
-                      <div className="border-2 border-primary/20 rounded-xl p-6 bg-card shadow-sm">
+                      <div className="border-2 border-primary/20 rounded-xl p-6 bg-card shadow-sm mt-auto">
                           <h3 className="text-sm font-bold mb-4 flex items-center justify-center gap-2 text-primary border-b pb-2"><ShieldCheck className="size-4" /> This Season's Stats</h3>
                           <div className="grid grid-cols-4 gap-x-2 text-center text-xs">
                               <div /><div className="font-semibold text-muted-foreground text-[10px] uppercase">High</div><div className="font-semibold text-muted-foreground text-[10px] uppercase">Low</div><div className="font-semibold text-muted-foreground text-[10px] uppercase">Now</div>
@@ -289,7 +293,12 @@ export default function ProfilePage() {
                           <div className="relative z-20 border-t border-white/10 pt-4 flex-1">
                               <div className="flex flex-wrap justify-center gap-2 max-h-[300px] overflow-y-auto pr-1">
                                   {awardCerts.length > 0 ? awardCerts.map((cert) => (
-                                      <div key={cert.id} className={cn("px-2 py-1 rounded border-2 text-[10px] font-black uppercase tracking-tighter shadow-sm whitespace-nowrap", cert.isWinner ? "bg-yellow-100 border-yellow-500 text-yellow-900" : "bg-slate-100 border-slate-400 text-slate-900")}>
+                                      <div key={cert.id} className={cn(
+                                          "px-2 py-1 rounded border-2 text-[10px] font-black uppercase tracking-tighter shadow-sm whitespace-nowrap", 
+                                          cert.isXmas 
+                                            ? "bg-red-100 border-green-600 text-red-800" 
+                                            : cert.isWinner ? "bg-yellow-100 border-yellow-500 text-yellow-900" : "bg-slate-100 border-slate-400 text-slate-900"
+                                      )}>
                                           {cert.label}
                                       </div>
                                   )) : <p className="text-[10px] text-white/20 italic">No certificates yet.</p>}
