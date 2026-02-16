@@ -120,10 +120,12 @@ export default function LeaderboardPage() {
     let highestProScore = -1;
     sortedUsers.forEach(u => { if (u.isPro && u.score > highestProScore) highestProScore = u.score; });
 
+    // Initial pass to identify players strictly outperforming Pros but not in prize slots
     const tempSlayers = sortedUsers.filter((p, idx) => {
         const rank = getCompRank(p.score);
         return !p.isPro && p.score > highestProScore && rank > 10;
     });
+    
     const slayerPoolTotal = Math.min(tempSlayers.length * 5, 55);
     const netSeasonalFund = 530 - 150 - 10 - slayerPoolTotal;
     
@@ -146,7 +148,7 @@ export default function LeaderboardPage() {
         let totalPrizeForGroup = 0;
         indices.forEach(idx => {
             const ord = idx + 1; 
-            if (ord <= 10 && !sortedUsers[idx].isPro) {
+            if (ord <= 10) { // Contributes if ordinal is in top 10 prize slots
                 totalPrizeForGroup += finalSeasonalPrizes[ord - 1] || 0;
             }
         });
@@ -162,10 +164,11 @@ export default function LeaderboardPage() {
         });
     });
 
+    // Final Slayers: beating Pros, rank > 10, AND not receiving any share of the top 10 fund
     const finalSlayers = sortedUsers.filter(p => {
         const b = breakdown.get(p.id);
         const rank = getCompRank(p.score);
-        return !p.isPro && p.score > highestProScore && rank > 10 && (!b || b.seasonal === 0);
+        return !p.isPro && p.score > highestProScore && rank > 10 && (!b || b.seasonal <= 0);
     });
     
     const individualBounty = finalSlayers.length > 0 ? slayerPoolTotal / finalSlayers.length : 0;
@@ -223,7 +226,7 @@ export default function LeaderboardPage() {
                   const isCurrentUser = user.id === resolvedUserId;
                   const competitionRank = sortedUsers.findIndex(u => u.score === user.score) + 1;
                   const competitionWasRank = prevScoresOnlyArr.indexOf(user.previousScore) + 1;
-                  const competitionRankChange = competitionWasRank - competitionRank;
+                  const competitionRankChange = (competitionWasRank > 0 && competitionRank > 0) ? competitionWasRank - competitionRank : 0;
                   const RankIcon = getRankChangeIcon(competitionRankChange);
 
                   const isMimoMWinner = monthlyMimoM?.some(a => a.userId === user.id && a.year === 2025);
@@ -300,11 +303,11 @@ export default function LeaderboardPage() {
                                 </TooltipProvider>
                             )}
                           </TableCell>
-                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{competitionWasRank}</TableCell>
+                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{competitionWasRank || '-'}</TableCell>
                           <TableCell className={cn("font-bold text-center border-r py-1", getRankChangeColour(competitionRankChange))}>
                               <div className={cn("flex items-center justify-center gap-2", isCurrentUser && "drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
-                                  <span className={isCurrentUser ? "text-[1.1rem] font-black" : ""}>{Math.abs(competitionRankChange)}</span>
-                                  <RankIcon className="size-5" />
+                                  <span className={isCurrentUser ? "text-[1.1rem] font-black" : ""}>{competitionWasRank > 0 ? Math.abs(competitionRankChange) : '-'}</span>
+                                  {competitionWasRank > 0 && <RankIcon className="size-5" />}
                               </div>
                           </TableCell>
                           <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.previousScore}</TableCell>

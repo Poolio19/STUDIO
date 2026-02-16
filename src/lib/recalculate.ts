@@ -194,10 +194,11 @@ export async function recalculateAllDataClientSide(
           if (latestWeek < period.endWeek) continue;
           
           if (period.id === 'xmas') {
-              // Christmas No. 1: Leader(s) at Week 17
+              // Christmas No. 1: Leader(s) at Week 17 (covering Dec 25th)
               const xmasRanks = users.map(u => {
                   const h = allHistories[u.id];
-                  return { uId: u.id, ...h.weeklyScores.find(ws => ws.week === period.endWeek) };
+                  const weekData = h.weeklyScores.find(ws => ws.week === period.endWeek);
+                  return { uId: u.id, rank: weekData?.rank || 999 };
               }).filter(r => r.rank === 1);
 
               xmasRanks.forEach(winner => {
