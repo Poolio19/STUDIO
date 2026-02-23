@@ -84,7 +84,7 @@ export async function recalculateAllDataClientSide(
                       month: monthData.month,
                       year: year,
                       type: type,
-                      special: award.type === 'XMAS NO1' ? 'Xmas No 1' : award.type,
+                      special: award.type === 'XMAS NO1' ? 'Xmas No 1' : null,
                       improvement: award.improvement || 0
                   }));
               }
@@ -252,7 +252,7 @@ export async function recalculateAllDataClientSide(
                       month: period.id,
                       year: 2025,
                       type: 'winner',
-                      special: isXmas ? 'Xmas No 1' : undefined,
+                      special: isXmas ? 'Xmas No 1' : null,
                       improvement: w.improvement
                   }));
               });

@@ -15,7 +15,7 @@ import { Loader2, Users, ShieldAlert, Trash2, Database, Save, RefreshCw } from '
 import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
-import { collection, doc, writeBatch, getDocs, query, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, writeBatch, getDocs, query, deleteDoc, updateDoc, orderBy } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
