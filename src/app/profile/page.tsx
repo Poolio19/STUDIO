@@ -32,11 +32,12 @@ import type { Team, User, UserHistory, MonthlyMimoM, Prediction } from '@/lib/ty
 import { ProfilePerformanceChart } from '@/components/charts/profile-performance-chart';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser, useResolvedUserId } from '@/firebase';
+import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser, useResolvedUserId, useStorage } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { AuthForm } from '@/components/auth/auth-form';
 import { updatePassword, verifyBeforeUpdateEmail } from 'firebase/auth';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -58,6 +59,7 @@ export default function ProfilePage() {
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
   const { user: authUser, isUserLoading: isAuthUserLoading } = useUser();
   const firestore = useFirestore();
+  const storage = useStorage();
   const resolvedUserId = useResolvedUserId();
   
   const userDocRef = useMemoFirebase(() => (firestore && resolvedUserId) ? doc(firestore, 'users', resolvedUserId) : null, [firestore, resolvedUserId]);
@@ -214,12 +216,25 @@ export default function ProfilePage() {
     }
   };
   
-  const handleAvatarSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && userDocRef) {
-      const reader = new FileReader();
-      reader.onloadend = () => { const res = reader.result as string; setAvatarPreview(res); setDocumentNonBlocking(userDocRef, { avatar: res }, { merge: true }); toast({ title: 'Avatar Updated!' }); };
-      reader.readAsDataURL(file);
+    if (!file || !userDocRef || !storage || !resolvedUserId) return;
+
+    const storageRef = ref(storage, `avatars/${resolvedUserId}`);
+    
+    try {
+        toast({ title: 'Uploading...', description: 'Your new avatar is being uploaded.' });
+        const uploadResult = await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(uploadResult.ref);
+
+        setAvatarPreview(downloadURL);
+        await setDocumentNonBlocking(userDocRef, { avatar: downloadURL }, { merge: true });
+        
+        toast({ title: 'Avatar Updated!', description: 'Your new look is now saved.' });
+
+    } catch (error: any) {
+        console.error("Avatar upload failed:", error);
+        toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload your avatar. Please try again.' });
     }
   };
   
@@ -336,9 +351,9 @@ export default function ProfilePage() {
                       </div>
                   </div>
                 <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Real Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="nickname" render={({ field }) => (<FormItem><FormLabel>Nickname</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="initials" render={({ field }) => (<FormItem><FormLabel>Initials</FormLabel><FormControl><Input {...field} maxLength={4}/></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="phoneNumber" render={({ field }) => (<FormItem><FormLabel>Mobile</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="nickname" render={({ field }) => (<FormItem><FormLabel>Nickname</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormMessage>)} />
+                <FormField control={form.control} name="initials" render={({ field }) => (<FormItem><FormLabel>Initials</FormLabel><FormControl><Input {...field} maxLength={4}/></FormControl><FormMessage /></FormMessage>)} />
+                <FormField control={form.control} name="phoneNumber" render={({ field }) => (<FormItem><FormLabel>Mobile</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormMessage>)} />
                 <FormField control={form.control} name="favouriteTeam" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Supported Team</FormLabel>

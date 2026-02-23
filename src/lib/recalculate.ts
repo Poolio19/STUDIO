@@ -16,7 +16,6 @@ import { allAwardPeriods } from './award-periods';
 
 /**
  * Recalculates all derived data and seeds historical records.
- * Handles out-of-order fixtures by calculating a chronological "Effective Week" for awards/charts.
  */
 export async function recalculateAllDataClientSide(
   firestore: Firestore,
@@ -41,7 +40,6 @@ export async function recalculateAllDataClientSide(
       const historicalUserIds = new Set(historicalPlayersData.map(p => p.id));
       const activeUserIds = new Set(predictions.filter(p => p.rankings?.length === 20).map(p => p.userId || (p as any).id));
       
-      // Process all historical players + pros + anyone active this season
       const users = allUsers.filter(u => historicalUserIds.has(u.id) || u.isPro || activeUserIds.has(u.id));
       const prevStandingsRankMap = new Map(prevStandingsData.map(s => [s.teamId, s.rank]));
 
@@ -79,9 +77,10 @@ export async function recalculateAllDataClientSide(
                   if (award.type.toLowerCase().includes('ru')) type = 'runner-up';
                   
                   const isHistoricalXmas = award.type === 'XMAS NO1';
+                  const awardId = `${uId}-${monthData.season}-${monthData.month}-${award.type}`.replace(/\s+/g, '-');
                   
-                  addOp(b => b.set(doc(firestore, 'monthlyMimoM', `${uId}-${monthData.season}-${monthData.month}`), {
-                      id: `${uId}-${monthData.season}-${monthData.month}`,
+                  addOp(b => b.set(doc(firestore, 'monthlyMimoM', awardId), {
+                      id: awardId,
                       userId: uId,
                       month: monthData.month,
                       year: year,
@@ -97,7 +96,6 @@ export async function recalculateAllDataClientSide(
       const playedWeeks = [0, ...new Set(playedMatches.map(m => m.week))].sort((a,b) => a-b);
       const latestAbsoluteWeek = Math.max(0, ...playedWeeks);
 
-      // Determine Chronological Week (highest week reached without gaps)
       let chronologicalWeek = 0;
       const playedWeeksSet = new Set(playedWeeks);
       for (let i = 1; i <= 38; i++) {
@@ -166,13 +164,7 @@ export async function recalculateAllDataClientSide(
           });
           
           const uRanked = users.map(u => ({...u, score: uScores[u.id]}))
-              .sort((a, b) => {
-                  if (b.score !== a.score) return b.score - a.score;
-                  const aIsPro = a.isPro ? 1 : 0;
-                  const bIsPro = b.isPro ? 1 : 0;
-                  if (aIsPro !== bIsPro) return bIsPro - aIsPro; // Pro Rule: Pro wins tie
-                  return (a.name || '').localeCompare(b.name || '');
-              });
+              .sort((a, b) => b.score - a.score || (a.isPro ? -1 : 1) || (a.name || '').localeCompare(b.name || ''));
           
           const scoresOnly = uRanked.map(u => u.score);
           uRanked.forEach((u) => {
@@ -181,8 +173,6 @@ export async function recalculateAllDataClientSide(
           });
       }
 
-      // --- Write Final User Profile Stats ---
-      // Robust comparison logic: Compare ABSOLUTE current against board at end of PREVIOUS official gameweek
       const latestWk = latestAbsoluteWeek;
       const prevWk = Math.max(0, chronologicalWeek - 1);
 
@@ -191,7 +181,6 @@ export async function recalculateAllDataClientSide(
           const latest = hist.weeklyScores.find(s => s.week === latestWk) || hist.weeklyScores[hist.weeklyScores.length - 1];
           const prev = hist.weeklyScores.find(s => s.week === prevWk) || { score: 0, rank: 0 };
           
-          // Highs/Lows should only count actual games (week > 0)
           const relevantScores = hist.weeklyScores.filter(s => s.week > 0).map(s => s.score);
           const relevantRanks = hist.weeklyScores.filter(s => s.week > 0).map(s => s.rank);
           
@@ -204,19 +193,18 @@ export async function recalculateAllDataClientSide(
               rankChange: prev.rank > 0 ? prev.rank - latest.rank : 0,
               maxScore: relevantScores.length > 0 ? Math.max(...relevantScores) : latest.score, 
               minScore: relevantScores.length > 0 ? Math.min(...relevantScores) : latest.score,
-              maxRank: relevantRanks.length > 0 ? Math.min(...relevantRanks) : latest.rank, // Best Position
-              minRank: relevantRanks.length > 0 ? Math.max(...relevantRanks) : latest.rank  // Worst Position
+              maxRank: relevantRanks.length > 0 ? Math.min(...relevantRanks) : latest.rank,
+              minRank: relevantRanks.length > 0 ? Math.max(...relevantRanks) : latest.rank
           }, { merge: true }));
           addOp(b => b.set(doc(firestore, 'userHistories', u.id), hist));
       }
 
-      // --- Determine Current Season (2025-26) Awards ---
       progressCallback("Locking in 2025-26 Award Winners...");
       for (const period of allAwardPeriods) {
           if (chronologicalWeek < period.endWeek) continue;
           
           const periodScores: { uId: string, improvement: number, score: number }[] = [];
-          users.filter(u => !u.isPro).forEach(u => {
+          users.filter(u => !u.isPro && activeUserIds.has(u.id)).forEach(u => {
               const h = allHistories[u.id];
               const sData = h.weeklyScores.find(ws => ws.week === period.startWeek);
               const eData = h.weeklyScores.find(ws => ws.week === period.endWeek);
@@ -227,13 +215,11 @@ export async function recalculateAllDataClientSide(
 
           if (periodScores.length > 0) {
               const isXmas = period.id === 'xmas';
-              
-              // Sort for Solitary Leader (Improvement > Score > Alpha)
               periodScores.sort((a,b) => b.improvement - a.improvement || b.score - a.score);
               
               const topImp = periodScores[0].improvement;
               const winners = isXmas 
-                ? [periodScores[0]] // Solitary winner for Xmas
+                ? [periodScores[0]] 
                 : periodScores.filter(s => s.improvement === topImp);
 
               winners.forEach(w => {
@@ -248,7 +234,6 @@ export async function recalculateAllDataClientSide(
                   }));
               });
 
-              // Runners up only if not Xmas
               if (!isXmas && winners.length === 1 && periodScores.length > 1) {
                   const runnerUpImp = periodScores.find(s => s.improvement < topImp)?.improvement;
                   if (runnerUpImp !== undefined) {
