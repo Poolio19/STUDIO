@@ -106,7 +106,6 @@ export default function LeaderboardPage() {
     });
 
     Object.values(awardsMap).forEach(award => {
-        // Xmas No 1 is a special £10 prize
         if (award.special === 'Xmas No 1') {
             award.winners.forEach(id => {
                 const b = breakdown.get(id);
@@ -320,8 +319,9 @@ export default function LeaderboardPage() {
                                   <ScoreIcon className="size-5" />
                               </div>
                           </TableCell>
-                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.minRank || '-'}</TableCell>
-                          <TableCell className={cn("text-center font-medium border-r py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.maxRank || '-'}</TableCell>
+                          {/* Corrected column mapping for Season Highs and Lows */}
+                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.maxRank || '-'}</TableCell>
+                          <TableCell className={cn("text-center font-medium border-r py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.minRank || '-'}</TableCell>
                           <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.maxScore}</TableCell>
                           <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.minScore}</TableCell>
                       </TableRow>

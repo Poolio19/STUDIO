@@ -179,27 +179,35 @@ export async function recalculateAllDataClientSide(
       }
 
       // --- Write Final User Profile Stats ---
+      // Robust previous week detection for "Change in Past Week" stats
+      const latestWk = playedWeeks[playedWeeks.length - 1];
+      const prevWk = playedWeeks.length > 1 ? playedWeeks[playedWeeks.length - 2] : 0;
+
       for (const u of users) {
           const hist = allHistories[u.id];
-          const latest = hist.weeklyScores.find(s => s.week === latestAbsoluteWeek) || hist.weeklyScores[hist.weeklyScores.length - 1];
-          const prev = hist.weeklyScores.find(s => s.week === latestAbsoluteWeek - 1) || { score: 0, rank: 0 };
+          const latest = hist.weeklyScores.find(s => s.week === latestWk) || hist.weeklyScores[hist.weeklyScores.length - 1];
+          const prev = hist.weeklyScores.find(s => s.week === prevWk) || { score: 0, rank: 0 };
           
           const scores = hist.weeklyScores.map(s => s.score);
           const ranks = hist.weeklyScores.map(s => s.rank).filter(r => r > 0);
           
           addOp(b => b.set(doc(firestore, 'users', u.id), {
-              score: latest.score, rank: latest.rank, previousScore: prev.score, previousRank: prev.rank,
-              scoreChange: latest.score - prev.score, rankChange: prev.rank > 0 ? prev.rank - latest.rank : 0,
-              maxScore: Math.max(...scores), minScore: Math.min(...scores),
-              maxRank: ranks.length > 0 ? Math.min(...ranks) : 0, 
-              minRank: ranks.length > 0 ? Math.max(...ranks) : 0
+              score: latest.score, 
+              rank: latest.rank, 
+              previousScore: prev.score, 
+              previousRank: prev.rank,
+              scoreChange: latest.score - prev.score, 
+              rankChange: prev.rank > 0 ? prev.rank - latest.rank : 0,
+              maxScore: Math.max(...scores), 
+              minScore: Math.min(...scores),
+              maxRank: ranks.length > 0 ? Math.min(...ranks) : 0, // Best Position
+              minRank: ranks.length > 0 ? Math.max(...ranks) : 0  // Worst Position
           }, { merge: true }));
           addOp(b => b.set(doc(firestore, 'userHistories', u.id), hist));
       }
 
       // --- Determine Current Season (2025-26) Awards ---
       progressCallback("Locking in 2025-26 Award Winners...");
-      // Awards logic uses chronological week to prevent early lock-ins
       for (const period of allAwardPeriods) {
           if (chronologicalWeek < period.endWeek) continue;
           
