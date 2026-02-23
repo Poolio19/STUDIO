@@ -319,7 +319,7 @@ export default function LeaderboardPage() {
                                   <ScoreIcon className="size-5" />
                               </div>
                           </TableCell>
-                          {/* Corrected column mapping for Season Highs and Lows */}
+                          {/* Mapping Season Highs and Lows */}
                           <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.maxRank || '-'}</TableCell>
                           <TableCell className={cn("text-center font-medium border-r py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.minRank || '-'}</TableCell>
                           <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.maxScore}</TableCell>

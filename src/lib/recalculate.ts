@@ -167,7 +167,7 @@ export async function recalculateAllDataClientSide(
                   if (b.score !== a.score) return b.score - a.score;
                   const aIsPro = a.isPro ? 1 : 0;
                   const bIsPro = b.isPro ? 1 : 0;
-                  if (aIsPro !== bIsPro) return bIsPro - aIsPro; // Pro Rule
+                  if (aIsPro !== bIsPro) return bIsPro - aIsPro; // Pro Rule: Pro wins tie
                   return (a.name || '').localeCompare(b.name || '');
               });
           
@@ -180,16 +180,18 @@ export async function recalculateAllDataClientSide(
 
       // --- Write Final User Profile Stats ---
       // Robust previous week detection for "Change in Past Week" stats
-      const latestWk = playedWeeks[playedWeeks.length - 1];
-      const prevWk = playedWeeks.length > 1 ? playedWeeks[playedWeeks.length - 2] : 0;
+      // We compare the ABSOLUTE current state vs the state at the end of the PREVIOUS chronological gameweek.
+      const latestWk = latestAbsoluteWeek;
+      const prevWk = Math.max(0, chronologicalWeek - 1);
 
       for (const u of users) {
           const hist = allHistories[u.id];
           const latest = hist.weeklyScores.find(s => s.week === latestWk) || hist.weeklyScores[hist.weeklyScores.length - 1];
           const prev = hist.weeklyScores.find(s => s.week === prevWk) || { score: 0, rank: 0 };
           
-          const scores = hist.weeklyScores.map(s => s.score);
-          const ranks = hist.weeklyScores.map(s => s.rank).filter(r => r > 0);
+          // Highs/Lows should only count actual games (week > 0)
+          const relevantScores = hist.weeklyScores.filter(s => s.week > 0).map(s => s.score);
+          const relevantRanks = hist.weeklyScores.filter(s => s.week > 0).map(s => s.rank);
           
           addOp(b => b.set(doc(firestore, 'users', u.id), {
               score: latest.score, 
@@ -198,10 +200,10 @@ export async function recalculateAllDataClientSide(
               previousRank: prev.rank,
               scoreChange: latest.score - prev.score, 
               rankChange: prev.rank > 0 ? prev.rank - latest.rank : 0,
-              maxScore: Math.max(...scores), 
-              minScore: Math.min(...scores),
-              maxRank: ranks.length > 0 ? Math.min(...ranks) : 0, // Best Position
-              minRank: ranks.length > 0 ? Math.max(...ranks) : 0  // Worst Position
+              maxScore: relevantScores.length > 0 ? Math.max(...relevantScores) : latest.score, 
+              minScore: relevantScores.length > 0 ? Math.min(...relevantScores) : latest.score,
+              maxRank: relevantRanks.length > 0 ? Math.min(...relevantRanks) : latest.rank, // Best Position
+              minRank: relevantRanks.length > 0 ? Math.max(...relevantRanks) : latest.rank  // Worst Position
           }, { merge: true }));
           addOp(b => b.set(doc(firestore, 'userHistories', u.id), hist));
       }
