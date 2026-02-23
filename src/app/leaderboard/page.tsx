@@ -96,7 +96,7 @@ export default function LeaderboardPage() {
 
     sortedUsers.forEach(u => breakdown.set(u.id, { total: 0, seasonal: 0, monthly: 0, proBounty: 0 }));
 
-    // 1. Monthly Awards (CURRENT SEASON 2025-26 ONLY)
+    // Monthly Awards Breakdown
     const awardsMap: Record<string, { winners: string[], runnersUp: string[], special?: string }> = {};
     monthlyMimoM.filter(m => m.year === 2025).forEach(m => {
         const key = m.special || `${m.month}-${m.year}`;
@@ -187,8 +187,6 @@ export default function LeaderboardPage() {
     return breakdown;
   }, [sortedUsers, monthlyMimoM]);
 
-  const prevScoresOnlyArr = useMemo(() => sortedUsers.map(u => u.previousScore).sort((a,b) => b - a), [sortedUsers]);
-  
   return (
     <div className="flex flex-col gap-8">
       <Card>
@@ -229,16 +227,13 @@ export default function LeaderboardPage() {
                 sortedUsers.map((user) => {
                   const b = winningsMap.get(user.id) || { total: 0, seasonal: 0, monthly: 0, proBounty: 0 };
                   const ScoreIcon = getRankChangeIcon(user.scoreChange);
-                  
                   const isCurrentUser = user.id === resolvedUserId;
-                  const competitionRank = sortedUsers.findIndex(u => u.score === user.score) + 1;
-                  const competitionWasRank = prevScoresOnlyArr.indexOf(user.previousScore) + 1;
-                  const competitionRankChange = (competitionWasRank > 0 && competitionRank > 0) ? competitionWasRank - competitionRank : 0;
-                  const RankIcon = getRankChangeIcon(competitionRankChange);
+                  const RankIcon = getRankChangeIcon(user.rankChange);
 
                   const getRowStatusClasses = () => {
                     if (user.isPro) return 'bg-slate-200 dark:bg-slate-800 text-muted-foreground font-medium';
 
+                    // Using stored scores to find highest ordinal for color status
                     const userScore = user.score;
                     const topOfGroup = sortedUsers.find(u => u.score === userScore);
                     const highestOrdinal = sortedUsers.indexOf(topOfGroup!) + 1;
@@ -259,19 +254,17 @@ export default function LeaderboardPage() {
                     return '';
                   };
 
-                  const rowClasses = getRowStatusClasses();
-
                   return (
                       <TableRow 
                         key={user.id} 
                         className={cn(
-                            "transition-colors",
-                            rowClasses,
+                            "transition-colors hover:bg-transparent hover:opacity-50",
+                            getRowStatusClasses(),
                             isCurrentUser && 'ring-2 ring-inset ring-primary z-10 relative bg-primary/10 shadow-[0_0_25px_hsl(var(--primary)/0.4)]'
                         )}
                       >
                           <TableCell className={cn("text-center py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
-                            {competitionRank}
+                            {user.rank}
                           </TableCell>
                           <TableCell className="py-1">
                             <div className="flex items-center gap-3">
@@ -305,11 +298,11 @@ export default function LeaderboardPage() {
                                 </TooltipProvider>
                             )}
                           </TableCell>
-                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{competitionWasRank || '-'}</TableCell>
-                          <TableCell className={cn("font-bold text-center border-r py-1", getRankChangeColour(competitionRankChange))}>
+                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.previousRank || '-'}</TableCell>
+                          <TableCell className={cn("font-bold text-center border-r py-1", getRankChangeColour(user.rankChange))}>
                               <div className={cn("flex items-center justify-center gap-2", isCurrentUser && "drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
-                                  <span className={isCurrentUser ? "text-[1.1rem] font-black" : ""}>{competitionWasRank > 0 ? Math.abs(competitionRankChange) : '-'}</span>
-                                  {competitionWasRank > 0 && <RankIcon className="size-5" />}
+                                  <span className={isCurrentUser ? "text-[1.1rem] font-black" : ""}>{user.previousRank > 0 ? Math.abs(user.rankChange) : '-'}</span>
+                                  {user.previousRank > 0 && <RankIcon className="size-5" />}
                               </div>
                           </TableCell>
                           <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.previousScore}</TableCell>
@@ -319,7 +312,6 @@ export default function LeaderboardPage() {
                                   <ScoreIcon className="size-5" />
                               </div>
                           </TableCell>
-                          {/* Mapping Season Highs and Lows */}
                           <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.maxRank || '-'}</TableCell>
                           <TableCell className={cn("text-center font-medium border-r py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.minRank || '-'}</TableCell>
                           <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.maxScore}</TableCell>

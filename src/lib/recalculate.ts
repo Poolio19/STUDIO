@@ -179,8 +179,7 @@ export async function recalculateAllDataClientSide(
       }
 
       // --- Write Final User Profile Stats ---
-      // Robust previous week detection for "Change in Past Week" stats
-      // We compare the ABSOLUTE current state vs the state at the end of the PREVIOUS chronological gameweek.
+      //Robust comparison logic: Compare ABSOLUTE current against board at end of PREVIOUS official gameweek
       const latestWk = latestAbsoluteWeek;
       const prevWk = Math.max(0, chronologicalWeek - 1);
 
@@ -214,7 +213,7 @@ export async function recalculateAllDataClientSide(
           if (chronologicalWeek < period.endWeek) continue;
           
           if (period.id === 'xmas') {
-              // Christmas No. 1: Leader(s) at Week 17
+              // Christmas No. 1: Leader(s) at end of Week 17
               const xmasRanks = users.map(u => {
                   const h = allHistories[u.id];
                   const weekData = h.weeklyScores.find(ws => ws.week === 17);
