@@ -78,29 +78,20 @@ export async function recalculateAllDataClientSide(
                   let type: 'winner' | 'runner-up' = 'winner';
                   if (award.type.toLowerCase().includes('ru')) type = 'runner-up';
                   
+                  const isHistoricalXmas = award.type === 'XMAS NO1';
+                  
                   addOp(b => b.set(doc(firestore, 'monthlyMimoM', `${uId}-${monthData.season}-${monthData.month}`), {
                       id: `${uId}-${monthData.season}-${monthData.month}`,
                       userId: uId,
                       month: monthData.month,
                       year: year,
                       type: type,
-                      special: award.type === 'XMAS NO1' ? 'Xmas No 1' : null,
+                      ...(isHistoricalXmas ? { special: 'Xmas No 1' } : {}),
                       improvement: award.improvement || 0
                   }));
               }
           });
       });
-
-      // --- MANUAL TEST SEED: 2017 Xmas No 1 for Jim ---
-      addOp(b => b.set(doc(firestore, 'monthlyMimoM', 'usr_009-2017-xmas'), {
-          id: 'usr_009-2017-xmas',
-          userId: 'usr_009',
-          month: 'xmas',
-          year: 2017,
-          type: 'winner',
-          special: 'Xmas No 1',
-          improvement: 100
-      }));
 
       const playedMatches = allMatches.filter(m => m.homeScore > -1 && m.awayScore > -1);
       const playedWeeks = [0, ...new Set(playedMatches.map(m => m.week))].sort((a,b) => a-b);
@@ -252,7 +243,7 @@ export async function recalculateAllDataClientSide(
                       month: period.id,
                       year: 2025,
                       type: 'winner',
-                      special: isXmas ? 'Xmas No 1' : null,
+                      ...(isXmas ? { special: 'Xmas No 1' } : {}),
                       improvement: w.improvement
                   }));
               });
