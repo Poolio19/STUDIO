@@ -113,7 +113,6 @@ export default function MostImprovedPage() {
       return { ladderWithRanks: [], firstPlaceImprovement: undefined, secondPlaceImprovement: undefined };
     }
 
-    // Sort by improvement then absolute score (tie-breaker)
     monthlyImprovements.sort((a, b) => b.improvement - a.improvement || b.score - a.score);
     
     let rank = 0;
@@ -146,7 +145,6 @@ export default function MostImprovedPage() {
     return allAwardPeriods.map(period => {
         const isCurrentPeriod = currentAwardPeriod?.id === period.id;
         const isPastPeriod = period.endWeek <= currentWeek && !isCurrentPeriod;
-        // Leaders visible after 1 week of fixtures
         const isTooEarly = isCurrentPeriod && currentWeek < (period.startWeek + 1);
 
         let winners: (User & { improvement: number, special?: string })[] = [];
@@ -178,7 +176,7 @@ export default function MostImprovedPage() {
         
         return {
             id: period.id,
-            abbreviation: period.abbreviation,
+            abbreviation: period.id === 'xmas' ? 'XMAS No. 1' : period.abbreviation,
             isCurrentMonth: isCurrentPeriod,
             isFuture: (!isPastPeriod && !isCurrentPeriod) || isTooEarly,
             winners,
@@ -282,7 +280,7 @@ export default function MostImprovedPage() {
                             <div key={monthlyAward.id} className={cn("p-3 border rounded-lg flex flex-col items-center justify-start text-center", {
                                 'opacity-50': isFuture,
                             })}>
-                                <p className="font-bold mb-2 text-sm">{isXmas ? 'XMAS No. 1' : monthlyAward.abbreviation}</p>
+                                <p className="font-bold mb-2 text-sm">{monthlyAward.abbreviation}</p>
                                 
                                 {isFuture ? (
                                      <div className="w-full space-y-2">
@@ -308,7 +306,7 @@ export default function MostImprovedPage() {
                                                         {typeof winner.improvement === 'number' && <span className="font-normal text-muted-foreground"> (+{winner.improvement}pts)</span>}
                                                     </p>
                                                     <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">
-                                                        {isXmas ? (monthlyAward.isCurrentMonth ? 'Leader' : 'Xmas No. 1') : (monthlyAward.isCurrentMonth ? (isTie ? 'Current JoMiMoM' : 'Current Leader') : (isTie ? 'JoMiMoM' : 'MiMoM'))}
+                                                        {isXmas ? (monthlyAward.isCurrentMonth ? 'Leader' : 'XMAS No. 1') : (monthlyAward.isCurrentMonth ? (isTie ? 'Current JoMiMoM' : 'Current Leader') : (isTie ? 'JoMiMoM' : 'MiMoM'))}
                                                     </p>
                                                 </div>
                                             </div>
