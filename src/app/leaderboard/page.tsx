@@ -257,7 +257,7 @@ export default function LeaderboardPage() {
                       <TableRow 
                         key={user.id} 
                         className={cn(
-                            "transition-all hover:bg-transparent hover:opacity-50",
+                            "transition-all hover:opacity-50",
                             getRowStatusClasses(),
                             isCurrentUser && 'ring-2 ring-inset ring-primary z-10 relative bg-primary/10 shadow-[0_0_25px_hsl(var(--primary)/0.4)]'
                         )}
