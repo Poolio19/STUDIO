@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -9,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import { useMemo } from 'react';
 import { PlayerPerformanceChart } from '@/components/charts/player-performance-chart';
-import type { User, UserHistory } from '@/lib/types';
+import type { User, UserHistory, Match } from '@/lib/types';
 import { useCollection, useFirestore, useMemoFirebase, useResolvedUserId } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
@@ -19,12 +20,26 @@ export default function PerformancePage() {
   const resolvedUserId = useResolvedUserId();
 
   const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+  const matchesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'matches') : null, [firestore]);
   const userHistoriesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'userHistories') : null, [firestore]);
 
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
+  const { data: matchesData, isLoading: matchesLoading } = useCollection<Match>(matchesQuery);
   const { data: userHistories, isLoading: historiesLoading } = useCollection<UserHistory>(userHistoriesQuery);
   
-  const isLoading = usersLoading || historiesLoading;
+  const isLoading = usersLoading || historiesLoading || matchesLoading;
+
+  const currentChronologicalWeek = useMemo(() => {
+    if (!matchesData) return 0;
+    const playedMatches = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
+    const playedWeeks = new Set(playedMatches.map(m => m.week));
+    let latest = 0;
+    for (let i = 1; i <= 38; i++) {
+        if (playedWeeks.has(i)) latest = i;
+        else break;
+    }
+    return latest;
+  }, [matchesData]);
 
   const activeUsers = useMemo(() => {
     if (!users) return [];
@@ -41,16 +56,21 @@ export default function PerformancePage() {
     if (!activeUsers || !userHistories || !sortedUsers) return { chartData: [], yAxisDomain: [0, 0], chartConfig: {}, legendUsers: [] };
     
     const activeUserHistories = userHistories.filter(h => activeUsers.some(u => u.id === h.userId));
-    const allScores = activeUserHistories.flatMap(h => h.weeklyScores.filter(w => w.week > 0).map(w => w.score));
-
-    if (allScores.length === 0) return { chartData: [], yAxisDomain: [0, 10], chartConfig: {}, legendUsers: [] };
     
-    const minScore = Math.min(...allScores);
-    const maxScore = Math.max(...allScores);
+    // Filter score values strictly by chronological week for the Y-Axis domain
+    const allChronologicalScores = activeUserHistories.flatMap(h => 
+        h.weeklyScores.filter(w => w.week >= 0 && w.week <= currentChronologicalWeek).map(w => w.score)
+    );
+
+    if (allChronologicalScores.length === 0) return { chartData: [], yAxisDomain: [0, 10], chartConfig: {}, legendUsers: [] };
+    
+    const minScore = Math.min(...allChronologicalScores);
+    const maxScore = Math.max(...allChronologicalScores);
     
     const yAxisDomain: [number, number] = [minScore - 5, maxScore + 5];
 
-    const weeks = [...new Set(activeUserHistories.flatMap(h => h.weeklyScores.map(w => w.week)))].sort((a,b) => a-b);
+    // Filter weeks to chronological progress
+    const weeks = Array.from({ length: currentChronologicalWeek + 1 }, (_, i) => i);
     
     const transformedData = weeks.map(week => {
       const weekData: { [key: string]: number | string } = { week: `Wk ${week}` };
@@ -86,7 +106,7 @@ export default function PerformancePage() {
     });
 
     return { chartData: transformedData, yAxisDomain, chartConfig: config, legendUsers: columnOrderedUsers };
-  }, [activeUsers, userHistories, sortedUsers]);
+  }, [activeUsers, userHistories, sortedUsers, currentChronologicalWeek]);
 
   const surnameCounts = useMemo(() => {
     if (!sortedUsers) return new Map<string, number>();
@@ -130,7 +150,7 @@ export default function PerformancePage() {
             <CardHeader>
               <CardTitle>Player Scores By Week</CardTitle>
               <CardDescription>
-                Each line represents a player's total score over the weeks.
+                Each line represents a player's total score over the chronological weeks. Future games are excluded from the visual timeline.
               </CardDescription>
             </CardHeader>
             <CardContent>

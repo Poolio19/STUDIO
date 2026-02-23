@@ -24,12 +24,11 @@ import { useAuth, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useState } from 'react';
-import { Loader2, ShieldAlert } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import type { User } from '@/lib/types';
 import historicalPlayersData from '@/lib/historical-players.json';
-import { emergencyAdminReset } from '@/app/admin/actions';
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -41,7 +40,6 @@ export function AuthForm() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -56,17 +54,14 @@ export function AuthForm() {
     const docSnap = await getDoc(userDocRef);
     if (docSnap.exists()) return;
 
-    // Check if this is a historical player logging in for the first time
     const historicalUser = historicalPlayersData.find(p => p.email.toLowerCase() === email.toLowerCase());
     const isCanonicalUid = firebaseAuthUid.startsWith('usr_');
     
-    // If they are historical but UID is random, we stop here and wait for sync
     if (historicalUser && !isCanonicalUid) {
         console.warn(`User ${email} logged in with random UID ${firebaseAuthUid}. Account sync required.`);
         return;
     }
 
-    // Only create "new" profiles for non-historical users (e.g. fresh testers)
     if (!historicalUser) {
         const profileData: Omit<User, 'id'> = {
             name: email.split('@')[0],
@@ -96,25 +91,6 @@ export function AuthForm() {
     }
   }
 
-  const handleEmergencyReset = async () => {
-    setIsResetting(true);
-    try {
-      const result = await emergencyAdminReset();
-      if (result.success) {
-        toast({ title: 'Admin Access Reset', description: result.message });
-        // Use either login email
-        form.setValue('email', 'jim.poole@prempred.com');
-        form.setValue('password', 'Password');
-      } else {
-        toast({ variant: 'destructive', title: 'Reset Failed', description: result.message });
-      }
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Error', description: error.message });
-    } finally {
-      setIsResetting(false);
-    }
-  };
-
   return (
     <div className="space-y-4 w-full max-w-md">
       <Card>
@@ -133,19 +109,6 @@ export function AuthForm() {
           </Form>
         </CardContent>
       </Card>
-
-      <div className="flex justify-center">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="text-muted-foreground hover:text-destructive"
-          onClick={handleEmergencyReset}
-          disabled={isResetting}
-        >
-          {isResetting ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : <ShieldAlert className="mr-2 h-3 w-3" />}
-          Emergency Admin Reset
-        </Button>
-      </div>
     </div>
   );
 }

@@ -17,7 +17,7 @@ import { allAwardPeriods } from './award-periods';
 
 /**
  * Recalculates all derived data and seeds historical records.
- * Optimized to strictly apply competition ranking (1, 2, 2, 4) and restore missing tables.
+ * Handles out-of-order fixtures by calculating a chronological "Effective Week" for awards/charts.
  */
 export async function recalculateAllDataClientSide(
   firestore: Firestore,
@@ -92,7 +92,15 @@ export async function recalculateAllDataClientSide(
 
       const playedMatches = allMatches.filter(m => m.homeScore > -1 && m.awayScore > -1);
       const playedWeeks = [0, ...new Set(playedMatches.map(m => m.week))].sort((a,b) => a-b);
-      const latestWeek = Math.max(0, ...playedWeeks);
+      const latestAbsoluteWeek = Math.max(0, ...playedWeeks);
+
+      // Determine Chronological Week (highest week without a gap)
+      let chronologicalWeek = 0;
+      const playedWeeksSet = new Set(playedWeeks);
+      for (let i = 1; i <= 38; i++) {
+          if (playedWeeksSet.has(i)) chronologicalWeek = i;
+          else break;
+      }
       
       for (const week of playedWeeks) {
           progressCallback(`Processing History: Week ${week}...`);
@@ -119,7 +127,7 @@ export async function recalculateAllDataClientSide(
               });
           }
 
-          if (week === latestWeek) {
+          if (week === latestAbsoluteWeek) {
               teams.forEach(t => {
                   const s = tStats[t.id];
                   const rank = tRanks.get(t.id) || 20;
@@ -146,7 +154,7 @@ export async function recalculateAllDataClientSide(
                   if (actual) {
                       const points = (5 - Math.abs((idx + 1) - actual));
                       score += points;
-                      if (week === latestWeek) {
+                      if (week === latestAbsoluteWeek) {
                           addOp(b => b.set(doc(firestore, 'playerTeamScores', `${u.id}-${tId}`), { userId: u.id, teamId: tId, score: points }));
                       }
                   }
@@ -173,8 +181,9 @@ export async function recalculateAllDataClientSide(
       // --- Write Final User Profile Stats ---
       for (const u of users) {
           const hist = allHistories[u.id];
-          const latest = hist.weeklyScores[hist.weeklyScores.length - 1];
-          const prev = hist.weeklyScores[hist.weeklyScores.length - 2] || { score: 0, rank: 0 };
+          const latest = hist.weeklyScores.find(s => s.week === latestAbsoluteWeek) || hist.weeklyScores[hist.weeklyScores.length - 1];
+          const prev = hist.weeklyScores.find(s => s.week === latestAbsoluteWeek - 1) || { score: 0, rank: 0 };
+          
           const scores = hist.weeklyScores.map(s => s.score);
           const ranks = hist.weeklyScores.map(s => s.rank).filter(r => r > 0);
           
@@ -190,8 +199,9 @@ export async function recalculateAllDataClientSide(
 
       // --- Determine Current Season (2025-26) Awards ---
       progressCallback("Locking in 2025-26 Award Winners...");
+      // Awards logic uses chronological week to prevent early lock-ins
       for (const period of allAwardPeriods) {
-          if (latestWeek < period.endWeek) continue;
+          if (chronologicalWeek < period.endWeek) continue;
           
           if (period.id === 'xmas') {
               // Christmas No. 1: Leader(s) at Week 17

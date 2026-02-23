@@ -75,12 +75,22 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const currentWeek = useMemo(() => {
     if (matchesData && matchesData.length > 0) {
         const playedMatches = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
-        return Math.max(...playedMatches.map(m => m.week), 0);
+        const playedWeeks = new Set(playedMatches.map(m => m.week));
+        let latest = 0;
+        for (let i = 1; i <= 38; i++) {
+            if (playedWeeks.has(i)) latest = i;
+            else break;
+        }
+        return latest;
     }
     return 0;
   }, [matchesData]);
 
-  const seasonStarted = currentWeek > 0;
+  const seasonStarted = useMemo(() => {
+    if (!matchesData) return false;
+    return matchesData.some(m => m.homeScore !== -1 && m.awayScore !== -1);
+  }, [matchesData]);
+
   const pageInfo = pageInfoMap[pathname];
   const title = pageInfo ? pageInfo.title : 'PremPred 2025-2026';
   let description = '';

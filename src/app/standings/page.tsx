@@ -73,7 +73,14 @@ export default function StandingsPage() {
         }).sort((a,b) => a.rank - b.rank);
 
         const playedMatches = matchesData.filter(m => m.homeScore > -1 && m.awayScore > -1);
-        const currentGamesPlayed = playedMatches.length > 0 ? Math.max(0, ...playedMatches.map(m => m.week)) : 0;
+        
+        // Chronological Week calculation
+        const playedWeeksSet = new Set(playedMatches.map(m => m.week));
+        let chronologicalWeek = 0;
+        for (let i = 1; i <= 38; i++) {
+            if (playedWeeksSet.has(i)) chronologicalWeek = i;
+            else break;
+        }
 
         const finalChartData = (() => {
             if (!weeklyTeamStandings || weeklyTeamStandings.length === 0) {
@@ -84,7 +91,7 @@ export default function StandingsPage() {
                 return [weekZeroData];
             }
             const teamNameMap = new Map(teamsData.map(t => [t.id, t.name]));
-            const maxWeek = currentGamesPlayed;
+            const maxWeek = chronologicalWeek; // Limit chart to chronological progress
             
             // Step 1: Group ranks by week
             const ranksByWeek: { [week: number]: { [teamId: string]: number } } = {};
@@ -99,7 +106,7 @@ export default function StandingsPage() {
             const teamHistories: { [teamId: string]: { [week: number]: number } } = {};
             teamsData.forEach(team => {
                 teamHistories[team.id] = {};
-                let lastKnownRank = finalStandingsWithTeamData.find(s => s.teamId === team.id)?.rank ?? 20; // Default to last known rank
+                let lastKnownRank = finalStandingsWithTeamData.find(s => s.teamId === team.id)?.rank ?? 20; 
         
                 for (let week = 0; week <= maxWeek; week++) {
                     if (ranksByWeek[week] && ranksByWeek[week][team.id] !== undefined) {
@@ -142,7 +149,7 @@ export default function StandingsPage() {
             standingsWithTeamData: finalStandingsWithTeamData, 
             chartData: finalChartData, 
             weeklyResults: resultsByWeek,
-            gamesPlayed: currentGamesPlayed,
+            gamesPlayed: chronologicalWeek,
         };
     }, [isLoading, teamsData, matchesData, standingsData, weeklyTeamStandings, teamRecentResults]);
 

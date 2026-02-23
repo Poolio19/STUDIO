@@ -69,7 +69,13 @@ export default function LeaderboardPage() {
   const currentWeek = useMemo(() => {
     if (matchesData && matchesData.length > 0) {
       const playedMatches = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
-      return Math.max(...playedMatches.map(m => m.week), 0);
+      const playedWeeks = new Set(playedMatches.map(m => m.week));
+      let latest = 0;
+      for (let i = 1; i <= 38; i++) {
+          if (playedWeeks.has(i)) latest = i;
+          else break;
+      }
+      return latest;
     }
     return 0;
   }, [matchesData]);
@@ -91,15 +97,24 @@ export default function LeaderboardPage() {
     sortedUsers.forEach(u => breakdown.set(u.id, { total: 0, seasonal: 0, monthly: 0, proBounty: 0 }));
 
     // 1. Monthly Awards (CURRENT SEASON 2025-26 ONLY)
-    const awardsMap: Record<string, { winners: string[], runnersUp: string[] }> = {};
+    const awardsMap: Record<string, { winners: string[], runnersUp: string[], special?: string }> = {};
     monthlyMimoM.filter(m => m.year === 2025).forEach(m => {
         const key = m.special || `${m.month}-${m.year}`;
-        if (!awardsMap[key]) awardsMap[key] = { winners: [], runnersUp: [] };
+        if (!awardsMap[key]) awardsMap[key] = { winners: [], runnersUp: [], special: m.special };
         if (m.type === 'winner') awardsMap[key].winners.push(m.userId);
         else if (m.type === 'runner-up') awardsMap[key].runnersUp.push(m.userId);
     });
 
     Object.values(awardsMap).forEach(award => {
+        // Xmas No 1 is a special £10 prize
+        if (award.special === 'Xmas No 1') {
+            award.winners.forEach(id => {
+                const b = breakdown.get(id);
+                if (b) { b.total += 10; b.monthly += 10; }
+            });
+            return;
+        }
+
         const winnerPrize = 10 / (award.winners.length || 1);
         award.winners.forEach(id => {
             const b = breakdown.get(id);
@@ -120,13 +135,7 @@ export default function LeaderboardPage() {
     let highestProScore = -1;
     sortedUsers.forEach(u => { if (u.isPro && u.score > highestProScore) highestProScore = u.score; });
 
-    // Initial pass to identify players strictly outperforming Pros but not in prize slots
-    const tempSlayers = sortedUsers.filter((p, idx) => {
-        const rank = getCompRank(p.score);
-        return !p.isPro && p.score > highestProScore && rank > 10;
-    });
-    
-    const slayerPoolTotal = Math.min(tempSlayers.length * 5, 55);
+    const slayerPoolTotal = Math.min(sortedUsers.filter(p => !p.isPro && p.score > highestProScore && getCompRank(p.score) > 10).length * 5, 55);
     const netSeasonalFund = 530 - 150 - 10 - slayerPoolTotal;
     
     let prizes: number[] = [netSeasonalFund / 33.2529];
@@ -148,7 +157,7 @@ export default function LeaderboardPage() {
         let totalPrizeForGroup = 0;
         indices.forEach(idx => {
             const ord = idx + 1; 
-            if (ord <= 10) { // Contributes if ordinal is in top 10 prize slots
+            if (ord <= 10) { 
                 totalPrizeForGroup += finalSeasonalPrizes[ord - 1] || 0;
             }
         });
@@ -164,7 +173,6 @@ export default function LeaderboardPage() {
         });
     });
 
-    // Final Slayers: beating Pros, rank > 10, AND not receiving any share of the top 10 fund
     const finalSlayers = sortedUsers.filter(p => {
         const b = breakdown.get(p.id);
         const rank = getCompRank(p.score);
@@ -229,17 +237,13 @@ export default function LeaderboardPage() {
                   const competitionRankChange = (competitionWasRank > 0 && competitionRank > 0) ? competitionWasRank - competitionRank : 0;
                   const RankIcon = getRankChangeIcon(competitionRankChange);
 
-                  const isMimoMWinner = monthlyMimoM?.some(a => a.userId === user.id && a.year === 2025);
-
                   const getRowStatusClasses = () => {
-                    // PROS ARE GREY
                     if (user.isPro) return 'bg-slate-200 dark:bg-slate-800 text-muted-foreground font-medium';
 
                     const userScore = user.score;
                     const topOfGroup = sortedUsers.find(u => u.score === userScore);
                     const highestOrdinal = sortedUsers.indexOf(topOfGroup!) + 1;
 
-                    // STATUS COLOURS FOR PRIZE WINNERS
                     if (b.seasonal > 0) {
                         if (highestOrdinal === 1) return 'bg-red-800 text-yellow-300 font-black';
                         if (highestOrdinal <= 2) return 'bg-red-600 text-white font-bold';
@@ -253,7 +257,6 @@ export default function LeaderboardPage() {
                         return 'bg-teal-400 text-teal-900 font-bold';
                     }
                     if (b.proBounty > 0) return 'bg-blue-300 text-blue-900 font-bold';
-                    if (isMimoMWinner) return 'bg-accent/20 font-bold';
                     return '';
                   };
 

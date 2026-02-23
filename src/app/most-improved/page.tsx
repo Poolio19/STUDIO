@@ -68,7 +68,13 @@ export default function MostImprovedPage() {
   const currentWeek = useMemo(() => {
     if (matchesData && matchesData.length > 0) {
       const playedMatches = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
-      return Math.max(...playedMatches.map(m => m.week), 0);
+      const playedWeeks = new Set(playedMatches.map(m => m.week));
+      let latest = 0;
+      for (let i = 1; i <= 38; i++) {
+          if (playedWeeks.has(i)) latest = i;
+          else break;
+      }
+      return latest;
     }
     return 0;
   }, [matchesData]);
@@ -147,7 +153,6 @@ export default function MostImprovedPage() {
     return allAwardPeriods.map(period => {
         const isCurrentPeriod = currentAwardPeriod?.id === period.id;
         const isPastPeriod = period.endWeek <= currentWeek && !isCurrentPeriod;
-        // LOWERED THRESHOLD: Show leaders after 1 week of fixtures instead of 2.
         const isTooEarly = isCurrentPeriod && currentWeek < (period.startWeek + 1);
 
         let winners: (User & { improvement: number, special?: string })[] = [];

@@ -89,15 +89,11 @@ export default function PredictPage() {
 
     return previousSeasonStandingsData
       .map(standing => {
-        // First, try a direct match
         let team = nameMap.get(standing.name);
-
-        // If no direct match, it might be a promoted team like "Leeds C1"
         if (!team) {
-          const coreName = standing.name.split(' C')[0]; // Simple split to get "Leeds" from "Leeds C1"
+          const coreName = standing.name.split(' C')[0];
           team = nameMap.get(coreName);
         }
-        
         return team ? { ...standing, ...team, teamId: team.id, teamLogo: team.logo } : null;
       })
       .filter((item): item is NonNullable<typeof item> => item !== null)
@@ -133,7 +129,6 @@ export default function PredictPage() {
         .filter((item): item is PredictionItem => !!item);
     }
   
-    // Only update if the form is clean, to avoid overwriting user's drag-and-drop changes
     if (!form.formState.isDirty && initialItems.length > 0) {
         setItems(initialItems);
         form.setValue('predictions', initialItems);
@@ -148,9 +143,7 @@ export default function PredictPage() {
 
   const currentStandingsWithTeamData = React.useMemo(() => {
     if (!teams || !currentStandings) return [];
-
     const teamMap = new Map(teams.map(t => [t.id, t]));
-    
     return currentStandings
         .map(standing => {
             const team = teamMap.get(standing.teamId);
@@ -161,54 +154,33 @@ export default function PredictPage() {
   }, [teams, currentStandings]);
 
 
-  const currentWeek = React.useMemo(() => {
-    if (matchesData && matchesData.length > 0) {
-        const playedMatches = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
-        return Math.max(...playedMatches.map(m => m.week), 0);
-    }
-    return 0;
+  const seasonStarted = React.useMemo(() => {
+    if (!matchesData) return false;
+    return matchesData.some(m => m.homeScore !== -1 && m.awayScore !== -1);
   }, [matchesData]);
-  
-  const seasonStarted = currentWeek > 0;
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user || !firestore || !resolvedUserId) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'You must be logged in to submit a prediction.',
-      });
+      toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to submit a prediction.' });
       return;
     }
-    
     if (seasonStarted) {
-      toast({
-        variant: 'destructive',
-        title: 'Predictions Locked',
-        description: 'The season has started, so predictions can no longer be changed.',
-      });
+      toast({ variant: 'destructive', title: 'Predictions Locked', description: 'The season has started, so predictions can no longer be changed.' });
       return;
     }
-    
     const predictionData = {
       userId: resolvedUserId,
       rankings: values.predictions.map(p => p.teamId),
       createdAt: new Date().toISOString(),
     };
-
     const predictionRef = doc(firestore, 'predictions', resolvedUserId);
     setDocumentNonBlocking(predictionRef, predictionData, { merge: true });
-    toast({
-        title: 'Season Predictions Submitted!',
-        description: 'Your final standings prediction has been saved. Good luck!',
-    });
+    toast({ title: 'Season Predictions Submitted!', description: 'Your final standings prediction has been saved. Good luck!' });
   }
   
   const getRankMap = (standings: any[]) => new Map(standings.map((s, i) => [s.teamId || s.id, i + 1]));
-
   const predRankMap = getRankMap(items);
   const currentRankMap = getRankMap(currentStandingsWithTeamData);
-  const prevRankMap = getRankMap(sortedPreviousStandings);
 
   if (isLoading) {
     return (
@@ -226,20 +198,15 @@ export default function PredictPage() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-[3fr_auto_3fr_auto_3fr] gap-4 items-start">
-             {/* Your Prediction */}
             <div className="flex flex-col">
-              <div className="font-medium pb-2 text-muted-foreground text-center">
-                Your Pred 25-26
-              </div>
+              <div className="font-medium pb-2 text-muted-foreground text-center">Your Pred 25-26</div>
               <Card>
                 <CardContent className="p-0">
                   {!user ? (
                       <div className="h-[1060px] flex flex-col items-center justify-center gap-4 text-muted-foreground bg-slate-50 dark:bg-slate-900/50 rounded-md">
                           <UserIcon className="size-16" />
                           <p className="font-medium">You are not signed in.</p>
-                          <Button asChild variant="outline">
-                              <Link href="/profile">Sign In to Predict</Link>
-                          </Button>
+                          <Button asChild variant="outline"><Link href="/profile">Sign In to Predict</Link></Button>
                       </div>
                   ) : (
                     <div className='p-1'>
@@ -250,10 +217,7 @@ export default function PredictPage() {
                           return (
                             <React.Fragment key={item.teamId}>
                               {index === 17 && <div className="my-1 border-t-2 border-dashed border-muted-foreground/30" />}
-                              <div
-                                className={cn("flex items-center h-[53px] rounded-md mb-1 shadow-sm")}
-                                style={{ backgroundColor: item.bgColourFaint, color: item.textColour }}
-                              >
+                              <div className={cn("flex items-center h-[53px] rounded-md mb-1 shadow-sm")} style={{ backgroundColor: item.bgColourFaint, color: item.textColour }}>
                                 <div className={cn("text-base font-medium w-12 text-center opacity-80")}>{index + 1}</div>
                                 <div className="w-12 h-full p-0">
                                   <div className="flex items-center justify-center h-full">
@@ -275,11 +239,7 @@ export default function PredictPage() {
                             return (
                                <React.Fragment key={item.teamId}>
                                 {index === 17 && <div className="my-1 border-t-2 border-dashed border-muted-foreground/30" />}
-                                <Reorder.Item
-                                    value={item}
-                                    className={cn("flex items-center h-[53px] cursor-grab active:cursor-grabbing rounded-md mb-1 shadow-sm")}
-                                    style={{ backgroundColor: item.bgColourFaint, color: item.textColour }}
-                                >
+                                <Reorder.Item value={item} className={cn("flex items-center h-[53px] cursor-grab active:cursor-grabbing rounded-md mb-1 shadow-sm")} style={{ backgroundColor: item.bgColourFaint, color: item.textColour }}>
                                     <div className={cn("text-base font-medium w-12 text-center opacity-80")}>{index + 1}</div>
                                     <div className="w-12 h-full p-0">
                                     <div className="flex items-center justify-center h-full">
@@ -301,7 +261,6 @@ export default function PredictPage() {
               </Card>
             </div>
 
-            {/* Difference 1 */}
             <div className="flex flex-col">
               <div className="font-medium pb-2 text-muted-foreground invisible">Diff</div>
               <div className="relative p-1">
@@ -319,14 +278,10 @@ export default function PredictPage() {
               </div>
             </div>
             
-            {/* Current Standings */}
             <div className="flex flex-col">
               <div className="font-medium pb-2 text-muted-foreground flex justify-between">
                 <span>Current 25-26</span>
-                <div className="flex">
-                  <span className="w-16 text-right">Pts</span>
-                  <span className="w-16 text-right">GD</span>
-                </div>
+                <div className="flex"><span className="w-16 text-right">Pts</span><span className="w-16 text-right">GD</span></div>
               </div>
               <Card>
                 <CardContent className="p-0">
@@ -337,10 +292,7 @@ export default function PredictPage() {
                         return (
                             <React.Fragment key={team.id}>
                                 {index === 17 && <div className="my-1 border-t-2 border-dashed border-muted-foreground/30" />}
-                                <div
-                                    className={cn("flex items-center h-[53px] rounded-md mb-1 shadow-sm")}
-                                    style={{ backgroundColor: team.bgColourFaint, color: team.textColour }}
-                                >
+                                <div className={cn("flex items-center h-[53px] rounded-md mb-1 shadow-sm")} style={{ backgroundColor: team.bgColourFaint, color: team.textColour }}>
                                     <div className={cn("text-base font-medium w-12 text-center opacity-80")}>{team.rank}</div>
                                     <div className="w-12 h-full p-0">
                                     <div className="flex items-center justify-center h-full">
@@ -361,13 +313,12 @@ export default function PredictPage() {
               </Card>
             </div>
 
-            {/* Difference 2 */}
              <div className="flex flex-col">
               <div className="font-medium pb-2 text-muted-foreground invisible">Diff</div>
               <div className="relative p-1">
                 {currentStandingsWithTeamData.map((team, index) => {
                   const currentRank = currentRankMap.get(team.teamId);
-                  const prevRank = prevRankMap.get(team.teamId);
+                  const prevRank = previousSeasonStandingsData.find(s => s.teamId === team.teamId)?.rank;
                   const diff = (currentRank !== undefined && prevRank !== undefined) ? prevRank - currentRank : 0;
                   return (
                      <React.Fragment key={`${team.teamId}-diff2`}>
@@ -379,14 +330,10 @@ export default function PredictPage() {
               </div>
             </div>
 
-            {/* Last Season */}
             <div className="flex flex-col">
               <div className="font-medium pb-2 text-muted-foreground flex justify-between">
                 <span>Last Year 24-25</span>
-                <div className="flex">
-                  <span className="w-16 text-right">Pts</span>
-                  <span className="w-16 text-right">GD</span>
-                </div>
+                <div className="flex"><span className="w-16 text-right">Pts</span><span className="w-16 text-right">GD</span></div>
               </div>
               <Card>
                 <CardContent className="p-0">
@@ -397,10 +344,7 @@ export default function PredictPage() {
                         return (
                             <React.Fragment key={team.id}>
                                 {index === 17 && <div className="my-1 border-t-2 border-dashed border-muted-foreground/30" />}
-                                <div
-                                    className={cn("flex items-center h-[53px] rounded-md mb-1 shadow-sm")}
-                                    style={{ backgroundColor: team.bgColourFaint, color: team.textColour }}
-                                >
+                                <div className={cn("flex items-center h-[53px] rounded-md mb-1 shadow-sm")} style={{ backgroundColor: team.bgColourFaint, color: team.textColour }}>
                                     <div className={cn("text-base font-medium w-12 text-center opacity-80")}>{team.rank}</div>
                                     <div className="w-12 h-full p-0">
                                     <div className="flex items-center justify-center h-full">
@@ -422,12 +366,9 @@ export default function PredictPage() {
             </div>
 
           </div>
-          {user && !seasonStarted && (
-            <Button type="submit">Submit Final Prediction</Button>
-          )}
+          {user && !seasonStarted && (<Button type="submit">Submit Final Prediction</Button>)}
         </form>
       </Form>
     </div>
   );
 }
-
