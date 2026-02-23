@@ -25,8 +25,7 @@ function getAdminAuth() {
 
 /**
  * Force-resets the primary admin account to ensure access.
- * Sets email to jim.poole@prempred.com, UID to usr_009, and password to 'Password'.
- * Handles existing account cleanup if UIDs mismatch.
+ * Anchored to usr_009 and verified admin emails.
  */
 export async function emergencyAdminReset() {
   let auth;
@@ -36,42 +35,38 @@ export async function emergencyAdminReset() {
     return { success: false, message: `Auth Init Failed: ${e.message}` };
   }
 
-  const adminEmail = 'jim.poole@prempred.com';
+  const adminEmails = ['jim.poole@prempred.com', 'jimpoolio@hotmail.com'];
   const adminUid = 'usr_009';
   const adminPassword = 'Password';
 
   try {
-    // 1. Check if UID exists
-    try {
-      await auth.getUser(adminUid);
-      // UID exists, update email and password to be sure it matches Jim
-      await auth.updateUser(adminUid, {
-        email: adminEmail,
-        password: adminPassword,
-        emailVerified: true
-      });
-    } catch (uidError: any) {
-      if (uidError.code === 'auth/user-not-found') {
-        // 2. UID not found, check if email exists at a different (random) UID
+    // Attempt to handle both emails
+    for (const email of adminEmails) {
         try {
-          const userByEmail = await auth.getUserByEmail(adminEmail);
-          // CRITICAL: email found but UID is wrong. Delete the "forked" account and recreate.
-          await auth.deleteUser(userByEmail.uid);
-        } catch (emailError) {}
+            await auth.getUser(adminUid);
+            await auth.updateUser(adminUid, {
+                email: email,
+                password: adminPassword,
+                emailVerified: true
+            });
+        } catch (uidError: any) {
+            if (uidError.code === 'auth/user-not-found') {
+                try {
+                    const userByEmail = await auth.getUserByEmail(email);
+                    await auth.deleteUser(userByEmail.uid);
+                } catch (emailError) {}
 
-        // 3. Create the clean canonical account
-        await auth.createUser({
-          uid: adminUid,
-          email: adminEmail,
-          password: adminPassword,
-          displayName: 'Jim Poole',
-          emailVerified: true,
-        });
-      } else {
-        throw uidError;
-      }
+                await auth.createUser({
+                    uid: adminUid,
+                    email: email,
+                    password: adminPassword,
+                    displayName: 'Jim Poole',
+                    emailVerified: true,
+                });
+            }
+        }
     }
-    return { success: true, message: 'Admin account reset to jim.poole@prempred.com / Password' };
+    return { success: true, message: 'Admin account anchored to usr_009 / Password' };
   } catch (error: any) {
     console.error("Emergency reset error:", error);
     return { success: false, message: error.message };

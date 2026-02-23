@@ -238,7 +238,7 @@ export default function LeaderboardPage() {
                     const highestOrdinal = sortedUsers.indexOf(topOfGroup!) + 1;
 
                     if (b.seasonal > 0) {
-                        if (highestOrdinal === 1) return 'bg-red-800 text-yellow-300 font-black';
+                        if (highestOrdinal === 1) return 'bg-red-800 text-yellow-300';
                         if (highestOrdinal <= 2) return 'bg-red-600 text-white font-bold';
                         if (highestOrdinal <= 3) return 'bg-orange-700 text-white font-bold';
                         if (highestOrdinal <= 4) return 'bg-orange-500 text-white font-bold';
@@ -257,7 +257,7 @@ export default function LeaderboardPage() {
                       <TableRow 
                         key={user.id} 
                         className={cn(
-                            "transition-all hover:opacity-50 group",
+                            "transition-all hover:bg-transparent hover:opacity-50 group",
                             getRowStatusClasses(),
                             isCurrentUser && 'ring-2 ring-inset ring-primary z-10 relative bg-primary/10 shadow-[0_0_25px_hsl(var(--primary)/0.4)]'
                         )}

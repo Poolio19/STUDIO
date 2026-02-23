@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -12,11 +11,11 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Users, ShieldAlert, Trash2 } from 'lucide-react';
-import { useFirestore, useUser } from '@/firebase';
+import { Loader2, Users, ShieldAlert, Trash2, Database, Save, RefreshCw } from 'lucide-react';
+import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
-import { collection, doc, writeBatch, getDocs, query, deleteDoc } from 'firebase/firestore';
+import { collection, doc, writeBatch, getDocs, query, deleteDoc, updateDoc } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,7 +28,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-import type { Match, Team, WeekResults } from '@/lib/types';
+import type { Match, Team, WeekResults, User as UserProfile } from '@/lib/types';
 import { recalculateAllDataClientSide } from '@/lib/recalculate';
 
 import { useForm, Controller } from 'react-hook-form';
@@ -82,20 +81,24 @@ export default function AdminPage() {
   const [isImportingFile, setIsImportingFile] = React.useState(false);
   const [isImportingUsers, setIsImportingUsers] = React.useState(false);
   const [initialWeekSet, setInitialWeekSet] = React.useState(false);
+  const [isSavingStats, setIsSavingStats] = React.useState<string | null>(null);
 
   const [latestFileContent, setLatestFileContent] = React.useState<string | null>(null);
 
   const [allMatches, setAllMatches] = React.useState<Match[]>([]);
   const [teamsMap, setTeamsMap] = React.useState<Map<string, Team>>(new Map());
 
-  // --- Security Redirect ---
   // Recognize admin by email OR canonical UID
+  const isAdmin = user?.email === 'jim.poole@prempred.com' || user?.email === 'jimpoolio@hotmail.com' || user?.uid === 'usr_009';
+
   React.useEffect(() => {
-    const isAdmin = user?.email === 'jim.poole@prempred.com' || user?.email === 'jimpoolio@hotmail.com' || user?.uid === 'usr_009';
     if (!isUserLoading && (!user || !isAdmin)) {
       router.replace('/leaderboard');
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, isAdmin]);
+
+  const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('name', 'asc')) : null, [firestore]);
+  const { data: dbUsers, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery);
 
   const fetchAllMatches = React.useCallback(async () => {
     if (!firestore) return;
@@ -106,16 +109,14 @@ export default function AdminPage() {
   
   React.useEffect(() => {
     async function fetchAllData() {
-      const isAdmin = user?.email === 'jim.poole@prempred.com' || user?.email === 'jimpoolio@hotmail.com' || user?.uid === 'usr_009';
       if (!firestore || !user || !isAdmin) return;
       const teamsSnap = await getDocs(query(collection(firestore, 'teams')));
       const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
       setTeamsMap(new Map(teams.map(t => [t.id, t])));
-      
       fetchAllMatches();
     }
     fetchAllData();
-  }, [firestore, fetchAllMatches, user]);
+  }, [firestore, fetchAllMatches, user, isAdmin]);
 
   const defaultWeek = React.useMemo(() => {
     if (!allMatches || allMatches.length === 0) return 1;
@@ -237,7 +238,6 @@ export default function AdminPage() {
             const data = userDoc.data();
             const email = data.email?.toLowerCase();
             const name = data.name;
-            // If this doc ID is not canonical but matches a historical email OR name, delete the duplicate fork
             if (!canonicalIds.has(userDoc.id) && (historicalEmails.has(email) || historicalNames.has(name))) {
                 await deleteDoc(userDoc.ref);
                 deletedCount++;
@@ -299,6 +299,20 @@ export default function AdminPage() {
     }
   };
 
+  const updatePlayerStat = async (userId: string, key: string, value: string | number) => {
+      if (!firestore) return;
+      setIsSavingStats(userId);
+      try {
+          const userRef = doc(firestore, 'users', userId);
+          await updateDoc(userRef, { [key]: value });
+          toast({ title: 'Stat updated' });
+      } catch (e: any) {
+          toast({ variant: 'destructive', title: 'Update failed', description: e.message });
+      } finally {
+          setIsSavingStats(null);
+      }
+  }
+
   const historicalDataHeaders = [
     { key: 'seasonsPlayed', label: 'S', tooltip: 'Seasons Played' },
     { key: 'first', label: '1', tooltip: '1st Place Finishes' },
@@ -319,7 +333,6 @@ export default function AdminPage() {
     { key: 'cashWinnings', label: '£', tooltip: 'Total Cash Winnings' },
   ];
 
-  const isAdmin = user?.email === 'jim.poole@prempred.com' || user?.email === 'jimpoolio@hotmail.com' || user?.uid === 'usr_009';
   if (isUserLoading || !user || !isAdmin) {
     return (
       <div className="flex h-96 items-center justify-center">
@@ -424,10 +437,13 @@ export default function AdminPage() {
         </div>
       </div>
       <Card>
-          <CardHeader><CardTitle>Historical Stats (Backup Reference)</CardTitle></CardHeader>
+          <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Database className="size-5" /> Live Career Stats (Editable)</CardTitle>
+              <CardDescription>Manually adjust historical tallies stored in Firestore. These are seeded from JSON but saved to DB.</CardDescription>
+          </CardHeader>
           <CardContent>
               <div className="overflow-x-auto">
-                <div className="grid grid-cols-[2fr_repeat(17,1fr)] gap-1 pb-2 min-w-[1000px]">
+                <div className="grid grid-cols-[200px_repeat(17,1fr)] gap-1 pb-2 min-w-[1200px]">
                   <span className="font-medium text-muted-foreground text-sm sticky left-0 bg-card">Player</span>
                   <TooltipProvider>
                     {historicalDataHeaders.map(header => (
@@ -435,12 +451,20 @@ export default function AdminPage() {
                     ))}
                   </TooltipProvider>
                 </div>
-                {historicalPlayersData.map((player) => (
-                  <div key={player.id} className="grid grid-cols-[2fr_repeat(17,1fr)] gap-1 items-center hover:bg-muted/50 rounded-md">
-                      <span className="font-medium text-sm truncate sticky left-0 bg-card py-1">{player.name}</span>
+                {dbUsers?.map((player) => (
+                  <div key={player.id} className="grid grid-cols-[200px_repeat(17,1fr)] gap-1 items-center hover:bg-muted/50 rounded-md">
+                      <span className="font-medium text-sm truncate sticky left-0 bg-card py-1 border-r pr-2">{player.name}</span>
                        {historicalDataHeaders.map(header => (
-                          <div key={header.key} className="w-full text-center h-8 text-xs px-1 flex items-center justify-center border rounded bg-muted/20">
-                            {(player as any)[header.key] ?? 0}
+                          <div key={header.key} className="w-full text-center">
+                            <Input 
+                                type="text" 
+                                className="h-8 text-xs px-1 text-center bg-muted/20"
+                                defaultValue={(player as any)[header.key] ?? 0}
+                                onBlur={(e) => {
+                                    const val = header.key === 'cashWinnings' ? parseFloat(e.target.value) : parseInt(e.target.value, 10);
+                                    if (!isNaN(val)) updatePlayerStat(player.id, header.key, val);
+                                }}
+                            />
                           </div>
                        ))}
                   </div>

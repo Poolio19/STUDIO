@@ -40,7 +40,9 @@ export async function recalculateAllDataClientSide(
       
       const historicalUserIds = new Set(historicalPlayersData.map(p => p.id));
       const activeUserIds = new Set(predictions.filter(p => p.rankings?.length === 20).map(p => p.userId || (p as any).id));
-      const users = allUsers.filter(u => activeUserIds.has(u.id) && (historicalUserIds.has(u.id) || u.isPro));
+      
+      // Process all historical players + pros + anyone active this season
+      const users = allUsers.filter(u => historicalUserIds.has(u.id) || u.isPro || activeUserIds.has(u.id));
       const prevStandingsRankMap = new Map(prevStandingsData.map(s => [s.teamId, s.rank]));
 
       progressCallback('Clearing derived database tables...');
@@ -67,11 +69,11 @@ export async function recalculateAllDataClientSide(
 
       // --- Seed Historical Certificates ---
       progressCallback('Seeding historical award records...');
-      const userByName = new Map(historicalPlayersData.map(p => [p.name, p.id]));
+      const userByName = new Map(historicalPlayersData.map(p => [(p.name || '').toLowerCase().trim(), p.id]));
       historicalMimoAwardsData.forEach((monthData: any) => {
           const year = parseInt(monthData.season.split('-')[0]);
           monthData.awards.forEach((award: any) => {
-              const uId = userByName.get(award.name);
+              const uId = userByName.get((award.name || '').toLowerCase().trim());
               if (uId) {
                   let type: 'winner' | 'runner-up' = 'winner';
                   if (award.type.toLowerCase().includes('ru')) type = 'runner-up';
@@ -82,7 +84,7 @@ export async function recalculateAllDataClientSide(
                       month: monthData.month,
                       year: year,
                       type: type,
-                      special: award.type,
+                      special: award.type === 'XMAS NO1' ? 'Xmas No 1' : award.type,
                       improvement: award.improvement || 0
                   }));
               }
@@ -104,7 +106,7 @@ export async function recalculateAllDataClientSide(
       const playedWeeks = [0, ...new Set(playedMatches.map(m => m.week))].sort((a,b) => a-b);
       const latestAbsoluteWeek = Math.max(0, ...playedWeeks);
 
-      // Determine Chronological Week (highest week without a gap)
+      // Determine Chronological Week (highest week reached without gaps)
       let chronologicalWeek = 0;
       const playedWeeksSet = new Set(playedWeeks);
       for (let i = 1; i <= 38; i++) {
@@ -233,12 +235,15 @@ export async function recalculateAllDataClientSide(
           });
 
           if (periodScores.length > 0) {
-              // Tie-breaker: Improvement > Final Score in month
-              periodScores.sort((a,b) => b.improvement - a.improvement || b.score - a.score);
-              const topImp = periodScores[0].improvement;
-              const winners = periodScores.filter(s => s.improvement === topImp);
-              
               const isXmas = period.id === 'xmas';
+              
+              // Sort for Solitary Leader (Improvement > Score > Alpha)
+              periodScores.sort((a,b) => b.improvement - a.improvement || b.score - a.score);
+              
+              const topImp = periodScores[0].improvement;
+              const winners = isXmas 
+                ? [periodScores[0]] // Solitary winner for Xmas
+                : periodScores.filter(s => s.improvement === topImp);
 
               winners.forEach(w => {
                   addOp(b => b.set(doc(firestore, 'monthlyMimoM', `2025-${period.id}-${w.uId}`), {
@@ -252,7 +257,7 @@ export async function recalculateAllDataClientSide(
                   }));
               });
 
-              // Runners up only if not Xmas (which is solitary winner focused)
+              // Runners up only if not Xmas
               if (!isXmas && winners.length === 1 && periodScores.length > 1) {
                   const runnerUpImp = periodScores.find(s => s.improvement < topImp)?.improvement;
                   if (runnerUpImp !== undefined) {
