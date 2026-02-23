@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -96,7 +95,7 @@ export default function LeaderboardPage() {
 
     sortedUsers.forEach(u => breakdown.set(u.id, { total: 0, seasonal: 0, monthly: 0, proBounty: 0 }));
 
-    // Monthly Awards Breakdown
+    // Monthly Awards Breakdown (Current Season)
     const awardsMap: Record<string, { winners: string[], runnersUp: string[], special?: string }> = {};
     monthlyMimoM.filter(m => m.year === 2025).forEach(m => {
         const key = m.special || `${m.month}-${m.year}`;
@@ -134,6 +133,7 @@ export default function LeaderboardPage() {
     let highestProScore = -1;
     sortedUsers.forEach(u => { if (u.isPro && u.score > highestProScore) highestProScore = u.score; });
 
+    // Slayer pool remains capped at 55
     const slayerPoolTotal = Math.min(sortedUsers.filter(p => !p.isPro && p.score > highestProScore && getCompRank(p.score) > 10).length * 5, 55);
     const netSeasonalFund = 530 - 150 - 10 - slayerPoolTotal;
     
@@ -233,7 +233,6 @@ export default function LeaderboardPage() {
                   const getRowStatusClasses = () => {
                     if (user.isPro) return 'bg-slate-200 dark:bg-slate-800 text-muted-foreground font-medium';
 
-                    // Using stored scores to find highest ordinal for color status
                     const userScore = user.score;
                     const topOfGroup = sortedUsers.find(u => u.score === userScore);
                     const highestOrdinal = sortedUsers.indexOf(topOfGroup!) + 1;
@@ -258,7 +257,7 @@ export default function LeaderboardPage() {
                       <TableRow 
                         key={user.id} 
                         className={cn(
-                            "transition-colors hover:bg-transparent hover:opacity-50",
+                            "transition-all hover:bg-transparent hover:opacity-50",
                             getRowStatusClasses(),
                             isCurrentUser && 'ring-2 ring-inset ring-primary z-10 relative bg-primary/10 shadow-[0_0_25px_hsl(var(--primary)/0.4)]'
                         )}
