@@ -158,18 +158,19 @@ export default function MostImprovedPage() {
             
             winners = periodAwards.filter(a => a.type === 'winner').map(a => {
                 const u = userMap.get(a.userId);
-                return u ? { ...u, improvement: a.improvement || 0, special: a.special } : null;
+                return u ? { ...u, improvement: a.improvement ?? 0, special: a.special } : null;
             }).filter((u): u is User & { improvement: number, special?: string } => !!u);
 
             runnersUp = periodAwards.filter(a => a.type === 'runner-up').map(a => {
                 const u = userMap.get(a.userId);
-                return u ? { ...u, improvement: a.improvement || 0 } : null;
+                return u ? { ...u, improvement: a.improvement ?? 0 } : null;
             }).filter((u): u is User & { improvement: number } => !!u);
         } else if (isCurrentPeriod && !isTooEarly) {
-            if (ladderData.firstPlaceImprovement !== undefined) {
-                winners = ladderData.ladderWithRanks.filter(u => u.improvement === ladderData.firstPlaceImprovement) as any;
+            if (ladderData.firstPlaceImprovement !== undefined && ladderData.firstPlaceImprovement !== 0) {
+                const candidates = ladderData.ladderWithRanks.filter(u => u.improvement === ladderData.firstPlaceImprovement);
+                winners = period.id === 'xmas' ? [candidates[0]] : candidates as any;
             }
-            if (period.id !== 'xmas' && ladderData.secondPlaceImprovement !== undefined && winners.length === 1) {
+            if (period.id !== 'xmas' && ladderData.secondPlaceImprovement !== undefined && ladderData.secondPlaceImprovement !== 0 && winners.length === 1) {
                 runnersUp = ladderData.ladderWithRanks.filter(u => u.improvement === ladderData.secondPlaceImprovement) as any;
             }
         }
@@ -267,7 +268,7 @@ export default function MostImprovedPage() {
             <div className="lg:col-span-3">
                  <Card>
                     <CardHeader className="bg-gradient-to-r from-yellow-400/20 via-yellow-400/5 to-slate-400/20">
-                        <CardTitle>MiMoM Hall Of Fame</CardTitle>
+                        <CardTitle>{currentAwardPeriod?.id === 'xmas' ? 'XMAS No. 1' : 'MiMoM Hall Of Fame'}</CardTitle>
                         <CardDescription>This Season's Winners and Runners-up.</CardDescription>
                     </CardHeader>
                     <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">

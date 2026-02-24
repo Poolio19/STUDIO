@@ -351,9 +351,9 @@ export default function ProfilePage() {
                       </div>
                   </div>
                 <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Real Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="nickname" render={({ field }) => (<FormItem><FormLabel>Nickname</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormMessage>)} />
-                <FormField control={form.control} name="initials" render={({ field }) => (<FormItem><FormLabel>Initials</FormLabel><FormControl><Input {...field} maxLength={4}/></FormControl><FormMessage /></FormMessage>)} />
-                <FormField control={form.control} name="phoneNumber" render={({ field }) => (<FormItem><FormLabel>Mobile</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormMessage>)} />
+                <FormField control={form.control} name="nickname" render={({ field }) => (<FormItem><FormLabel>Nickname</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="initials" render={({ field }) => (<FormItem><FormLabel>Initials</FormLabel><FormControl><Input {...field} maxLength={4}/></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="phoneNumber" render={({ field }) => (<FormItem><FormLabel>Mobile</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="favouriteTeam" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Supported Team</FormLabel>

@@ -1,9 +1,11 @@
+
 'use client';
 
 import React, { createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp, initializeApp, getApps, getApp } from 'firebase/app';
 import { Firestore, getFirestore, enableNetwork } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged, getAuth } from 'firebase/auth';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { firebaseConfig } from './config';
 
@@ -21,6 +23,7 @@ export interface FirebaseContextState {
   firebaseApp: FirebaseApp | null;
   firestore: Firestore | null;
   auth: Auth | null;
+  storage: FirebaseStorage | null;
   user: User | null;
   isUserLoading: boolean;
   userError: Error | null;
@@ -46,6 +49,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     firebaseApp: FirebaseApp;
     auth: Auth;
     firestore: Firestore;
+    storage: FirebaseStorage;
   } | null>(null);
   
   const [userAuthState, setUserAuthState] = useState<UserAuthState>({
@@ -65,12 +69,13 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
       const firestore = getFirestore(app);
       const auth = getAuth(app);
+      const storage = getStorage(app);
       
       enableNetwork(firestore).catch((err) => {
         console.error("Firebase: Failed to enable network.", err);
       });
 
-      setServices({ firebaseApp: app, auth, firestore });
+      setServices({ firebaseApp: app, auth, firestore, storage });
 
       const unsubscribe = onAuthStateChanged(
         auth,
@@ -94,6 +99,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     firebaseApp: services?.firebaseApp || null,
     firestore: services?.firestore || null,
     auth: services?.auth || null,
+    storage: services?.storage || null,
     ...userAuthState,
     isConfigured,
   }), [services, userAuthState, isConfigured]);
@@ -116,6 +122,7 @@ function useFirebaseContext() {
 
 export const useAuth = (): Auth | null => useFirebaseContext().auth;
 export const useFirestore = (): Firestore | null => useFirebaseContext().firestore;
+export const useStorage = (): FirebaseStorage | null => useFirebaseContext().storage;
 export const useFirebaseApp = (): FirebaseApp | null => useFirebaseContext().firebaseApp;
 export const useUser = (): UserHookResult => {
     const { user, isUserLoading, userError } = useFirebaseContext();
