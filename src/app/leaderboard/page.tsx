@@ -134,7 +134,6 @@ export default function LeaderboardPage() {
     let highestProScore = -1;
     sortedUsers.forEach(u => { if (u.isPro && u.score > highestProScore) highestProScore = u.score; });
 
-    // Slayer pool remains capped at 55
     const slayerPoolTotal = Math.min(sortedUsers.filter(p => !p.isPro && p.score > highestProScore && getCompRank(p.score) > 10).length * 5, 55);
     const netSeasonalFund = 530 - 150 - 10 - slayerPoolTotal;
     
@@ -258,7 +257,7 @@ export default function LeaderboardPage() {
                       <TableRow 
                         key={user.id} 
                         className={cn(
-                            "transition-all hover:brightness-90 group",
+                            "transition-all hover:brightness-90 group border-b",
                             getRowStatusClasses(),
                             isCurrentUser && 'ring-2 ring-inset ring-primary z-10 relative bg-primary/10 shadow-[0_0_25px_hsl(var(--primary)/0.4)]'
                         )}
