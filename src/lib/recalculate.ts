@@ -40,7 +40,7 @@ export async function recalculateAllDataClientSide(
       
       const historicalUserIds = new Set(historicalPlayersData.map(p => p.id.trim()));
       
-      // STRICT Ranking Pool: Only people who have a complete 20-team prediction
+      // STRICT Ranking Pool: Only people with complete predictions
       const activeUserIds = new Set(
         predictions
           .filter(p => p.rankings && p.rankings.length === 20)

@@ -27,7 +27,7 @@ import { ArrowUp, ArrowDown, Minus, Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase, useResolvedUserId } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, query } from 'firebase/firestore';
 import { allAwardPeriods } from '@/lib/award-periods';
 
 const getRankChangeIcon = (change: number) => {
@@ -114,8 +114,6 @@ export default function MostImprovedPage() {
         const history = userHistories.find(h => h.userId === user.id);
         if (history && history.weeklyScores) {
             const startWeekData = history.weeklyScores.find(ws => ws.week === startWeek);
-            
-            // Look for the latest available week in history that is <= currentWeek
             const latestScoresInPeriod = history.weeklyScores
                 .filter(ws => ws.week >= startWeek && ws.week <= currentWeek)
                 .sort((a,b) => b.week - a.week);
@@ -257,7 +255,7 @@ export default function MostImprovedPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                        {ladderData.ladderWithRanks.map((user) => {
+                        {ladderData.ladderWithRanks.length > 0 ? ladderData.ladderWithRanks.map((user) => {
                             const PositionChangeIcon = getRankChangeIcon(user.rankChangeInMonth);
                             const rankColour = getLadderRankColour(user);
                             return (
@@ -275,7 +273,9 @@ export default function MostImprovedPage() {
                                     </TableCell>
                                 </TableRow>
                             );
-                        })}
+                        }) : (
+                            <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground italic">No active data for this period.</TableCell></TableRow>
+                        )}
                         </TableBody>
                     </Table>
                     </CardContent>
@@ -294,20 +294,20 @@ export default function MostImprovedPage() {
                             const isXmas = monthlyAward.id === 'xmas';
 
                             return (
-                            <div key={monthlyAward.id} className={cn("p-2 border rounded-lg flex flex-col items-center min-h-[200px]", { 'opacity-50': isFuture, 'opacity-70 grayscale-[30%]': isCurrent })}>
+                            <div key={monthlyAward.id} className={cn("p-2 border rounded-lg flex flex-col items-center min-h-[240px]", { 'opacity-50': isFuture, 'opacity-70 grayscale-[30%]': isCurrent })}>
                                 <p className="font-black mb-3 text-[11px] border-b w-full pb-1 uppercase tracking-widest text-muted-foreground/80">{monthlyAward.abbreviation}</p>
                                 
                                 {isFuture || (isCurrent && monthlyAward.winners.length === 0) ? (
                                      <div className="w-full space-y-2">
-                                        <div className="bg-muted/30 py-1.5 px-2 rounded-md flex items-center justify-center h-[90px]"><p className="text-[10px] font-black uppercase text-muted-foreground/40 tracking-widest">TBC</p></div>
-                                        {!isXmas && <div className="bg-muted/20 py-1.5 px-2 rounded-md flex items-center justify-center h-[90px]"><p className="text-[10px] font-black uppercase text-muted-foreground/30 tracking-widest">TBC</p></div>}
+                                        <div className="bg-muted/30 py-1.5 px-2 rounded-md flex items-center justify-center h-[100px]"><p className="text-[10px] font-black uppercase text-muted-foreground/40 tracking-widest">TBC</p></div>
+                                        {!isXmas && <div className="bg-muted/20 py-1.5 px-2 rounded-md flex items-center justify-center h-[100px]"><p className="text-[10px] font-black uppercase text-muted-foreground/30 tracking-widest">TBC</p></div>}
                                     </div>
                                 ) : (
                                     <div className="w-full space-y-2">
                                         {monthlyAward.winners?.map(winner => {
                                             const isTie = monthlyAward.winners.length > 1;
-                                            const awardTitle = isXmas ? 'XMAS NO. 1' : (isTie ? 'JOMIMOM' : 'MIMOM');
-                                            const displayTitle = isCurrent ? `CURRENT ${awardTitle}` : awardTitle;
+                                            const rawTitle = isXmas ? 'XMAS NO. 1' : (isTie ? 'JoMiMoM' : 'MiMoM');
+                                            const displayTitle = isCurrent ? `Current ${rawTitle}` : rawTitle;
                                             const style = isXmas ? { backgroundColor: '#064e3b', borderColor: '#dc2626', color: '#fff' } : getDilutedBackground('yellow', monthlyAward.winners.length);
                                             
                                             return (
@@ -315,7 +315,7 @@ export default function MostImprovedPage() {
                                                     {isXmas && <Holly />}
                                                     <Avatar className="w-1/4 h-full rounded-none shrink-0"><AvatarImage src={getAvatarUrl(winner.avatar)} className="object-cover h-full" /><AvatarFallback className="rounded-none">{winner.name?.charAt(0)}</AvatarFallback></Avatar>
                                                     <div className="flex-1 flex flex-col justify-center px-2 text-center overflow-hidden">
-                                                        <p className={cn("text-[13px] font-black uppercase tracking-tight", isXmas ? "text-white" : "text-yellow-950")}>{displayTitle}</p>
+                                                        <p className={cn("text-[13px] font-bold tracking-tight", isXmas ? "text-white" : "text-yellow-950")}>{displayTitle}</p>
                                                         <p className="text-[12px] font-bold truncate leading-tight my-0.5">{winner.name}</p>
                                                         <p className={cn("text-[11px] font-black uppercase", isXmas ? "text-yellow-400" : "text-yellow-950/80")}>{formatImprovementText(winner.improvement)}</p>
                                                         <p className={cn("text-[10px] font-medium", isXmas ? "text-white/80" : "text-yellow-950/60")}>{formatPrizeMoney(winner.prize || 0)}</p>
@@ -326,15 +326,15 @@ export default function MostImprovedPage() {
 
                                         {monthlyAward.runnersUp?.map(runnerUp => {
                                             const isTie = monthlyAward.runnersUp.length > 1;
-                                            const awardTitle = isTie ? 'JORUMIMOM' : 'RUMIMOM';
-                                            const displayTitle = isCurrent ? `CURRENT ${awardTitle}` : awardTitle;
+                                            const rawTitle = isTie ? 'JoRuMiMoM' : 'RuMiMoM';
+                                            const displayTitle = isCurrent ? `Current ${rawTitle}` : rawTitle;
                                             const style = getDilutedBackground('slate', monthlyAward.runnersUp.length);
 
                                             return (
                                                 <div key={runnerUp.id} style={style} className="rounded-md flex items-stretch h-[100px] overflow-hidden shadow-sm border border-slate-600/10">
                                                     <Avatar className="w-1/4 h-full rounded-none shrink-0"><AvatarImage src={getAvatarUrl(runnerUp.avatar)} className="object-cover h-full" /><AvatarFallback className="rounded-none">{runnerUp.name?.charAt(0)}</AvatarFallback></Avatar>
                                                     <div className="flex-1 flex flex-col justify-center px-2 text-center overflow-hidden">
-                                                        <p className="text-[13px] font-black uppercase text-slate-900 tracking-tight">{displayTitle}</p>
+                                                        <p className="text-[13px] font-bold text-slate-900 tracking-tight">{displayTitle}</p>
                                                         <p className="text-[12px] font-bold truncate leading-tight my-0.5">{runnerUp.name}</p>
                                                         <p className="text-[11px] font-black uppercase text-slate-950/80">{formatImprovementText(runnerUp.improvement)}</p>
                                                         <p className="text-[10px] font-medium text-slate-950/60">{formatPrizeMoney(runnerUp.prize || 0)}</p>
