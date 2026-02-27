@@ -95,8 +95,9 @@ export default function MostImprovedPage() {
   }, [matchesData]);
 
   const currentAwardPeriod = useMemo(() => {
+    // If currentWeek is at the very boundary of a new month, we might still want to see the active race
     const period = allAwardPeriods.find(p => currentWeek >= p.startWeek && currentWeek < p.endWeek);
-    return period || allAwardPeriods[0];
+    return period || allAwardPeriods[allAwardPeriods.length - 1];
   }, [currentWeek]);
   
   const currentMonthName = currentAwardPeriod?.month || currentAwardPeriod?.special || '';
@@ -109,11 +110,13 @@ export default function MostImprovedPage() {
     const startWeek = currentAwardPeriod.startWeek;
     const monthlyImprovements: (User & { improvement: number, rankChangeInMonth: number })[] = [];
 
-    const nonProUsers = users.filter(u => !u.isPro);
+    const nonProUsers = users.filter(u => !u.isPro && u.name);
     nonProUsers.forEach(user => {
         const history = userHistories.find(h => h.userId === user.id);
         if (history && history.weeklyScores) {
+            // Find score at start of month
             const startWeekData = history.weeklyScores.find(ws => ws.week === startWeek);
+            // Find latest available score in this period
             const latestScoresInPeriod = history.weeklyScores
                 .filter(ws => ws.week >= startWeek && ws.week <= currentWeek)
                 .sort((a,b) => b.week - a.week);
@@ -132,6 +135,7 @@ export default function MostImprovedPage() {
       return { ladderWithRanks: [], firstPlaceImprovement: undefined, secondPlaceImprovement: undefined };
     }
 
+    // Sort by improvement descending, then by total score descending
     monthlyImprovements.sort((a, b) => b.improvement - a.improvement || b.score - a.score);
     
     let rank = 0;
@@ -172,7 +176,7 @@ export default function MostImprovedPage() {
         if (isPastPeriod) {
             const periodAwards = monthlyMimoMAwards.filter(a => 
                 a.year === period.year && 
-                (a.month.toLowerCase() === period.id.toLowerCase() || a.id.includes(period.id))
+                (a.month.toLowerCase() === period.id.toLowerCase() || (a.special === 'Xmas No 1' && period.id === 'xmas'))
             );
             
             const rawWinners = periodAwards.filter(a => a.type === 'winner').map(a => {
@@ -207,14 +211,14 @@ export default function MostImprovedPage() {
         
         return {
             id: period.id,
-            abbreviation: period.id === 'xmas' ? 'XMAS NO. 1' : period.abbreviation,
+            abbreviation: period.id === 'xmas' ? 'Xmas No. 1' : period.abbreviation,
             isCurrentMonth: isCurrentPeriod,
             isFuture,
             winners,
             runnersUp,
         };
     });
-  }, [userMap, monthlyMimoMAwards, allAwardPeriods, currentWeek, currentAwardPeriod, ladderData]);
+  }, [userMap, monthlyMimoMAwards, currentWeek, currentAwardPeriod, ladderData]);
 
   const getDilutedBackground = (baseColor: 'yellow' | 'slate', count: number) => {
       const colors = { yellow: 'rgba(250, 204, 21, ', slate: 'rgba(148, 163, 184, ' };
@@ -241,7 +245,7 @@ export default function MostImprovedPage() {
             <div className="flex flex-col gap-8 lg:col-span-2">
                 <Card>
                     <CardHeader className="bg-gradient-to-r from-yellow-400/20 via-yellow-400/5 to-slate-400/20">
-                    <CardTitle className="uppercase">{currentAwardPeriod?.id === 'xmas' ? 'XMAS NO. 1 Race' : 'IN-MONTH MIMOM STANDINGS'}</CardTitle>
+                    <CardTitle>{currentAwardPeriod?.id === 'xmas' ? 'Xmas No. 1 Race' : 'In-Month MiMoM Standings'}</CardTitle>
                     <CardDescription>Current standings for {currentMonthName}</CardDescription>
                     </CardHeader>
                     <CardContent className="p-0">
@@ -284,8 +288,8 @@ export default function MostImprovedPage() {
             <div className="lg:col-span-3">
                  <Card>
                     <CardHeader className="bg-gradient-to-r from-yellow-400/20 via-yellow-400/5 to-slate-400/20">
-                        <CardTitle className="uppercase">MiMoM Hall Of Fame</CardTitle>
-                        <CardDescription>Season winners and runners-up in dense 3-column layout.</CardDescription>
+                        <CardTitle>MiMoM Hall of Fame</CardTitle>
+                        <CardDescription>Season winners and runners-up across 2025-26.</CardDescription>
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {hallOfFameData.map((monthlyAward) => {
@@ -306,7 +310,7 @@ export default function MostImprovedPage() {
                                     <div className="w-full space-y-2">
                                         {monthlyAward.winners?.map(winner => {
                                             const isTie = monthlyAward.winners.length > 1;
-                                            const rawTitle = isXmas ? 'XMAS NO. 1' : (isTie ? 'JoMiMoM' : 'MiMoM');
+                                            const rawTitle = isXmas ? 'XMAS No. 1' : (isTie ? 'JoMiMoM' : 'MiMoM');
                                             const displayTitle = isCurrent ? `Current ${rawTitle}` : rawTitle;
                                             const style = isXmas ? { backgroundColor: '#064e3b', borderColor: '#dc2626', color: '#fff' } : getDilutedBackground('yellow', monthlyAward.winners.length);
                                             
@@ -336,8 +340,8 @@ export default function MostImprovedPage() {
                                                     <div className="flex-1 flex flex-col justify-center px-2 text-center overflow-hidden">
                                                         <p className="text-[13px] font-bold text-slate-900 tracking-tight">{displayTitle}</p>
                                                         <p className="text-[12px] font-bold truncate leading-tight my-0.5">{runnerUp.name}</p>
-                                                        <p className="text-[11px] font-black uppercase text-slate-950/80">{formatImprovementText(runnerUp.improvement)}</p>
-                                                        <p className="text-[10px] font-medium text-slate-950/60">{formatPrizeMoney(runnerUp.prize || 0)}</p>
+                                                        <p className={cn("text-[11px] font-black uppercase text-slate-950/80")}>{formatImprovementText(runnerUp.improvement)}</p>
+                                                        <p className={cn("text-[10px] font-medium text-slate-950/60")}>{formatPrizeMoney(runnerUp.prize || 0)}</p>
                                                     </div>
                                                 </div>
                                             )

@@ -40,7 +40,6 @@ export async function recalculateAllDataClientSide(
       
       const historicalUserIds = new Set(historicalPlayersData.map(p => p.id.trim()));
       
-      // STRICT Ranking Pool: Only people with complete predictions
       const activeUserIds = new Set(
         predictions
           .filter(p => p.rankings && p.rankings.length === 20)
@@ -76,7 +75,6 @@ export async function recalculateAllDataClientSide(
           if (opCount >= 499) { mainBatches.push(writeBatch(firestore)); bIdx++; opCount = 0; }
       };
 
-      // --- Seed Historical Certificates ---
       progressCallback('Seeding historical award records...');
       const userByName = new Map();
       allUsers.forEach(u => {
