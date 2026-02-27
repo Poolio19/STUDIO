@@ -180,7 +180,6 @@ export async function recalculateAllDataClientSide(
               uScores[u.id] = score;
           });
           
-          // Calculate rank strictly among active participants to prevent Position Low > entry count
           const uRanked = activeUsersForRankings.map(u => ({...u, score: uScores[u.id]}))
               .sort((a, b) => b.score - a.score || (a.isPro ? -1 : 1) || (a.name || '').localeCompare(b.name || ''));
           
@@ -190,7 +189,6 @@ export async function recalculateAllDataClientSide(
               allHistories[u.id].weeklyScores.push({ week, score: u.score, rank: competitionRank });
           });
 
-          // For users not meeting leaderboard criteria, we still track score but rank is 0
           usersToProcess.filter(u => !leaderboardCriteria(u)).forEach(u => {
               allHistories[u.id].weeklyScores.push({ week, score: uScores[u.id] || 0, rank: 0 });
           });

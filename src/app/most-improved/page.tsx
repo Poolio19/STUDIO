@@ -54,7 +54,7 @@ const formatImprovementText = (val: number) => {
 }
 
 const formatPrizeMoney = (val: number) => {
-    if (val <= 0) return '';
+    if (val <= 0) return '£0';
     const rounded = Math.round(val * 100) / 100;
     return rounded % 1 === 0 ? `£${rounded}` : `£${rounded.toFixed(2)}`;
 }
@@ -317,7 +317,7 @@ export default function MostImprovedPage() {
                             const isXmas = monthlyAward.id === 'xmas';
 
                             return (
-                            <div key={monthlyAward.id} className={cn("p-2 border rounded-lg flex flex-col items-center justify-start text-center", {
+                            <div key={monthlyAward.id} className={cn("p-2 border rounded-lg flex flex-col items-center justify-start text-center min-h-[180px]", {
                                 'opacity-50': isFuture,
                                 'opacity-70 grayscale-[30%]': isCurrent,
                             })}>
@@ -325,11 +325,11 @@ export default function MostImprovedPage() {
                                 
                                 {isFuture || (isCurrent && monthlyAward.winners.length === 0) ? (
                                      <div className="w-full space-y-2">
-                                        <div className="bg-muted/30 py-1.5 px-2 rounded-md flex items-center justify-center h-[70px]">
+                                        <div className="bg-muted/30 py-1.5 px-2 rounded-md flex items-center justify-center h-[80px]">
                                             <p className="text-[10px] font-black uppercase text-muted-foreground/40 tracking-widest">{isXmas ? 'XMAS NO. 1' : 'MIMOM'} TBC</p>
                                         </div>
                                         {!isXmas && (
-                                            <div className="bg-muted/20 py-1.5 px-2 rounded-md flex items-center justify-center h-[70px]">
+                                            <div className="bg-muted/20 py-1.5 px-2 rounded-md flex items-center justify-center h-[80px]">
                                                 <p className="text-[10px] font-black uppercase text-muted-foreground/30 tracking-widest">RUMIMOM TBC</p>
                                             </div>
                                         )}
@@ -343,7 +343,7 @@ export default function MostImprovedPage() {
                                             const style = isXmas ? { backgroundColor: '#064e3b', borderColor: '#dc2626', color: '#fff' } : getDilutedBackground('yellow', monthlyAward.winners.length);
                                             
                                             return (
-                                                <div key={winner.id} style={style} className={cn("rounded-md flex items-stretch h-[70px] overflow-hidden shadow-sm border relative", isXmas && "border-2")}>
+                                                <div key={winner.id} style={style} className={cn("rounded-md flex items-stretch h-[80px] overflow-hidden shadow-sm border relative", isXmas && "border-2")}>
                                                     {isXmas && <Holly />}
                                                     <div className="w-1/4 h-full shrink-0">
                                                         <Avatar className="h-full w-full rounded-none">
@@ -351,15 +351,18 @@ export default function MostImprovedPage() {
                                                             <AvatarFallback className="rounded-none">{winner.name?.charAt(0)}</AvatarFallback>
                                                         </Avatar>
                                                     </div>
-                                                    <div className="flex-1 flex flex-col justify-center px-2 text-left overflow-hidden">
-                                                        <p className={cn("text-[12px] font-black uppercase tracking-tighter leading-none mb-1", isXmas ? "text-white" : "text-yellow-900/90")}>
+                                                    <div className="flex-1 flex flex-col justify-center px-3 text-center overflow-hidden">
+                                                        <p className={cn("text-[13px] font-black uppercase tracking-tight leading-none mb-1", isXmas ? "text-white" : "text-yellow-950")}>
                                                             {displayTitle}
                                                         </p>
-                                                        <p className="text-[13px] font-bold leading-none truncate mb-1">
+                                                        <p className="text-[12px] font-bold leading-none truncate mb-1">
                                                             {winner.name}
                                                         </p>
-                                                        <p className={cn("text-[10px] font-black leading-none uppercase", isXmas ? "text-yellow-400" : "text-yellow-950/60")}>
-                                                            {formatImprovementText(winner.improvement)} <span className="font-medium normal-case ml-1">{formatPrizeMoney(winner.prize || 0)}</span>
+                                                        <p className={cn("text-[11px] font-black leading-none uppercase mb-1", isXmas ? "text-yellow-400" : "text-yellow-950/80")}>
+                                                            {formatImprovementText(winner.improvement)}
+                                                        </p>
+                                                        <p className={cn("text-[10px] font-medium leading-none", isXmas ? "text-white/80" : "text-yellow-950/60")}>
+                                                            {formatPrizeMoney(winner.prize || 0)}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -372,22 +375,25 @@ export default function MostImprovedPage() {
                                             const style = getDilutedBackground('slate', monthlyAward.runnersUp.length);
 
                                             return (
-                                                <div key={runnerUp.id} style={style} className="rounded-md flex items-stretch h-[70px] overflow-hidden shadow-sm border border-slate-600/10">
+                                                <div key={runnerUp.id} style={style} className="rounded-md flex items-stretch h-[80px] overflow-hidden shadow-sm border border-slate-600/10">
                                                     <div className="w-1/4 h-full shrink-0">
                                                         <Avatar className="h-full w-full rounded-none">
                                                             <AvatarImage src={getAvatarUrl(runnerUp.avatar)} alt={runnerUp.name} className="object-cover" />
                                                             <AvatarFallback className="rounded-none">{runnerUp.name?.charAt(0)}</AvatarFallback>
                                                         </Avatar>
                                                     </div>
-                                                    <div className="flex-1 flex flex-col justify-center px-2 text-left overflow-hidden">
-                                                        <p className="text-[12px] font-black uppercase text-slate-900/90 tracking-tighter leading-none mb-1">
+                                                    <div className="flex-1 flex flex-col justify-center px-3 text-center overflow-hidden">
+                                                        <p className="text-[13px] font-black uppercase text-slate-900 tracking-tight leading-none mb-1">
                                                             {displayTitle}
                                                         </p>
-                                                        <p className="text-[13px] font-bold leading-none truncate mb-1">
+                                                        <p className="text-[12px] font-bold leading-none truncate mb-1">
                                                             {runnerUp.name}
                                                         </p>
-                                                        <p className="text-[10px] font-black leading-none text-slate-950/60 uppercase">
-                                                            {formatImprovementText(runnerUp.improvement)} <span className="font-medium normal-case ml-1">{formatPrizeMoney(runnerUp.prize || 0)}</span>
+                                                        <p className="text-[11px] font-black leading-none uppercase mb-1 text-slate-950/80">
+                                                            {formatImprovementText(runnerUp.improvement)}
+                                                        </p>
+                                                        <p className="text-[10px] font-medium leading-none text-slate-950/60">
+                                                            {formatPrizeMoney(runnerUp.prize || 0)}
                                                         </p>
                                                     </div>
                                                 </div>
