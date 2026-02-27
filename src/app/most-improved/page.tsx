@@ -112,7 +112,7 @@ export default function MostImprovedPage() {
       return { ladderWithRanks: [], firstPlaceImprovement: undefined, secondPlaceImprovement: undefined };
     }
 
-    // Strictly filter for active 2025-26 players only (the ~106)
+    // Strictly filter for active 2025-26 players only (those with a prediction)
     const activeUserIds = new Set(
       predictions
         .filter(p => p.rankings && p.rankings.length === 20)
@@ -128,7 +128,9 @@ export default function MostImprovedPage() {
         const history = userHistories.find(h => h.userId === user.id);
         if (history && history.weeklyScores) {
             const availableScores = [...history.weeklyScores].sort((a,b) => a.week - b.week);
+            // Get score at the start of the month
             const startWeekData = availableScores.filter(ws => ws.week <= startWeek).reverse()[0];
+            // Get score at the latest available week
             const endWeekData = availableScores.filter(ws => ws.week >= startWeek && ws.week <= currentWeek).reverse()[0];
 
             if (startWeekData && endWeekData) {
@@ -256,41 +258,39 @@ export default function MostImprovedPage() {
                     <CardDescription>Current standings for {currentMonthName}</CardDescription>
                     </CardHeader>
                     <CardContent className="p-0">
-                    <div className="max-h-[800px] overflow-y-auto">
-                        <Table>
-                            <TableHeader className="sticky top-0 bg-background z-10">
-                                <TableRow>
-                                    <TableHead className="w-[50px] text-center">Rank</TableHead>
-                                    <TableHead>Player</TableHead>
-                                    <TableHead className="text-center">PTS Change</TableHead>
-                                    <TableHead className="text-center">Pos Change</TableHead>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-[50px] text-center">Rank</TableHead>
+                                <TableHead>Player</TableHead>
+                                <TableHead className="text-center">PTS Change</TableHead>
+                                <TableHead className="text-center">Pos Change</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                        {ladderData.ladderWithRanks.length > 0 ? ladderData.ladderWithRanks.map((user) => {
+                            const PositionChangeIcon = getRankChangeIcon(user.rankChangeInMonth);
+                            const rankColour = getLadderRankColour(user);
+                            return (
+                                <TableRow key={user.id} className={cn(rankColour)}>
+                                    <TableCell className="p-2 font-black text-center">{user.displayRank}</TableCell>
+                                    <TableCell className="p-2">
+                                        <div className="flex items-center gap-3">
+                                            <Avatar className="h-8 w-8 rounded-none"><AvatarImage src={getAvatarUrl(user.avatar)} data-ai-hint="person" className="object-cover h-full w-full" /><AvatarFallback className="rounded-none">{user.name.charAt(0)}</AvatarFallback></Avatar>
+                                            <span className="font-bold">{user.name}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="p-2 text-center font-black">{formatPointsChange(user.improvement)}</TableCell>
+                                    <TableCell className={cn("p-2 text-center font-black", getRankChangeColour(user.rankChangeInMonth))}>
+                                        <div className="flex items-center justify-center gap-1"><PositionChangeIcon className="size-4" />{Math.abs(user.rankChangeInMonth)}</div>
+                                    </TableCell>
                                 </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                            {ladderData.ladderWithRanks.length > 0 ? ladderData.ladderWithRanks.map((user) => {
-                                const PositionChangeIcon = getRankChangeIcon(user.rankChangeInMonth);
-                                const rankColour = getLadderRankColour(user);
-                                return (
-                                    <TableRow key={user.id} className={cn(rankColour)}>
-                                        <TableCell className="p-2 font-black text-center">{user.displayRank}</TableCell>
-                                        <TableCell className="p-2">
-                                            <div className="flex items-center gap-3">
-                                                <Avatar className="h-8 w-8 rounded-none"><AvatarImage src={getAvatarUrl(user.avatar)} data-ai-hint="person" className="object-cover h-full w-full" /><AvatarFallback className="rounded-none">{user.name.charAt(0)}</AvatarFallback></Avatar>
-                                                <span className="font-bold">{user.name}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="p-2 text-center font-black">{formatPointsChange(user.improvement)}</TableCell>
-                                        <TableCell className={cn("p-2 text-center font-black", getRankChangeColour(user.rankChangeInMonth))}>
-                                            <div className="flex items-center justify-center gap-1"><PositionChangeIcon className="size-4" />{Math.abs(user.rankChangeInMonth)}</div>
-                                        </TableCell>
-                                    </TableRow>
-                                );
-                            }) : (
-                                <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground italic">No active data for this period.</TableCell></TableRow>
-                            )}
-                            </TableBody>
-                        </Table>
-                    </div>
+                            );
+                        }) : (
+                            <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground italic">No active standings for this period.</TableCell></TableRow>
+                        )}
+                        </TableBody>
+                    </Table>
                     </CardContent>
                 </Card>
             </div>

@@ -96,7 +96,7 @@ export async function recalculateAllDataClientSide(
                   addOp(b => b.set(doc(firestore, 'monthlyMimoM', awardId), {
                       id: awardId,
                       userId: uId,
-                      month: monthData.month,
+                      month: monthData.month.toLowerCase(),
                       year: year,
                       type: type,
                       ...(isHistoricalXmas ? { special: 'Xmas No 1' } : {}),
