@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -57,7 +56,7 @@ export default function LeaderboardPage() {
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('rank', 'asc')) : null, [firestore]);
   const matchesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'matches')) : null, [firestore]);
   const mimoMQuery = useMemoFirebase(() => firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore]);
-  const predictionsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'predictions') : null, [firestore]);
+  const predictionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'predictions')) : null, [firestore]);
 
   const { data: usersData, isLoading: usersLoading } = useCollection<User>(usersQuery);
   const { data: matchesData, isLoading: matchesLoading } = useCollection<Match>(matchesQuery);
@@ -96,7 +95,6 @@ export default function LeaderboardPage() {
 
     sortedUsers.forEach(u => breakdown.set(u.id, { total: 0, seasonal: 0, monthly: 0, proBounty: 0 }));
 
-    // Monthly Awards Breakdown (Current Season)
     const awardsMap: Record<string, { winners: string[], runnersUp: string[], special?: string }> = {};
     monthlyMimoM.filter(m => m.year === 2025).forEach(m => {
         const key = m.special || `${m.month}-${m.year}`;
@@ -195,29 +193,29 @@ export default function LeaderboardPage() {
             <TableHeader>
                <TableRow>
                 <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-blue-200/50 dark:bg-blue-800/30 py-2">PremPred Standings</TableHead>
-                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-green-200/50 dark:bg-green-800/30 py-2">Change In The Past Week</TableHead>
-                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground bg-purple-200/50 dark:bg-purple-800/30 py-2">Season Highs And Lows</TableHead>
+                <TableHead colSpan={4} className="hidden md:table-cell text-center text-lg font-bold text-foreground border-r bg-green-200/50 dark:bg-green-800/30 py-2">Change In The Past Week</TableHead>
+                <TableHead colSpan={4} className="hidden md:table-cell text-center text-lg font-bold text-foreground bg-purple-200/50 dark:bg-purple-800/30 py-2">Season Highs And Lows</TableHead>
               </TableRow>
               <TableRow>
-                <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-blue-100/50 dark:bg-blue-900/20 py-2">Week {currentWeek}, Current Standings</TableHead>
-                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-green-100/50 dark:bg-blue-900/20 py-2">Position</TableHead>
-                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-green-100/50 dark:bg-blue-900/20 py-2">Points</TableHead>
-                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground border-r bg-purple-100/50 dark:bg-blue-900/20 py-2">Position</TableHead>
-                <TableHead colSpan={2} className="text-center text-lg font-bold text-foreground bg-purple-100/50 dark:bg-blue-900/20 py-2">Points</TableHead>
+                <TableHead colSpan={4} className="text-center text-base font-bold text-foreground border-r bg-blue-100/50 dark:bg-blue-900/20 py-2">Week {currentWeek}, Current Standings</TableHead>
+                <TableHead colSpan={2} className="hidden md:table-cell text-center text-base font-bold text-foreground border-r bg-green-100/50 dark:bg-blue-900/20 py-2">Position</TableHead>
+                <TableHead colSpan={2} className="hidden md:table-cell text-center text-base font-bold text-foreground border-r bg-green-100/50 dark:bg-blue-900/20 py-2">Points</TableHead>
+                <TableHead colSpan={2} className="hidden md:table-cell text-center text-base font-bold text-foreground border-r bg-purple-100/50 dark:bg-blue-900/20 py-2">Position</TableHead>
+                <TableHead colSpan={2} className="hidden md:table-cell text-center text-base font-bold text-foreground bg-purple-100/50 dark:bg-blue-900/20 py-2">Points</TableHead>
               </TableRow>
               <TableRow>
-                <TableHead className="w-[80px] bg-blue-50/50 dark:bg-blue-900/10 py-2 text-center">Pos</TableHead>
-                <TableHead className="bg-blue-50/50 dark:bg-blue-900/10 py-2">Player</TableHead>
+                <TableHead className="w-[60px] bg-blue-50/50 dark:bg-blue-900/10 py-2 text-center">Pos</TableHead>
+                <TableHead className="bg-blue-50/50 dark:bg-blue-900/10 py-2 min-w-[150px]">Player</TableHead>
                 <TableHead className="text-center bg-blue-50/50 dark:bg-blue-900/10 py-2">Points</TableHead>
                 <TableHead className="text-center border-r bg-blue-50/50 dark:bg-blue-900/10 py-2">Winnings</TableHead>
-                <TableHead className="text-center bg-green-50/50 dark:bg-green-900/10 py-2">Was</TableHead>
-                <TableHead className="w-[130px] text-center border-r bg-green-50/50 dark:bg-green-900/10 py-2">Move</TableHead>
-                <TableHead className="text-center bg-green-50/50 dark:bg-green-900/10 py-2">Was</TableHead>
-                <TableHead className="w-[130px] text-center border-r bg-green-50/50 dark:bg-green-900/10 py-2">Change</TableHead>
-                <TableHead className="text-center bg-purple-50/50 dark:bg-purple-900/10 py-2">High</TableHead>
-                <TableHead className="text-center border-r bg-purple-50/50 dark:bg-purple-900/10 py-2">Low</TableHead>
-                <TableHead className="text-center bg-purple-50/50 dark:bg-purple-900/10 py-2">High</TableHead>
-                <TableHead className="text-center bg-purple-50/50 dark:bg-purple-900/10 py-2">Low</TableHead>
+                <TableHead className="hidden md:table-cell text-center bg-green-50/50 dark:bg-green-900/10 py-2">Was</TableHead>
+                <TableHead className="hidden md:table-cell w-[100px] text-center border-r bg-green-50/50 dark:bg-green-900/10 py-2">Move</TableHead>
+                <TableHead className="hidden md:table-cell text-center bg-green-50/50 dark:bg-green-900/10 py-2">Was</TableHead>
+                <TableHead className="hidden md:table-cell w-[100px] text-center border-r bg-green-50/50 dark:bg-green-900/10 py-2">Change</TableHead>
+                <TableHead className="hidden md:table-cell text-center bg-purple-50/50 dark:bg-purple-900/10 py-2">High</TableHead>
+                <TableHead className="hidden md:table-cell text-center border-r bg-purple-50/50 dark:bg-purple-900/10 py-2">Low</TableHead>
+                <TableHead className="hidden md:table-cell text-center bg-purple-50/50 dark:bg-purple-900/10 py-2">High</TableHead>
+                <TableHead className="hidden md:table-cell text-center bg-purple-50/50 dark:bg-purple-900/10 py-2">Low</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -257,7 +255,7 @@ export default function LeaderboardPage() {
                       <TableRow 
                         key={user.id} 
                         className={cn(
-                            "transition-all hover:brightness-90 group border-b",
+                            "transition-all border-b hover:brightness-90",
                             getRowStatusClasses(),
                             isCurrentUser && 'ring-2 ring-inset ring-primary z-10 relative bg-primary/10 shadow-[0_0_25px_hsl(var(--primary)/0.4)]'
                         )}
@@ -297,24 +295,24 @@ export default function LeaderboardPage() {
                                 </TooltipProvider>
                             )}
                           </TableCell>
-                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.previousRank || '-'}</TableCell>
-                          <TableCell className={cn("font-bold text-center border-r py-1", getRankChangeColour(user.rankChange))}>
+                          <TableCell className={cn("hidden md:table-cell text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.previousRank || '-'}</TableCell>
+                          <TableCell className={cn("hidden md:table-cell font-bold text-center border-r py-1", getRankChangeColour(user.rankChange))}>
                               <div className={cn("flex items-center justify-center gap-2", isCurrentUser && "drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
                                   <span className={isCurrentUser ? "text-[1.1rem] font-black" : ""}>{user.previousRank > 0 ? Math.abs(user.rankChange) : '-'}</span>
                                   {user.previousRank > 0 && <RankIcon className="size-5" />}
                               </div>
                           </TableCell>
-                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.previousScore}</TableCell>
-                          <TableCell className={cn("font-bold text-center border-r py-1", getRankChangeColour(user.scoreChange))}>
+                          <TableCell className={cn("hidden md:table-cell text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.previousScore}</TableCell>
+                          <TableCell className={cn("hidden md:table-cell font-bold text-center border-r py-1", getRankChangeColour(user.scoreChange))}>
                               <div className={cn("flex items-center justify-center gap-2", isCurrentUser && "drop-shadow-[0_0_8px_hsl(var(--primary))]")}>
                                   <span className={isCurrentUser ? "text-[1.1rem] font-black" : ""}>{formatPointsChange(user.scoreChange)}</span>
                                   <ScoreIcon className="size-5" />
                               </div>
                           </TableCell>
-                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.maxRank || '-'}</TableCell>
-                          <TableCell className={cn("text-center font-medium border-r py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.minRank || '-'}</TableCell>
-                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.maxScore}</TableCell>
-                          <TableCell className={cn("text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.minScore}</TableCell>
+                          <TableCell className={cn("hidden md:table-cell text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.maxRank || '-'}</TableCell>
+                          <TableCell className={cn("hidden md:table-cell text-center font-medium border-r py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.minRank || '-'}</TableCell>
+                          <TableCell className={cn("hidden md:table-cell text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.maxScore}</TableCell>
+                          <TableCell className={cn("hidden md:table-cell text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.minScore}</TableCell>
                       </TableRow>
                   );
                 })

@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -74,7 +73,6 @@ export default function StandingsPage() {
 
         const playedMatches = matchesData.filter(m => m.homeScore > -1 && m.awayScore > -1);
         
-        // Chronological Week calculation
         const playedWeeksSet = new Set(playedMatches.map(m => m.week));
         let chronologicalWeek = 0;
         for (let i = 1; i <= 38; i++) {
@@ -91,9 +89,8 @@ export default function StandingsPage() {
                 return [weekZeroData];
             }
             const teamNameMap = new Map(teamsData.map(t => [t.id, t.name]));
-            const maxWeek = chronologicalWeek; // Limit chart to chronological progress
+            const maxWeek = chronologicalWeek; 
             
-            // Step 1: Group ranks by week
             const ranksByWeek: { [week: number]: { [teamId: string]: number } } = {};
             weeklyTeamStandings.forEach(ws => {
                 if (!ranksByWeek[ws.week]) {
@@ -102,7 +99,6 @@ export default function StandingsPage() {
                 ranksByWeek[ws.week][ws.teamId] = ws.rank;
             });
         
-            // Step 2: Create a full history for each team, forward-filling ranks
             const teamHistories: { [teamId: string]: { [week: number]: number } } = {};
             teamsData.forEach(team => {
                 teamHistories[team.id] = {};
@@ -116,7 +112,6 @@ export default function StandingsPage() {
                 }
             });
         
-            // Step 3: Transform into the final chart data structure
             const transformedData = [];
             for (let week = 0; week <= maxWeek; week++) {
                 const weekEntry: { [key: string]: any } = { week };
@@ -187,27 +182,27 @@ export default function StandingsPage() {
       <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData as (Team & { rank: number })[]} />
 
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 overflow-x-auto">
           <Table className="border-separate border-spacing-y-1">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[50px]">Pos</TableHead>
                 <TableHead className="w-[48px]"></TableHead>
-                <TableHead>Team</TableHead>
-                <TableHead className="text-center">Plyd</TableHead>
-                <TableHead className="text-center">W</TableHead>
-                <TableHead className="text-center">D</TableHead>
-                <TableHead className="text-center">L</TableHead>
+                <TableHead className="min-w-[120px]">Team</TableHead>
+                <TableHead className="hidden md:table-cell text-center">Plyd</TableHead>
+                <TableHead className="hidden md:table-cell text-center">W</TableHead>
+                <TableHead className="hidden md:table-cell text-center">D</TableHead>
+                <TableHead className="hidden md:table-cell text-center">L</TableHead>
                 <TableHead className="text-center">GD</TableHead>
-                <TableHead className="text-center">GF</TableHead>
-                <TableHead className="text-center">GA</TableHead>
+                <TableHead className="hidden md:table-cell text-center">GF</TableHead>
+                <TableHead className="hidden md:table-cell text-center">GA</TableHead>
                 <TableHead className="text-center">Pts</TableHead>
                 <TableHead colSpan={6} className="text-center">Form</TableHead>
               </TableRow>
-               <TableRow>
+               <TableRow className="hidden md:table-row">
                  <TableHead colSpan={11}></TableHead>
                 {weekHeaders.map(header => <TableHead key={header} className="text-center w-12">{header}</TableHead>)}
-                {Array(6-weekHeaders.length).fill(0).map((_, i) => <TableHead key={`empty-${i}`} className="w-12"></TableHead>)}
+                {Array(Math.max(0, 6-weekHeaders.length)).fill(0).map((_, i) => <TableHead key={`empty-${i}`} className="w-12"></TableHead>)}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -245,17 +240,17 @@ export default function StandingsPage() {
                       <TableCell>
                       <span className="font-medium">{team.name}</span>
                       </TableCell>
-                      <TableCell className="text-center">{team.gamesPlayed}</TableCell>
-                      <TableCell className="text-center">{team.wins}</TableCell>
-                      <TableCell className="text-center">{team.draws}</TableCell>
-                      <TableCell className="text-center">{team.losses}</TableCell>
+                      <TableCell className="hidden md:table-cell text-center">{team.gamesPlayed}</TableCell>
+                      <TableCell className="hidden md:table-cell text-center">{team.wins}</TableCell>
+                      <TableCell className="hidden md:table-cell text-center">{team.draws}</TableCell>
+                      <TableCell className="hidden md:table-cell text-center">{team.losses}</TableCell>
                       <TableCell className="text-center">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
-                      <TableCell className="text-center">{team.goalsFor}</TableCell>
-                      <TableCell className="text-center">{team.goalsAgainst}</TableCell>
+                      <TableCell className="hidden md:table-cell text-center">{team.goalsFor}</TableCell>
+                      <TableCell className="hidden md:table-cell text-center">{team.goalsAgainst}</TableCell>
                       <TableCell className="text-center font-bold">{team.points}</TableCell>
                       
                       {resultsToDisplay.map((result, index) => (
-                      <TableCell key={index} className={cn("text-center font-bold p-0 w-12", index === resultsToDisplay.length - 1 && 'rounded-r-md')}>
+                      <TableCell key={index} className={cn("text-center font-bold p-0 w-12", index === resultsToDisplay.length - 1 && 'rounded-r-md', index < 3 ? 'table-cell' : 'hidden md:table-cell')}>
                           <div className={cn("flex items-center justify-center h-10 w-full", getResultColor(result), index === resultsToDisplay.length - 1 && 'rounded-r-md')}>
                           {result}
                           </div>
@@ -289,19 +284,19 @@ export default function StandingsPage() {
                                     return (
                                         <div key={index} className="flex items-center justify-center p-3 rounded-lg border">
                                             <div className="flex items-center gap-3 justify-end w-2/5">
-                                                <span className="font-medium text-right">{match.homeTeam.name}</span>
-                                                 <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.homeTeam.bgColourSolid }}>
+                                                <span className="font-medium text-right text-xs md:text-sm">{match.homeTeam.name}</span>
+                                                 <div className="flex items-center justify-center size-8 rounded-full shrink-0" style={{ backgroundColor: match.homeTeam.bgColourSolid }}>
                                                     <HomeIcon className="size-5" style={{ color: match.homeTeam.iconColour }} />
                                                 </div>
                                             </div>
-                                            <div className="font-bold text-lg px-4 text-center">
+                                            <div className="font-bold text-base md:text-lg px-2 md:px-4 text-center whitespace-nowrap">
                                                 {match.homeScore} - {match.awayScore}
                                             </div>
                                             <div className="flex items-center gap-3 w-2/5">
-                                                 <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: match.awayTeam.bgColourSolid }}>
+                                                 <div className="flex items-center justify-center size-8 rounded-full shrink-0" style={{ backgroundColor: match.awayTeam.bgColourSolid }}>
                                                     <AwayIcon className="size-5" style={{ color: match.awayTeam.iconColour }} />
                                                 </div>
-                                                <span className="font-medium">{match.awayTeam.name}</span>
+                                                <span className="font-medium text-xs md:text-sm">{match.awayTeam.name}</span>
                                             </div>
                                         </div>
                                     )

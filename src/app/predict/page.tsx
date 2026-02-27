@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -197,13 +196,14 @@ export default function PredictPage() {
     <div className="flex flex-col gap-8">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <div className="grid grid-cols-1 lg:grid-cols-[3fr_auto_3fr_auto_3fr] gap-4 items-start">
-            <div className="flex flex-col">
+          <div className="flex flex-col lg:flex-row gap-4 items-start">
+            {/* Column 1: Your Prediction */}
+            <div className="flex-1 w-full lg:w-auto">
               <div className="font-medium pb-2 text-muted-foreground text-center">Your Pred 25-26</div>
               <Card>
                 <CardContent className="p-0">
                   {!user ? (
-                      <div className="h-[1060px] flex flex-col items-center justify-center gap-4 text-muted-foreground bg-slate-50 dark:bg-slate-900/50 rounded-md">
+                      <div className="h-[600px] lg:h-[1060px] flex flex-col items-center justify-center gap-4 text-muted-foreground bg-slate-50 dark:bg-slate-900/50 rounded-md">
                           <UserIcon className="size-16" />
                           <p className="font-medium">You are not signed in.</p>
                           <Button asChild variant="outline"><Link href="/profile">Sign In to Predict</Link></Button>
@@ -261,7 +261,8 @@ export default function PredictPage() {
               </Card>
             </div>
 
-            <div className="flex flex-col">
+            {/* Column 2: Difference (Hidden on mobile) */}
+            <div className="hidden lg:flex flex-col">
               <div className="font-medium pb-2 text-muted-foreground invisible">Diff</div>
               <div className="relative p-1">
                 {items.map((item, index) => {
@@ -278,10 +279,11 @@ export default function PredictPage() {
               </div>
             </div>
             
-            <div className="flex flex-col">
-              <div className="font-medium pb-2 text-muted-foreground flex justify-between">
+            {/* Column 3: Current Standings */}
+            <div className="flex-1 w-full lg:w-auto">
+              <div className="font-medium pb-2 text-muted-foreground flex justify-between px-2">
                 <span>Current 25-26</span>
-                <div className="flex"><span className="w-16 text-right">Pts</span><span className="w-16 text-right">GD</span></div>
+                <div className="flex"><span className="w-12 md:w-16 text-right">Pts</span><span className="hidden md:block w-16 text-right">GD</span></div>
               </div>
               <Card>
                 <CardContent className="p-0">
@@ -301,9 +303,9 @@ export default function PredictPage() {
                                         </div>
                                     </div>
                                     </div>
-                                    <span className="font-medium text-sm pl-4 flex-grow">{team.name}</span>
-                                    <span className="text-right font-semibold w-16 pr-2 tabular-nums">{team.points}</span>
-                                    <span className="text-right w-16 pr-4 tabular-nums">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</span>
+                                    <span className="font-medium text-sm pl-2 md:pl-4 flex-grow truncate">{team.name}</span>
+                                    <span className="text-right font-semibold w-12 md:w-16 pr-2 tabular-nums">{team.points}</span>
+                                    <span className="hidden md:block text-right w-16 pr-4 tabular-nums">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</span>
                                 </div>
                           </React.Fragment>
                         );
@@ -313,7 +315,8 @@ export default function PredictPage() {
               </Card>
             </div>
 
-             <div className="flex flex-col">
+            {/* Column 4: Difference (Hidden on mobile) */}
+             <div className="hidden lg:flex flex-col">
               <div className="font-medium pb-2 text-muted-foreground invisible">Diff</div>
               <div className="relative p-1">
                 {currentStandingsWithTeamData.map((team, index) => {
@@ -330,7 +333,8 @@ export default function PredictPage() {
               </div>
             </div>
 
-            <div className="flex flex-col">
+            {/* Column 5: Previous Season */}
+            <div className="hidden lg:block flex-1">
               <div className="font-medium pb-2 text-muted-foreground flex justify-between">
                 <span>Last Year 24-25</span>
                 <div className="flex"><span className="w-16 text-right">Pts</span><span className="w-16 text-right">GD</span></div>
@@ -353,7 +357,7 @@ export default function PredictPage() {
                                         </div>
                                     </div>
                                     </div>
-                                    <span className="font-medium text-sm pl-4 flex-grow">{team.name}</span>
+                                    <span className="font-medium text-sm pl-4 flex-grow truncate">{team.name}</span>
                                     <span className="text-right font-semibold w-16 pr-2 tabular-nums">{team.points}</span>
                                     <span className="text-right w-16 pr-4 tabular-nums">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</span>
                                 </div>
@@ -366,7 +370,7 @@ export default function PredictPage() {
             </div>
 
           </div>
-          {user && !seasonStarted && (<Button type="submit">Submit Final Prediction</Button>)}
+          {user && !seasonStarted && (<Button type="submit" className="w-full lg:w-auto">Submit Final Prediction</Button>)}
         </form>
       </Form>
     </div>
