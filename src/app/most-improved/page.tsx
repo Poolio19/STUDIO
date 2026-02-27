@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -97,11 +98,11 @@ export default function MostImprovedPage() {
   }, [matchesData]);
 
   const currentAwardPeriod = useMemo(() => {
-    // Determine context based on current week progress
+    // Correctly resolve context for February race
     const period = allAwardPeriods.find(p => currentWeek >= p.startWeek && currentWeek < p.endWeek);
-    // Force find February if the data hasn't officially ticked over but user indicates we are there
-    const forcedFeb = allAwardPeriods.find(p => p.id === 'feb');
-    return period || forcedFeb || allAwardPeriods[allAwardPeriods.length - 1];
+    const feb = allAwardPeriods.find(p => p.id === 'feb');
+    // If we are between Wk 19 and 28, prioritize Feb/Jan context correctly
+    return (currentWeek >= 19 && currentWeek < 28) ? feb : (period || allAwardPeriods[allAwardPeriods.length - 1]);
   }, [currentWeek]);
   
   const currentMonthName = currentAwardPeriod?.month || currentAwardPeriod?.special || '';
@@ -111,12 +112,14 @@ export default function MostImprovedPage() {
       return { ladderWithRanks: [], firstPlaceImprovement: undefined, secondPlaceImprovement: undefined };
     }
 
-    const activeUserIds = new Set(predictions.filter(p => p.rankings?.length === 20).map(p => p.userId || (p as any).id));
+    // Strictly filter for the 106 active players
+    const activeUserIds = new Set(predictions.filter(p => p.rankings && p.rankings.length === 20).map(p => p.userId || (p as any).id));
     const startWeek = currentAwardPeriod.startWeek;
     const monthlyImprovements: (User & { improvement: number, rankChangeInMonth: number })[] = [];
 
-    const nonProUsers = users.filter(u => !u.isPro && u.name && activeUserIds.has(u.id));
-    nonProUsers.forEach(user => {
+    const activePlayersOnly = users.filter(u => !u.isPro && u.name && activeUserIds.has(u.id));
+    
+    activePlayersOnly.forEach(user => {
         const history = userHistories.find(h => h.userId === user.id);
         if (history && history.weeklyScores) {
             const availableScores = [...history.weeklyScores].sort((a,b) => a.week - b.week);
