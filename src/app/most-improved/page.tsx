@@ -54,9 +54,9 @@ const formatImprovementText = (val: number) => {
 }
 
 const formatPrizeMoney = (val: number) => {
-    if (val <= 0) return '£0';
+    if (val <= 0) return '£0.00';
     const rounded = Math.round(val * 100) / 100;
-    return rounded % 1 === 0 ? `£${rounded}` : `£${rounded.toFixed(2)}`;
+    return `£${rounded.toFixed(2)}`;
 }
 
 const Holly = () => (
@@ -95,7 +95,6 @@ export default function MostImprovedPage() {
   }, [matchesData]);
 
   const currentAwardPeriod = useMemo(() => {
-    // If currentWeek is at the very boundary of a new month, we might still want to see the active race
     const period = allAwardPeriods.find(p => currentWeek >= p.startWeek && currentWeek < p.endWeek);
     return period || allAwardPeriods[allAwardPeriods.length - 1];
   }, [currentWeek]);
@@ -114,14 +113,12 @@ export default function MostImprovedPage() {
     nonProUsers.forEach(user => {
         const history = userHistories.find(h => h.userId === user.id);
         if (history && history.weeklyScores) {
-            // Find score at start of month
-            const startWeekData = history.weeklyScores.find(ws => ws.week === startWeek);
-            // Find latest available score in this period
-            const latestScoresInPeriod = history.weeklyScores
-                .filter(ws => ws.week >= startWeek && ws.week <= currentWeek)
-                .sort((a,b) => b.week - a.week);
+            // Find score at start of month (or nearest preceding)
+            const availableScores = [...history.weeklyScores].sort((a,b) => a.week - b.week);
+            const startWeekData = availableScores.filter(ws => ws.week <= startWeek).reverse()[0];
             
-            const endWeekData = latestScoresInPeriod[0];
+            // Find latest available score in this period
+            const endWeekData = availableScores.filter(ws => ws.week >= startWeek && ws.week <= currentWeek).reverse()[0];
 
             if (startWeekData && endWeekData) {
                 const improvement = endWeekData.score - startWeekData.score;
@@ -135,7 +132,6 @@ export default function MostImprovedPage() {
       return { ladderWithRanks: [], firstPlaceImprovement: undefined, secondPlaceImprovement: undefined };
     }
 
-    // Sort by improvement descending, then by total score descending
     monthlyImprovements.sort((a, b) => b.improvement - a.improvement || b.score - a.score);
     
     let rank = 0;
@@ -310,7 +306,7 @@ export default function MostImprovedPage() {
                                     <div className="w-full space-y-2">
                                         {monthlyAward.winners?.map(winner => {
                                             const isTie = monthlyAward.winners.length > 1;
-                                            const rawTitle = isXmas ? 'XMAS No. 1' : (isTie ? 'JoMiMoM' : 'MiMoM');
+                                            const rawTitle = isXmas ? 'Xmas No. 1' : (isTie ? 'JoMiMoM' : 'MiMoM');
                                             const displayTitle = isCurrent ? `Current ${rawTitle}` : rawTitle;
                                             const style = isXmas ? { backgroundColor: '#064e3b', borderColor: '#dc2626', color: '#fff' } : getDilutedBackground('yellow', monthlyAward.winners.length);
                                             
