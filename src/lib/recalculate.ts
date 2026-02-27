@@ -37,16 +37,12 @@ export async function recalculateAllDataClientSide(
       const allUsers = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
       const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
       
-      const historicalUserIds = new Set(historicalPlayersData.map(p => p.id));
+      const historicalUserIds = new Set(historicalPlayersData.map(p => p.id.trim()));
       
-      // STRICT Ranking Pool: Only people who have a name AND a complete 20-team prediction for this season
+      // STRICT Ranking Pool: Only people who have a complete 20-team prediction
       const activeUserIds = new Set(
         predictions
           .filter(p => p.rankings && p.rankings.length === 20)
-          .filter(p => {
-              const uId = p.userId || (p as any).id;
-              return allUsers.some(u => u.id === uId && u.name);
-          })
           .map(p => p.userId || (p as any).id)
       );
       

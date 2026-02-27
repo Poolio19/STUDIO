@@ -56,7 +56,8 @@ const formatImprovementText = (val: number) => {
 
 const formatPrizeMoney = (val: number) => {
     if (val <= 0) return '';
-    return val % 1 === 0 ? `£${val}` : `£${val.toFixed(2)}`;
+    const rounded = Math.round(val * 100) / 100;
+    return rounded % 1 === 0 ? `£${rounded}` : `£${rounded.toFixed(2)}`;
 }
 
 export default function MostImprovedPage() {
@@ -293,7 +294,7 @@ export default function MostImprovedPage() {
                         <CardTitle>MiMoM Hall Of Fame</CardTitle>
                         <CardDescription>This Season's Winners and Runners-up.</CardDescription>
                     </CardHeader>
-                    <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {hallOfFameData.map((monthlyAward) => {
                             const isFuture = monthlyAward.isFuture;
                             const isXmas = monthlyAward.id === 'xmas';
@@ -306,11 +307,11 @@ export default function MostImprovedPage() {
                                 
                                 {isFuture ? (
                                      <div className="w-full space-y-2">
-                                        <div className="bg-yellow-400/20 p-2 rounded-md flex items-center justify-center h-[80px]">
-                                            <p className="text-[10px] font-bold text-yellow-800/80 dark:text-yellow-200/80">{isXmas ? 'No. 1 - TBC' : 'MiMoM - TBC'}</p>
+                                        <div className="bg-yellow-400/20 py-1.5 px-2 rounded-md flex items-center justify-center h-[80px]">
+                                            <p className="text-[10px] font-bold text-yellow-800/80 dark:text-yellow-200/80">{isXmas ? 'XMAS No. 1 - TBC' : 'MiMoM - TBC'}</p>
                                         </div>
                                         {!isXmas && (
-                                            <div className="bg-slate-400/20 p-2 rounded-md flex items-center justify-center h-[80px]">
+                                            <div className="bg-slate-400/20 py-1.5 px-2 rounded-md flex items-center justify-center h-[80px]">
                                                 <p className="text-[10px] font-bold text-slate-800/80 dark:text-slate-200/80">RuMiMoM - TBC</p>
                                             </div>
                                         )}
@@ -321,13 +322,27 @@ export default function MostImprovedPage() {
                                             const isTie = monthlyAward.winners.length > 1;
                                             const awardTitle = isXmas ? (monthlyAward.isCurrentMonth ? 'Leader' : 'XMAS No. 1') : (isTie ? 'JoMiMoM' : 'MiMoM');
                                             return (
-                                                <div key={winner.id} className="bg-yellow-400/20 p-2 rounded-md flex flex-col items-center gap-1 min-h-[100px] justify-center">
-                                                    <p className="text-[10px] uppercase font-bold text-yellow-800/60 dark:text-yellow-200/60">{awardTitle}</p>
-                                                    <p className="text-sm font-bold leading-tight">{winner.name}</p>
-                                                    <p className="text-[11px] font-semibold text-muted-foreground">
-                                                        {formatImprovementText(winner.improvement)} 
-                                                        {winner.prize && winner.prize > 0 && <span className="ml-2 text-primary">{formatPrizeMoney(winner.prize)}</span>}
-                                                    </p>
+                                                <div key={winner.id} className="bg-yellow-400/20 py-1.5 px-2 rounded-md flex items-center gap-3 min-h-[80px]">
+                                                    <div className="w-1/4 flex shrink-0 justify-center">
+                                                        <Avatar className="h-10 w-10 border border-yellow-600/30 shadow-sm">
+                                                            <AvatarImage src={getAvatarUrl(winner.avatar)} alt={winner.name} />
+                                                            <AvatarFallback>{winner.name?.charAt(0)}</AvatarFallback>
+                                                        </Avatar>
+                                                    </div>
+                                                    <div className="flex-1 flex flex-col justify-center overflow-hidden text-left">
+                                                        <p className="text-[13px] font-black uppercase text-yellow-800 dark:text-yellow-200 tracking-tight leading-none mb-1">
+                                                            {awardTitle}
+                                                        </p>
+                                                        <p className="text-[14px] font-bold leading-tight truncate mb-0.5 text-foreground">
+                                                            {winner.name}
+                                                        </p>
+                                                        <p className="text-[11px] font-semibold text-muted-foreground leading-none">
+                                                            {formatImprovementText(winner.improvement)} 
+                                                            {winner.prize && winner.prize > 0 && (
+                                                                <span className="ml-1 text-primary">| {formatPrizeMoney(winner.prize)}</span>
+                                                            )}
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             )
                                         })}
@@ -335,13 +350,27 @@ export default function MostImprovedPage() {
                                         {monthlyAward.runnersUp?.map(runnerUp => {
                                             const awardTitle = monthlyAward.runnersUp.length > 1 ? 'JoRuMiMoM' : 'RuMiMoM';
                                             return (
-                                                <div key={runnerUp.id} className="bg-slate-400/20 p-2 rounded-md flex flex-col items-center gap-1 min-h-[80px] justify-center">
-                                                    <p className="text-[10px] uppercase font-bold text-slate-800/60 dark:text-slate-200/60">{awardTitle}</p>
-                                                    <p className="text-sm font-bold leading-tight">{runnerUp.name}</p>
-                                                    <p className="text-[11px] font-semibold text-muted-foreground">
-                                                        {formatImprovementText(runnerUp.improvement)}
-                                                        {runnerUp.prize && runnerUp.prize > 0 && <span className="ml-2 text-primary">{formatPrizeMoney(runnerUp.prize)}</span>}
-                                                    </p>
+                                                <div key={runnerUp.id} className="bg-slate-400/20 py-1.5 px-2 rounded-md flex items-center gap-3 min-h-[80px]">
+                                                    <div className="w-1/4 flex shrink-0 justify-center">
+                                                        <Avatar className="h-10 w-10 border border-slate-600/30 shadow-sm">
+                                                            <AvatarImage src={getAvatarUrl(runnerUp.avatar)} alt={runnerUp.name} />
+                                                            <AvatarFallback>{runnerUp.name?.charAt(0)}</AvatarFallback>
+                                                        </Avatar>
+                                                    </div>
+                                                    <div className="flex-1 flex flex-col justify-center overflow-hidden text-left">
+                                                        <p className="text-[13px] font-black uppercase text-slate-800 dark:text-slate-200 tracking-tight leading-none mb-1">
+                                                            {awardTitle}
+                                                        </p>
+                                                        <p className="text-[14px] font-bold leading-tight truncate mb-0.5 text-foreground">
+                                                            {runnerUp.name}
+                                                        </p>
+                                                        <p className="text-[11px] font-semibold text-muted-foreground leading-none">
+                                                            {formatImprovementText(runnerUp.improvement)}
+                                                            {runnerUp.prize && runnerUp.prize > 0 && (
+                                                                <span className="ml-1 text-primary">| {formatPrizeMoney(runnerUp.prize)}</span>
+                                                            )}
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             )
                                         })}
