@@ -239,7 +239,9 @@ export async function recalculateAllDataClientSide(
               periodScores.sort((a,b) => b.improvement - a.improvement || b.score - a.score);
               
               const topImp = periodScores[0].improvement;
-              const winners = isXmas ? [periodScores[0]] : periodScores.filter(s => s.improvement === topImp);
+              const winners = isXmas 
+                ? [periodScores[0]] 
+                : periodScores.filter(s => s.improvement === topImp);
 
               winners.forEach(w => {
                   const awardId = `2025-${period.id}-${w.uId}`;

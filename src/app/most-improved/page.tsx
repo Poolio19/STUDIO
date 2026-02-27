@@ -114,11 +114,13 @@ export default function MostImprovedPage() {
         const history = userHistories.find(h => h.userId === user.id);
         if (history && history.weeklyScores) {
             const startWeekData = history.weeklyScores.find(ws => ws.week === startWeek);
-            const latestScores = history.weeklyScores
+            
+            // Look for the latest available week in history that is <= currentWeek
+            const latestScoresInPeriod = history.weeklyScores
                 .filter(ws => ws.week >= startWeek && ws.week <= currentWeek)
                 .sort((a,b) => b.week - a.week);
             
-            const endWeekData = latestScores[0];
+            const endWeekData = latestScoresInPeriod[0];
 
             if (startWeekData && endWeekData) {
                 const improvement = endWeekData.score - startWeekData.score;
@@ -241,7 +243,7 @@ export default function MostImprovedPage() {
             <div className="flex flex-col gap-8 lg:col-span-2">
                 <Card>
                     <CardHeader className="bg-gradient-to-r from-yellow-400/20 via-yellow-400/5 to-slate-400/20">
-                    <CardTitle>{currentAwardPeriod?.id === 'xmas' ? 'XMAS NO. 1 Race' : 'In-Month MiMoM Standings'}</CardTitle>
+                    <CardTitle className="uppercase">{currentAwardPeriod?.id === 'xmas' ? 'XMAS NO. 1 Race' : 'IN-MONTH MIMOM STANDINGS'}</CardTitle>
                     <CardDescription>Current standings for {currentMonthName}</CardDescription>
                     </CardHeader>
                     <CardContent className="p-0">
@@ -282,7 +284,7 @@ export default function MostImprovedPage() {
             <div className="lg:col-span-3">
                  <Card>
                     <CardHeader className="bg-gradient-to-r from-yellow-400/20 via-yellow-400/5 to-slate-400/20">
-                        <CardTitle>MiMoM Hall Of Fame</CardTitle>
+                        <CardTitle className="uppercase">MiMoM Hall Of Fame</CardTitle>
                         <CardDescription>Season winners and runners-up in dense 3-column layout.</CardDescription>
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -309,9 +311,9 @@ export default function MostImprovedPage() {
                                             const style = isXmas ? { backgroundColor: '#064e3b', borderColor: '#dc2626', color: '#fff' } : getDilutedBackground('yellow', monthlyAward.winners.length);
                                             
                                             return (
-                                                <div key={winner.id} style={style} className={cn("rounded-md flex items-stretch h-[90px] overflow-hidden shadow-sm border relative", isXmas && "border-2")}>
+                                                <div key={winner.id} style={style} className={cn("rounded-md flex items-stretch h-[100px] overflow-hidden shadow-sm border relative", isXmas && "border-2")}>
                                                     {isXmas && <Holly />}
-                                                    <Avatar className="w-1/4 h-full rounded-none shrink-0"><AvatarImage src={getAvatarUrl(winner.avatar)} className="object-cover" /><AvatarFallback className="rounded-none">{winner.name?.charAt(0)}</AvatarFallback></Avatar>
+                                                    <Avatar className="w-1/4 h-full rounded-none shrink-0"><AvatarImage src={getAvatarUrl(winner.avatar)} className="object-cover h-full" /><AvatarFallback className="rounded-none">{winner.name?.charAt(0)}</AvatarFallback></Avatar>
                                                     <div className="flex-1 flex flex-col justify-center px-2 text-center overflow-hidden">
                                                         <p className={cn("text-[13px] font-black uppercase tracking-tight", isXmas ? "text-white" : "text-yellow-950")}>{displayTitle}</p>
                                                         <p className="text-[12px] font-bold truncate leading-tight my-0.5">{winner.name}</p>
@@ -329,8 +331,8 @@ export default function MostImprovedPage() {
                                             const style = getDilutedBackground('slate', monthlyAward.runnersUp.length);
 
                                             return (
-                                                <div key={runnerUp.id} style={style} className="rounded-md flex items-stretch h-[90px] overflow-hidden shadow-sm border border-slate-600/10">
-                                                    <Avatar className="w-1/4 h-full rounded-none shrink-0"><AvatarImage src={getAvatarUrl(runnerUp.avatar)} className="object-cover" /><AvatarFallback className="rounded-none">{runnerUp.name?.charAt(0)}</AvatarFallback></Avatar>
+                                                <div key={runnerUp.id} style={style} className="rounded-md flex items-stretch h-[100px] overflow-hidden shadow-sm border border-slate-600/10">
+                                                    <Avatar className="w-1/4 h-full rounded-none shrink-0"><AvatarImage src={getAvatarUrl(runnerUp.avatar)} className="object-cover h-full" /><AvatarFallback className="rounded-none">{runnerUp.name?.charAt(0)}</AvatarFallback></Avatar>
                                                     <div className="flex-1 flex flex-col justify-center px-2 text-center overflow-hidden">
                                                         <p className="text-[13px] font-black uppercase text-slate-900 tracking-tight">{displayTitle}</p>
                                                         <p className="text-[12px] font-bold truncate leading-tight my-0.5">{runnerUp.name}</p>
