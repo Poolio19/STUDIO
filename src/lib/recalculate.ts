@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -17,7 +16,7 @@ import { allAwardPeriods } from './award-periods';
 
 /**
  * Recalculates all derived data and seeds historical records.
- * Strictly calculates ranks among active 2025-26 players only.
+ * Strictly calculates ranks among active 2025-26 players only (~106 entries).
  */
 export async function recalculateAllDataClientSide(
   firestore: Firestore,
@@ -41,6 +40,7 @@ export async function recalculateAllDataClientSide(
       
       const historicalUserIds = new Set(historicalPlayersData.map(p => p.id.trim()));
       
+      // Identify the ~106 active players who have entered for 2025-26
       const activeUserIds = new Set(
         predictions
           .filter(p => p.rankings && p.rankings.length === 20)
