@@ -49,8 +49,8 @@ const formatPointsChange = (change: number) => {
 }
 
 const formatImprovementText = (val: number) => {
-    const absVal = Math.abs(val);
-    return val >= 0 ? `+${absVal}PTS` : `-${absVal}PTS`;
+    const prefix = val >= 0 ? '+' : '';
+    return `${prefix}${val}PTS`;
 }
 
 const formatPrizeMoney = (val: number) => {
@@ -58,6 +58,16 @@ const formatPrizeMoney = (val: number) => {
     const rounded = Math.round(val * 100) / 100;
     return rounded % 1 === 0 ? `£${rounded}` : `£${rounded.toFixed(2)}`;
 }
+
+const Holly = () => (
+    <svg className="absolute top-1 right-1 size-6 text-red-500 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 12c2-2 5-2 7-2s2 5 2 7-5 2-7 2-2-5-2-7Z" fill="#065f46" stroke="#064e3b" />
+        <path d="M12 12c-2-2-5-2-7-2s-2 5-2 7 5 2 7 2 2-5 2-7Z" fill="#065f46" stroke="#064e3b" />
+        <circle cx="12" cy="10" r="2" fill="#ef4444" stroke="#b91c1c" />
+        <circle cx="10" cy="13" r="2" fill="#ef4444" stroke="#b91c1c" />
+        <circle cx="14" cy="13" r="2" fill="#ef4444" stroke="#b91c1c" />
+    </svg>
+)
 
 export default function MostImprovedPage() {
   const firestore = useFirestore();
@@ -216,19 +226,14 @@ export default function MostImprovedPage() {
   };
 
   const getDilutedBackground = (baseColor: 'yellow' | 'slate', count: number) => {
-      // Base colors in RGBA
       const colors = {
-          yellow: 'rgba(250, 204, 21, ', // yellow-400
-          slate: 'rgba(148, 163, 184, '   // slate-400
+          yellow: 'rgba(250, 204, 21, ', 
+          slate: 'rgba(148, 163, 184, ' 
       };
-      
-      // More winners = more diluted
-      // Tiered opacity logic
       let opacity = 1.0;
       if (count === 2) opacity = 0.65;
       if (count === 3) opacity = 0.45;
       if (count >= 4) opacity = 0.25;
-
       return { backgroundColor: colors[baseColor] + opacity + ')' };
   };
 
@@ -337,10 +342,11 @@ export default function MostImprovedPage() {
                                         {monthlyAward.winners?.map(winner => {
                                             const isTie = monthlyAward.winners.length > 1;
                                             const awardTitle = isXmas ? 'XMAS NO. 1' : (isTie ? 'JOMIMOM' : 'MIMOM');
-                                            const style = getDilutedBackground('yellow', monthlyAward.winners.length);
+                                            const style = isXmas ? { backgroundColor: '#064e3b', borderColor: '#dc2626', color: '#fff' } : getDilutedBackground('yellow', monthlyAward.winners.length);
                                             
                                             return (
-                                                <div key={winner.id} style={style} className="rounded-md flex items-stretch h-[70px] overflow-hidden shadow-sm border border-yellow-600/10">
+                                                <div key={winner.id} style={style} className={cn("rounded-md flex items-stretch h-[70px] overflow-hidden shadow-sm border relative", isXmas && "border-2")}>
+                                                    {isXmas && <Holly />}
                                                     <div className="w-1/4 h-full shrink-0">
                                                         <Avatar className="h-full w-full rounded-none">
                                                             <AvatarImage src={getAvatarUrl(winner.avatar)} alt={winner.name} className="object-cover" />
@@ -348,14 +354,14 @@ export default function MostImprovedPage() {
                                                         </Avatar>
                                                     </div>
                                                     <div className="flex-1 flex flex-col justify-center px-2 text-left overflow-hidden">
-                                                        <p className="text-[12px] font-black uppercase text-yellow-900/90 tracking-tighter leading-none mb-1">
+                                                        <p className={cn("text-[12px] font-black uppercase tracking-tighter leading-none mb-1", isXmas ? "text-white" : "text-yellow-900/90")}>
                                                             {awardTitle}
                                                         </p>
-                                                        <p className="text-[13px] font-bold leading-none truncate mb-1 text-foreground">
+                                                        <p className="text-[13px] font-bold leading-none truncate mb-1">
                                                             {winner.name}
                                                         </p>
-                                                        <p className="text-[10px] font-black leading-none text-yellow-950/60 uppercase">
-                                                            {formatImprovementText(winner.improvement)} <span className="font-medium normal-case ml-1 text-primary">{formatPrizeMoney(winner.prize || 0)}</span>
+                                                        <p className={cn("text-[10px] font-black leading-none uppercase", isXmas ? "text-yellow-400" : "text-yellow-950/60")}>
+                                                            {formatImprovementText(winner.improvement)} <span className="font-medium normal-case ml-1">{formatPrizeMoney(winner.prize || 0)}</span>
                                                         </p>
                                                     </div>
                                                 </div>
@@ -378,11 +384,11 @@ export default function MostImprovedPage() {
                                                         <p className="text-[12px] font-black uppercase text-slate-900/90 tracking-tighter leading-none mb-1">
                                                             {awardTitle}
                                                         </p>
-                                                        <p className="text-[13px] font-bold leading-none truncate mb-1 text-foreground">
+                                                        <p className="text-[13px] font-bold leading-none truncate mb-1">
                                                             {runnerUp.name}
                                                         </p>
                                                         <p className="text-[10px] font-black leading-none text-slate-950/60 uppercase">
-                                                            {formatImprovementText(runnerUp.improvement)} <span className="font-medium normal-case ml-1 text-primary">{formatPrizeMoney(runnerUp.prize || 0)}</span>
+                                                            {formatImprovementText(runnerUp.improvement)} <span className="font-medium normal-case ml-1">{formatPrizeMoney(runnerUp.prize || 0)}</span>
                                                         </p>
                                                     </div>
                                                 </div>
