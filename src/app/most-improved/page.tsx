@@ -106,7 +106,8 @@ export default function MostImprovedPage() {
     }
 
     const startWeek = currentAwardPeriod.startWeek;
-    const endWeek = currentWeek;
+    // For live standings, use the current week or the month's end week
+    const endWeekComp = Math.min(currentWeek, currentAwardPeriod.endWeek);
 
     const monthlyImprovements: (User & { improvement: number, rankChangeInMonth: number })[] = [];
 
@@ -115,7 +116,7 @@ export default function MostImprovedPage() {
         const history = userHistories.find(h => h.userId === user.id);
         if (history && history.weeklyScores) {
             const startWeekData = history.weeklyScores.find(ws => ws.week === startWeek);
-            const endWeekData = history.weeklyScores.find(ws => ws.week === endWeek);
+            const endWeekData = history.weeklyScores.find(ws => ws.week === endWeekComp);
 
             if (startWeekData && endWeekData) {
                 const improvement = endWeekData.score - startWeekData.score;
