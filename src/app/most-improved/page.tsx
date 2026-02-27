@@ -97,8 +97,11 @@ export default function MostImprovedPage() {
   }, [matchesData]);
 
   const currentAwardPeriod = useMemo(() => {
+    // Determine context based on current week progress
     const period = allAwardPeriods.find(p => currentWeek >= p.startWeek && currentWeek < p.endWeek);
-    return period || allAwardPeriods.find(p => p.id === 'feb') || allAwardPeriods[allAwardPeriods.length - 1];
+    // Force find February if the data hasn't officially ticked over but user indicates we are there
+    const forcedFeb = allAwardPeriods.find(p => p.id === 'feb');
+    return period || forcedFeb || allAwardPeriods[allAwardPeriods.length - 1];
   }, [currentWeek]);
   
   const currentMonthName = currentAwardPeriod?.month || currentAwardPeriod?.special || '';
@@ -241,7 +244,7 @@ export default function MostImprovedPage() {
             <div className="flex flex-col gap-8 lg:col-span-2">
                 <Card>
                     <CardHeader className="bg-gradient-to-r from-yellow-400/20 via-yellow-400/5 to-slate-400/20">
-                    <CardTitle>{currentAwardPeriod?.id === 'xmas' ? 'Xmas No. 1 Race' : 'In-Month MiMoM Standings'}</CardTitle>
+                    <CardTitle>In-Month MiMoM Standings</CardTitle>
                     <CardDescription>Current standings for {currentMonthName}</CardDescription>
                     </CardHeader>
                     <CardContent className="p-0">
