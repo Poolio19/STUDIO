@@ -194,14 +194,14 @@ export default function LeaderboardPage() {
                <TableRow>
                 <TableHead colSpan={4} className="text-center text-lg font-bold text-foreground border-r bg-blue-200/50 dark:bg-blue-800/30 py-2">PremPred Standings</TableHead>
                 <TableHead colSpan={4} className="hidden md:table-cell text-center text-lg font-bold text-foreground border-r bg-green-200/50 dark:bg-green-800/30 py-2">Change In The Past Week</TableHead>
-                <TableHead colSpan={4} className="hidden md:table-cell text-center text-lg font-bold text-foreground bg-purple-200/50 dark:bg-purple-800/30 py-2">Season Highs And Lows</TableHead>
+                <TableHead colSpan={4} className="hidden lg:table-cell text-center text-lg font-bold text-foreground bg-purple-200/50 dark:bg-purple-800/30 py-2">Season Highs And Lows</TableHead>
               </TableRow>
               <TableRow>
                 <TableHead colSpan={4} className="text-center text-base font-bold text-foreground border-r bg-blue-100/50 dark:bg-blue-900/20 py-2">Week {currentWeek}, Current Standings</TableHead>
                 <TableHead colSpan={2} className="hidden md:table-cell text-center text-base font-bold text-foreground border-r bg-green-100/50 dark:bg-blue-900/20 py-2">Position</TableHead>
                 <TableHead colSpan={2} className="hidden md:table-cell text-center text-base font-bold text-foreground border-r bg-green-100/50 dark:bg-blue-900/20 py-2">Points</TableHead>
-                <TableHead colSpan={2} className="hidden md:table-cell text-center text-base font-bold text-foreground border-r bg-purple-100/50 dark:bg-blue-900/20 py-2">Position</TableHead>
-                <TableHead colSpan={2} className="hidden md:table-cell text-center text-base font-bold text-foreground bg-purple-100/50 dark:bg-blue-900/20 py-2">Points</TableHead>
+                <TableHead colSpan={2} className="hidden lg:table-cell text-center text-base font-bold text-foreground border-r bg-purple-100/50 dark:bg-blue-900/20 py-2">Position</TableHead>
+                <TableHead colSpan={2} className="hidden lg:table-cell text-center text-base font-bold text-foreground bg-purple-100/50 dark:bg-blue-900/20 py-2">Points</TableHead>
               </TableRow>
               <TableRow>
                 <TableHead className="w-[60px] bg-blue-50/50 dark:bg-blue-900/10 py-2 text-center">Pos</TableHead>
@@ -212,10 +212,10 @@ export default function LeaderboardPage() {
                 <TableHead className="hidden md:table-cell w-[100px] text-center border-r bg-green-50/50 dark:bg-green-900/10 py-2">Move</TableHead>
                 <TableHead className="hidden md:table-cell text-center bg-green-50/50 dark:bg-green-900/10 py-2">Was</TableHead>
                 <TableHead className="hidden md:table-cell w-[100px] text-center border-r bg-green-50/50 dark:bg-green-900/10 py-2">Change</TableHead>
-                <TableHead className="hidden md:table-cell text-center bg-purple-50/50 dark:bg-purple-900/10 py-2">High</TableHead>
-                <TableHead className="hidden md:table-cell text-center border-r bg-purple-50/50 dark:bg-purple-900/10 py-2">Low</TableHead>
-                <TableHead className="hidden md:table-cell text-center bg-purple-50/50 dark:bg-purple-900/10 py-2">High</TableHead>
-                <TableHead className="hidden md:table-cell text-center bg-purple-50/50 dark:bg-purple-900/10 py-2">Low</TableHead>
+                <TableHead className="hidden lg:table-cell text-center bg-purple-50/50 dark:bg-purple-900/10 py-2">High</TableHead>
+                <TableHead className="hidden lg:table-cell text-center border-r bg-purple-50/50 dark:bg-purple-900/10 py-2">Low</TableHead>
+                <TableHead className="hidden lg:table-cell text-center bg-purple-50/50 dark:bg-purple-900/10 py-2">High</TableHead>
+                <TableHead className="hidden lg:table-cell text-center bg-purple-50/50 dark:bg-purple-900/10 py-2">Low</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -281,7 +281,7 @@ export default function LeaderboardPage() {
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger className="cursor-help underline decoration-dotted underline-offset-4">
-                                            {b.total > 0 ? `£${b.total.toFixed(2)}` : '£0.00'}
+                                            {b.total > 0 ? `£${b.total % 1 === 0 ? b.total : b.total.toFixed(2)}` : '£0'}
                                         </TooltipTrigger>
                                         <TooltipContent side="left" className="space-y-1">
                                             <p className="font-bold border-b pb-1 mb-1 text-xs">Breakdown</p>
@@ -309,10 +309,10 @@ export default function LeaderboardPage() {
                                   <ScoreIcon className="size-5" />
                               </div>
                           </TableCell>
-                          <TableCell className={cn("hidden md:table-cell text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.maxRank || '-'}</TableCell>
-                          <TableCell className={cn("hidden md:table-cell text-center font-medium border-r py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.minRank || '-'}</TableCell>
-                          <TableCell className={cn("hidden md:table-cell text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.maxScore}</TableCell>
-                          <TableCell className={cn("hidden md:table-cell text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.minScore}</TableCell>
+                          <TableCell className={cn("hidden lg:table-cell text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.maxRank || '-'}</TableCell>
+                          <TableCell className={cn("hidden lg:table-cell text-center font-medium border-r py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.minRank || '-'}</TableCell>
+                          <TableCell className={cn("hidden lg:table-cell text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.maxScore}</TableCell>
+                          <TableCell className={cn("hidden lg:table-cell text-center font-medium py-1", isCurrentUser && "text-[1.1rem] font-black drop-shadow-[0_0_8px_hsl(var(--primary))]")}>{user.minScore}</TableCell>
                       </TableRow>
                   );
                 })

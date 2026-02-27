@@ -245,15 +245,16 @@ export async function recalculateAllDataClientSide(
 
               winners.forEach(w => {
                   const awardId = `2025-${period.id}-${w.uId}`;
-                  addOp(b => b.set(doc(firestore, 'monthlyMimoM', awardId), {
+                  const awardData: any = {
                       id: awardId,
                       userId: w.uId,
                       month: period.id,
                       year: 2025,
                       type: 'winner',
-                      ...(isXmas ? { special: 'Xmas No 1' } : {}),
                       improvement: w.improvement ?? 0
-                  }));
+                  };
+                  if (isXmas) awardData.special = 'Xmas No 1';
+                  addOp(b => b.set(doc(firestore, 'monthlyMimoM', awardId), awardData));
               });
 
               if (!isXmas && winners.length === 1 && periodScores.length > 1) {

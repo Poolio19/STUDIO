@@ -48,6 +48,17 @@ const formatPointsChange = (change: number) => {
     return <span>{change}</span>;
 }
 
+const formatImprovementText = (val: number) => {
+    if (val > 0) return `+${val}pts`;
+    if (val < 0) return `${val}pts`;
+    return '0pts';
+}
+
+const formatPrizeMoney = (val: number) => {
+    if (val <= 0) return '';
+    return val % 1 === 0 ? `£${val}` : `£${val.toFixed(2)}`;
+}
+
 export default function MostImprovedPage() {
   const firestore = useFirestore();
   const resolvedUserId = useResolvedUserId();
@@ -147,8 +158,8 @@ export default function MostImprovedPage() {
         const isPastPeriod = period.endWeek <= currentWeek && !isCurrentPeriod;
         const isTooEarly = isCurrentPeriod && currentWeek < (period.startWeek + 1);
 
-        let winners: (User & { improvement: number, special?: string })[] = [];
-        let runnersUp: (User & { improvement: number })[] = [];
+        let winners: (User & { improvement: number, special?: string, prize?: number })[] = [];
+        let runnersUp: (User & { improvement: number, prize?: number })[] = [];
         
         if (isPastPeriod) {
             const periodAwards = monthlyMimoMAwards.filter(a => 
@@ -156,22 +167,33 @@ export default function MostImprovedPage() {
                 (a.month.toLowerCase() === period.id.toLowerCase() || a.id.includes(period.id))
             );
             
-            winners = periodAwards.filter(a => a.type === 'winner').map(a => {
+            const rawWinners = periodAwards.filter(a => a.type === 'winner').map(a => {
                 const u = userMap.get(a.userId);
                 return u ? { ...u, improvement: a.improvement ?? 0, special: a.special } : null;
             }).filter((u): u is User & { improvement: number, special?: string } => !!u);
 
-            runnersUp = periodAwards.filter(a => a.type === 'runner-up').map(a => {
+            const rawRunnersUp = periodAwards.filter(a => a.type === 'runner-up').map(a => {
                 const u = userMap.get(a.userId);
                 return u ? { ...u, improvement: a.improvement ?? 0 } : null;
             }).filter((u): u is User & { improvement: number } => !!u);
+
+            const winPrize = period.id === 'xmas' ? 10 : (10 / (rawWinners.length || 1));
+            const ruPrize = (rawWinners.length === 1 && rawRunnersUp.length > 0) ? (5 / rawRunnersUp.length) : 0;
+
+            winners = rawWinners.map(w => ({ ...w, prize: winPrize }));
+            runnersUp = rawRunnersUp.map(r => ({ ...r, prize: ruPrize }));
+
         } else if (isCurrentPeriod && !isTooEarly) {
             if (ladderData.firstPlaceImprovement !== undefined && ladderData.firstPlaceImprovement !== 0) {
                 const candidates = ladderData.ladderWithRanks.filter(u => u.improvement === ladderData.firstPlaceImprovement);
-                winners = period.id === 'xmas' ? [candidates[0]] : candidates as any;
+                const winPool = period.id === 'xmas' ? [candidates[0]] : candidates;
+                const winPrize = period.id === 'xmas' ? 10 : (10 / winPool.length);
+                winners = winPool.map(w => ({ ...w, prize: winPrize })) as any;
             }
             if (period.id !== 'xmas' && ladderData.secondPlaceImprovement !== undefined && ladderData.secondPlaceImprovement !== 0 && winners.length === 1) {
-                runnersUp = ladderData.ladderWithRanks.filter(u => u.improvement === ladderData.secondPlaceImprovement) as any;
+                const candidates = ladderData.ladderWithRanks.filter(u => u.improvement === ladderData.secondPlaceImprovement);
+                const ruPrize = 5 / candidates.length;
+                runnersUp = candidates.map(r => ({ ...r, prize: ruPrize })) as any;
             }
         }
         
@@ -268,67 +290,61 @@ export default function MostImprovedPage() {
             <div className="lg:col-span-3">
                  <Card>
                     <CardHeader className="bg-gradient-to-r from-yellow-400/20 via-yellow-400/5 to-slate-400/20">
-                        <CardTitle>{currentAwardPeriod?.id === 'xmas' ? 'XMAS No. 1' : 'MiMoM Hall Of Fame'}</CardTitle>
+                        <CardTitle>MiMoM Hall Of Fame</CardTitle>
                         <CardDescription>This Season's Winners and Runners-up.</CardDescription>
                     </CardHeader>
                     <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {hallOfFameData.map((monthlyAward) => {
                             const isFuture = monthlyAward.isFuture;
-                            const isTie = monthlyAward.winners.length > 1;
                             const isXmas = monthlyAward.id === 'xmas';
 
                             return (
                             <div key={monthlyAward.id} className={cn("p-3 border rounded-lg flex flex-col items-center justify-start text-center", {
                                 'opacity-50': isFuture,
                             })}>
-                                <p className="font-bold mb-2 text-sm">{monthlyAward.abbreviation}</p>
+                                <p className="font-bold mb-3 text-sm border-b w-full pb-1 uppercase tracking-wider">{monthlyAward.abbreviation}</p>
                                 
                                 {isFuture ? (
                                      <div className="w-full space-y-2">
-                                        <div className="bg-yellow-400/20 p-2 rounded-md flex items-center justify-center h-[60px]">
-                                            <p className="text-sm font-bold text-yellow-800/80 dark:text-yellow-200/80">{isXmas ? 'No. 1 - TBC' : 'MiMoM - TBC'}</p>
+                                        <div className="bg-yellow-400/20 p-2 rounded-md flex items-center justify-center h-[80px]">
+                                            <p className="text-[10px] font-bold text-yellow-800/80 dark:text-yellow-200/80">{isXmas ? 'No. 1 - TBC' : 'MiMoM - TBC'}</p>
                                         </div>
                                         {!isXmas && (
-                                            <div className="bg-slate-400/20 p-2 rounded-md flex items-center justify-center h-[60px]">
-                                                <p className="text-sm font-bold text-slate-800/80 dark:text-slate-200/80">RuMiMoM - TBC</p>
+                                            <div className="bg-slate-400/20 p-2 rounded-md flex items-center justify-center h-[80px]">
+                                                <p className="text-[10px] font-bold text-slate-800/80 dark:text-slate-200/80">RuMiMoM - TBC</p>
                                             </div>
                                         )}
                                     </div>
                                 ) : (
                                     <div className="w-full space-y-2">
-                                        {monthlyAward.winners?.map(winner => (
-                                            <div key={winner.id} className="bg-yellow-400/20 p-2 rounded-md flex items-center gap-3">
-                                                <Avatar className="h-10 w-10">
-                                                    <AvatarImage src={getAvatarUrl(winner.avatar || '')} alt={winner.name} data-ai-hint="person portrait" />
-                                                    <AvatarFallback>{(winner.name || '?').charAt(0)}</AvatarFallback>
-                                                </Avatar>
-                                                <div className="text-left">
-                                                    <p className="text-sm font-bold">{winner.name}
-                                                        {typeof winner.improvement === 'number' && <span className="font-normal text-muted-foreground"> (+{winner.improvement}pts)</span>}
-                                                    </p>
-                                                    <p className="text-xs font-semibold text-yellow-800/80 dark:text-yellow-200/80">
-                                                        {isXmas ? (monthlyAward.isCurrentMonth ? 'Leader' : 'XMAS No. 1') : (monthlyAward.isCurrentMonth ? (isTie ? 'Current JoMiMoM' : 'Current Leader') : (isTie ? 'JoMiMoM' : 'MiMoM'))}
+                                        {monthlyAward.winners?.map(winner => {
+                                            const isTie = monthlyAward.winners.length > 1;
+                                            const awardTitle = isXmas ? (monthlyAward.isCurrentMonth ? 'Leader' : 'XMAS No. 1') : (isTie ? 'JoMiMoM' : 'MiMoM');
+                                            return (
+                                                <div key={winner.id} className="bg-yellow-400/20 p-2 rounded-md flex flex-col items-center gap-1 min-h-[100px] justify-center">
+                                                    <p className="text-[10px] uppercase font-bold text-yellow-800/60 dark:text-yellow-200/60">{awardTitle}</p>
+                                                    <p className="text-sm font-bold leading-tight">{winner.name}</p>
+                                                    <p className="text-[11px] font-semibold text-muted-foreground">
+                                                        {formatImprovementText(winner.improvement)} 
+                                                        {winner.prize && winner.prize > 0 && <span className="ml-2 text-primary">{formatPrizeMoney(winner.prize)}</span>}
                                                     </p>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            )
+                                        })}
 
-                                        {monthlyAward.runnersUp?.map(runnerUp => (
-                                            <div key={runnerUp.id} className="bg-slate-400/20 p-2 rounded-md flex items-center gap-3">
-                                                <Avatar className="h-10 w-10">
-                                                    <AvatarImage src={getAvatarUrl(runnerUp.avatar || '')} alt={runnerUp.name} data-ai-hint="person portrait" />
-                                                    <AvatarFallback>{(runnerUp.name || '?').charAt(0)}</AvatarFallback>
-                                                </Avatar>
-                                                <div className="text-left">
-                                                    <p className="text-sm font-bold">{runnerUp.name}
-                                                        {typeof runnerUp.improvement === 'number' && <span className="font-normal text-muted-foreground"> (+{runnerUp.improvement}pts)</span>}
-                                                    </p>
-                                                    <p className="text-xs font-semibold text-slate-800/80 dark:text-slate-200/80">
-                                                        {monthlyAward.isCurrentMonth ? 'Current Runner-Up' : (monthlyAward.runnersUp.length > 1 ? 'JoRuMiMoM' : 'RuMiMoM')}
+                                        {monthlyAward.runnersUp?.map(runnerUp => {
+                                            const awardTitle = monthlyAward.runnersUp.length > 1 ? 'JoRuMiMoM' : 'RuMiMoM';
+                                            return (
+                                                <div key={runnerUp.id} className="bg-slate-400/20 p-2 rounded-md flex flex-col items-center gap-1 min-h-[80px] justify-center">
+                                                    <p className="text-[10px] uppercase font-bold text-slate-800/60 dark:text-slate-200/60">{awardTitle}</p>
+                                                    <p className="text-sm font-bold leading-tight">{runnerUp.name}</p>
+                                                    <p className="text-[11px] font-semibold text-muted-foreground">
+                                                        {formatImprovementText(runnerUp.improvement)}
+                                                        {runnerUp.prize && runnerUp.prize > 0 && <span className="ml-2 text-primary">{formatPrizeMoney(runnerUp.prize)}</span>}
                                                     </p>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            )
+                                        })}
                                     </div>
                                 )}
                             </div>
