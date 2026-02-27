@@ -106,7 +106,7 @@ export default function MostImprovedPage() {
   const currentMonthName = currentAwardPeriod?.month || currentAwardPeriod?.special || '';
 
   const ladderData = useMemo(() => {
-    if (!users || !userHistories || !currentAwardPeriod || currentWeek < currentAwardPeriod.startWeek) {
+    if (!users || !userHistories || !currentAwardPeriod) {
       return { ladderWithRanks: [], firstPlaceImprovement: undefined, secondPlaceImprovement: undefined };
     }
 
@@ -165,15 +165,15 @@ export default function MostImprovedPage() {
 
     return allAwardPeriods.map(period => {
         const isCurrentPeriod = currentAwardPeriod?.id === period.id;
-        const isPastPeriod = period.endWeek <= currentWeek && !isCurrentPeriod;
-        const isTooEarly = isCurrentPeriod && currentWeek < (period.startWeek + 1);
+        const isPastPeriod = period.endWeek <= currentWeek;
+        const isFuture = !isPastPeriod && !isCurrentPeriod;
 
         let winners: (User & { improvement: number, special?: string, prize?: number })[] = [];
         let runnersUp: (User & { improvement: number, prize?: number })[] = [];
         
         if (isPastPeriod) {
             const periodAwards = monthlyMimoMAwards.filter(a => 
-                a.year === 2025 && 
+                a.year === period.year && 
                 (a.month.toLowerCase() === period.id.toLowerCase() || a.id.includes(period.id))
             );
             
@@ -193,7 +193,7 @@ export default function MostImprovedPage() {
             winners = rawWinners.map(w => ({ ...w, prize: winPrize }));
             runnersUp = rawRunnersUp.map(r => ({ ...r, prize: ruPrize }));
 
-        } else if (isCurrentPeriod && !isTooEarly) {
+        } else if (isCurrentPeriod) {
             if (ladderData.firstPlaceImprovement !== undefined && ladderData.firstPlaceImprovement !== 0) {
                 const candidates = ladderData.ladderWithRanks.filter(u => u.improvement === ladderData.firstPlaceImprovement);
                 const winPool = period.id === 'xmas' ? [candidates[0]] : candidates;
@@ -211,7 +211,7 @@ export default function MostImprovedPage() {
             id: period.id,
             abbreviation: period.id === 'xmas' ? 'XMAS No. 1' : period.abbreviation,
             isCurrentMonth: isCurrentPeriod,
-            isFuture: (!isPastPeriod && !isCurrentPeriod) || isTooEarly,
+            isFuture,
             winners,
             runnersUp,
         };
@@ -318,15 +318,17 @@ export default function MostImprovedPage() {
                     <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {hallOfFameData.map((monthlyAward) => {
                             const isFuture = monthlyAward.isFuture;
+                            const isCurrent = monthlyAward.isCurrentMonth;
                             const isXmas = monthlyAward.id === 'xmas';
 
                             return (
                             <div key={monthlyAward.id} className={cn("p-2 border rounded-lg flex flex-col items-center justify-start text-center", {
                                 'opacity-50': isFuture,
+                                'opacity-70 grayscale-[30%]': isCurrent,
                             })}>
                                 <p className="font-black mb-3 text-[11px] border-b w-full pb-1 uppercase tracking-[0.15em] text-muted-foreground/80">{monthlyAward.abbreviation}</p>
                                 
-                                {isFuture ? (
+                                {isFuture || (isCurrent && monthlyAward.winners.length === 0) ? (
                                      <div className="w-full space-y-2">
                                         <div className="bg-muted/30 py-1.5 px-2 rounded-md flex items-center justify-center h-[70px]">
                                             <p className="text-[10px] font-black uppercase text-muted-foreground/40 tracking-widest">{isXmas ? 'XMAS NO. 1' : 'MIMOM'} TBC</p>
@@ -342,6 +344,7 @@ export default function MostImprovedPage() {
                                         {monthlyAward.winners?.map(winner => {
                                             const isTie = monthlyAward.winners.length > 1;
                                             const awardTitle = isXmas ? 'XMAS NO. 1' : (isTie ? 'JOMIMOM' : 'MIMOM');
+                                            const displayTitle = isCurrent ? `CURRENT ${awardTitle}` : awardTitle;
                                             const style = isXmas ? { backgroundColor: '#064e3b', borderColor: '#dc2626', color: '#fff' } : getDilutedBackground('yellow', monthlyAward.winners.length);
                                             
                                             return (
@@ -355,7 +358,7 @@ export default function MostImprovedPage() {
                                                     </div>
                                                     <div className="flex-1 flex flex-col justify-center px-2 text-left overflow-hidden">
                                                         <p className={cn("text-[12px] font-black uppercase tracking-tighter leading-none mb-1", isXmas ? "text-white" : "text-yellow-900/90")}>
-                                                            {awardTitle}
+                                                            {displayTitle}
                                                         </p>
                                                         <p className="text-[13px] font-bold leading-none truncate mb-1">
                                                             {winner.name}
@@ -370,6 +373,7 @@ export default function MostImprovedPage() {
 
                                         {monthlyAward.runnersUp?.map(runnerUp => {
                                             const awardTitle = monthlyAward.runnersUp.length > 1 ? 'JORUMIMOM' : 'RUMIMOM';
+                                            const displayTitle = isCurrent ? `CURRENT ${awardTitle}` : awardTitle;
                                             const style = getDilutedBackground('slate', monthlyAward.runnersUp.length);
 
                                             return (
@@ -382,7 +386,7 @@ export default function MostImprovedPage() {
                                                     </div>
                                                     <div className="flex-1 flex flex-col justify-center px-2 text-left overflow-hidden">
                                                         <p className="text-[12px] font-black uppercase text-slate-900/90 tracking-tighter leading-none mb-1">
-                                                            {awardTitle}
+                                                            {displayTitle}
                                                         </p>
                                                         <p className="text-[13px] font-bold leading-none truncate mb-1">
                                                             {runnerUp.name}
