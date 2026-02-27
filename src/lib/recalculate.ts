@@ -8,7 +8,7 @@ import {
   type Firestore,
   type WriteBatch,
 } from 'firebase/firestore';
-import type { Team, Prediction, User as UserProfile, UserHistory, Match, MonthlyMimoM } from '@/lib/types';
+import type { Team, Prediction, User as UserProfile, UserHistory, Match } from '@/lib/types';
 import prevStandingsData from './previous-season-standings-24-25.json';
 import historicalPlayersData from './historical-players.json';
 import historicalMimoAwardsData from './historical-mimo-awards.json';

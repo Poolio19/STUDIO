@@ -204,7 +204,7 @@ export default function MostImprovedPage() {
         
         return {
             id: period.id,
-            abbreviation: period.id === 'xmas' ? 'XMAS No. 1' : period.abbreviation,
+            abbreviation: period.id === 'xmas' ? 'XMAS NO. 1' : period.abbreviation,
             isCurrentMonth: isCurrentPeriod,
             isFuture,
             winners,
@@ -251,7 +251,7 @@ export default function MostImprovedPage() {
             <div className="flex flex-col gap-8 lg:col-span-2">
                 <Card>
                     <CardHeader className="bg-gradient-to-r from-yellow-400/20 via-yellow-400/5 to-slate-400/20">
-                    <CardTitle>{currentAwardPeriod?.id === 'xmas' ? 'XMAS No. 1 Race' : 'In-Month MiMoM Standings'}</CardTitle>
+                    <CardTitle>{currentAwardPeriod?.id === 'xmas' ? 'XMAS NO. 1 Race' : 'In-Month MiMoM Standings'}</CardTitle>
                     <CardDescription>Current standings for {currentMonthName}</CardDescription>
                     </CardHeader>
                     <CardContent>
