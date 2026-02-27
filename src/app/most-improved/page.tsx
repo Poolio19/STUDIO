@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import {
   Avatar,
   AvatarFallback,
@@ -28,7 +29,6 @@ import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase, useResolvedUserId } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { allAwardPeriods } from '@/lib/award-periods';
-
 
 const getRankChangeIcon = (change: number) => {
   if (change > 0) return ArrowUp;
@@ -60,7 +60,7 @@ const formatPrizeMoney = (val: number) => {
 }
 
 const Holly = () => (
-    <svg className="absolute top-1 right-1 size-6 text-red-500 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="absolute top-1 right-1 size-6 text-red-500 opacity-80 z-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 12c2-2 5-2 7-2s2 5 2 7-5 2-7 2-2-5-2-7Z" fill="#065f46" stroke="#064e3b" />
         <path d="M12 12c-2-2-5-2-7-2s-2 5-2 7 5 2 7 2 2-5 2-7Z" fill="#065f46" stroke="#064e3b" />
         <circle cx="12" cy="10" r="2" fill="#ef4444" stroke="#b91c1c" />
@@ -95,7 +95,9 @@ export default function MostImprovedPage() {
   }, [matchesData]);
 
   const currentAwardPeriod = useMemo(() => {
-    return allAwardPeriods.find(p => currentWeek >= p.startWeek && currentWeek < p.endWeek);
+    const period = allAwardPeriods.find(p => currentWeek >= p.startWeek && currentWeek < p.endWeek);
+    // If we are exactly between weeks, default to the one starting
+    return period || allAwardPeriods[0];
   }, [currentWeek]);
   
   const currentMonthName = currentAwardPeriod?.month || currentAwardPeriod?.special || '';
@@ -106,7 +108,6 @@ export default function MostImprovedPage() {
     }
 
     const startWeek = currentAwardPeriod.startWeek;
-    // For live standings, use the current week or the month's end week
     const endWeekComp = Math.min(currentWeek, currentAwardPeriod.endWeek);
 
     const monthlyImprovements: (User & { improvement: number, rankChangeInMonth: number })[] = [];
@@ -116,12 +117,18 @@ export default function MostImprovedPage() {
         const history = userHistories.find(h => h.userId === user.id);
         if (history && history.weeklyScores) {
             const startWeekData = history.weeklyScores.find(ws => ws.week === startWeek);
-            const endWeekData = history.weeklyScores.find(ws => ws.week === endWeekComp);
+            
+            // Robust check: get latest score <= currentWeek within this month
+            const validScores = history.weeklyScores
+                .filter(ws => ws.week >= startWeek && ws.week <= currentWeek)
+                .sort((a,b) => b.week - a.week);
+            
+            const endWeekData = validScores[0];
 
             if (startWeekData && endWeekData) {
                 const improvement = endWeekData.score - startWeekData.score;
                 const rankChangeInMonth = (startWeekData.rank > 0 && endWeekData.rank > 0) ? startWeekData.rank - endWeekData.rank : 0;
-                monthlyImprovements.push({ ...user, improvement, rankChangeInMonth, score: endWeekData.score });
+                monthlyImprovements.push({ ...user, improvement, rankChangeInMonth, score: endWeekData.score, rank: endWeekData.rank });
             }
         }
     });
@@ -214,13 +221,6 @@ export default function MostImprovedPage() {
     });
   }, [userMap, monthlyMimoMAwards, allAwardPeriods, currentWeek, currentAwardPeriod, ladderData]);
 
-
-  const getLadderRankColour = (user: (typeof ladderData.ladderWithRanks)[0]) => {
-    if (ladderData.firstPlaceImprovement !== undefined && user.improvement === ladderData.firstPlaceImprovement) return 'bg-yellow-400/20';
-    if (currentAwardPeriod?.id !== 'xmas' && ladderData.secondPlaceImprovement !== undefined && user.improvement === ladderData.secondPlaceImprovement && ladderData.secondPlaceImprovement !== ladderData.firstPlaceImprovement) return 'bg-slate-400/20';
-    return '';
-  };
-
   const getDilutedBackground = (baseColor: 'yellow' | 'slate', count: number) => {
       const colors = {
           yellow: 'rgba(250, 204, 21, ', 
@@ -231,6 +231,12 @@ export default function MostImprovedPage() {
       if (count === 3) opacity = 0.45;
       if (count >= 4) opacity = 0.25;
       return { backgroundColor: colors[baseColor] + opacity + ')' };
+  };
+
+  const getLadderRankColour = (user: (typeof ladderData.ladderWithRanks)[0]) => {
+    if (ladderData.firstPlaceImprovement !== undefined && user.improvement === ladderData.firstPlaceImprovement) return 'bg-yellow-400/20';
+    if (currentAwardPeriod?.id !== 'xmas' && ladderData.secondPlaceImprovement !== undefined && user.improvement === ladderData.secondPlaceImprovement && ladderData.secondPlaceImprovement !== ladderData.firstPlaceImprovement) return 'bg-slate-400/20';
+    return '';
   };
 
   if (isLoading) {
@@ -318,7 +324,7 @@ export default function MostImprovedPage() {
                             const isXmas = monthlyAward.id === 'xmas';
 
                             return (
-                            <div key={monthlyAward.id} className={cn("p-2 border rounded-lg flex flex-col items-center justify-start text-center min-h-[180px]", {
+                            <div key={monthlyAward.id} className={cn("p-2 border rounded-lg flex flex-col items-center justify-start text-center min-h-[200px]", {
                                 'opacity-50': isFuture,
                                 'opacity-70 grayscale-[30%]': isCurrent,
                             })}>
@@ -326,11 +332,11 @@ export default function MostImprovedPage() {
                                 
                                 {isFuture || (isCurrent && monthlyAward.winners.length === 0) ? (
                                      <div className="w-full space-y-2">
-                                        <div className="bg-muted/30 py-1.5 px-2 rounded-md flex items-center justify-center h-[80px]">
+                                        <div className="bg-muted/30 py-1.5 px-2 rounded-md flex items-center justify-center h-[90px]">
                                             <p className="text-[10px] font-black uppercase text-muted-foreground/40 tracking-widest">{isXmas ? 'XMAS NO. 1' : 'MIMOM'} TBC</p>
                                         </div>
                                         {!isXmas && (
-                                            <div className="bg-muted/20 py-1.5 px-2 rounded-md flex items-center justify-center h-[80px]">
+                                            <div className="bg-muted/20 py-1.5 px-2 rounded-md flex items-center justify-center h-[90px]">
                                                 <p className="text-[10px] font-black uppercase text-muted-foreground/30 tracking-widest">RUMIMOM TBC</p>
                                             </div>
                                         )}
@@ -344,25 +350,25 @@ export default function MostImprovedPage() {
                                             const style = isXmas ? { backgroundColor: '#064e3b', borderColor: '#dc2626', color: '#fff' } : getDilutedBackground('yellow', monthlyAward.winners.length);
                                             
                                             return (
-                                                <div key={winner.id} style={style} className={cn("rounded-md flex items-stretch h-[80px] overflow-hidden shadow-sm border relative", isXmas && "border-2")}>
+                                                <div key={winner.id} style={style} className={cn("rounded-md flex items-stretch h-[90px] overflow-hidden shadow-sm border relative", isXmas && "border-2")}>
                                                     {isXmas && <Holly />}
-                                                    <div className="w-1/4 h-full shrink-0">
+                                                    <div className="w-1/4 h-full shrink-0 relative z-20">
                                                         <Avatar className="h-full w-full rounded-none">
                                                             <AvatarImage src={getAvatarUrl(winner.avatar)} alt={winner.name} className="object-cover" />
                                                             <AvatarFallback className="rounded-none">{winner.name?.charAt(0)}</AvatarFallback>
                                                         </Avatar>
                                                     </div>
-                                                    <div className="flex-1 flex flex-col justify-center px-3 text-center overflow-hidden">
-                                                        <p className={cn("text-[13px] font-black uppercase tracking-tight leading-none mb-1", isXmas ? "text-white" : "text-yellow-950")}>
+                                                    <div className="flex-1 flex flex-col justify-center px-3 text-center overflow-hidden relative z-20">
+                                                        <p className={cn("text-[14px] font-black uppercase tracking-tight leading-none mb-1.5", isXmas ? "text-white" : "text-yellow-950")}>
                                                             {displayTitle}
                                                         </p>
-                                                        <p className="text-[12px] font-bold leading-none truncate mb-1">
+                                                        <p className="text-[13px] font-bold leading-none truncate mb-1.5">
                                                             {winner.name}
                                                         </p>
-                                                        <p className={cn("text-[11px] font-black leading-none uppercase mb-1", isXmas ? "text-yellow-400" : "text-yellow-950/80")}>
+                                                        <p className={cn("text-[12px] font-black leading-none uppercase mb-1", isXmas ? "text-yellow-400" : "text-yellow-950/80")}>
                                                             {formatImprovementText(winner.improvement)}
                                                         </p>
-                                                        <p className={cn("text-[10px] font-medium leading-none", isXmas ? "text-white/80" : "text-yellow-950/60")}>
+                                                        <p className={cn("text-[11px] font-medium leading-none", isXmas ? "text-white/80" : "text-yellow-950/60")}>
                                                             {formatPrizeMoney(winner.prize || 0)}
                                                         </p>
                                                     </div>
@@ -371,12 +377,13 @@ export default function MostImprovedPage() {
                                         })}
 
                                         {monthlyAward.runnersUp?.map(runnerUp => {
-                                            const awardTitle = monthlyAward.runnersUp.length > 1 ? 'JORUMIMOM' : 'RUMIMOM';
+                                            const isTie = monthlyAward.runnersUp.length > 1;
+                                            const awardTitle = isTie ? 'JORUMIMOM' : 'RUMIMOM';
                                             const displayTitle = isCurrent ? `CURRENT ${awardTitle}` : awardTitle;
                                             const style = getDilutedBackground('slate', monthlyAward.runnersUp.length);
 
                                             return (
-                                                <div key={runnerUp.id} style={style} className="rounded-md flex items-stretch h-[80px] overflow-hidden shadow-sm border border-slate-600/10">
+                                                <div key={runnerUp.id} style={style} className="rounded-md flex items-stretch h-[90px] overflow-hidden shadow-sm border border-slate-600/10">
                                                     <div className="w-1/4 h-full shrink-0">
                                                         <Avatar className="h-full w-full rounded-none">
                                                             <AvatarImage src={getAvatarUrl(runnerUp.avatar)} alt={runnerUp.name} className="object-cover" />
@@ -384,16 +391,16 @@ export default function MostImprovedPage() {
                                                         </Avatar>
                                                     </div>
                                                     <div className="flex-1 flex flex-col justify-center px-3 text-center overflow-hidden">
-                                                        <p className="text-[13px] font-black uppercase text-slate-900 tracking-tight leading-none mb-1">
+                                                        <p className="text-[14px] font-black uppercase text-slate-900 tracking-tight leading-none mb-1.5">
                                                             {displayTitle}
                                                         </p>
-                                                        <p className="text-[12px] font-bold leading-none truncate mb-1">
+                                                        <p className="text-[13px] font-bold leading-none truncate mb-1.5">
                                                             {runnerUp.name}
                                                         </p>
-                                                        <p className="text-[11px] font-black leading-none uppercase mb-1 text-slate-950/80">
+                                                        <p className="text-[12px] font-black leading-none uppercase mb-1 text-slate-950/80">
                                                             {formatImprovementText(runnerUp.improvement)}
                                                         </p>
-                                                        <p className="text-[10px] font-medium leading-none text-slate-950/60">
+                                                        <p className="text-[11px] font-medium leading-none text-slate-950/60">
                                                             {formatPrizeMoney(runnerUp.prize || 0)}
                                                         </p>
                                                     </div>
