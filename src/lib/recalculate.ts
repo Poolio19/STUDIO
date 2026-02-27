@@ -220,7 +220,7 @@ export async function recalculateAllDataClientSide(
 
       progressCallback("Locking in 2025-26 Award Winners...");
       for (const period of allAwardPeriods) {
-          if (chronologicalWeek < period.endWeek) continue;
+          if (latestAbsoluteWeek < period.endWeek) continue;
 
           const periodScores: { uId: string, improvement: number, score: number }[] = [];
           usersToProcess.filter(u => !u.isPro && activeUserIds.has(u.id)).forEach(u => {
