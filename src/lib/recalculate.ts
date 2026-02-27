@@ -16,6 +16,7 @@ import { allAwardPeriods } from './award-periods';
 
 /**
  * Recalculates all derived data and seeds historical records.
+ * Strictly calculates ranks among active 2025-26 players only.
  */
 export async function recalculateAllDataClientSide(
   firestore: Firestore,
@@ -50,6 +51,7 @@ export async function recalculateAllDataClientSide(
         (historicalUserIds.has(u.id) || u.isPro) && activeUserIds.has(u.id);
 
       const usersToProcess = allUsers.filter(u => historicalUserIds.has(u.id) || u.isPro || activeUserIds.has(u.id));
+      const activeUsersForRankings = usersToProcess.filter(leaderboardCriteria);
       const prevStandingsRankMap = new Map(prevStandingsData.map(s => [s.teamId, s.rank]));
 
       progressCallback('Clearing derived database tables...');
@@ -178,7 +180,8 @@ export async function recalculateAllDataClientSide(
               uScores[u.id] = score;
           });
           
-          const uRanked = usersToProcess.filter(leaderboardCriteria).map(u => ({...u, score: uScores[u.id]}))
+          // Calculate rank strictly among active participants to prevent Position Low > entry count
+          const uRanked = activeUsersForRankings.map(u => ({...u, score: uScores[u.id]}))
               .sort((a, b) => b.score - a.score || (a.isPro ? -1 : 1) || (a.name || '').localeCompare(b.name || ''));
           
           const scoresOnly = uRanked.map(u => u.score);
@@ -187,6 +190,7 @@ export async function recalculateAllDataClientSide(
               allHistories[u.id].weeklyScores.push({ week, score: u.score, rank: competitionRank });
           });
 
+          // For users not meeting leaderboard criteria, we still track score but rank is 0
           usersToProcess.filter(u => !leaderboardCriteria(u)).forEach(u => {
               allHistories[u.id].weeklyScores.push({ week, score: uScores[u.id] || 0, rank: 0 });
           });
