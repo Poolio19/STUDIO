@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { User, UserHistory, Match, MonthlyMimoM } from '@/lib/types';
+import type { User, UserHistory, Match, MonthlyMimoM, Prediction } from '@/lib/types';
 import { getAvatarUrl } from '@/lib/placeholder-images';
 import { ArrowUp, ArrowDown, Minus, Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
@@ -77,13 +77,15 @@ export default function MostImprovedPage() {
   const matchesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'matches') : null, [firestore]);
   const userHistoriesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'userHistories') : null, [firestore]);
   const mimoMQuery = useMemoFirebase(() => firestore ? collection(firestore, 'monthlyMimoM') : null, [firestore]);
+  const predictionsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'predictions') : null, [firestore]);
 
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
   const { data: matchesData, isLoading: matchesLoading } = useCollection<Match>(matchesQuery);
   const { data: userHistories, isLoading: historiesLoading } = useCollection<UserHistory>(userHistoriesQuery);
   const { data: monthlyMimoMAwards, isLoading: mimoMLoading } = useCollection<MonthlyMimoM>(mimoMQuery);
+  const { data: predictions, isLoading: predictionsLoading } = useCollection<Prediction>(predictionsQuery);
 
-  const isLoading = usersLoading || matchesLoading || historiesLoading || mimoMLoading;
+  const isLoading = usersLoading || matchesLoading || historiesLoading || mimoMLoading || predictionsLoading;
 
   const currentWeek = useMemo(() => {
     if (matchesData && matchesData.length > 0) {
@@ -96,28 +98,26 @@ export default function MostImprovedPage() {
 
   const currentAwardPeriod = useMemo(() => {
     const period = allAwardPeriods.find(p => currentWeek >= p.startWeek && currentWeek < p.endWeek);
-    return period || allAwardPeriods[allAwardPeriods.length - 1];
+    return period || allAwardPeriods.find(p => p.id === 'feb') || allAwardPeriods[allAwardPeriods.length - 1];
   }, [currentWeek]);
   
   const currentMonthName = currentAwardPeriod?.month || currentAwardPeriod?.special || '';
 
   const ladderData = useMemo(() => {
-    if (!users || !userHistories || !currentAwardPeriod) {
+    if (!users || !userHistories || !currentAwardPeriod || !predictions) {
       return { ladderWithRanks: [], firstPlaceImprovement: undefined, secondPlaceImprovement: undefined };
     }
 
+    const activeUserIds = new Set(predictions.filter(p => p.rankings?.length === 20).map(p => p.userId || (p as any).id));
     const startWeek = currentAwardPeriod.startWeek;
     const monthlyImprovements: (User & { improvement: number, rankChangeInMonth: number })[] = [];
 
-    const nonProUsers = users.filter(u => !u.isPro && u.name);
+    const nonProUsers = users.filter(u => !u.isPro && u.name && activeUserIds.has(u.id));
     nonProUsers.forEach(user => {
         const history = userHistories.find(h => h.userId === user.id);
         if (history && history.weeklyScores) {
-            // Find score at start of month (or nearest preceding)
             const availableScores = [...history.weeklyScores].sort((a,b) => a.week - b.week);
             const startWeekData = availableScores.filter(ws => ws.week <= startWeek).reverse()[0];
-            
-            // Find latest available score in this period
             const endWeekData = availableScores.filter(ws => ws.week >= startWeek && ws.week <= currentWeek).reverse()[0];
 
             if (startWeekData && endWeekData) {
@@ -151,7 +151,7 @@ export default function MostImprovedPage() {
     const secondPlaceImprovement = allImprovements.length > 1 ? allImprovements[1] : undefined;
 
     return { ladderWithRanks, firstPlaceImprovement, secondPlaceImprovement };
-  }, [users, userHistories, currentAwardPeriod, currentWeek]);
+  }, [users, userHistories, currentAwardPeriod, currentWeek, predictions]);
   
   const userMap = useMemo(() => {
     if (!users) return new Map<string, User>();
@@ -263,7 +263,7 @@ export default function MostImprovedPage() {
                                     <TableCell className="p-2 font-black text-center">{user.displayRank}</TableCell>
                                     <TableCell className="p-2">
                                         <div className="flex items-center gap-3">
-                                            <Avatar className="h-8 w-8"><AvatarImage src={getAvatarUrl(user.avatar)} data-ai-hint="person" /><AvatarFallback>{user.name.charAt(0)}</AvatarFallback></Avatar>
+                                            <Avatar className="h-8 w-8 rounded-none"><AvatarImage src={getAvatarUrl(user.avatar)} data-ai-hint="person" className="object-cover h-full w-full" /><AvatarFallback className="rounded-none">{user.name.charAt(0)}</AvatarFallback></Avatar>
                                             <span className="font-bold">{user.name}</span>
                                         </div>
                                     </TableCell>
@@ -313,7 +313,7 @@ export default function MostImprovedPage() {
                                             return (
                                                 <div key={winner.id} style={style} className={cn("rounded-md flex items-stretch h-[100px] overflow-hidden shadow-sm border relative", isXmas && "border-2")}>
                                                     {isXmas && <Holly />}
-                                                    <Avatar className="w-1/4 h-full rounded-none shrink-0"><AvatarImage src={getAvatarUrl(winner.avatar)} className="object-cover h-full" /><AvatarFallback className="rounded-none">{winner.name?.charAt(0)}</AvatarFallback></Avatar>
+                                                    <Avatar className="w-1/4 h-full rounded-none shrink-0 border-r"><AvatarImage src={getAvatarUrl(winner.avatar)} className="object-cover h-full" /><AvatarFallback className="rounded-none">{winner.name?.charAt(0)}</AvatarFallback></Avatar>
                                                     <div className="flex-1 flex flex-col justify-center px-2 text-center overflow-hidden">
                                                         <p className={cn("text-[13px] font-bold tracking-tight", isXmas ? "text-white" : "text-yellow-950")}>{displayTitle}</p>
                                                         <p className="text-[12px] font-bold truncate leading-tight my-0.5">{winner.name}</p>
@@ -332,7 +332,7 @@ export default function MostImprovedPage() {
 
                                             return (
                                                 <div key={runnerUp.id} style={style} className="rounded-md flex items-stretch h-[100px] overflow-hidden shadow-sm border border-slate-600/10">
-                                                    <Avatar className="w-1/4 h-full rounded-none shrink-0"><AvatarImage src={getAvatarUrl(runnerUp.avatar)} className="object-cover h-full" /><AvatarFallback className="rounded-none">{runnerUp.name?.charAt(0)}</AvatarFallback></Avatar>
+                                                    <Avatar className="w-1/4 h-full rounded-none shrink-0 border-r"><AvatarImage src={getAvatarUrl(runnerUp.avatar)} className="object-cover h-full" /><AvatarFallback className="rounded-none">{runnerUp.name?.charAt(0)}</AvatarFallback></Avatar>
                                                     <div className="flex-1 flex flex-col justify-center px-2 text-center overflow-hidden">
                                                         <p className="text-[13px] font-bold text-slate-900 tracking-tight">{displayTitle}</p>
                                                         <p className="text-[12px] font-bold truncate leading-tight my-0.5">{runnerUp.name}</p>
