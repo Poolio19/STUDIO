@@ -48,8 +48,7 @@ export async function recalculateAllDataClientSide(
       const leaderboardCriteria = (u: UserProfile) => 
         (historicalUserIds.has(u.id) || u.isPro) && activeUserIds.has(u.id);
 
-      const usersToProcess = allUsers.filter(u => historicalUserIds.has(u.id) || u.isPro || activeUserIds.has(u.id));
-      const activeUsersForRankings = usersToProcess.filter(leaderboardCriteria);
+      const activeUsersForRankings = allUsers.filter(leaderboardCriteria);
       const prevStandingsRankMap = new Map(prevStandingsData.map(s => [s.teamId, s.rank]));
 
       progressCallback('Clearing derived database tables...');
@@ -65,7 +64,7 @@ export async function recalculateAllDataClientSide(
       }
       
       const allHistories: { [uId: string]: UserHistory } = {};
-      usersToProcess.forEach(u => allHistories[u.id] = { userId: u.id, weeklyScores: [] });
+      allUsers.forEach(u => allHistories[u.id] = { userId: u.id, weeklyScores: [] });
 
       let mainBatches: WriteBatch[] = [writeBatch(firestore)];
       let bIdx = 0; let opCount = 0;
@@ -129,11 +128,10 @@ export async function recalculateAllDataClientSide(
                   .sort((a,b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.name.localeCompare(b.name));
               tRanks = new Map(tRanked.map((s, i) => [s.teamId, i + 1]));
 
-              if (week === latestAbsoluteWeek) {
-                  tRanked.forEach((s, idx) => {
-                      addOp(b => b.set(doc(firestore, 'weeklyTeamStandings', `wk${week}-${s.teamId}`), { week, teamId: s.teamId, rank: idx + 1 }));
-                  });
-              }
+              // CRITICAL: Write weekly ranks for ALL weeks, not just the latest
+              tRanked.forEach((s, idx) => {
+                  addOp(b => b.set(doc(firestore, 'weeklyTeamStandings', `wk${week}-${s.teamId}`), { week, teamId: s.teamId, rank: idx + 1 }));
+              });
           }
 
           if (week === latestAbsoluteWeek) {
@@ -154,7 +152,7 @@ export async function recalculateAllDataClientSide(
           }
 
           const uScores: { [uId: string]: number } = {};
-          usersToProcess.forEach(u => {
+          allUsers.forEach(u => {
               const pred = predictions.find(p => (p.userId || (p as any).id) === u.id);
               let score = 0;
               pred?.rankings.forEach((tId, idx) => {
@@ -179,7 +177,7 @@ export async function recalculateAllDataClientSide(
               allHistories[u.id].weeklyScores.push({ week, score: u.score, rank: competitionRank });
           });
 
-          usersToProcess.filter(u => !leaderboardCriteria(u)).forEach(u => {
+          allUsers.filter(u => !leaderboardCriteria(u)).forEach(u => {
               allHistories[u.id].weeklyScores.push({ week, score: uScores[u.id] || 0, rank: 0 });
           });
       }
@@ -187,7 +185,7 @@ export async function recalculateAllDataClientSide(
       const latestWk = latestAbsoluteWeek;
       const prevWk = Math.max(0, chronologicalWeek - 1);
 
-      for (const u of usersToProcess) {
+      for (const u of allUsers) {
           const hist = allHistories[u.id];
           const latest = hist.weeklyScores.find(s => s.week === latestWk) || hist.weeklyScores[hist.weeklyScores.length - 1];
           const prev = hist.weeklyScores.find(s => s.week === prevWk) || { score: 0, rank: 0 };
@@ -195,13 +193,13 @@ export async function recalculateAllDataClientSide(
           const relevantRanks = hist.weeklyScores.filter(s => s.week > 0 && s.rank > 0).map(s => s.rank);
           
           addOp(b => b.set(doc(firestore, 'users', u.id), {
-              score: latest.score, rank: latest.rank, previousScore: prev.score, previousRank: prev.rank,
-              scoreChange: latest.score - prev.score, 
-              rankChange: prev.rank > 0 && latest.rank > 0 ? prev.rank - latest.rank : 0,
-              maxScore: relevantScores.length > 0 ? Math.max(...relevantScores) : latest.score, 
-              minScore: relevantScores.length > 0 ? Math.min(...relevantScores) : latest.score,
-              maxRank: relevantRanks.length > 0 ? Math.min(...relevantRanks) : latest.rank,
-              minRank: relevantRanks.length > 0 ? Math.max(...relevantRanks) : latest.rank
+              score: latest?.score || 0, rank: latest?.rank || 0, previousScore: prev.score, previousRank: prev.rank,
+              scoreChange: (latest?.score || 0) - prev.score, 
+              rankChange: prev.rank > 0 && (latest?.rank || 0) > 0 ? prev.rank - latest.rank : 0,
+              maxScore: relevantScores.length > 0 ? Math.max(...relevantScores) : (latest?.score || 0), 
+              minScore: relevantScores.length > 0 ? Math.min(...relevantScores) : (latest?.score || 0),
+              maxRank: relevantRanks.length > 0 ? Math.min(...relevantRanks) : (latest?.rank || 0),
+              minRank: relevantRanks.length > 0 ? Math.max(...relevantRanks) : (latest?.rank || 0)
           }, { merge: true }));
           addOp(b => b.set(doc(firestore, 'userHistories', u.id), hist));
       }
@@ -210,7 +208,7 @@ export async function recalculateAllDataClientSide(
       for (const period of allAwardPeriods) {
           if (latestAbsoluteWeek > period.startWeek) {
               const periodScores: { uId: string, improvement: number, score: number }[] = [];
-              usersToProcess.filter(u => !u.isPro && activeUserIds.has(u.id)).forEach(u => {
+              activeUsersForRankings.filter(u => !u.isPro).forEach(u => {
                   const h = allHistories[u.id];
                   const sData = h.weeklyScores.find(ws => ws.week === period.startWeek);
                   const eData = h.weeklyScores.filter(ws => ws.week <= (latestAbsoluteWeek >= period.endWeek ? period.endWeek : latestAbsoluteWeek)).reverse()[0];
@@ -223,12 +221,14 @@ export async function recalculateAllDataClientSide(
                   const isXmas = period.id === 'xmas';
                   periodScores.sort((a,b) => b.improvement - a.improvement || b.score - a.score);
                   const topImp = periodScores[0].improvement;
+                  
+                  // SOLITARY XMAS LEAD: Use total points as tie-breaker
                   const winners = isXmas ? [periodScores[0]] : periodScores.filter(s => s.improvement === topImp);
 
                   winners.forEach(w => {
                       const awardId = `2025-${period.id}-${w.uId}`;
                       const awardData: any = {
-                          id: awardId, userId: w.uId, month: period.id, year: 2025, type: 'winner', improvement: w.improvement ?? 0
+                          id: awardId, userId: w.uId, month: period.month || period.id, year: period.year, type: 'winner', improvement: w.improvement ?? 0
                       };
                       if (isXmas) awardData.special = 'Xmas No 1';
                       addOp(b => b.set(doc(firestore, 'monthlyMimoM', awardId), awardData));
@@ -241,7 +241,7 @@ export async function recalculateAllDataClientSide(
                           runnersUp.forEach(ru => {
                               const ruAwardId = `2025-${period.id}-ru-${ru.uId}`;
                               addOp(b => b.set(doc(firestore, 'monthlyMimoM', ruAwardId), {
-                                  id: ruAwardId, userId: ru.uId, month: period.id, year: 2025, type: 'runner-up', improvement: ru.improvement ?? 0
+                                  id: ruAwardId, userId: ru.uId, month: period.month || period.id, year: period.year, type: 'runner-up', improvement: ru.improvement ?? 0
                               }));
                           });
                       }

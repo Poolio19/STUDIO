@@ -121,10 +121,10 @@ export default function MostImprovedPage() {
         return currentScore > startScore;
     });
 
-    const isTransitionPhase = !hasProgress && currentWeek >= rawPeriod.startWeek;
+    const isTransitionPhase = !hasProgress && currentWeek >= rawPeriod.startWeek && currentWeek > 0;
     
     if (isTransitionPhase) {
-        const prevPeriod = allAwardPeriods.find(p => p.endWeek === rawPeriod.startWeek);
+        const prevPeriod = allAwardPeriods.filter(p => p.endWeek <= currentWeek).sort((a,b) => b.endWeek - a.endWeek)[0];
         if (prevPeriod) return { period: prevPeriod, isFinal: true };
     }
     
@@ -188,7 +188,7 @@ export default function MostImprovedPage() {
         
         if (!hideDueToWeekOne) {
             const periodAwards = monthlyMimoMAwards.filter(a => 
-                a.year === period.year && (a.month.toLowerCase() === period.id.toLowerCase() || (a.special === 'Xmas No 1' && period.id === 'xmas'))
+                a.year === period.year && (a.month.toLowerCase() === (period.month || period.id).toLowerCase() || (a.special === 'Xmas No 1' && period.id === 'xmas'))
             );
             
             if (periodAwards.length > 0) {
@@ -222,10 +222,11 @@ export default function MostImprovedPage() {
 
   const getWinnerRowStyle = (rank: number, improvement: number) => {
       if (improvement <= 0) return {};
-      if (rank === 1) return { backgroundColor: 'rgba(250, 204, 21, 0.15)' }; // Gold faint
-      if (ladderData.firstPlaceImprovement === ladderData.secondPlaceImprovement && rank === 1) return { backgroundColor: 'rgba(250, 204, 21, 0.15)' };
-      if (rank === 2 || (ladderData.firstPlaceImprovement !== ladderData.secondPlaceImprovement && improvement === ladderData.secondPlaceImprovement)) {
-          return { backgroundColor: 'rgba(148, 163, 184, 0.15)' }; // Slate faint
+      // Yellow highlight for winners (displayRank 1)
+      if (rank === 1) return { backgroundColor: 'rgba(250, 204, 21, 0.25)' };
+      // Slate highlight for runners up
+      if (ladderData.firstPlaceImprovement !== ladderData.secondPlaceImprovement && improvement === ladderData.secondPlaceImprovement) {
+          return { backgroundColor: 'rgba(148, 163, 184, 0.25)' };
       }
       return {};
   };
@@ -269,7 +270,7 @@ export default function MostImprovedPage() {
                                 const PositionChangeIcon = getRankChangeIcon(user.rankChangeInMonth);
                                 const rowStyle = getWinnerRowStyle(user.displayRank, user.improvement);
                                 return (
-                                    <TableRow key={user.id} style={rowStyle}>
+                                    <TableRow key={user.id} style={rowStyle} className="transition-colors hover:brightness-95">
                                         <TableCell className="p-2 font-black text-center">{user.displayRank}</TableCell>
                                         <TableCell className="p-2">
                                             <div className="flex items-center gap-3">
