@@ -97,9 +97,12 @@ export default function MostImprovedPage() {
   }, [matchesData]);
 
   const currentAwardPeriod = useMemo(() => {
-    // Specifically force February context for weeks 19 through 28 to resolve the "March" jump issue
+    // Specifically force February context for the current stage of the season (Weeks 19-28)
     const feb = allAwardPeriods.find(p => p.id === 'feb');
-    if (currentWeek >= 19 && currentWeek < 28) return feb;
+    const jan = allAwardPeriods.find(p => p.id === 'jan');
+    
+    if (currentWeek >= 24 && currentWeek < 28) return feb;
+    if (currentWeek >= 19 && currentWeek < 24) return jan;
     
     const period = allAwardPeriods.find(p => currentWeek >= p.startWeek && currentWeek < p.endWeek);
     return period || allAwardPeriods[allAwardPeriods.length - 1];
@@ -112,7 +115,7 @@ export default function MostImprovedPage() {
       return { ladderWithRanks: [], firstPlaceImprovement: undefined, secondPlaceImprovement: undefined };
     }
 
-    // Strictly filter for active 2025-26 players only (those with a prediction)
+    // Strictly filter for active 2025-26 players only (those with a complete prediction)
     const activeUserIds = new Set(
       predictions
         .filter(p => p.rankings && p.rankings.length === 20)
@@ -208,12 +211,12 @@ export default function MostImprovedPage() {
             if (ladderData.firstPlaceImprovement !== undefined && ladderData.firstPlaceImprovement !== 0) {
                 const candidates = ladderData.ladderWithRanks.filter(u => u.improvement === ladderData.firstPlaceImprovement);
                 const winPool = period.id === 'xmas' ? [candidates[0]] : candidates;
-                const winPrize = period.id === 'xmas' ? 10 : (10 / winPool.length);
+                const winPrize = period.id === 'xmas' ? 10 : (10 / (winPool.length || 1));
                 winners = winPool.map(w => ({ ...w, prize: winPrize })) as any;
             }
             if (period.id !== 'xmas' && ladderData.secondPlaceImprovement !== undefined && ladderData.secondPlaceImprovement !== 0 && winners.length === 1) {
                 const candidates = ladderData.ladderWithRanks.filter(u => u.improvement === ladderData.secondPlaceImprovement);
-                const ruPrize = 5 / candidates.length;
+                const ruPrize = 5 / (candidates.length || 1);
                 runnersUp = candidates.map(r => ({ ...r, prize: ruPrize })) as any;
             }
         }
@@ -326,7 +329,7 @@ export default function MostImprovedPage() {
                                             return (
                                                 <div key={winner.id} style={style} className={cn("rounded-md flex items-stretch h-[100px] overflow-hidden shadow-sm border relative", isXmas && "border-2")}>
                                                     {isXmas && <Holly />}
-                                                    <Avatar className="w-1/4 h-full rounded-none shrink-0 border-r"><AvatarImage src={getAvatarUrl(winner.avatar)} className="object-cover h-full" /><AvatarFallback className="rounded-none">{winner.name?.charAt(0)}</AvatarFallback></Avatar>
+                                                    <Avatar className="w-1/4 h-full rounded-none shrink-0 border-r bg-card"><AvatarImage src={getAvatarUrl(winner.avatar)} className="object-cover h-full" /><AvatarFallback className="rounded-none">{winner.name?.charAt(0)}</AvatarFallback></Avatar>
                                                     <div className="flex-1 flex flex-col justify-center px-2 text-center overflow-hidden">
                                                         <p className={cn("text-[13px] font-bold tracking-tight", isXmas ? "text-white" : "text-yellow-950")}>{displayTitle}</p>
                                                         <p className="text-[12px] font-bold truncate leading-tight my-0.5">{winner.name}</p>
@@ -345,7 +348,7 @@ export default function MostImprovedPage() {
 
                                             return (
                                                 <div key={runnerUp.id} style={style} className="rounded-md flex items-stretch h-[100px] overflow-hidden shadow-sm border border-slate-600/10">
-                                                    <Avatar className="w-1/4 h-full rounded-none shrink-0 border-r"><AvatarImage src={getAvatarUrl(runnerUp.avatar)} className="object-cover h-full" /><AvatarFallback className="rounded-none">{runnerUp.name?.charAt(0)}</AvatarFallback></Avatar>
+                                                    <Avatar className="w-1/4 h-full rounded-none shrink-0 border-r bg-card"><AvatarImage src={getAvatarUrl(runnerUp.avatar)} className="object-cover h-full" /><AvatarFallback className="rounded-none">{runnerUp.name?.charAt(0)}</AvatarFallback></Avatar>
                                                     <div className="flex-1 flex flex-col justify-center px-2 text-center overflow-hidden">
                                                         <p className="text-[13px] font-bold text-slate-900 tracking-tight">{displayTitle}</p>
                                                         <p className="text-[12px] font-bold truncate leading-tight my-0.5">{runnerUp.name}</p>
