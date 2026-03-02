@@ -26,8 +26,8 @@ import { getAvatarUrl } from '@/lib/placeholder-images';
 import { ArrowUp, ArrowDown, Minus, Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { useCollection, useFirestore, useMemoFirebase, useResolvedUserId } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
 import { allAwardPeriods } from '@/lib/award-periods';
 import historicalPlayersData from '@/lib/historical-players.json';
 
@@ -72,7 +72,6 @@ const Holly = () => (
 
 export default function MostImprovedPage() {
   const firestore = useFirestore();
-  const resolvedUserId = useResolvedUserId();
 
   const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
   const matchesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'matches') : null, [firestore]);
@@ -113,7 +112,9 @@ export default function MostImprovedPage() {
     
     const rawPeriod = allAwardPeriods.find(p => currentWeek >= p.startWeek && currentWeek < p.endWeek) || allAwardPeriods[allAwardPeriods.length - 1];
     
+    // Check if anyone in active pool has scored yet in the raw period
     const hasProgress = users.some(u => {
+        if (!activeUserIds.has(u.id)) return false;
         const h = userHistories.find(hist => hist.userId === u.id);
         if (!h) return false;
         const currentScore = h.weeklyScores.find(ws => ws.week === currentWeek)?.score ?? 0;
@@ -121,22 +122,23 @@ export default function MostImprovedPage() {
         return currentScore > startScore;
     });
 
-    const isTransitionPhase = !hasProgress && currentWeek >= rawPeriod.startWeek && currentWeek > 0;
+    // We are in Week 1 of a month if we've passed the start week but no one has scored yet
+    const isWeekOneTransition = !hasProgress && currentWeek >= rawPeriod.startWeek && currentWeek > 0;
     
-    if (isTransitionPhase) {
+    if (isWeekOneTransition) {
         const prevPeriod = allAwardPeriods.filter(p => p.endWeek <= currentWeek).sort((a,b) => b.endWeek - a.endWeek)[0];
         if (prevPeriod) return { period: prevPeriod, isFinal: true };
     }
     
     return { period: rawPeriod, isFinal: false };
-  }, [currentWeek, users, userHistories]);
+  }, [currentWeek, users, userHistories, activeUserIds]);
 
   const ladderData = useMemo(() => {
     if (!users || !userHistories || !standingsContext || !activeUserIds.size) {
       return { ladderWithRanks: [], firstPlaceImprovement: undefined, secondPlaceImprovement: undefined };
     }
 
-    const { period } = standingsContext;
+    const { period, isFinal } = standingsContext;
     const monthlyImprovements: (User & { improvement: number, rankChangeInMonth: number })[] = [];
     const activePlayersOnly = users.filter(u => !u.isPro && u.name && activeUserIds.has(u.id));
     
@@ -145,7 +147,7 @@ export default function MostImprovedPage() {
         if (history && history.weeklyScores) {
             const scores = [...history.weeklyScores].sort((a,b) => a.week - b.week);
             const startData = scores.find(ws => ws.week === period.startWeek) || scores[0];
-            const endData = scores.filter(ws => ws.week <= (standingsContext.isFinal ? period.endWeek : currentWeek)).reverse()[0] || scores[scores.length-1];
+            const endData = scores.filter(ws => ws.week <= (isFinal ? period.endWeek : currentWeek)).reverse()[0] || scores[scores.length-1];
 
             if (startData && endData) {
                 const improvement = endData.score - startData.score;
@@ -173,17 +175,17 @@ export default function MostImprovedPage() {
   }, [users, userHistories, standingsContext, currentWeek, activeUserIds]);
   
   const hallOfFameData = useMemo(() => {
-    if (!users || !monthlyMimoMAwards) return [];
+    if (!users || !monthlyMimoMAwards || !standingsContext) return [];
     const userMap = new Map(users.map(u => [u.id, u]));
 
     return allAwardPeriods.map(period => {
-        const isCurrent = (standingsContext?.period.id === period.id && !standingsContext.isFinal);
+        const isCurrent = (standingsContext.period.id === period.id && !standingsContext.isFinal);
         const isPast = period.endWeek <= currentWeek;
         const isFuture = !isPast && !isCurrent && period.startWeek > currentWeek;
 
-        // Hide Feb award during Week 1 of March Transition
-        const hideDueToTransition = standingsContext?.isFinal && standingsContext.period.id === period.id;
-        // Hide potential winners until Week 2 has scores
+        // Hide Feb award in HoF during Week 1 transition of March
+        const hideDueToTransition = standingsContext.isFinal && standingsContext.period.id === period.id;
+        // Hide potential current winners in HoF until Week 2 scores are in
         const hideDueToWeekOne = isCurrent && currentWeek <= period.startWeek;
 
         let winners: (User & { improvement: number, prize?: number })[] = [];
@@ -225,9 +227,9 @@ export default function MostImprovedPage() {
 
   const getWinnerRowStyle = (rank: number, improvement: number) => {
       if (improvement <= 0) return {};
-      if (rank === 1) return { backgroundColor: 'rgba(250, 204, 21, 0.25)' };
+      if (rank === 1) return { backgroundColor: 'rgba(250, 204, 21, 0.25)' }; // Yellow
       if (ladderData.firstPlaceImprovement !== ladderData.secondPlaceImprovement && improvement === ladderData.secondPlaceImprovement) {
-          return { backgroundColor: 'rgba(148, 163, 184, 0.25)' };
+          return { backgroundColor: 'rgba(148, 163, 184, 0.25)' }; // Slate
       }
       return {};
   };

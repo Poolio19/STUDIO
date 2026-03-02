@@ -68,11 +68,11 @@ export default function StandingsPage() {
         
         const finalStandingsWithTeamData = standingsData.map(standing => {
             const team = teamMap.get(standing.teamId)!;
-            // SORT BY DATE, NOT WEEK NUMBER
+            // SORT BY DATE to handle rescheduled games (e.g. Wk 31 appearing correctly)
             const teamMatches = playedMatches.filter(m => m.homeTeamId === standing.teamId || m.awayTeamId === standing.teamId)
-                .sort((a,b) => new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime()).slice(0, 6);
+                .sort((a,b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime()).slice(-6);
             
-            const recentResults: FormResult[] = teamMatches.reverse().map(m => {
+            const recentResults: FormResult[] = teamMatches.map(m => {
                 const hS = Number(m.homeScore);
                 const aS = Number(m.awayScore);
                 let res: 'W' | 'D' | 'L' = 'D';
@@ -106,7 +106,6 @@ export default function StandingsPage() {
             for (let week = 0; week <= maxWeek; week++) {
                 const weekEntry: { [key: string]: any } = { week };
                 teamsData.forEach(team => {
-                    // Carry forward previous week's rank if current is missing
                     let rank = ranksByWeek[week]?.[team.id];
                     if (rank === undefined && week > 0) {
                         for(let prev = week - 1; prev >= 0; prev--) {
@@ -184,7 +183,7 @@ export default function StandingsPage() {
                 <TableHead className="hidden md:table-cell text-center">GF</TableHead>
                 <TableHead className="hidden md:table-cell text-center">GA</TableHead>
                 <TableHead className="text-center">Pts</TableHead>
-                <TableHead colSpan={6} className="text-center">Recent Form Guide (L-R: Oldest to Newest)</TableHead>
+                <TableHead colSpan={6} className="text-center">Recent Form Guide (L-R: Chronological Play-Order)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
