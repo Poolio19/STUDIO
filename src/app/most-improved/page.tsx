@@ -97,10 +97,11 @@ export default function MostImprovedPage() {
   }, [matchesData]);
 
   const currentAwardPeriod = useMemo(() => {
-    // Specifically force February context for the current stage of the season (Weeks 19-28)
+    // Specifically fix the context for the current stage of the season
     const feb = allAwardPeriods.find(p => p.id === 'feb');
     const jan = allAwardPeriods.find(p => p.id === 'jan');
     
+    // If we are between Week 19 and 28, keep focus on Jan/Feb
     if (currentWeek >= 24 && currentWeek < 28) return feb;
     if (currentWeek >= 19 && currentWeek < 24) return jan;
     
@@ -132,9 +133,9 @@ export default function MostImprovedPage() {
         if (history && history.weeklyScores) {
             const availableScores = [...history.weeklyScores].sort((a,b) => a.week - b.week);
             // Get score at the start of the month
-            const startWeekData = availableScores.filter(ws => ws.week <= startWeek).reverse()[0];
+            const startWeekData = availableScores.find(ws => ws.week === startWeek) || availableScores[0];
             // Get score at the latest available week
-            const endWeekData = availableScores.filter(ws => ws.week >= startWeek && ws.week <= currentWeek).reverse()[0];
+            const endWeekData = availableScores.filter(ws => ws.week <= currentWeek).reverse()[0] || availableScores[availableScores.length-1];
 
             if (startWeekData && endWeekData) {
                 const improvement = endWeekData.score - startWeekData.score;
@@ -185,39 +186,41 @@ export default function MostImprovedPage() {
         let winners: (User & { improvement: number, special?: string, prize?: number })[] = [];
         let runnersUp: (User & { improvement: number, prize?: number })[] = [];
         
-        if (isPastPeriod) {
+        if (isPastPeriod || isCurrentPeriod) {
             const periodAwards = monthlyMimoMAwards.filter(a => 
                 a.year === period.year && 
                 (a.month.toLowerCase() === period.id.toLowerCase() || (a.special === 'Xmas No 1' && period.id === 'xmas'))
             );
             
-            const rawWinners = periodAwards.filter(a => a.type === 'winner').map(a => {
-                const u = userMap.get(a.userId);
-                return u ? { ...u, improvement: a.improvement ?? 0, special: a.special } : null;
-            }).filter((u): u is User & { improvement: number, special?: string } => !!u);
+            if (periodAwards.length > 0) {
+                const rawWinners = periodAwards.filter(a => a.type === 'winner').map(a => {
+                    const u = userMap.get(a.userId);
+                    return u ? { ...u, improvement: a.improvement ?? 0, special: a.special } : null;
+                }).filter((u): u is User & { improvement: number, special?: string } => !!u);
 
-            const rawRunnersUp = periodAwards.filter(a => a.type === 'runner-up').map(a => {
-                const u = userMap.get(a.userId);
-                return u ? { ...u, improvement: a.improvement ?? 0 } : null;
-            }).filter((u): u is User & { improvement: number } => !!u);
+                const rawRunnersUp = periodAwards.filter(a => a.type === 'runner-up').map(a => {
+                    const u = userMap.get(a.userId);
+                    return u ? { ...u, improvement: a.improvement ?? 0 } : null;
+                }).filter((u): u is User & { improvement: number } => !!u);
 
-            const winPrize = period.id === 'xmas' ? 10 : (10 / (rawWinners.length || 1));
-            const ruPrize = (rawWinners.length === 1 && rawRunnersUp.length > 0) ? (5 / rawRunnersUp.length) : 0;
+                const winPrize = period.id === 'xmas' ? 10 : (10 / (rawWinners.length || 1));
+                const ruPrize = (rawWinners.length === 1 && rawRunnersUp.length > 0) ? (5 / rawRunnersUp.length) : 0;
 
-            winners = rawWinners.map(w => ({ ...w, prize: winPrize }));
-            runnersUp = rawRunnersUp.map(r => ({ ...r, prize: ruPrize }));
-
-        } else if (isCurrentPeriod) {
-            if (ladderData.firstPlaceImprovement !== undefined && ladderData.firstPlaceImprovement !== 0) {
-                const candidates = ladderData.ladderWithRanks.filter(u => u.improvement === ladderData.firstPlaceImprovement);
-                const winPool = period.id === 'xmas' ? [candidates[0]] : candidates;
-                const winPrize = period.id === 'xmas' ? 10 : (10 / (winPool.length || 1));
-                winners = winPool.map(w => ({ ...w, prize: winPrize })) as any;
-            }
-            if (period.id !== 'xmas' && ladderData.secondPlaceImprovement !== undefined && ladderData.secondPlaceImprovement !== 0 && winners.length === 1) {
-                const candidates = ladderData.ladderWithRanks.filter(u => u.improvement === ladderData.secondPlaceImprovement);
-                const ruPrize = 5 / (candidates.length || 1);
-                runnersUp = candidates.map(r => ({ ...r, prize: ruPrize })) as any;
+                winners = rawWinners.map(w => ({ ...w, prize: winPrize }));
+                runnersUp = rawRunnersUp.map(r => ({ ...r, prize: ruPrize }));
+            } else if (isCurrentPeriod) {
+                // Potential winners if not in DB yet
+                if (ladderData.firstPlaceImprovement !== undefined) {
+                    const candidates = ladderData.ladderWithRanks.filter(u => u.improvement === ladderData.firstPlaceImprovement);
+                    const winPool = period.id === 'xmas' ? [candidates[0]] : candidates;
+                    const winPrize = period.id === 'xmas' ? 10 : (10 / (winPool.length || 1));
+                    winners = winPool.map(w => ({ ...w, prize: winPrize })) as any;
+                }
+                if (period.id !== 'xmas' && ladderData.secondPlaceImprovement !== undefined && winners.length === 1) {
+                    const candidates = ladderData.ladderWithRanks.filter(u => u.improvement === ladderData.secondPlaceImprovement);
+                    const ruPrize = 5 / (candidates.length || 1);
+                    runnersUp = candidates.map(r => ({ ...r, prize: ruPrize })) as any;
+                }
             }
         }
         
@@ -323,7 +326,6 @@ export default function MostImprovedPage() {
                                         {monthlyAward.winners?.map(winner => {
                                             const isTie = monthlyAward.winners.length > 1;
                                             const rawTitle = isXmas ? 'Xmas No 1' : (isTie ? 'JoMiMoM' : 'MiMoM');
-                                            const displayTitle = isCurrent ? `Current ${rawTitle}` : rawTitle;
                                             const style = isXmas ? { backgroundColor: '#064e3b', borderColor: '#dc2626', color: '#fff' } : getDilutedBackground('yellow', monthlyAward.winners.length);
                                             
                                             return (
@@ -331,7 +333,7 @@ export default function MostImprovedPage() {
                                                     {isXmas && <Holly />}
                                                     <Avatar className="w-1/4 h-full rounded-none shrink-0 border-r bg-card"><AvatarImage src={getAvatarUrl(winner.avatar)} className="object-cover h-full" /><AvatarFallback className="rounded-none">{winner.name?.charAt(0)}</AvatarFallback></Avatar>
                                                     <div className="flex-1 flex flex-col justify-center px-2 text-center overflow-hidden">
-                                                        <p className={cn("text-[13px] font-bold tracking-tight", isXmas ? "text-white" : "text-yellow-950")}>{displayTitle}</p>
+                                                        <p className={cn("text-[13px] font-bold tracking-tight", isXmas ? "text-white" : "text-yellow-950")}>{rawTitle}</p>
                                                         <p className="text-[12px] font-bold truncate leading-tight my-0.5">{winner.name}</p>
                                                         <p className={cn("text-[11px] font-black uppercase", isXmas ? "text-yellow-400" : "text-yellow-950/80")}>{formatImprovementText(winner.improvement)}</p>
                                                         <p className={cn("text-[10px] font-medium", isXmas ? "text-white/80" : "text-yellow-950/60")}>{formatPrizeMoney(winner.prize || 0)}</p>
@@ -343,14 +345,13 @@ export default function MostImprovedPage() {
                                         {monthlyAward.runnersUp?.map(runnerUp => {
                                             const isTie = monthlyAward.runnersUp.length > 1;
                                             const rawTitle = isTie ? 'JoRuMiMoM' : 'RuMiMoM';
-                                            const displayTitle = isCurrent ? `Current ${rawTitle}` : rawTitle;
                                             const style = getDilutedBackground('slate', monthlyAward.runnersUp.length);
 
                                             return (
                                                 <div key={runnerUp.id} style={style} className="rounded-md flex items-stretch h-[100px] overflow-hidden shadow-sm border border-slate-600/10">
                                                     <Avatar className="w-1/4 h-full rounded-none shrink-0 border-r bg-card"><AvatarImage src={getAvatarUrl(runnerUp.avatar)} className="object-cover h-full" /><AvatarFallback className="rounded-none">{runnerUp.name?.charAt(0)}</AvatarFallback></Avatar>
                                                     <div className="flex-1 flex flex-col justify-center px-2 text-center overflow-hidden">
-                                                        <p className="text-[13px] font-bold text-slate-900 tracking-tight">{displayTitle}</p>
+                                                        <p className="text-[13px] font-bold text-slate-900 tracking-tight">{rawTitle}</p>
                                                         <p className="text-[12px] font-bold truncate leading-tight my-0.5">{runnerUp.name}</p>
                                                         <p className={cn("text-[11px] font-black uppercase text-slate-950/80")}>{formatImprovementText(runnerUp.improvement)}</p>
                                                         <p className={cn("text-[10px] font-medium text-slate-950/60")}>{formatPrizeMoney(runnerUp.prize || 0)}</p>

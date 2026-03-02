@@ -40,7 +40,6 @@ export async function recalculateAllDataClientSide(
       
       const historicalUserIds = new Set(historicalPlayersData.map(p => p.id.trim()));
       
-      // Identify the ~106 active players who have entered for 2025-26
       const activeUserIds = new Set(
         predictions
           .filter(p => p.rankings && p.rankings.length === 20)
@@ -233,7 +232,7 @@ export async function recalculateAllDataClientSide(
               }
           });
 
-          if (periodScores.length > 0 && periodScores.some(s => s.improvement !== 0)) {
+          if (periodScores.length > 0) {
               const isXmas = period.id === 'xmas';
               periodScores.sort((a,b) => b.improvement - a.improvement || b.score - a.score);
               
@@ -258,7 +257,7 @@ export async function recalculateAllDataClientSide(
 
               if (!isXmas && winners.length === 1 && periodScores.length > 1) {
                   const runnerUpImp = periodScores.find(s => s.improvement < topImp)?.improvement;
-                  if (runnerUpImp !== undefined && runnerUpImp !== 0) {
+                  if (runnerUpImp !== undefined) {
                       const runnersUp = periodScores.filter(s => s.improvement === runnerUpImp);
                       runnersUp.forEach(ru => {
                           const ruAwardId = `2025-${period.id}-ru-${ru.uId}`;
