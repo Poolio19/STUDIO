@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -98,7 +97,7 @@ export async function recalculateAllDataClientSide(
           });
       });
 
-      const playedMatches = allMatches.filter(m => m.homeScore > -1 && m.awayScore > -1);
+      const playedMatches = allMatches.filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1);
       const playedWeeks = [0, ...new Set(playedMatches.map(m => m.week))].sort((a,b) => a-b);
       const latestAbsoluteWeek = Math.max(0, ...playedWeeks);
 
@@ -109,33 +108,44 @@ export async function recalculateAllDataClientSide(
           else break;
       }
       
-      for (const week of playedWeeks) {
-          progressCallback(`Processing History: Week ${week}...`);
-          let tRanks = prevStandingsRankMap;
-          const tStats: { [tId: string]: any } = {};
-          teams.forEach(t => tStats[t.id] = { points: 0, goalDifference: 0, goalsFor: 0, goalsAgainst: 0, wins: 0, draws: 0, losses: 0, gamesPlayed: 0 });
+      const tStatsByWeek: { [week: number]: { [tId: string]: any } } = {};
+      const cumulativeTStats: { [tId: string]: any } = {};
+      teams.forEach(t => cumulativeTStats[t.id] = { points: 0, goalDifference: 0, goalsFor: 0, goalsAgainst: 0, wins: 0, draws: 0, losses: 0, gamesPlayed: 0 });
 
+      for (let week = 0; week <= 38; week++) {
+          progressCallback(`Processing History: Week ${week}...`);
+          
           if (week > 0) {
-              const weekMatches = playedMatches.filter(m => m.week <= week);
+              const weekMatches = playedMatches.filter(m => m.week === week);
               weekMatches.forEach(m => {
-                  const h = tStats[m.homeTeamId]; const a = tStats[m.awayTeamId];
-                  const hScore = Number(m.homeScore);
-                  const aScore = Number(m.awayScore);
+                  const h = cumulativeTStats[m.homeTeamId];
+                  const a = cumulativeTStats[m.awayTeamId];
+                  const hS = Number(m.homeScore);
+                  const aS = Number(m.awayScore);
                   
-                  h.goalsFor += hScore; h.goalsAgainst += aScore; h.gamesPlayed++;
-                  a.goalsFor += aScore; a.goalsAgainst += hScore; a.gamesPlayed++;
+                  h.goalsFor = Number(h.goalsFor) + hS;
+                  h.goalsAgainst = Number(h.goalsAgainst) + aS;
+                  h.gamesPlayed++;
                   
-                  if (hScore > aScore) { h.points += 3; h.wins++; a.losses++; }
-                  else if (hScore < aScore) { a.points += 3; a.wins++; h.losses++; }
+                  a.goalsFor = Number(a.goalsFor) + aS;
+                  a.goalsAgainst = Number(a.goalsAgainst) + hS;
+                  a.gamesPlayed++;
+                  
+                  if (hS > aS) { h.points += 3; h.wins++; a.losses++; }
+                  else if (hS < aS) { a.points += 3; a.wins++; h.losses++; }
                   else { h.points++; h.draws++; a.points++; a.draws++; }
                   
                   h.goalDifference = h.goalsFor - h.goalsAgainst;
                   a.goalDifference = a.goalsFor - a.goalsAgainst;
               });
-              const tRanked = Object.entries(tStats).map(([teamId, s]) => ({ teamId, ...s, name: teamMap.get(teamId)?.name || '' }))
-                  .sort((a,b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.name.localeCompare(b.name));
-              tRanks = new Map(tRanked.map((s, i) => [s.teamId, i + 1]));
+          }
 
+          const tRanked = Object.entries(cumulativeTStats).map(([teamId, s]) => ({ teamId, ...s, name: teamMap.get(teamId)?.name || '' }))
+              .sort((a,b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.name.localeCompare(b.name));
+          
+          const weekRanks = new Map(tRanked.map((s, i) => [s.teamId, i + 1]));
+
+          if (playedWeeksSet.has(week) || week === 0) {
               tRanked.forEach((s, idx) => {
                   addOp(b => b.set(doc(firestore, 'weeklyTeamStandings', `wk${week}-${s.teamId}`), { week, teamId: s.teamId, rank: idx + 1 }));
               });
@@ -143,11 +153,13 @@ export async function recalculateAllDataClientSide(
 
           if (week === latestAbsoluteWeek) {
               teams.forEach(t => {
-                  const s = tStats[t.id];
-                  const rank = tRanks.get(t.id) || 20;
+                  const s = cumulativeTStats[t.id];
+                  const rank = weekRanks.get(t.id) || 20;
                   addOp(b => b.set(doc(firestore, 'standings', t.id), { teamId: t.id, rank, ...s }));
-                  const teamMatches = allMatches.filter(m => (m.homeTeamId === t.id || m.awayTeamId === t.id) && m.homeScore > -1)
-                      .sort((a,b) => b.week - a.week).slice(0, 6);
+                  
+                  const teamMatches = playedMatches.filter(m => (m.homeTeamId === t.id || m.awayTeamId === t.id))
+                      .sort((a,b) => new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime()).slice(0, 6);
+                  
                   const results = teamMatches.reverse().map(m => {
                       const hS = Number(m.homeScore);
                       const aS = Number(m.awayScore);
@@ -160,35 +172,37 @@ export async function recalculateAllDataClientSide(
               });
           }
 
-          const uScores: { [uId: string]: number } = {};
-          allUsers.forEach(u => {
-              const pred = predictions.find(p => (p.userId || (p as any).id) === u.id);
-              let score = 0;
-              pred?.rankings.forEach((tId, idx) => {
-                  const actual = tRanks.get(tId);
-                  if (actual) {
-                      const points = (5 - Math.abs((idx + 1) - actual));
-                      score += points;
-                      if (week === latestAbsoluteWeek) {
-                          addOp(b => b.set(doc(firestore, 'playerTeamScores', `${u.id}-${tId}`), { userId: u.id, teamId: tId, score: points }));
+          if (playedWeeksSet.has(week) || week === 0) {
+              const uScores: { [uId: string]: number } = {};
+              allUsers.forEach(u => {
+                  const pred = predictions.find(p => (p.userId || (p as any).id) === u.id);
+                  let score = 0;
+                  pred?.rankings.forEach((tId, idx) => {
+                      const actual = weekRanks.get(tId);
+                      if (actual) {
+                          const points = (5 - Math.abs((idx + 1) - actual));
+                          score += points;
+                          if (week === latestAbsoluteWeek) {
+                              addOp(b => b.set(doc(firestore, 'playerTeamScores', `${u.id}-${tId}`), { userId: u.id, teamId: tId, score: points }));
+                          }
                       }
-                  }
+                  });
+                  uScores[u.id] = score;
               });
-              uScores[u.id] = score;
-          });
-          
-          const uRanked = activeUsersForRankings.map(u => ({...u, score: uScores[u.id]}))
-              .sort((a, b) => b.score - a.score || (a.isPro ? -1 : 1) || (a.name || '').localeCompare(b.name || ''));
-          
-          const scoresOnly = uRanked.map(u => u.score);
-          uRanked.forEach((u) => {
-              const competitionRank = scoresOnly.indexOf(u.score) + 1;
-              allHistories[u.id].weeklyScores.push({ week, score: u.score, rank: competitionRank });
-          });
+              
+              const uRanked = activeUsersForRankings.map(u => ({...u, score: uScores[u.id]}))
+                  .sort((a, b) => b.score - a.score || (a.isPro ? -1 : 1) || (a.name || '').localeCompare(b.name || ''));
+              
+              const scoresOnly = uRanked.map(u => u.score);
+              uRanked.forEach((u) => {
+                  const competitionRank = scoresOnly.indexOf(u.score) + 1;
+                  allHistories[u.id].weeklyScores.push({ week, score: u.score, rank: competitionRank });
+              });
 
-          allUsers.filter(u => !leaderboardCriteria(u)).forEach(u => {
-              allHistories[u.id].weeklyScores.push({ week, score: uScores[u.id] || 0, rank: 0 });
-          });
+              allUsers.filter(u => !leaderboardCriteria(u)).forEach(u => {
+                  allHistories[u.id].weeklyScores.push({ week, score: uScores[u.id] || 0, rank: 0 });
+              });
+          }
       }
 
       const latestWk = latestAbsoluteWeek;

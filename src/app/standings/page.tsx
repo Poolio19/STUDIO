@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -35,6 +34,7 @@ import { Loader2 } from 'lucide-react';
 type FormResult = {
     result: 'W' | 'D' | 'L' | '-';
     week: number;
+    date: string;
 };
 
 export default function StandingsPage() {
@@ -64,12 +64,13 @@ export default function StandingsPage() {
 
         const teamMap = new Map(teamsData.map(t => [t.id, t]));
         
-        const playedMatches = matchesData.filter(m => m.homeScore > -1 && m.awayScore > -1);
+        const playedMatches = matchesData.filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1);
         
         const finalStandingsWithTeamData = standingsData.map(standing => {
             const team = teamMap.get(standing.teamId)!;
+            // SORT BY DATE, NOT WEEK NUMBER
             const teamMatches = playedMatches.filter(m => m.homeTeamId === standing.teamId || m.awayTeamId === standing.teamId)
-                .sort((a,b) => b.week - a.week).slice(0, 6);
+                .sort((a,b) => new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime()).slice(0, 6);
             
             const recentResults: FormResult[] = teamMatches.reverse().map(m => {
                 const hS = Number(m.homeScore);
@@ -78,9 +79,9 @@ export default function StandingsPage() {
                 if (hS === aS) res = 'D';
                 else if (m.homeTeamId === standing.teamId) res = hS > aS ? 'W' : 'L';
                 else res = aS > hS ? 'W' : 'L';
-                return { result: res, week: m.week };
+                return { result: res, week: m.week, date: m.matchDate };
             });
-            while (recentResults.length < 6) recentResults.unshift({ result: '-', week: 0 });
+            while (recentResults.length < 6) recentResults.unshift({ result: '-', week: 0, date: '' });
 
             return { ...standing, ...team, recentResults };
         }).sort((a,b) => a.rank - b.rank);
@@ -93,7 +94,7 @@ export default function StandingsPage() {
         }
 
         const finalChartData = (() => {
-            const maxWeek = chronologicalWeek; 
+            const maxWeek = Math.max(0, ...[...playedWeeksSet]); 
             
             const ranksByWeek: { [week: number]: { [teamId: string]: number } } = {};
             weeklyTeamStandings.forEach(ws => {
@@ -105,7 +106,17 @@ export default function StandingsPage() {
             for (let week = 0; week <= maxWeek; week++) {
                 const weekEntry: { [key: string]: any } = { week };
                 teamsData.forEach(team => {
-                    weekEntry[team.name] = ranksByWeek[week]?.[team.id] ?? 20;
+                    // Carry forward previous week's rank if current is missing
+                    let rank = ranksByWeek[week]?.[team.id];
+                    if (rank === undefined && week > 0) {
+                        for(let prev = week - 1; prev >= 0; prev--) {
+                            if(ranksByWeek[prev]?.[team.id]) {
+                                rank = ranksByWeek[prev][team.id];
+                                break;
+                            }
+                        }
+                    }
+                    weekEntry[team.name] = rank ?? 20;
                 });
                 transformedData.push(weekEntry);
             }
@@ -153,8 +164,6 @@ export default function StandingsPage() {
     );
   }
 
-  const latestRecentWeeks = standingsWithTeamData[0]?.recentResults.map(r => r.week).filter(w => w > 0) || [];
-
   return (
     <div className="space-y-8">
       <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData as (Team & { rank: number })[]} />
@@ -175,7 +184,7 @@ export default function StandingsPage() {
                 <TableHead className="hidden md:table-cell text-center">GF</TableHead>
                 <TableHead className="hidden md:table-cell text-center">GA</TableHead>
                 <TableHead className="text-center">Pts</TableHead>
-                <TableHead colSpan={6} className="text-center">Recent Form Guide</TableHead>
+                <TableHead colSpan={6} className="text-center">Recent Form Guide (L-R: Oldest to Newest)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

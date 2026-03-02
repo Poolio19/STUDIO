@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -91,7 +90,7 @@ export default function MostImprovedPage() {
 
   const currentWeek = useMemo(() => {
     if (matchesData && matchesData.length > 0) {
-      const playedMatches = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
+      const playedMatches = matchesData.filter(m => Number(m.homeScore) !== -1 && Number(m.awayScore) !== -1);
       const playedWeeks = playedMatches.map(m => m.week);
       return playedWeeks.length > 0 ? Math.max(...playedWeeks) : 0;
     }
@@ -182,12 +181,15 @@ export default function MostImprovedPage() {
         const isPast = period.endWeek <= currentWeek;
         const isFuture = !isPast && !isCurrent && period.startWeek > currentWeek;
 
+        // Hide Feb award during Week 1 of March Transition
+        const hideDueToTransition = standingsContext?.isFinal && standingsContext.period.id === period.id;
+        // Hide potential winners until Week 2 has scores
         const hideDueToWeekOne = isCurrent && currentWeek <= period.startWeek;
 
         let winners: (User & { improvement: number, prize?: number })[] = [];
         let runnersUp: (User & { improvement: number, prize?: number })[] = [];
         
-        if (!hideDueToWeekOne) {
+        if (!hideDueToWeekOne && !hideDueToTransition) {
             const periodAwards = monthlyMimoMAwards.filter(a => 
                 a.year === period.year && (a.month.toLowerCase() === (period.month || period.id).toLowerCase() || (a.special === 'Xmas No 1' && period.id === 'xmas'))
             );
