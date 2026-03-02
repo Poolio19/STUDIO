@@ -118,17 +118,20 @@ export async function recalculateAllDataClientSide(
               const weekMatches = playedMatches.filter(m => m.week <= week);
               weekMatches.forEach(m => {
                   const h = tStats[m.homeTeamId]; const a = tStats[m.awayTeamId];
-                  h.goalsFor += m.homeScore; h.goalsAgainst += m.awayScore; h.goalDifference += (m.homeScore - m.awayScore); h.gamesPlayed++;
-                  a.goalsFor += m.awayScore; a.goalsAgainst += m.homeScore; a.goalDifference += (a.goalsFor - a.goalsAgainst); a.gamesPlayed++;
+                  h.goalsFor += m.homeScore; h.goalsAgainst += m.awayScore; h.gamesPlayed++;
+                  a.goalsFor += m.awayScore; a.goalsAgainst += m.homeScore; a.gamesPlayed++;
+                  
                   if (m.homeScore > m.awayScore) { h.points += 3; h.wins++; a.losses++; }
                   else if (m.homeScore < m.awayScore) { a.points += 3; a.wins++; h.losses++; }
                   else { h.points++; h.draws++; a.points++; a.draws++; }
+                  
+                  h.goalDifference = h.goalsFor - h.goalsAgainst;
+                  a.goalDifference = a.goalsFor - a.goalsAgainst;
               });
               const tRanked = Object.entries(tStats).map(([teamId, s]) => ({ teamId, ...s, name: teamMap.get(teamId)?.name || '' }))
                   .sort((a,b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.name.localeCompare(b.name));
               tRanks = new Map(tRanked.map((s, i) => [s.teamId, i + 1]));
 
-              // CRITICAL: Write weekly ranks for ALL weeks, not just the latest
               tRanked.forEach((s, idx) => {
                   addOp(b => b.set(doc(firestore, 'weeklyTeamStandings', `wk${week}-${s.teamId}`), { week, teamId: s.teamId, rank: idx + 1 }));
               });
@@ -222,7 +225,6 @@ export async function recalculateAllDataClientSide(
                   periodScores.sort((a,b) => b.improvement - a.improvement || b.score - a.score);
                   const topImp = periodScores[0].improvement;
                   
-                  // SOLITARY XMAS LEAD: Use total points as tie-breaker
                   const winners = isXmas ? [periodScores[0]] : periodScores.filter(s => s.improvement === topImp);
 
                   winners.forEach(w => {

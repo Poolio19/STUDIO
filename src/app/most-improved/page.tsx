@@ -222,9 +222,7 @@ export default function MostImprovedPage() {
 
   const getWinnerRowStyle = (rank: number, improvement: number) => {
       if (improvement <= 0) return {};
-      // Yellow highlight for winners (displayRank 1)
       if (rank === 1) return { backgroundColor: 'rgba(250, 204, 21, 0.25)' };
-      // Slate highlight for runners up
       if (ladderData.firstPlaceImprovement !== ladderData.secondPlaceImprovement && improvement === ladderData.secondPlaceImprovement) {
           return { backgroundColor: 'rgba(148, 163, 184, 0.25)' };
       }
