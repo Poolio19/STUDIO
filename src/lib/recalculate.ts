@@ -220,7 +220,6 @@ export async function recalculateAllDataClientSide(
 
       progressCallback("Locking in 2025-26 Award Winners...");
       for (const period of allAwardPeriods) {
-          // If the period has finished, calculate final winners
           if (latestAbsoluteWeek >= period.endWeek) {
               const periodScores: { uId: string, improvement: number, score: number }[] = [];
               usersToProcess.filter(u => !u.isPro && activeUserIds.has(u.id)).forEach(u => {
@@ -237,19 +236,12 @@ export async function recalculateAllDataClientSide(
                   periodScores.sort((a,b) => b.improvement - a.improvement || b.score - a.score);
                   
                   const topImp = periodScores[0].improvement;
-                  const winners = isXmas 
-                    ? [periodScores[0]] 
-                    : periodScores.filter(s => s.improvement === topImp);
+                  const winners = isXmas ? [periodScores[0]] : periodScores.filter(s => s.improvement === topImp);
 
                   winners.forEach(w => {
                       const awardId = `2025-${period.id}-${w.uId}`;
                       const awardData: any = {
-                          id: awardId,
-                          userId: w.uId,
-                          month: period.id,
-                          year: 2025,
-                          type: 'winner',
-                          improvement: w.improvement ?? 0
+                          id: awardId, userId: w.uId, month: period.id, year: 2025, type: 'winner', improvement: w.improvement ?? 0
                       };
                       if (isXmas) awardData.special = 'Xmas No 1';
                       addOp(b => b.set(doc(firestore, 'monthlyMimoM', awardId), awardData));
@@ -262,12 +254,7 @@ export async function recalculateAllDataClientSide(
                           runnersUp.forEach(ru => {
                               const ruAwardId = `2025-${period.id}-ru-${ru.uId}`;
                               addOp(b => b.set(doc(firestore, 'monthlyMimoM', ruAwardId), {
-                                  id: ruAwardId,
-                                  userId: ru.uId,
-                                  month: period.id,
-                                  year: 2025,
-                                  type: 'runner-up',
-                                  improvement: ru.improvement ?? 0
+                                  id: ruAwardId, userId: ru.uId, month: period.id, year: 2025, type: 'runner-up', improvement: ru.improvement ?? 0
                               }));
                           });
                       }
