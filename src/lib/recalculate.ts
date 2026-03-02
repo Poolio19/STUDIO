@@ -220,56 +220,57 @@ export async function recalculateAllDataClientSide(
 
       progressCallback("Locking in 2025-26 Award Winners...");
       for (const period of allAwardPeriods) {
-          if (latestAbsoluteWeek < period.endWeek) continue;
-
-          const periodScores: { uId: string, improvement: number, score: number }[] = [];
-          usersToProcess.filter(u => !u.isPro && activeUserIds.has(u.id)).forEach(u => {
-              const h = allHistories[u.id];
-              const sData = h.weeklyScores.find(ws => ws.week === period.startWeek);
-              const eData = h.weeklyScores.find(ws => ws.week === period.endWeek);
-              if (sData && eData) {
-                  periodScores.push({ uId: u.id, improvement: eData.score - sData.score, score: eData.score });
-              }
-          });
-
-          if (periodScores.length > 0) {
-              const isXmas = period.id === 'xmas';
-              periodScores.sort((a,b) => b.improvement - a.improvement || b.score - a.score);
-              
-              const topImp = periodScores[0].improvement;
-              const winners = isXmas 
-                ? [periodScores[0]] 
-                : periodScores.filter(s => s.improvement === topImp);
-
-              winners.forEach(w => {
-                  const awardId = `2025-${period.id}-${w.uId}`;
-                  const awardData: any = {
-                      id: awardId,
-                      userId: w.uId,
-                      month: period.id,
-                      year: 2025,
-                      type: 'winner',
-                      improvement: w.improvement ?? 0
-                  };
-                  if (isXmas) awardData.special = 'Xmas No 1';
-                  addOp(b => b.set(doc(firestore, 'monthlyMimoM', awardId), awardData));
+          // If the period has finished, calculate final winners
+          if (latestAbsoluteWeek >= period.endWeek) {
+              const periodScores: { uId: string, improvement: number, score: number }[] = [];
+              usersToProcess.filter(u => !u.isPro && activeUserIds.has(u.id)).forEach(u => {
+                  const h = allHistories[u.id];
+                  const sData = h.weeklyScores.find(ws => ws.week === period.startWeek);
+                  const eData = h.weeklyScores.find(ws => ws.week === period.endWeek);
+                  if (sData && eData) {
+                      periodScores.push({ uId: u.id, improvement: eData.score - sData.score, score: eData.score });
+                  }
               });
 
-              if (!isXmas && winners.length === 1 && periodScores.length > 1) {
-                  const runnerUpImp = periodScores.find(s => s.improvement < topImp)?.improvement;
-                  if (runnerUpImp !== undefined) {
-                      const runnersUp = periodScores.filter(s => s.improvement === runnerUpImp);
-                      runnersUp.forEach(ru => {
-                          const ruAwardId = `2025-${period.id}-ru-${ru.uId}`;
-                          addOp(b => b.set(doc(firestore, 'monthlyMimoM', ruAwardId), {
-                              id: ruAwardId,
-                              userId: ru.uId,
-                              month: period.id,
-                              year: 2025,
-                              type: 'runner-up',
-                              improvement: ru.improvement ?? 0
-                          }));
-                      });
+              if (periodScores.length > 0) {
+                  const isXmas = period.id === 'xmas';
+                  periodScores.sort((a,b) => b.improvement - a.improvement || b.score - a.score);
+                  
+                  const topImp = periodScores[0].improvement;
+                  const winners = isXmas 
+                    ? [periodScores[0]] 
+                    : periodScores.filter(s => s.improvement === topImp);
+
+                  winners.forEach(w => {
+                      const awardId = `2025-${period.id}-${w.uId}`;
+                      const awardData: any = {
+                          id: awardId,
+                          userId: w.uId,
+                          month: period.id,
+                          year: 2025,
+                          type: 'winner',
+                          improvement: w.improvement ?? 0
+                      };
+                      if (isXmas) awardData.special = 'Xmas No 1';
+                      addOp(b => b.set(doc(firestore, 'monthlyMimoM', awardId), awardData));
+                  });
+
+                  if (!isXmas && winners.length === 1 && periodScores.length > 1) {
+                      const runnerUpImp = periodScores.find(s => s.improvement < topImp)?.improvement;
+                      if (runnerUpImp !== undefined) {
+                          const runnersUp = periodScores.filter(s => s.improvement === runnerUpImp);
+                          runnersUp.forEach(ru => {
+                              const ruAwardId = `2025-${period.id}-ru-${ru.uId}`;
+                              addOp(b => b.set(doc(firestore, 'monthlyMimoM', ruAwardId), {
+                                  id: ruAwardId,
+                                  userId: ru.uId,
+                                  month: period.id,
+                                  year: 2025,
+                                  type: 'runner-up',
+                                  improvement: ru.improvement ?? 0
+                              }));
+                          });
+                      }
                   }
               }
           }
