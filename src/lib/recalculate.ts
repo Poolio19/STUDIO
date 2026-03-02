@@ -39,7 +39,6 @@ export async function recalculateAllDataClientSide(
       const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
       
       const historicalUserIds = new Set(historicalPlayersData.map(p => p.id.trim()));
-      
       const activeUserIds = new Set(
         predictions
           .filter(p => p.rankings && p.rankings.length === 20)
@@ -88,16 +87,10 @@ export async function recalculateAllDataClientSide(
               if (uId) {
                   let type: 'winner' | 'runner-up' = 'winner';
                   if (award.type.toLowerCase().includes('ru')) type = 'runner-up';
-                  
                   const isHistoricalXmas = award.type === 'XMAS NO1';
                   const awardId = `hist-${uId}-${monthData.season}-${monthData.month}-${idx}`.replace(/\s+/g, '-');
-                  
                   addOp(b => b.set(doc(firestore, 'monthlyMimoM', awardId), {
-                      id: awardId,
-                      userId: uId,
-                      month: monthData.month.toLowerCase(),
-                      year: year,
-                      type: type,
+                      id: awardId, userId: uId, month: monthData.month.toLowerCase(), year: year, type: type,
                       ...(isHistoricalXmas ? { special: 'Xmas No 1' } : {}),
                       improvement: award.improvement ?? 0
                   }));
@@ -148,7 +141,6 @@ export async function recalculateAllDataClientSide(
                   const s = tStats[t.id];
                   const rank = tRanks.get(t.id) || 20;
                   addOp(b => b.set(doc(firestore, 'standings', t.id), { teamId: t.id, rank, ...s }));
-                  
                   const teamMatches = allMatches.filter(m => (m.homeTeamId === t.id || m.awayTeamId === t.id) && m.homeScore > -1)
                       .sort((a,b) => b.week - a.week).slice(0, 6);
                   const results = teamMatches.reverse().map(m => {
@@ -199,15 +191,11 @@ export async function recalculateAllDataClientSide(
           const hist = allHistories[u.id];
           const latest = hist.weeklyScores.find(s => s.week === latestWk) || hist.weeklyScores[hist.weeklyScores.length - 1];
           const prev = hist.weeklyScores.find(s => s.week === prevWk) || { score: 0, rank: 0 };
-          
           const relevantScores = hist.weeklyScores.filter(s => s.week > 0).map(s => s.score);
           const relevantRanks = hist.weeklyScores.filter(s => s.week > 0 && s.rank > 0).map(s => s.rank);
           
           addOp(b => b.set(doc(firestore, 'users', u.id), {
-              score: latest.score, 
-              rank: latest.rank, 
-              previousScore: prev.score, 
-              previousRank: prev.rank,
+              score: latest.score, rank: latest.rank, previousScore: prev.score, previousRank: prev.rank,
               scoreChange: latest.score - prev.score, 
               rankChange: prev.rank > 0 && latest.rank > 0 ? prev.rank - latest.rank : 0,
               maxScore: relevantScores.length > 0 ? Math.max(...relevantScores) : latest.score, 
@@ -234,7 +222,6 @@ export async function recalculateAllDataClientSide(
               if (periodScores.length > 0) {
                   const isXmas = period.id === 'xmas';
                   periodScores.sort((a,b) => b.improvement - a.improvement || b.score - a.score);
-                  
                   const topImp = periodScores[0].improvement;
                   const winners = isXmas ? [periodScores[0]] : periodScores.filter(s => s.improvement === topImp);
 

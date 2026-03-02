@@ -108,33 +108,37 @@ export default function MostImprovedPage() {
     );
   }, [predictions, users]);
 
-  const currentAwardPeriod = useMemo(() => {
-    const period = allAwardPeriods.find(p => currentWeek >= p.startWeek && currentWeek < p.endWeek);
-    const resolvedPeriod = period || allAwardPeriods[allAwardPeriods.length - 1];
+  // Determine the display period for the standings table (Pivot to previous month if Week 1)
+  const standingsContext = useMemo(() => {
+    if (!users || !userHistories) return null;
+    
+    const rawPeriod = allAwardPeriods.find(p => currentWeek >= p.startWeek && currentWeek < p.endWeek) || allAwardPeriods[allAwardPeriods.length - 1];
+    
+    // Check if the current month has any points progress
+    const hasProgress = users.some(u => {
+        const h = userHistories.find(hist => hist.userId === u.id);
+        if (!h) return false;
+        const currentScore = h.weeklyScores.find(ws => ws.week === currentWeek)?.score ?? 0;
+        const startScore = h.weeklyScores.find(ws => ws.week === rawPeriod.startWeek)?.score ?? 0;
+        return currentScore > startScore;
+    });
 
-    if (resolvedPeriod.startWeek === currentWeek && users && userHistories) {
-        const hasProgress = users.some(u => {
-            const h = userHistories.find(hist => hist.userId === u.id);
-            const startScore = h?.weeklyScores.find(ws => ws.week === resolvedPeriod.startWeek)?.score ?? 0;
-            const prevScore = h?.weeklyScores.find(ws => ws.week === resolvedPeriod.startWeek - 1)?.score ?? 0;
-            return startScore > prevScore;
-        });
-        if (!hasProgress) {
-            const prevPeriod = allAwardPeriods.find(p => p.endWeek === resolvedPeriod.startWeek);
-            if (prevPeriod) return prevPeriod;
-        }
+    const isWeekOneTransition = !hasProgress && currentWeek >= rawPeriod.startWeek;
+    
+    if (isWeekOneTransition) {
+        const prevPeriod = allAwardPeriods.find(p => p.endWeek === rawPeriod.startWeek);
+        if (prevPeriod) return { period: prevPeriod, isFinal: true };
     }
-    return resolvedPeriod;
+    
+    return { period: rawPeriod, isFinal: false };
   }, [currentWeek, users, userHistories]);
-  
-  const currentMonthName = currentAwardPeriod?.month || currentAwardPeriod?.special || '';
 
   const ladderData = useMemo(() => {
-    if (!users || !userHistories || !currentAwardPeriod || !activeUserIds.size) {
+    if (!users || !userHistories || !standingsContext || !activeUserIds.size) {
       return { ladderWithRanks: [], firstPlaceImprovement: undefined, secondPlaceImprovement: undefined };
     }
 
-    const startWeek = currentAwardPeriod.startWeek;
+    const { period } = standingsContext;
     const monthlyImprovements: (User & { improvement: number, rankChangeInMonth: number })[] = [];
     const activePlayersOnly = users.filter(u => !u.isPro && u.name && activeUserIds.has(u.id));
     
@@ -142,8 +146,8 @@ export default function MostImprovedPage() {
         const history = userHistories.find(h => h.userId === user.id);
         if (history && history.weeklyScores) {
             const scores = [...history.weeklyScores].sort((a,b) => a.week - b.week);
-            const startData = scores.find(ws => ws.week === startWeek) || scores[0];
-            const endData = scores.filter(ws => ws.week <= currentWeek).reverse()[0] || scores[scores.length-1];
+            const startData = scores.find(ws => ws.week === period.startWeek) || scores[0];
+            const endData = scores.filter(ws => ws.week <= Math.min(currentWeek, period.endWeek)).reverse()[0] || scores[scores.length-1];
 
             if (startData && endData) {
                 const improvement = endData.score - startData.score;
@@ -168,72 +172,66 @@ export default function MostImprovedPage() {
 
     const allImps = [...new Set(ladderWithRanks.map(u => u.improvement))].sort((a, b) => b - a);
     return { ladderWithRanks, firstPlaceImprovement: allImps[0], secondPlaceImprovement: allImps[1] };
-  }, [users, userHistories, currentAwardPeriod, currentWeek, activeUserIds]);
+  }, [users, userHistories, standingsContext, currentWeek, activeUserIds]);
   
   const hallOfFameData = useMemo(() => {
     if (!users || !userHistories || !monthlyMimoMAwards) return [];
     const userMap = new Map(users.map(u => [u.id, u]));
 
     return allAwardPeriods.map(period => {
-        const isCurrent = currentAwardPeriod?.id === period.id;
+        const isCurrent = (standingsContext?.period.id === period.id);
         const isPast = period.endWeek <= currentWeek;
         const isFuture = !isPast && !isCurrent && period.startWeek > currentWeek;
+
+        // RULE: No one shown in HoF for current month until Week 2 (CurrentWeek > startWeek)
+        const hideDueToWeekOne = isCurrent && currentWeek <= period.startWeek;
 
         let winners: (User & { improvement: number, prize?: number })[] = [];
         let runnersUp: (User & { improvement: number, prize?: number })[] = [];
         
-        const periodAwards = monthlyMimoMAwards.filter(a => 
-            a.year === period.year && (a.month.toLowerCase() === period.id.toLowerCase() || (a.special === 'Xmas No 1' && period.id === 'xmas'))
-        );
-        
-        if (periodAwards.length > 0) {
-            const rawWinners = periodAwards.filter(a => a.type === 'winner').map(a => {
-                const u = userMap.get(a.userId);
-                return u ? { ...u, improvement: a.improvement ?? 0 } : null;
-            }).filter((u): u is User & { improvement: number } => !!u);
+        if (!hideDueToWeekOne) {
+            const periodAwards = monthlyMimoMAwards.filter(a => 
+                a.year === period.year && (a.month.toLowerCase() === period.id.toLowerCase() || (a.special === 'Xmas No 1' && period.id === 'xmas'))
+            );
+            
+            if (periodAwards.length > 0) {
+                const rawWinners = periodAwards.filter(a => a.type === 'winner').map(a => {
+                    const u = userMap.get(a.userId);
+                    return u ? { ...u, improvement: a.improvement ?? 0 } : null;
+                }).filter((u): u is User & { improvement: number } => !!u);
 
-            const rawRunnersUp = periodAwards.filter(a => a.type === 'runner-up').map(a => {
-                const u = userMap.get(a.userId);
-                return u ? { ...u, improvement: a.improvement ?? 0 } : null;
-            }).filter((u): u is User & { improvement: number } => !!u);
+                const rawRunnersUp = periodAwards.filter(a => a.type === 'runner-up').map(a => {
+                    const u = userMap.get(a.userId);
+                    return u ? { ...u, improvement: a.improvement ?? 0 } : null;
+                }).filter((u): u is User & { improvement: number } => !!u);
 
-            const winPrize = period.id === 'xmas' ? 10 : (10 / (rawWinners.length || 1));
-            const ruPrize = (rawWinners.length === 1 && rawRunnersUp.length > 0) ? (5 / rawRunnersUp.length) : 0;
-            winners = rawWinners.map(w => ({ ...w, prize: winPrize }));
-            runnersUp = rawRunnersUp.map(r => ({ ...r, prize: ruPrize }));
-        } else if (isCurrent || isPast) {
-            // Period calculation fallback
-            const activePlayers = users.filter(u => !u.isPro && activeUserIds.has(u.id));
-            const periodScores: any[] = [];
-            activePlayers.forEach(u => {
-                const h = userHistories.find(hist => hist.userId === u.id);
-                if (h) {
-                    const sData = h.weeklyScores.find(ws => ws.week === period.startWeek) || h.weeklyScores[0];
-                    const eData = h.weeklyScores.filter(ws => ws.week <= Math.min(currentWeek, period.endWeek)).reverse()[0] || h.weeklyScores[h.weeklyScores.length-1];
-                    if (sData && eData) periodScores.push({ ...u, improvement: eData.score - sData.score, finalScore: eData.score });
-                }
-            });
-
-            if (periodScores.length > 0) {
-                periodScores.sort((a,b) => b.improvement - a.improvement || b.finalScore - a.finalScore);
-                const topImp = periodScores[0].improvement;
-                const winPool = period.id === 'xmas' ? [periodScores[0]] : periodScores.filter(s => s.improvement === topImp);
-                const winPrize = period.id === 'xmas' ? 10 : (10 / winPool.length);
-                winners = winPool.map(w => ({ ...w, prize: winPrize }));
-
-                if (period.id !== 'xmas' && winners.length === 1) {
-                    const ruImp = periodScores.find(s => s.improvement < topImp)?.improvement;
-                    if (ruImp !== undefined) {
-                        const ruPool = periodScores.filter(s => s.improvement === ruImp);
-                        runnersUp = ruPool.map(r => ({ ...r, prize: 5 / ruPool.length }));
-                    }
-                }
+                const winPrize = period.id === 'xmas' ? 10 : (10 / (rawWinners.length || 1));
+                const ruPrize = (rawWinners.length === 1 && rawRunnersUp.length > 0) ? (5 / rawRunnersUp.length) : 0;
+                winners = rawWinners.map(w => ({ ...w, prize: winPrize }));
+                runnersUp = rawRunnersUp.map(r => ({ ...r, prize: ruPrize }));
             }
         }
         
-        return { id: period.id, abbreviation: period.id === 'xmas' ? 'Xmas No. 1' : period.abbreviation, isCurrent, isFuture, winners, runnersUp };
+        return { 
+            id: period.id, 
+            abbreviation: period.id === 'xmas' ? 'Xmas No. 1' : period.abbreviation, 
+            isCurrent, 
+            isFuture, 
+            winners, 
+            runnersUp 
+        };
     });
-  }, [users, userHistories, monthlyMimoMAwards, currentWeek, currentAwardPeriod, activeUserIds]);
+  }, [users, userHistories, monthlyMimoMAwards, currentWeek, standingsContext, activeUserIds]);
+
+  const getWinnerRowStyle = (rank: number, improvement: number) => {
+      if (improvement <= 0) return {};
+      if (rank === 1) return { backgroundColor: 'rgba(250, 204, 21, 0.15)' }; // Gold faint
+      if (ladderData.firstPlaceImprovement === ladderData.secondPlaceImprovement && rank === 1) return { backgroundColor: 'rgba(250, 204, 21, 0.15)' };
+      if (rank === 2 || (ladderData.firstPlaceImprovement !== ladderData.secondPlaceImprovement && improvement === ladderData.secondPlaceImprovement)) {
+          return { backgroundColor: 'rgba(148, 163, 184, 0.15)' }; // Slate faint
+      }
+      return {};
+  };
 
   const getDilutedBackground = (baseColor: 'yellow' | 'slate', count: number) => {
       const colors = { yellow: 'rgba(250, 204, 21, ', slate: 'rgba(148, 163, 184, ' };
@@ -252,8 +250,12 @@ export default function MostImprovedPage() {
             <div className="lg:col-span-2">
                 <Card>
                     <CardHeader className="bg-gradient-to-r from-yellow-400/20 via-yellow-400/5 to-slate-400/20">
-                        <CardTitle>In-Month MiMoM Standings</CardTitle>
-                        <CardDescription>Live progress for {currentMonthName}</CardDescription>
+                        <CardTitle>
+                            {standingsContext?.isFinal ? `MiMoM Final Standings for ${standingsContext.period.month || standingsContext.period.special}` : `In-Month MiMoM Standings`}
+                        </CardTitle>
+                        <CardDescription>
+                            {standingsContext?.isFinal ? `Results are locked. Prizes bagged.` : `Live progress for ${standingsContext?.period.month || standingsContext?.period.special}`}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent className="p-0">
                         <Table>
@@ -268,8 +270,9 @@ export default function MostImprovedPage() {
                             <TableBody>
                             {ladderData.ladderWithRanks.length > 0 ? ladderData.ladderWithRanks.map((user) => {
                                 const PositionChangeIcon = getRankChangeIcon(user.rankChangeInMonth);
+                                const rowStyle = getWinnerRowStyle(user.displayRank, user.improvement);
                                 return (
-                                    <TableRow key={user.id}>
+                                    <TableRow key={user.id} style={rowStyle}>
                                         <TableCell className="p-2 font-black text-center">{user.displayRank}</TableCell>
                                         <TableCell className="p-2">
                                             <div className="flex items-center gap-3">
@@ -333,7 +336,7 @@ export default function MostImprovedPage() {
                                             </div>
                                         )
                                     })}
-                                    {award.winners.length === 0 && !award.isCurrent && <div className="bg-muted/30 py-1.5 px-2 rounded-md flex items-center justify-center h-[100px]"><p className="text-[10px] font-black uppercase text-muted-foreground/40 tracking-widest">TBC</p></div>}
+                                    {award.winners.length === 0 && !award.isFuture && <div className="bg-muted/30 py-1.5 px-2 rounded-md flex items-center justify-center h-[100px]"><p className="text-[10px] font-black uppercase text-muted-foreground/40 tracking-widest">TBC</p></div>}
                                 </div>
                             </div>
                         )})}
