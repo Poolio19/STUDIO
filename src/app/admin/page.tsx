@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Users, ShieldAlert, Trash2, Database, Save, RefreshCw } from 'lucide-react';
+import { Loader2, Users, Database, Save, RefreshCw } from 'lucide-react';
 import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
@@ -89,7 +89,6 @@ export default function AdminPage() {
   const [allMatches, setAllMatches] = React.useState<Match[]>([]);
   const [teamsMap, setTeamsMap] = React.useState<Map<string, Team>>(new Map());
 
-  // Recognize admin by email OR canonical UID
   const isAdmin = user?.email === 'jim.poole@prempred.com' || user?.email === 'jimpoolio@hotmail.com' || user?.uid === 'usr_009';
 
   React.useEffect(() => {
@@ -99,7 +98,7 @@ export default function AdminPage() {
   }, [user, isUserLoading, router, isAdmin]);
 
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('name', 'asc')) : null, [firestore]);
-  const { data: dbUsers, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery);
+  const { data: dbUsers } = useCollection<UserProfile>(usersQuery);
 
   const fetchAllMatches = React.useCallback(async () => {
     if (!firestore) return;
@@ -129,7 +128,7 @@ export default function AdminPage() {
     for (let i = 1; i <= 38; i++) {
         const weekMatches = matchesByWeek[i];
         if (weekMatches && weekMatches.length > 0) {
-            const isComplete = weekMatches.every(m => m.homeScore >= 0);
+            const isComplete = weekMatches.every(m => Number(m.homeScore) >= 0);
             if (!isComplete) return i;
         }
     }
@@ -169,11 +168,11 @@ export default function AdminPage() {
   const onWriteResultsFileSubmit = (data: ScoresFormValues) => {
     setIsWritingFile(true);
     setLatestFileContent(null);
-    const validResults = data.results.filter(r => (r.homeScore >= 0 && r.awayScore >= 0) || (r.homeScore === -2 && r.awayScore === -2));
+    const validResults = data.results.filter(r => (Number(r.homeScore) >= 0 && Number(r.awayScore) >= 0) || (Number(r.homeScore) === -2 && Number(r.awayScore) === -2));
     try {
       const weekResultsData = {
         week: data.week,
-        results: validResults.map(r => ({ id: r.id, homeScore: r.homeScore, awayScore: r.awayScore })),
+        results: validResults.map(r => ({ id: r.id, homeScore: Number(r.homeScore), awayScore: Number(r.awayScore) })),
       };
       setLatestFileContent(JSON.stringify(weekResultsData, null, 2));
       toast({ title: 'Content Created!', description: `Results content for ${validResults.length} matches is ready.` });
@@ -190,10 +189,10 @@ export default function AdminPage() {
     try {
       const weekData: WeekResults = JSON.parse(latestFileContent);
       const batch = writeBatch(firestore);
-      const scoredResults = weekData.results.filter(r => (r.homeScore >= 0 && r.awayScore >= 0) || (r.homeScore === -2 && r.awayScore === -2));
+      const scoredResults = weekData.results.filter(r => (Number(r.homeScore) >= 0 && Number(r.awayScore) >= 0) || (Number(r.homeScore) === -2 && Number(r.awayScore) === -2));
       for (const result of scoredResults) {
         if (!result.id) continue;
-        batch.update(doc(firestore, 'matches', result.id), { homeScore: result.homeScore, awayScore: result.awayScore });
+        batch.update(doc(firestore, 'matches', result.id), { homeScore: Number(result.homeScore), awayScore: Number(result.awayScore) });
       }
       await batch.commit();
       await fetchAllMatches();
@@ -227,8 +226,6 @@ export default function AdminPage() {
     toast({ title: 'Starting Strict Identity Sync...', description: 'Syncing IDs and cleaning up duplicates.' });
     
     try {
-        // Phase 1: Cleanup Forked Profiles
-        toast({ title: 'Phase 1: Cleaning up duplicates...' });
         const allUsersSnap = await getDocs(collection(firestore, 'users'));
         const historicalEmails = new Set(historicalPlayersData.map(p => p.email.toLowerCase()));
         const historicalNames = new Set(historicalPlayersData.map(p => p.name));
@@ -246,7 +243,6 @@ export default function AdminPage() {
         }
         if (deletedCount > 0) toast({ title: `Removed ${deletedCount} duplicate profiles.` });
 
-        // Phase 2: Sync Authentication in chunks
         const authChunks = [];
         const authChunkSize = 50;
         for (let i = 0; i < historicalPlayersData.length; i += authChunkSize) {
@@ -258,14 +254,12 @@ export default function AdminPage() {
         let chunkIndex = 1;
 
         for (const chunk of authChunks) {
-            toast({ title: `Syncing Auth Chunk ${chunkIndex}/${authChunks.length}` });
             const result = await bulkCreateAuthUsersChunk(chunk);
             totalCreated += result.createdCount;
             totalUpdated += result.updatedCount;
             chunkIndex++;
         }
         
-        // Phase 3: Restore Stats to canonical documents
         const dbChunks = [];
         const dbChunkSize = 100;
         for (let i = 0; i < historicalPlayersData.length; i += dbChunkSize) {
@@ -274,7 +268,6 @@ export default function AdminPage() {
 
         chunkIndex = 1;
         for (const chunk of dbChunks) {
-            toast({ title: `Restoring Stats Chunk ${chunkIndex}/${dbChunks.length}` });
             const batch = writeBatch(firestore);
             chunk.forEach(player => {
                 const userRef = doc(firestore, 'users', player.id);

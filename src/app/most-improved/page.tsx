@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -326,7 +327,7 @@ export default function MostImprovedPage() {
                                                 <div className="flex-1 flex flex-col justify-center px-2 text-center overflow-hidden">
                                                     <p className="text-[13px] font-bold text-slate-900 tracking-tight">{title}</p>
                                                     <p className="text-[12px] font-bold truncate leading-tight my-0.5">{ru.name}</p>
-                                                    <p className="text-[11px] font-black uppercase text-slate-950/80">{formatImprovementText(ru.improvement)}</p>
+                                                    <p className={cn("text-[11px] font-black uppercase text-slate-950/80")}>{formatImprovementText(ru.improvement)}</p>
                                                     <p className="text-[10px] font-medium text-slate-950/60">{formatPrizeMoney(ru.prize || 0)}</p>
                                                 </div>
                                             </div>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -118,11 +119,14 @@ export async function recalculateAllDataClientSide(
               const weekMatches = playedMatches.filter(m => m.week <= week);
               weekMatches.forEach(m => {
                   const h = tStats[m.homeTeamId]; const a = tStats[m.awayTeamId];
-                  h.goalsFor += m.homeScore; h.goalsAgainst += m.awayScore; h.gamesPlayed++;
-                  a.goalsFor += m.awayScore; a.goalsAgainst += m.homeScore; a.gamesPlayed++;
+                  const hScore = Number(m.homeScore);
+                  const aScore = Number(m.awayScore);
                   
-                  if (m.homeScore > m.awayScore) { h.points += 3; h.wins++; a.losses++; }
-                  else if (m.homeScore < m.awayScore) { a.points += 3; a.wins++; h.losses++; }
+                  h.goalsFor += hScore; h.goalsAgainst += aScore; h.gamesPlayed++;
+                  a.goalsFor += aScore; a.goalsAgainst += hScore; a.gamesPlayed++;
+                  
+                  if (hScore > aScore) { h.points += 3; h.wins++; a.losses++; }
+                  else if (hScore < aScore) { a.points += 3; a.wins++; h.losses++; }
                   else { h.points++; h.draws++; a.points++; a.draws++; }
                   
                   h.goalDifference = h.goalsFor - h.goalsAgainst;
@@ -145,9 +149,11 @@ export async function recalculateAllDataClientSide(
                   const teamMatches = allMatches.filter(m => (m.homeTeamId === t.id || m.awayTeamId === t.id) && m.homeScore > -1)
                       .sort((a,b) => b.week - a.week).slice(0, 6);
                   const results = teamMatches.reverse().map(m => {
-                      if (m.homeScore === m.awayScore) return 'D';
-                      if (m.homeTeamId === t.id) return m.homeScore > m.awayScore ? 'W' : 'L';
-                      return m.awayScore > m.homeScore ? 'W' : 'L';
+                      const hS = Number(m.homeScore);
+                      const aS = Number(m.awayScore);
+                      if (hS === aS) return 'D';
+                      if (m.homeTeamId === t.id) return hS > aS ? 'W' : 'L';
+                      return aS > hS ? 'W' : 'L';
                   });
                   while (results.length < 6) results.unshift('-');
                   addOp(b => b.set(doc(firestore, 'teamRecentResults', t.id), { teamId: t.id, results }));

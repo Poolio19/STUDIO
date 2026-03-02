@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -21,7 +22,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import type { WeeklyTeamStanding, Match, Team, CurrentStanding, TeamRecentResult } from '@/lib/types';
+import type { WeeklyTeamStanding, Match, Team, CurrentStanding } from '@/lib/types';
 import { Icons, IconName } from '@/components/icons';
 import { TeamStandingsChart } from '@/components/charts/team-standings-chart';
 import { useMemo } from 'react';
@@ -71,10 +72,12 @@ export default function StandingsPage() {
                 .sort((a,b) => b.week - a.week).slice(0, 6);
             
             const recentResults: FormResult[] = teamMatches.reverse().map(m => {
+                const hS = Number(m.homeScore);
+                const aS = Number(m.awayScore);
                 let res: 'W' | 'D' | 'L' = 'D';
-                if (m.homeScore === m.awayScore) res = 'D';
-                else if (m.homeTeamId === standing.teamId) res = m.homeScore > m.awayScore ? 'W' : 'L';
-                else res = m.awayScore > m.homeScore ? 'W' : 'L';
+                if (hS === aS) res = 'D';
+                else if (m.homeTeamId === standing.teamId) res = hS > aS ? 'W' : 'L';
+                else res = aS > hS ? 'W' : 'L';
                 return { result: res, week: m.week };
             });
             while (recentResults.length < 6) recentResults.unshift({ result: '-', week: 0 });
@@ -90,7 +93,6 @@ export default function StandingsPage() {
         }
 
         const finalChartData = (() => {
-            const teamNameMap = new Map(teamsData.map(t => [t.id, t.name]));
             const maxWeek = chronologicalWeek; 
             
             const ranksByWeek: { [week: number]: { [teamId: string]: number } } = {};
@@ -151,6 +153,8 @@ export default function StandingsPage() {
     );
   }
 
+  const latestRecentWeeks = standingsWithTeamData[0]?.recentResults.map(r => r.week).filter(w => w > 0) || [];
+
   return (
     <div className="space-y-8">
       <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData as (Team & { rank: number })[]} />
@@ -171,7 +175,7 @@ export default function StandingsPage() {
                 <TableHead className="hidden md:table-cell text-center">GF</TableHead>
                 <TableHead className="hidden md:table-cell text-center">GA</TableHead>
                 <TableHead className="text-center">Pts</TableHead>
-                <TableHead colSpan={6} className="text-center">Form Guide</TableHead>
+                <TableHead colSpan={6} className="text-center">Recent Form Guide</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -190,7 +194,7 @@ export default function StandingsPage() {
                       <TableCell className="p-0">
                         <div className="flex items-center justify-center h-full">
                             <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}>
-                            <TeamIcon className={cn("size-5", isLiverpool && "scale-x-[-1]")}/><style>{`#team-icon-${team.id} { color: ${team.iconColour} }`}</style>
+                            <TeamIcon className={cn("size-5", isLiverpool && "scale-x-[-1]")} style={{ color: team.iconColour }} />
                             </div>
                         </div>
                       </TableCell>
