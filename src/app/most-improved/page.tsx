@@ -108,13 +108,11 @@ export default function MostImprovedPage() {
     );
   }, [predictions, users]);
 
-  // Determine the display period for the standings table (Pivot to previous month if Week 1)
   const standingsContext = useMemo(() => {
     if (!users || !userHistories) return null;
     
     const rawPeriod = allAwardPeriods.find(p => currentWeek >= p.startWeek && currentWeek < p.endWeek) || allAwardPeriods[allAwardPeriods.length - 1];
     
-    // Check if the current month has any points progress
     const hasProgress = users.some(u => {
         const h = userHistories.find(hist => hist.userId === u.id);
         if (!h) return false;
@@ -123,9 +121,9 @@ export default function MostImprovedPage() {
         return currentScore > startScore;
     });
 
-    const isWeekOneTransition = !hasProgress && currentWeek >= rawPeriod.startWeek;
+    const isTransitionPhase = !hasProgress && currentWeek >= rawPeriod.startWeek;
     
-    if (isWeekOneTransition) {
+    if (isTransitionPhase) {
         const prevPeriod = allAwardPeriods.find(p => p.endWeek === rawPeriod.startWeek);
         if (prevPeriod) return { period: prevPeriod, isFinal: true };
     }
@@ -147,7 +145,7 @@ export default function MostImprovedPage() {
         if (history && history.weeklyScores) {
             const scores = [...history.weeklyScores].sort((a,b) => a.week - b.week);
             const startData = scores.find(ws => ws.week === period.startWeek) || scores[0];
-            const endData = scores.filter(ws => ws.week <= Math.min(currentWeek, period.endWeek)).reverse()[0] || scores[scores.length-1];
+            const endData = scores.filter(ws => ws.week <= (standingsContext.isFinal ? period.endWeek : currentWeek)).reverse()[0] || scores[scores.length-1];
 
             if (startData && endData) {
                 const improvement = endData.score - startData.score;
@@ -175,15 +173,14 @@ export default function MostImprovedPage() {
   }, [users, userHistories, standingsContext, currentWeek, activeUserIds]);
   
   const hallOfFameData = useMemo(() => {
-    if (!users || !userHistories || !monthlyMimoMAwards) return [];
+    if (!users || !monthlyMimoMAwards) return [];
     const userMap = new Map(users.map(u => [u.id, u]));
 
     return allAwardPeriods.map(period => {
-        const isCurrent = (standingsContext?.period.id === period.id);
+        const isCurrent = (standingsContext?.period.id === period.id && !standingsContext.isFinal);
         const isPast = period.endWeek <= currentWeek;
         const isFuture = !isPast && !isCurrent && period.startWeek > currentWeek;
 
-        // RULE: No one shown in HoF for current month until Week 2 (CurrentWeek > startWeek)
         const hideDueToWeekOne = isCurrent && currentWeek <= period.startWeek;
 
         let winners: (User & { improvement: number, prize?: number })[] = [];
@@ -221,7 +218,7 @@ export default function MostImprovedPage() {
             runnersUp 
         };
     });
-  }, [users, userHistories, monthlyMimoMAwards, currentWeek, standingsContext, activeUserIds]);
+  }, [users, monthlyMimoMAwards, currentWeek, standingsContext]);
 
   const getWinnerRowStyle = (rank: number, improvement: number) => {
       if (improvement <= 0) return {};
@@ -276,8 +273,8 @@ export default function MostImprovedPage() {
                                         <TableCell className="p-2 font-black text-center">{user.displayRank}</TableCell>
                                         <TableCell className="p-2">
                                             <div className="flex items-center gap-3">
-                                                <Avatar className="h-8 w-8 rounded-none"><AvatarImage src={getAvatarUrl(user.avatar)} className="object-cover h-full w-full" /><AvatarFallback className="rounded-none">{user.name.charAt(0)}</AvatarFallback></Avatar>
-                                                <span className="font-bold">{user.name}</span>
+                                                <Avatar className="h-8 w-8 rounded-none shrink-0"><AvatarImage src={getAvatarUrl(user.avatar)} className="object-cover h-full w-full" /><AvatarFallback className="rounded-none">{user.name.charAt(0)}</AvatarFallback></Avatar>
+                                                <span className="font-bold truncate">{user.name}</span>
                                             </div>
                                         </TableCell>
                                         <TableCell className="p-2 text-center font-black">{formatPointsChange(user.improvement)}</TableCell>

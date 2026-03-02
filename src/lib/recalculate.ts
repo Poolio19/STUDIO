@@ -208,12 +208,12 @@ export async function recalculateAllDataClientSide(
 
       progressCallback("Locking in 2025-26 Award Winners...");
       for (const period of allAwardPeriods) {
-          if (latestAbsoluteWeek >= period.endWeek) {
+          if (latestAbsoluteWeek > period.startWeek) {
               const periodScores: { uId: string, improvement: number, score: number }[] = [];
               usersToProcess.filter(u => !u.isPro && activeUserIds.has(u.id)).forEach(u => {
                   const h = allHistories[u.id];
                   const sData = h.weeklyScores.find(ws => ws.week === period.startWeek);
-                  const eData = h.weeklyScores.find(ws => ws.week === period.endWeek);
+                  const eData = h.weeklyScores.filter(ws => ws.week <= (latestAbsoluteWeek >= period.endWeek ? period.endWeek : latestAbsoluteWeek)).reverse()[0];
                   if (sData && eData) {
                       periodScores.push({ uId: u.id, improvement: eData.score - sData.score, score: eData.score });
                   }
