@@ -31,12 +31,6 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 
-type FormResult = {
-    result: 'W' | 'D' | 'L' | '-';
-    week: number;
-    date: string;
-};
-
 export default function StandingsPage() {
     const firestore = useFirestore();
 
@@ -56,112 +50,70 @@ export default function StandingsPage() {
         standingsWithTeamData, 
         chartData, 
         weeklyResults,
-        gamesPlayed,
+        latestWeek,
     } = useMemo(() => {
         if (isLoading || !teamsData || !standingsData || !matchesData || !weeklyTeamStandings) {
-            return { standingsWithTeamData: [], chartData: [], weeklyResults: new Map(), gamesPlayed: 0 };
+            return { standingsWithTeamData: [], chartData: [], weeklyResults: new Map(), latestWeek: 0 };
         }
 
         const teamMap = new Map(teamsData.map(t => [t.id, t]));
+        const played = matchesData.filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1);
         
-        const playedMatches = matchesData.filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1);
-        
-        const finalStandingsWithTeamData = standingsData.map(standing => {
+        const finalStandings = standingsData.map(standing => {
             const team = teamMap.get(standing.teamId)!;
-            // SORT BY PLAY DATE to ensure chronological sequence (e.g. W31 played early appears correctly)
-            const teamMatches = playedMatches.filter(m => m.homeTeamId === standing.teamId || m.awayTeamId === standing.teamId)
+            // CRITICAL: Sort form guide by matchDatePlay strictly
+            const teamMatches = played.filter(m => m.homeTeamId === standing.teamId || m.awayTeamId === standing.teamId)
                 .sort((a,b) => new Date(a.matchDatePlay).getTime() - new Date(b.matchDatePlay).getTime()).slice(-6);
             
-            const recentResults: FormResult[] = teamMatches.map(m => {
-                const hS = Number(m.homeScore);
-                const aS = Number(m.awayScore);
+            const recentResults = teamMatches.map(m => {
+                const hS = Number(m.homeScore); const aS = Number(m.awayScore);
                 let res: 'W' | 'D' | 'L' = 'D';
                 if (hS === aS) res = 'D';
                 else if (m.homeTeamId === standing.teamId) res = hS > aS ? 'W' : 'L';
                 else res = aS > hS ? 'W' : 'L';
-                return { result: res, week: m.week, date: m.matchDatePlay };
+                return { result: res, week: m.week };
             });
-            while (recentResults.length < 6) recentResults.unshift({ result: '-', week: 0, date: '' });
+            while (recentResults.length < 6) recentResults.unshift({ result: '-', week: 0 });
 
             return { ...standing, ...team, recentResults };
         }).sort((a,b) => a.rank - b.rank);
 
-        const playedWeeksSet = new Set(playedMatches.map(m => m.week));
-        let chronologicalWeek = 0;
-        for (let i = 1; i <= 38; i++) {
-            if (playedWeeksSet.has(i)) chronologicalWeek = i;
-            else break;
-        }
+        const maxW = played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
 
         const finalChartData = (() => {
-            const maxWeek = Math.max(0, ...[...playedWeeksSet]); 
-            
-            const ranksByWeek: { [week: number]: { [teamId: string]: number } } = {};
+            const ranksByWeek: any = {};
             weeklyTeamStandings.forEach(ws => {
                 if (!ranksByWeek[ws.week]) ranksByWeek[ws.week] = {};
                 ranksByWeek[ws.week][ws.teamId] = ws.rank;
             });
-        
-            const transformedData = [];
-            for (let week = 0; week <= maxWeek; week++) {
-                const weekEntry: { [key: string]: any } = { week };
-                teamsData.forEach(team => {
-                    let rank = ranksByWeek[week]?.[team.id];
-                    if (rank === undefined && week > 0) {
-                        for(let prev = week - 1; prev >= 0; prev--) {
-                            if(ranksByWeek[prev]?.[team.id]) {
-                                rank = ranksByWeek[prev][team.id];
-                                break;
-                            }
-                        }
-                    }
-                    weekEntry[team.name] = rank ?? 20;
-                });
-                transformedData.push(weekEntry);
+            const data = [];
+            for (let w = 0; week <= maxW; week++) {
+                const entry: any = { week: w };
+                teamsData.forEach(t => entry[t.name] = ranksByWeek[w]?.[t.id] ?? 20);
+                data.push(entry);
             }
-            return transformedData;
+            return data;
         })();
 
-        const resultsByWeek = new Map<number, (Match & {homeTeam: Team, awayTeam: Team})[]>();
-        playedMatches.sort((a,b) => a.week - b.week).forEach(match => {
-            const weekMatches = resultsByWeek.get(match.week) || [];
-            const homeTeam = teamMap.get(match.homeTeamId);
-            const awayTeam = teamMap.get(match.awayTeamId);
-            if (homeTeam && awayTeam) {
-                weekMatches.push({ ...match, homeTeam, awayTeam });
-            }
-            resultsByWeek.set(match.week, weekMatches);
+        const resultsByW = new Map();
+        played.sort((a,b) => a.week - b.week).forEach(m => {
+            const list = resultsByW.get(m.week) || [];
+            const h = teamMap.get(m.homeTeamId); const a = teamMap.get(m.awayTeamId);
+            if (h && a) list.push({ ...m, homeTeam: h, awayTeam: a });
+            resultsByW.set(m.week, list);
         });
 
-        return { 
-            standingsWithTeamData: finalStandingsWithTeamData, 
-            chartData: finalChartData, 
-            weeklyResults: resultsByWeek,
-            gamesPlayed: chronologicalWeek,
-        };
+        return { standingsWithTeamData: finalStandings, chartData: finalChartData, weeklyResults: resultsByW, latestWeek: maxW };
     }, [isLoading, teamsData, matchesData, standingsData, weeklyTeamStandings]);
 
-    const getResultColor = (result: 'W' | 'D' | 'L' | '-') => {
-        switch (result) {
-            case 'W': return 'bg-green-500 text-white';
-            case 'D': return 'bg-blue-300 text-white';
-            case 'L': return 'bg-red-500 text-white';
-            default: return 'bg-gray-200 text-gray-500';
-        }
+    const getResultColor = (res: string) => {
+        if (res === 'W') return 'bg-green-500 text-white';
+        if (res === 'D') return 'bg-blue-300 text-white';
+        if (res === 'L') return 'bg-red-500 text-white';
+        return 'bg-muted text-muted-foreground';
     };
 
-  if (isLoading) {
-    return (
-        <div className="space-y-8">
-            <div className="flex justify-center items-center h-96">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                    <Loader2 className="size-5 animate-spin" />
-                    <span>Loading league data...</span>
-                </div>
-            </div>
-        </div>
-    );
-  }
+  if (isLoading) return <div className="flex h-96 items-center justify-center"><Loader2 className="size-8 animate-spin text-muted-foreground" /></div>;
 
   return (
     <div className="space-y-8">
@@ -176,50 +128,27 @@ export default function StandingsPage() {
                 <TableHead className="w-[48px]"></TableHead>
                 <TableHead className="min-w-[120px]">Team</TableHead>
                 <TableHead className="hidden md:table-cell text-center">Plyd</TableHead>
-                <TableHead className="hidden md:table-cell text-center">W</TableHead>
-                <TableHead className="hidden md:table-cell text-center">D</TableHead>
-                <TableHead className="hidden md:table-cell text-center">L</TableHead>
                 <TableHead className="text-center">GD</TableHead>
-                <TableHead className="hidden md:table-cell text-center">GF</TableHead>
-                <TableHead className="hidden md:table-cell text-center">GA</TableHead>
                 <TableHead className="text-center">Pts</TableHead>
-                <TableHead colSpan={6} className="text-center">Recent Form Guide (L-R: Chronological Play-Order)</TableHead>
+                <TableHead colSpan={6} className="text-center">Form Guide (L-R: Chronological Play-Order)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {standingsWithTeamData.map(team => {
                   if (!team) return null;
                   const TeamIcon = Icons[team.logo as IconName] || Icons.match;
-                  const isLiverpool = team.id === 'team_12';
-
                   return (
-                  <TableRow
-                      key={team.id}
-                      style={{ backgroundColor: team.bgColourFaint, color: team.textColour }}
-                      className="border-b-4 border-transparent"
-                  >
+                  <TableRow key={team.id} style={{ backgroundColor: team.bgColourFaint, color: team.textColour }} className="border-b-4 border-transparent">
                       <TableCell className="font-medium rounded-l-md">{team.rank}</TableCell>
-                      <TableCell className="p-0">
-                        <div className="flex items-center justify-center h-full">
-                            <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}>
-                            <TeamIcon className={cn("size-5", isLiverpool && "scale-x-[-1]")} style={{ color: team.iconColour }} />
-                            </div>
-                        </div>
-                      </TableCell>
+                      <TableCell className="p-0"><div className="flex items-center justify-center h-full"><div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}><TeamIcon className={cn("size-5", team.id === 'team_12' && "scale-x-[-1]")} style={{ color: team.iconColour }} /></div></div></TableCell>
                       <TableCell><span className="font-medium">{team.name}</span></TableCell>
                       <TableCell className="hidden md:table-cell text-center">{team.gamesPlayed}</TableCell>
-                      <TableCell className="hidden md:table-cell text-center">{team.wins}</TableCell>
-                      <TableCell className="hidden md:table-cell text-center">{team.draws}</TableCell>
-                      <TableCell className="hidden md:table-cell text-center">{team.losses}</TableCell>
                       <TableCell className="text-center">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
-                      <TableCell className="hidden md:table-cell text-center">{team.goalsFor}</TableCell>
-                      <TableCell className="hidden md:table-cell text-center">{team.goalsAgainst}</TableCell>
                       <TableCell className="text-center font-bold">{team.points}</TableCell>
-                      
-                      {team.recentResults.map((res, index) => (
-                      <TableCell key={index} className={cn("text-center font-bold p-0 w-12", index === 5 && 'rounded-r-md', index < 3 ? 'table-cell' : 'hidden md:table-cell')}>
-                          <div className={cn("flex flex-col items-center justify-center h-10 w-full", getResultColor(res.result), index === 5 && 'rounded-r-md')}>
-                            <span className="text-[10px] leading-none opacity-70 mb-0.5">{res.week > 0 ? `W${res.week}` : ''}</span>
+                      {team.recentResults.map((res, i) => (
+                      <TableCell key={i} className={cn("text-center font-bold p-0 w-12", i === 5 && 'rounded-r-md')}>
+                          <div className={cn("flex flex-col items-center justify-center h-10 w-full", getResultColor(res.result), i === 5 && 'rounded-r-md')}>
+                            <span className="text-[9px] leading-none opacity-70 mb-0.5">{res.week > 0 ? `W${res.week}` : ''}</span>
                             <span className="leading-none">{res.result}</span>
                           </div>
                       </TableCell>
@@ -235,40 +164,27 @@ export default function StandingsPage() {
       <Separator />
 
       <Card>
-        <CardHeader className="items-center">
-            <CardTitle className="bg-black text-yellow-400 p-2 rounded-md">Week by Week Results</CardTitle>
-             <CardDescription>A complete history of the season's results.</CardDescription>
-        </CardHeader>
+        <CardHeader className="items-center"><CardTitle className="bg-black text-yellow-400 p-2 rounded-md">Week by Week Results</CardTitle><CardDescription>Full history of results.</CardDescription></CardHeader>
         <CardContent>
-            <Accordion type="single" collapsible defaultValue={`week-${gamesPlayed}`}>
-                {[...weeklyResults.keys()].sort((a,b) => b-a).map(weekNumber => (
-                    <AccordionItem value={`week-${weekNumber}`} key={weekNumber}>
-                        <AccordionTrigger className="text-lg font-bold">Week {weekNumber}</AccordionTrigger>
+            <Accordion type="single" collapsible defaultValue={`week-${latestWeek}`}>
+                {[...weeklyResults.keys()].sort((a,b) => b-a).map(wNum => (
+                    <AccordionItem value={`week-${wNum}`} key={wNum}>
+                        <AccordionTrigger className="text-lg font-bold">Week {wNum}</AccordionTrigger>
                         <AccordionContent>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                                {weeklyResults.get(weekNumber)?.map((match, index) => {
-                                    const HomeIcon = Icons[match.homeTeam.logo as IconName] || Icons.match;
-                                    const AwayIcon = Icons[match.awayTeam.logo as IconName] || Icons.match;
-                                    return (
-                                        <div key={index} className="flex items-center justify-center p-3 rounded-lg border">
-                                            <div className="flex items-center gap-3 justify-end w-2/5">
-                                                <span className="font-medium text-right text-xs md:text-sm">{match.homeTeam.name}</span>
-                                                 <div className="flex items-center justify-center size-8 rounded-full shrink-0" style={{ backgroundColor: match.homeTeam.bgColourSolid }}>
-                                                    <HomeIcon className="size-5" style={{ color: match.homeTeam.iconColour }} />
-                                                </div>
-                                            </div>
-                                            <div className="font-bold text-base md:text-lg px-2 md:px-4 text-center whitespace-nowrap">
-                                                {match.homeScore} - {match.awayScore}
-                                            </div>
-                                            <div className="flex items-center gap-3 w-2/5">
-                                                 <div className="flex items-center justify-center size-8 rounded-full shrink-0" style={{ backgroundColor: match.awayTeam.bgColourSolid }}>
-                                                    <AwayIcon className="size-5" style={{ color: match.awayTeam.iconColour }} />
-                                                </div>
-                                                <span className="font-medium text-xs md:text-sm">{match.awayTeam.name}</span>
-                                            </div>
+                                {weeklyResults.get(wNum)?.map((m, idx) => (
+                                    <div key={idx} className="flex items-center justify-center p-3 rounded-lg border">
+                                        <div className="flex items-center gap-3 justify-end w-2/5">
+                                            <span className="font-medium text-right text-xs">{m.homeTeam.name}</span>
+                                            <div className="flex items-center justify-center size-8 rounded-full shrink-0" style={{ backgroundColor: m.homeTeam.bgColourSolid }}><Icons.logo className="size-5" style={{ color: m.homeTeam.iconColour }} /></div>
                                         </div>
-                                    )
-                                })}
+                                        <div className="font-bold text-lg px-4 text-center">{m.homeScore} - {m.awayScore}</div>
+                                        <div className="flex items-center gap-3 w-2/5">
+                                            <div className="flex items-center justify-center size-8 rounded-full shrink-0" style={{ backgroundColor: m.awayTeam.bgColourSolid }}><Icons.logo className="size-5" style={{ color: m.awayTeam.iconColour }} /></div>
+                                            <span className="font-medium text-xs">{m.awayTeam.name}</span>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </AccordionContent>
                     </AccordionItem>

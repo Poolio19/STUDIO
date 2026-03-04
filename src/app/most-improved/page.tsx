@@ -29,7 +29,6 @@ import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { allAwardPeriods } from '@/lib/award-periods';
-import historicalPlayersData from '@/lib/historical-players.json';
 
 const getRankChangeIcon = (change: number) => {
   if (change > 0) return ArrowUp;
@@ -43,12 +42,6 @@ const getRankChangeColour = (change: number) => {
     return 'text-gray-500';
 }
 
-const formatPointsChange = (change: number) => {
-    if (change > 0) return <span className="text-green-500">+{change}</span>;
-    if (change < 0) return <span className="text-red-500">{change}</span>;
-    return <span>{change}</span>;
-}
-
 const formatImprovementText = (val: number) => {
     const prefix = val >= 0 ? '+' : '';
     return `${prefix}${val}PTS`;
@@ -56,8 +49,7 @@ const formatImprovementText = (val: number) => {
 
 const formatPrizeMoney = (val: number) => {
     if (val <= 0) return '£0.00';
-    const rounded = Math.round(val * 100) / 100;
-    return `£${rounded.toFixed(2)}`;
+    return `£${val.toFixed(2)}`;
 }
 
 const Holly = () => (
@@ -88,44 +80,34 @@ export default function MostImprovedPage() {
   const isLoading = usersLoading || matchesLoading || historiesLoading || mimoMLoading || predictionsLoading;
 
   const currentWeek = useMemo(() => {
-    if (matchesData && matchesData.length > 0) {
-      const playedMatches = matchesData.filter(m => Number(m.homeScore) !== -1 && Number(m.awayScore) !== -1);
-      const playedWeeks = playedMatches.map(m => m.week);
-      return playedWeeks.length > 0 ? Math.max(...playedWeeks) : 0;
-    }
-    return 0;
+    if (!matchesData) return 0;
+    const played = matchesData.filter(m => Number(m.homeScore) !== -1 && Number(m.awayScore) !== -1);
+    return played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
   }, [matchesData]);
 
   const activeUserIds = useMemo(() => {
-    if (!predictions || !users) return new Set<string>();
-    const historicalIds = new Set(historicalPlayersData.map(p => p.id));
-    return new Set(
-      predictions
-        .filter(p => p.rankings && p.rankings.length === 20)
-        .map(p => p.userId || (p as any).id)
-        .filter(id => historicalIds.has(id) || users.find(u => u.id === id)?.isPro)
-    );
-  }, [predictions, users]);
+    if (!predictions) return new Set<string>();
+    return new Set(predictions.filter(p => p.rankings?.length === 20).map(p => p.userId || (p as any).id));
+  }, [predictions]);
 
-  const standingsContext = useMemo(() => {
-    if (!users || !userHistories) return null;
+  const transitionContext = useMemo(() => {
+    if (!users || !userHistories || !activeUserIds.size) return null;
     
     const rawPeriod = allAwardPeriods.find(p => currentWeek >= p.startWeek && currentWeek < p.endWeek) || allAwardPeriods[allAwardPeriods.length - 1];
     
-    // Check if anyone in active pool has scored yet in the raw period
+    // Check if anyone has actually moved since the start of this month
     const hasProgress = users.some(u => {
         if (!activeUserIds.has(u.id)) return false;
         const h = userHistories.find(hist => hist.userId === u.id);
         if (!h) return false;
-        const currentScore = h.weeklyScores.find(ws => ws.week === currentWeek)?.score ?? 0;
-        const startScore = h.weeklyScores.find(ws => ws.week === rawPeriod.startWeek)?.score ?? 0;
-        return currentScore > startScore;
+        const currentS = h.weeklyScores.find(ws => ws.week === currentWeek)?.score ?? 0;
+        const startS = h.weeklyScores.find(ws => ws.week === rawPeriod.startWeek)?.score ?? 0;
+        return currentS > startS;
     });
 
-    // Week 1 Transition Phase: Stuck at 0 pts change, show previous month
-    const isWeekOneTransition = !hasProgress && currentWeek >= rawPeriod.startWeek && currentWeek > 0;
+    const isTransition = !hasProgress && currentWeek >= rawPeriod.startWeek && currentWeek > 0;
     
-    if (isWeekOneTransition) {
+    if (isTransition) {
         const prevPeriod = allAwardPeriods.filter(p => p.endWeek <= currentWeek).sort((a,b) => b.endWeek - a.endWeek)[0];
         if (prevPeriod) return { period: prevPeriod, isFinal: true };
     }
@@ -134,113 +116,83 @@ export default function MostImprovedPage() {
   }, [currentWeek, users, userHistories, activeUserIds]);
 
   const ladderData = useMemo(() => {
-    if (!users || !userHistories || !standingsContext || !activeUserIds.size) {
-      return { ladderWithRanks: [], firstPlaceImprovement: undefined, secondPlaceImprovement: undefined };
-    }
+    if (!users || !userHistories || !transitionContext || !activeUserIds.size) return { list: [], topImp: 0, ruImp: 0 };
 
-    const { period, isFinal } = standingsContext;
-    const monthlyImprovements: (User & { improvement: number, rankChangeInMonth: number })[] = [];
-    const activePlayersOnly = users.filter(u => !u.isPro && u.name && activeUserIds.has(u.id));
+    const { period, isFinal } = transitionContext;
+    const results: (User & { improvement: number, rankChangeInMonth: number, displayRank: number })[] = [];
+    const players = users.filter(u => !u.isPro && u.name && activeUserIds.has(u.id));
     
-    activePlayersOnly.forEach(user => {
+    players.forEach(user => {
         const history = userHistories.find(h => h.userId === user.id);
-        if (history && history.weeklyScores) {
-            const scores = [...history.weeklyScores].sort((a,b) => a.week - b.week);
-            const startData = scores.find(ws => ws.week === period.startWeek) || scores[0];
-            const endData = scores.filter(ws => ws.week <= (isFinal ? period.endWeek : currentWeek)).reverse()[0] || scores[scores.length-1];
+        if (history) {
+            const startData = history.weeklyScores.find(ws => ws.week === period.startWeek);
+            const endData = history.weeklyScores.filter(ws => ws.week <= (isFinal ? period.endWeek : currentWeek)).reverse()[0];
 
             if (startData && endData) {
                 const improvement = endData.score - startData.score;
                 const rankChangeInMonth = (startData.rank > 0 && endData.rank > 0) ? startData.rank - endData.rank : 0;
-                monthlyImprovements.push({ ...user, improvement, rankChangeInMonth, score: endData.score, rank: endData.rank });
+                results.push({ ...user, improvement, rankChangeInMonth, displayRank: 0 });
             }
         }
     });
 
-    if (monthlyImprovements.length === 0) return { ladderWithRanks: [], firstPlaceImprovement: undefined, secondPlaceImprovement: undefined };
-
-    monthlyImprovements.sort((a, b) => b.improvement - a.improvement || b.score - a.score);
+    results.sort((a, b) => b.improvement - a.improvement || b.score - a.score);
     
-    let rank = 0;
-    let lastImp = Infinity;
-    const ladderWithRanks = monthlyImprovements.map((u, i) => {
-      if (u.improvement < lastImp) rank = i + 1;
-      else if (i === 0) rank = 1;
-      lastImp = u.improvement;
-      return { ...u, displayRank: rank };
+    let r = 0; let lastI = Infinity;
+    const list = results.map((u, i) => {
+      if (u.improvement < lastI) r = i + 1;
+      lastI = u.improvement;
+      return { ...u, displayRank: r };
     });
 
-    const allImps = [...new Set(ladderWithRanks.map(u => u.improvement))].sort((a, b) => b - a);
-    return { ladderWithRanks, firstPlaceImprovement: allImps[0], secondPlaceImprovement: allImps[1] };
-  }, [users, userHistories, standingsContext, currentWeek, activeUserIds]);
+    const imps = [...new Set(list.map(u => u.improvement))].sort((a, b) => b - a);
+    return { list, topImp: imps[0], ruImp: imps[1] };
+  }, [users, userHistories, transitionContext, currentWeek, activeUserIds]);
   
   const hallOfFameData = useMemo(() => {
-    if (!users || !monthlyMimoMAwards || !standingsContext) return [];
+    if (!users || !monthlyMimoMAwards || !transitionContext) return [];
     const userMap = new Map(users.map(u => [u.id, u]));
 
     return allAwardPeriods.map(period => {
-        const isCurrent = (standingsContext.period.id === period.id && !standingsContext.isFinal);
+        const isCurrent = (transitionContext.period.id === period.id && !transitionContext.isFinal);
         const isPast = period.endWeek <= currentWeek;
         const isFuture = !isPast && !isCurrent && period.startWeek > currentWeek;
 
-        // Hide Feb award in HoF during Week 1 transition of March
-        const hideDueToTransition = standingsContext.isFinal && standingsContext.period.id === period.id;
-        // Hide potential current winners in HoF until Week 2 scores are in
+        const hideDueToTransition = transitionContext.isFinal && transitionContext.period.id === period.id;
         const hideDueToWeekOne = isCurrent && currentWeek <= period.startWeek;
 
-        let winners: (User & { improvement: number, prize?: number })[] = [];
-        let runnersUp: (User & { improvement: number, prize?: number })[] = [];
+        let winners: any[] = []; let runnersUp: any[] = [];
         
         if (!hideDueToWeekOne && !hideDueToTransition) {
             const periodAwards = monthlyMimoMAwards.filter(a => 
                 a.year === period.year && (a.month.toLowerCase() === (period.month || period.id).toLowerCase() || (a.special === 'Xmas No 1' && period.id === 'xmas'))
             );
             
-            if (periodAwards.length > 0) {
-                const rawWinners = periodAwards.filter(a => a.type === 'winner').map(a => {
-                    const u = userMap.get(a.userId);
-                    return u ? { ...u, improvement: a.improvement ?? 0 } : null;
-                }).filter((u): u is User & { improvement: number } => !!u);
+            const rawWinners = periodAwards.filter(a => a.type === 'winner').map(a => {
+                const u = userMap.get(a.userId);
+                return u ? { ...u, improvement: a.improvement ?? 0 } : null;
+            }).filter(u => !!u);
 
-                const rawRunnersUp = periodAwards.filter(a => a.type === 'runner-up').map(a => {
-                    const u = userMap.get(a.userId);
-                    return u ? { ...u, improvement: a.improvement ?? 0 } : null;
-                }).filter((u): u is User & { improvement: number } => !!u);
+            const rawRunnersUp = periodAwards.filter(a => a.type === 'runner-up').map(a => {
+                const u = userMap.get(a.userId);
+                return u ? { ...u, improvement: a.improvement ?? 0 } : null;
+            }).filter(u => !!u);
 
-                const winPrize = period.id === 'xmas' ? 10 : (10 / (rawWinners.length || 1));
-                const ruPrize = (rawWinners.length === 1 && rawRunnersUp.length > 0) ? (5 / rawRunnersUp.length) : 0;
-                winners = rawWinners.map(w => ({ ...w, prize: winPrize }));
-                runnersUp = rawRunnersUp.map(r => ({ ...r, prize: ruPrize }));
-            }
+            const winPrize = period.id === 'xmas' ? 10 : (10 / (rawWinners.length || 1));
+            const ruPrize = (rawWinners.length === 1 && rawRunnersUp.length > 0) ? (5 / rawRunnersUp.length) : 0;
+            winners = rawWinners.map(w => ({ ...w, prize: winPrize }));
+            runnersUp = rawRunnersUp.map(r => ({ ...r, prize: ruPrize }));
         }
         
-        return { 
-            id: period.id, 
-            abbreviation: period.id === 'xmas' ? 'Xmas No. 1' : period.abbreviation, 
-            isCurrent, 
-            isFuture, 
-            winners, 
-            runnersUp 
-        };
+        return { id: period.id, label: period.id === 'xmas' ? 'Xmas No. 1' : period.abbreviation, isCurrent, isFuture, winners, runnersUp };
     });
-  }, [users, monthlyMimoMAwards, currentWeek, standingsContext]);
+  }, [users, monthlyMimoMAwards, currentWeek, transitionContext]);
 
   const getWinnerRowStyle = (rank: number, improvement: number) => {
       if (improvement <= 0) return {};
-      if (rank === 1) return { backgroundColor: 'rgba(250, 204, 21, 0.25)' }; // Yellow
-      if (ladderData.firstPlaceImprovement !== ladderData.secondPlaceImprovement && improvement === ladderData.secondPlaceImprovement) {
-          return { backgroundColor: 'rgba(148, 163, 184, 0.25)' }; // Slate
-      }
+      if (rank === 1) return { backgroundColor: 'rgba(250, 204, 21, 0.2)' };
+      if (ladderData.topImp !== ladderData.ruImp && improvement === ladderData.ruImp) return { backgroundColor: 'rgba(148, 163, 184, 0.2)' };
       return {};
-  };
-
-  const getDilutedBackground = (baseColor: 'yellow' | 'slate', count: number) => {
-      const colors = { yellow: 'rgba(250, 204, 21, ', slate: 'rgba(148, 163, 184, ' };
-      let opacity = 1.0;
-      if (count === 2) opacity = 0.65;
-      if (count === 3) opacity = 0.45;
-      if (count >= 4) opacity = 0.25;
-      return { backgroundColor: colors[baseColor] + opacity + ')' };
   };
 
   if (isLoading) return <div className="flex h-96 items-center justify-center text-muted-foreground"><Loader2 className="size-5 animate-spin mr-2" /> Loading MiMoM Central...</div>;
@@ -250,13 +202,9 @@ export default function MostImprovedPage() {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
             <div className="lg:col-span-2">
                 <Card>
-                    <CardHeader className="bg-gradient-to-r from-yellow-400/20 via-yellow-400/5 to-slate-400/20">
-                        <CardTitle>
-                            {standingsContext?.isFinal ? `MiMoM Final Standings for ${standingsContext.period.month || standingsContext.period.special}` : `In-Month MiMoM Standings`}
-                        </CardTitle>
-                        <CardDescription>
-                            {standingsContext?.isFinal ? `Results are locked. Prizes bagged.` : `Live progress for ${standingsContext?.period.month || standingsContext?.period.special}`}
-                        </CardDescription>
+                    <CardHeader className="bg-gradient-to-r from-yellow-400/10 via-background to-slate-400/10">
+                        <CardTitle>{transitionContext?.isFinal ? `MiMoM Final Standings for ${transitionContext.period.month || transitionContext.period.special}` : `In-Month MiMoM Standings`}</CardTitle>
+                        <CardDescription>{transitionContext?.isFinal ? `Results are locked. Prizes bagged.` : `Live progress for ${transitionContext?.period.month || transitionContext?.period.special}`}</CardDescription>
                     </CardHeader>
                     <CardContent className="p-0">
                         <Table>
@@ -269,21 +217,20 @@ export default function MostImprovedPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                            {ladderData.ladderWithRanks.length > 0 ? ladderData.ladderWithRanks.map((user) => {
-                                const PositionChangeIcon = getRankChangeIcon(user.rankChangeInMonth);
-                                const rowStyle = getWinnerRowStyle(user.displayRank, user.improvement);
+                            {ladderData.list.length > 0 ? ladderData.list.map((user) => {
+                                const Icon = getRankChangeIcon(user.rankChangeInMonth);
                                 return (
-                                    <TableRow key={user.id} style={rowStyle} className="transition-colors hover:brightness-95">
+                                    <TableRow key={user.id} style={getWinnerRowStyle(user.displayRank, user.improvement)} className="transition-colors hover:brightness-95">
                                         <TableCell className="p-2 font-black text-center">{user.displayRank}</TableCell>
                                         <TableCell className="p-2">
                                             <div className="flex items-center gap-3">
-                                                <Avatar className="h-8 w-8 rounded-none shrink-0"><AvatarImage src={getAvatarUrl(user.avatar)} className="object-cover h-full w-full rounded-none" /><AvatarFallback className="rounded-none">{user.name.charAt(0)}</AvatarFallback></Avatar>
+                                                <Avatar className="h-8 w-8 rounded-none shrink-0"><AvatarImage src={getAvatarUrl(user.avatar)} className="object-cover rounded-none" /><AvatarFallback className="rounded-none">{user.name.charAt(0)}</AvatarFallback></Avatar>
                                                 <span className="font-bold truncate">{user.name}</span>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="p-2 text-center font-black">{formatPointsChange(user.improvement)}</TableCell>
+                                        <TableCell className="p-2 text-center font-black">{user.improvement >= 0 ? `+${user.improvement}` : user.improvement}</TableCell>
                                         <TableCell className={cn("p-2 text-center font-black", getRankChangeColour(user.rankChangeInMonth))}>
-                                            <div className="flex items-center justify-center gap-1"><PositionChangeIcon className="size-4" />{Math.abs(user.rankChangeInMonth)}</div>
+                                            <div className="flex items-center justify-center gap-1"><Icon className="size-4" />{Math.abs(user.rankChangeInMonth)}</div>
                                         </TableCell>
                                     </TableRow>
                                 );
@@ -295,48 +242,40 @@ export default function MostImprovedPage() {
             </div>
             <div className="lg:col-span-3">
                  <Card>
-                    <CardHeader className="bg-gradient-to-r from-yellow-400/20 via-yellow-400/5 to-slate-400/20">
+                    <CardHeader className="bg-gradient-to-r from-yellow-400/10 via-background to-slate-400/10">
                         <CardTitle>MiMoM Hall of Fame</CardTitle>
                         <CardDescription>Official winners and runners-up for the 2025-26 season.</CardDescription>
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-6">
                         {hallOfFameData.map((award) => {
                             if (award.isFuture) return null;
-                            const isXmas = award.id === 'xmas';
                             return (
                             <div key={award.id} className={cn("p-2 border rounded-lg flex flex-col items-center min-h-[240px]", award.isCurrent && "opacity-70")}>
-                                <p className="font-black mb-3 text-[11px] border-b w-full pb-1 uppercase tracking-widest text-muted-foreground/80">{award.abbreviation}</p>
+                                <p className="font-black mb-3 text-[11px] border-b w-full pb-1 uppercase tracking-widest text-muted-foreground/80">{award.label}</p>
                                 <div className="w-full space-y-2">
-                                    {award.winners.map(winner => {
-                                        const title = isXmas ? 'Xmas No 1' : (award.winners.length > 1 ? 'JoMiMoM' : 'MiMoM');
-                                        const style = isXmas ? { backgroundColor: '#064e3b', borderColor: '#dc2626', color: '#fff' } : getDilutedBackground('yellow', award.winners.length);
-                                        return (
-                                            <div key={winner.id} style={style} className={cn("rounded-none flex items-stretch h-[100px] overflow-hidden shadow-sm border", isXmas && "border-2")}>
-                                                {isXmas && <Holly />}
-                                                <Avatar className="w-1/4 h-full rounded-none shrink-0 border-r bg-card"><AvatarImage src={getAvatarUrl(winner.avatar)} className="object-cover h-full rounded-none" /><AvatarFallback className="rounded-none">{winner.name?.charAt(0)}</AvatarFallback></Avatar>
-                                                <div className="flex-1 flex flex-col justify-center px-2 text-center overflow-hidden">
-                                                    <p className={cn("text-[13px] font-bold tracking-tight", isXmas ? "text-white" : "text-yellow-950")}>{title}</p>
-                                                    <p className="text-[12px] font-bold truncate leading-tight my-0.5">{winner.name}</p>
-                                                    <p className={cn("text-[11px] font-black uppercase", isXmas ? "text-yellow-400" : "text-yellow-950/80")}>{formatImprovementText(winner.improvement)}</p>
-                                                    <p className={cn("text-[10px] font-medium", isXmas ? "text-white/80" : "text-yellow-950/60")}>{formatPrizeMoney(winner.prize || 0)}</p>
-                                                </div>
+                                    {award.winners.map(winner => (
+                                        <div key={winner.id} className={cn("rounded-none flex items-stretch h-[100px] overflow-hidden shadow-sm border", award.id === 'xmas' ? "bg-emerald-900 border-red-600 text-white border-2" : "bg-yellow-50 border-yellow-500")}>
+                                            {award.id === 'xmas' && <Holly />}
+                                            <Avatar className="w-1/4 h-full rounded-none shrink-0 border-r bg-card"><AvatarImage src={getAvatarUrl(winner.avatar)} className="object-cover h-full rounded-none" /><AvatarFallback className="rounded-none">{winner.name?.charAt(0)}</AvatarFallback></Avatar>
+                                            <div className="flex-1 flex flex-col justify-center px-2 text-center overflow-hidden">
+                                                <p className={cn("text-[13px] font-bold tracking-tight", award.id === 'xmas' ? "text-white" : "text-yellow-900")}>{award.id === 'xmas' ? 'Xmas No 1' : (award.winners.length > 1 ? 'JoMiMoM' : 'MiMoM')}</p>
+                                                <p className="text-[12px] font-bold truncate leading-tight my-0.5">{winner.name}</p>
+                                                <p className={cn("text-[11px] font-black uppercase", award.id === 'xmas' ? "text-yellow-400" : "text-yellow-950/80")}>{formatImprovementText(winner.improvement)}</p>
+                                                <p className={cn("text-[10px] font-medium", award.id === 'xmas' ? "text-white/80" : "text-yellow-950/60")}>{formatPrizeMoney(winner.prize || 0)}</p>
                                             </div>
-                                        )
-                                    })}
-                                    {award.runnersUp.map(ru => {
-                                        const title = award.runnersUp.length > 1 ? 'JoRuMiMoM' : 'RuMiMoM';
-                                        return (
-                                            <div key={ru.id} style={getDilutedBackground('slate', award.runnersUp.length)} className="rounded-none flex items-stretch h-[100px] overflow-hidden shadow-sm border border-slate-600/10">
-                                                <Avatar className="w-1/4 h-full rounded-none shrink-0 border-r bg-card"><AvatarImage src={getAvatarUrl(ru.avatar)} className="object-cover h-full rounded-none" /><AvatarFallback className="rounded-none">{ru.name?.charAt(0)}</AvatarFallback></Avatar>
-                                                <div className="flex-1 flex flex-col justify-center px-2 text-center overflow-hidden">
-                                                    <p className="text-[13px] font-bold text-slate-900 tracking-tight">{title}</p>
-                                                    <p className="text-[12px] font-bold truncate leading-tight my-0.5">{ru.name}</p>
-                                                    <p className={cn("text-[11px] font-black uppercase text-slate-950/80")}>{formatImprovementText(ru.improvement)}</p>
-                                                    <p className="text-[10px] font-medium text-slate-950/60">{formatPrizeMoney(ru.prize || 0)}</p>
-                                                </div>
+                                        </div>
+                                    ))}
+                                    {award.runnersUp.map(ru => (
+                                        <div key={ru.id} className="rounded-none flex items-stretch h-[100px] overflow-hidden shadow-sm border border-slate-300 bg-slate-50">
+                                            <Avatar className="w-1/4 h-full rounded-none shrink-0 border-r bg-card"><AvatarImage src={getAvatarUrl(ru.avatar)} className="object-cover h-full rounded-none" /><AvatarFallback className="rounded-none">{ru.name?.charAt(0)}</AvatarFallback></Avatar>
+                                            <div className="flex-1 flex flex-col justify-center px-2 text-center overflow-hidden">
+                                                <p className="text-[13px] font-bold text-slate-900 tracking-tight">{award.runnersUp.length > 1 ? 'JoRuMiMoM' : 'RuMiMoM'}</p>
+                                                <p className="text-[12px] font-bold truncate leading-tight my-0.5">{ru.name}</p>
+                                                <p className="text-[11px] font-black uppercase text-slate-950/80">{formatImprovementText(ru.improvement)}</p>
+                                                <p className="text-[10px] font-medium text-slate-950/60">{formatPrizeMoney(ru.prize || 0)}</p>
                                             </div>
-                                        )
-                                    })}
+                                        </div>
+                                    ))}
                                     {award.winners.length === 0 && !award.isFuture && <div className="bg-muted/30 py-1.5 px-2 rounded-md flex items-center justify-center h-[100px]"><p className="text-[10px] font-black uppercase text-muted-foreground/40 tracking-widest">TBC</p></div>}
                                 </div>
                             </div>

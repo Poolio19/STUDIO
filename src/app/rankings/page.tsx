@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -10,7 +9,7 @@ import {
 } from '@/components/ui/card';
 import { useMemo } from 'react';
 import { PlayerRankChart } from '@/components/charts/player-rank-chart';
-import type { User, UserHistory, Match } from '@/lib/types';
+import type { User, UserHistory, Match, Prediction } from '@/lib/types';
 import { useCollection, useFirestore, useMemoFirebase, useResolvedUserId } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
@@ -21,159 +20,102 @@ export default function RankingsPage() {
 
   const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
   const matchesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'matches') : null, [firestore]);
-  const userHistoriesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'userHistories') : null, [firestore]);
+  const historiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'userHistories') : null, [firestore]);
+  const predictionsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'predictions') : null, [firestore]);
 
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
   const { data: matchesData, isLoading: matchesLoading } = useCollection<Match>(matchesQuery);
-  const { data: userHistories, isLoading: historiesLoading } = useCollection<UserHistory>(userHistoriesQuery);
+  const { data: userHistories, isLoading: historiesLoading } = useCollection<UserHistory>(historiesQuery);
+  const { data: predictions, isLoading: predictionsLoading } = useCollection<Prediction>(predictionsQuery);
 
-  const isLoading = usersLoading || historiesLoading || matchesLoading;
+  const isLoading = usersLoading || historiesLoading || matchesLoading || predictionsLoading;
 
-  const currentChronologicalWeek = useMemo(() => {
+  const currentWk = useMemo(() => {
     if (!matchesData) return 0;
-    const playedMatches = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
-    const playedWeeks = new Set(playedMatches.map(m => m.week));
-    let latest = 0;
-    for (let i = 1; i <= 38; i++) {
-        if (playedWeeks.has(i)) latest = i;
-        else break;
-    }
-    return latest;
+    const played = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
+    return played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
   }, [matchesData]);
 
   const activeUsers = useMemo(() => {
-    if (!users) return [];
-    const activeUserIds = new Set(userHistories?.map(h => h.userId) || []);
-    return users.filter(u => u.name && activeUserIds.has(u.id));
-  }, [users, userHistories]);
-
-  const sortedUsers = useMemo(() => {
-    if (!activeUsers) return [];
-    return [...activeUsers].sort((a, b) => a.rank - b.rank);
-  }, [activeUsers]);
-
+    if (!users || !predictions) return [];
+    const activeIds = new Set(predictions.filter(p => p.rankings?.length === 20).map(p => p.userId || (p as any).id));
+    return users.filter(u => u.name && activeIds.has(u.id)).sort((a, b) => a.rank - b.rank);
+  }, [users, predictions]);
 
   const { chartData, yAxisDomain, chartConfig, legendUsers } = useMemo(() => {
-    if (!activeUsers || !userHistories || !sortedUsers) return { chartData: [], yAxisDomain: [0, 0], chartConfig: {}, legendUsers: [] };
+    if (!activeUsers.length || !userHistories) return { chartData: [], yAxisDomain: [0, 10], chartConfig: {}, legendUsers: [] };
     
-    const activeUserHistories = userHistories.filter(h => activeUsers.some(u => u.id === h.userId));
-    const yAxisDomain: [number, number] = [0, activeUsers.length + 1];
+    const activeHistories = userHistories.filter(h => activeUsers.some(u => u.id === h.userId));
+    const domain: [number, number] = [0, activeUsers.length + 1];
 
-    // Filter weeks to chronological progress
-    const weeks = Array.from({ length: currentChronologicalWeek + 1 }, (_, i) => i);
-    
-    const transformedData = weeks.map(week => {
-      const weekData: { [key: string]: number | string } = { week: `Wk ${week}` };
-      activeUserHistories.forEach(history => {
-        const user = activeUsers.find(u => u.id === history.userId); 
-        if (user) {
-          const weekScore = history.weeklyScores.find(w => w.week === week);
-          if (weekScore && weekScore.rank > 0) {
-            weekData[user.name] = weekScore.rank;
-          }
+    const weeks = Array.from({ length: currentWk + 1 }, (_, i) => i);
+    const data = weeks.map(week => {
+      const entry: any = { week: `Wk ${week}` };
+      activeHistories.forEach(h => {
+        const u = activeUsers.find(user => user.id === h.userId);
+        if (u) {
+            const val = h.weeklyScores.find(w => w.week === week)?.rank;
+            if (val && val > 0) entry[u.name] = val;
         }
       });
-      return weekData;
+      return entry;
     });
 
-    const config = sortedUsers.reduce((config, user, index) => {
-      config[user.name] = {
-        label: user.name,
-        colour: `hsl(var(--chart-color-${index + 1}))`,
-      };
-      return config;
+    const config = activeUsers.reduce((acc, u, i) => {
+      acc[u.name] = { label: u.name, colour: `hsl(var(--chart-color-${(i % 50) + 1}))` };
+      return acc;
     }, {} as any);
     
-    const numRows = 13;
-    const numCols = Math.ceil(sortedUsers.length / numRows);
-    const columnOrderedUsers: (User | undefined)[] = new Array(numCols * numRows).fill(undefined);
+    const numRows = 13; const numCols = Math.ceil(activeUsers.length / numRows);
+    const legend: (User | undefined)[] = new Array(numCols * numRows).fill(undefined);
+    activeUsers.forEach((u, i) => legend[(i % numRows) * numCols + Math.floor(i / numRows)] = u);
 
-    sortedUsers.forEach((user, i) => {
-        const col = Math.floor(i / numRows);
-        const row = i % numRows;
-        const newIndex = row * numCols + col;
-        columnOrderedUsers[newIndex] = user;
-    });
-
-    return { chartData: transformedData, yAxisDomain, chartConfig: config, legendUsers: columnOrderedUsers };
-  }, [activeUsers, userHistories, sortedUsers, currentChronologicalWeek]);
+    return { chartData: data, yAxisDomain: domain, chartConfig: config, legendUsers: legend };
+  }, [activeUsers, userHistories, currentWk]);
 
   const surnameCounts = useMemo(() => {
-    if (!sortedUsers) return new Map<string, number>();
     const counts = new Map<string, number>();
-    sortedUsers.forEach(user => {
-      if (user.isPro) return;
-      const parts = user.name.split(' ');
-      const surname = parts[parts.length - 1];
-      counts.set(surname, (counts.get(surname) || 0) + 1);
+    activeUsers.forEach(u => {
+      const parts = u.name.split(' ');
+      const s = parts[parts.length - 1];
+      counts.set(s, (counts.get(s) || 0) + 1);
     });
     return counts;
-  }, [sortedUsers]);
+  }, [activeUsers]);
 
-  const formatNameForLegend = (name: string | null | undefined) => {
+  const formatLegendName = (name: string) => {
     if (!name) return '';
-    if (name.startsWith('THE ')) {
-      return name.substring(4);
-    }
     const parts = name.split(' ');
     if (parts.length > 1) {
-      const surname = parts[parts.length - 1];
-      if (surnameCounts.get(surname) === 1) {
-        return surname;
-      }
-      return `${parts[0].charAt(0)} ${surname}`;
+      const s = parts[parts.length - 1];
+      return surnameCounts.get(s) === 1 ? s : `${parts[0].charAt(0)} ${s}`;
     }
     return name;
   };
 
-
   return (
     <div className="space-y-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>Player Position By Week</CardTitle>
-          <CardDescription>
-            Each line represents a player's rank over the chronological weeks. Future games are excluded from the visual timeline.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center items-center h-[600px]">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                    <Loader2 className="size-5 animate-spin" />
-                    <span>Loading chart data...</span>
+      {isLoading ? (
+          <Card className="flex justify-center items-center h-[600px]"><Loader2 className="size-8 animate-spin text-muted-foreground" /></Card>
+      ) : (
+          <Card>
+            <CardHeader><CardTitle>Player Position By Week</CardTitle><CardDescription>Weekly rank progression for active season players.</CardDescription></CardHeader>
+            <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-9 gap-x-4 gap-y-1 text-[10px] mb-6">
+                    {legendUsers.map((u, i) => {
+                        if (!u) return <div key={i} />;
+                        return (
+                            <div key={u.id} className="flex items-center space-x-2 truncate">
+                                <span className="h-2 w-2 rounded-sm shrink-0" style={{ backgroundColor: chartConfig[u.name]?.colour }}></span>
+                                <span className="truncate">{`${u.rank} ${formatLegendName(u.name)}`}</span>
+                            </div>
+                        );
+                    })}
                 </div>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-9 gap-x-4 gap-y-0 text-xs mb-6">
-                {legendUsers.map((user, index) => {
-                  if (!user) return <div key={`empty-${index}`} />;
-                  const userConfig = chartConfig[user.name];
-                  if (!userConfig) return null;
-                  const formattedName = formatNameForLegend(user.name);
-                  return (
-                    <div key={user.id} className="flex items-center space-x-2 truncate py-0">
-                      <span
-                        className="inline-block h-2 w-2 rounded-sm shrink-0"
-                        style={{ backgroundColor: userConfig.colour }}
-                      ></span>
-                      <span className="truncate" title={`${user.name} ${user.rank}`}>{`${user.rank} ${formattedName}`}</span>
-                    </div>
-                  );
-                })}
-              </div>
-              <PlayerRankChart 
-                chartData={chartData} 
-                yAxisDomain={yAxisDomain} 
-                sortedUsers={sortedUsers} 
-                chartConfig={chartConfig} 
-                currentUserId={resolvedUserId} 
-              />
-            </>
-          )}
-        </CardContent>
-      </Card>
+              <PlayerRankChart chartData={chartData} yAxisDomain={yAxisDomain} sortedUsers={activeUsers} chartConfig={chartConfig} currentUserId={resolvedUserId} />
+            </CardContent>
+          </Card>
+      )}
     </div>
   );
 }
