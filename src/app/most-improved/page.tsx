@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { allAwardPeriods } from '@/lib/award-periods';
+import historicalPlayersData from '@/lib/historical-players.json';
 
 const getRankChangeIcon = (change: number) => {
   if (change > 0) return ArrowUp;
@@ -95,7 +96,6 @@ export default function MostImprovedPage() {
     
     const rawPeriod = allAwardPeriods.find(p => currentWeek >= p.startWeek && currentWeek < p.endWeek) || allAwardPeriods[allAwardPeriods.length - 1];
     
-    // Check if points scored in current month
     const hasProgress = users.some(u => {
         if (!activeUserIds.has(u.id)) return false;
         const h = userHistories.find(hist => hist.userId === u.id);
@@ -158,7 +158,7 @@ export default function MostImprovedPage() {
         const isPast = period.endWeek <= currentWeek;
         const isFuture = !isPast && !isCurrent && period.startWeek > currentWeek;
 
-        // Hide current month data grid until week 2
+        // Rule: Hide current month results in grid until Week 2 scores are in
         const hideDueToTransition = transitionContext.isFinal && transitionContext.period.id === period.id;
         const hideDueToWeekOne = isCurrent && !transitionContext.isFinal;
 

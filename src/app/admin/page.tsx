@@ -163,8 +163,8 @@ export default function AdminPage() {
   React.useEffect(() => {
     if (!initialWeekSet) return;
     const results = weekFixtures.map(fixture => {
-      // Prepopulate with MatchDateOrig as requested, but favor matchDatePlay if it exists
-      const dateToUse = new Date(fixture.matchDatePlay || fixture.matchDateOrig);
+      // Prepopulate with MatchDateOrig as primary source for 'Actually Played' columns
+      const dateToUse = new Date(fixture.matchDateOrig);
       return {
         id: fixture.id,
         homeScore: fixture.homeScore,

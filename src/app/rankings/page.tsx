@@ -13,6 +13,7 @@ import type { User, UserHistory, Match, Prediction } from '@/lib/types';
 import { useCollection, useFirestore, useMemoFirebase, useResolvedUserId } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
+import historicalPlayersData from '@/lib/historical-players.json';
 
 export default function RankingsPage() {
   const firestore = useFirestore();
@@ -38,9 +39,14 @@ export default function RankingsPage() {
 
   const activeUsers = useMemo(() => {
     if (!users || !predictions) return [];
-    // Strictly filter for current season entries
+    
+    // Strictly filter for current season entries (historical ID or Pro, and valid prediction)
+    const historicalUserIds = new Set(historicalPlayersData.map(p => p.id));
     const activeIds = new Set(predictions.filter(p => p.rankings?.length === 20).map(p => p.userId || (p as any).id));
-    return users.filter(u => u.name && activeIds.has(u.id)).sort((a, b) => a.rank - b.rank);
+    
+    return users
+        .filter(u => u.name && (historicalUserIds.has(u.id) || u.isPro) && activeIds.has(u.id))
+        .sort((a, b) => a.rank - b.rank);
   }, [users, predictions]);
 
   const { chartData, yAxisDomain, chartConfig, legendUsers } = useMemo(() => {
