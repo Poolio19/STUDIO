@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Users, Database, Save, RefreshCw, Calendar as CalendarIcon } from 'lucide-react';
+import { Loader2, Users, Database, Save, RefreshCw, Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
@@ -59,13 +59,18 @@ const displayScore = (val: number | undefined | null | string) => {
     return String(val);
 }
 
+const timeOptions = ["12:00", "12:30", "14:00", "14:15", "15:00", "16:00", "16:30", "17:30", "19:30", "20:00", "20:15"];
+
 const scoresFormSchema = z.object({
   week: z.coerce.number().min(1).max(38),
   results: z.array(z.object({
     id: z.string(),
     homeScore: z.preprocess(scoreTransformer, z.number().int()),
     awayScore: z.preprocess(scoreTransformer, z.number().int()),
-    matchDatePlay: z.string(),
+    playYear: z.string(),
+    playMonth: z.string(),
+    playDay: z.string(),
+    playTime: z.string(),
   })),
 });
 
@@ -152,17 +157,23 @@ export default function AdminPage() {
   const weekFixtures = React.useMemo(() => {
     return allMatches
       .filter(fixture => fixture.week === selectedWeek)
-      .sort((a,b) => new Date(a.matchDatePlay).getTime() - new Date(b.matchDatePlay).getTime());
+      .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime());
   }, [selectedWeek, allMatches]);
 
   React.useEffect(() => {
     if (!initialWeekSet) return;
-    const results = weekFixtures.map(fixture => ({
-      id: fixture.id,
-      homeScore: fixture.homeScore,
-      awayScore: fixture.awayScore,
-      matchDatePlay: fixture.matchDatePlay,
-    }));
+    const results = weekFixtures.map(fixture => {
+      const dateToUse = new Date(fixture.matchDatePlay || fixture.matchDateOrig);
+      return {
+        id: fixture.id,
+        homeScore: fixture.homeScore,
+        awayScore: fixture.awayScore,
+        playYear: String(dateToUse.getUTCFullYear()),
+        playMonth: String(dateToUse.getUTCMonth() + 1).padStart(2, '0'),
+        playDay: String(dateToUse.getUTCDate()).padStart(2, '0'),
+        playTime: `${String(dateToUse.getUTCHours()).padStart(2, '0')}:${String(dateToUse.getUTCMinutes()).padStart(2, '0')}`,
+      };
+    });
     scoresForm.reset({ week: selectedWeek, results: results });
   }, [selectedWeek, weekFixtures, scoresForm, initialWeekSet]);
 
@@ -176,7 +187,7 @@ export default function AdminPage() {
             id: r.id, 
             homeScore: Number(r.homeScore), 
             awayScore: Number(r.awayScore),
-            matchDatePlay: r.matchDatePlay
+            matchDatePlay: `${r.playYear}-${r.playMonth}-${r.playDay}T${r.playTime}:00Z`
         })),
       };
       setLatestFileContent(JSON.stringify(weekResultsData, null, 2));
@@ -368,7 +379,7 @@ export default function AdminPage() {
                        const homeTeam = teamsMap.get(fixture.homeTeamId);
                        const awayTeam = teamsMap.get(fixture.awayTeamId);
                       return (
-                        <div key={fixture.id} className="p-2 border rounded-md bg-muted/5 space-y-2">
+                        <div key={fixture.id} className="p-3 border rounded-md bg-muted/5 space-y-3">
                             <div className="grid grid-cols-[1fr_auto_10px_auto_1fr] items-center gap-2">
                                 <span className="text-right font-medium text-sm">{homeTeam?.name || fixture.homeTeamId}</span>
                                 <Controller
@@ -388,16 +399,49 @@ export default function AdminPage() {
                                 />
                                 <span className="font-medium text-sm">{awayTeam?.name || fixture.awayTeamId}</span>
                             </div>
-                            <div className="flex items-center gap-2 px-2">
-                                <CalendarIcon className="size-3 text-muted-foreground" />
-                                <span className="text-[10px] uppercase font-bold text-muted-foreground w-20">Played:</span>
-                                <Controller
-                                    control={scoresForm.control}
-                                    name={`results.${index}.matchDatePlay`}
-                                    render={({ field }) => (
-                                        <Input {...field} type="text" className="flex-1 text-[10px] h-6 bg-background" placeholder="YYYY-MM-DDTHH:MM:SSZ" />
-                                    )}
-                                />
+                            <div className="flex flex-wrap items-center gap-3 px-2 pt-2 border-t border-muted">
+                                <div className="flex items-center gap-1.5 min-w-[80px]">
+                                    <CalendarIcon className="size-3.5 text-muted-foreground" />
+                                    <span className="text-[10px] uppercase font-bold text-muted-foreground">Played Date:</span>
+                                </div>
+                                <div className="flex items-center gap-1 flex-1 min-w-[200px]">
+                                    <Controller
+                                        control={scoresForm.control}
+                                        name={`results.${index}.playYear`}
+                                        render={({ field }) => (
+                                            <Input {...field} className="w-16 h-7 text-[11px] text-center px-1" placeholder="YYYY" />
+                                        )}
+                                    />
+                                    <Controller
+                                        control={scoresForm.control}
+                                        name={`results.${index}.playMonth`}
+                                        render={({ field }) => (
+                                            <Input {...field} className="w-10 h-7 text-[11px] text-center px-1" placeholder="MM" />
+                                        )}
+                                    />
+                                    <Controller
+                                        control={scoresForm.control}
+                                        name={`results.${index}.playDay`}
+                                        render={({ field }) => (
+                                            <Input {...field} className="w-10 h-7 text-[11px] text-center px-1" placeholder="DD" />
+                                        )}
+                                    />
+                                    <div className="flex items-center gap-1 ml-2">
+                                        <Clock className="size-3.5 text-muted-foreground" />
+                                        <Controller
+                                            control={scoresForm.control}
+                                            name={`results.${index}.playTime`}
+                                            render={({ field }) => (
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <SelectTrigger className="w-20 h-7 text-[11px] px-2"><SelectValue /></SelectTrigger>
+                                                    <SelectContent>
+                                                        {timeOptions.map(t => <SelectItem key={t} value={t} className="text-[11px]">{t}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                            )}
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                       )

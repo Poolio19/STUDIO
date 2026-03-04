@@ -92,7 +92,7 @@ export async function recalculateAllDataClientSide(
       });
 
       const playedMatches = allMatches.filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1)
-          .sort((a,b) => new Date(a.matchDatePlay).getTime() - new Date(b.matchDatePlay).getTime());
+          .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime());
       
       const playedWeeks = [0, ...new Set(playedMatches.map(m => m.week))].sort((a,b) => a-b);
       const latestAbsoluteWeek = Math.max(0, ...playedWeeks);
@@ -142,7 +142,7 @@ export async function recalculateAllDataClientSide(
                   addOp(b => b.set(doc(firestore, 'standings', t.id), { teamId: t.id, rank: weekRanks.get(t.id) || 20, ...s }));
                   
                   const teamMatches = playedMatches.filter(m => (m.homeTeamId === t.id || m.awayTeamId === t.id))
-                      .sort((a,b) => new Date(a.matchDatePlay).getTime() - new Date(b.matchDatePlay).getTime()).slice(-6);
+                      .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime()).slice(-6);
                   
                   const results = teamMatches.map(m => {
                       const hS = Number(m.homeScore); const aS = Number(m.awayScore);
