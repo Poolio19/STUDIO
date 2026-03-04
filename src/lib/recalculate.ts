@@ -9,7 +9,6 @@ import {
   type WriteBatch,
 } from 'firebase/firestore';
 import type { Team, Prediction, User as UserProfile, UserHistory, Match } from '@/lib/types';
-import historicalPlayersData from './historical-players.json';
 import historicalMimoAwardsData from './historical-mimo-awards.json';
 import { allAwardPeriods } from './award-periods';
 
@@ -43,7 +42,6 @@ export async function recalculateAllDataClientSide(
           .map(p => p.userId || (p as any).id)
       );
       
-      // Filter for users who are active this season
       const activeUsersForRankings = allUsers.filter(u => activeUserIds.has(u.id));
 
       progressCallback('Clearing derived database tables...');
@@ -81,11 +79,16 @@ export async function recalculateAllDataClientSide(
               if (uId) {
                   let type: 'winner' | 'runner-up' = 'winner';
                   if (award.type.toLowerCase().includes('ru')) type = 'runner-up';
-                  const awardId = `hist-${uId}-${monthData.season}-${monthData.month}-${idx}`.replace(/\s+/g, '-');
+                  // Clean ID to avoid path errors
+                  const awardId = `hist-${uId}-${monthData.season}-${monthData.month}-${idx}`.replace(/[^a-zA-Z0-9-]/g, '-');
                   addOp(b => b.set(doc(firestore, 'monthlyMimoM', awardId), {
-                      id: awardId, userId: uId, month: monthData.month.toLowerCase(), year: year, type: type,
+                      id: awardId, 
+                      userId: uId, 
+                      month: monthData.month.toLowerCase(), 
+                      year: year, 
+                      type: type,
                       improvement: award.improvement ?? 0,
-                      special: award.type === 'XMAS NO1' ? 'Xmas No 1' : undefined
+                      ...(award.type === 'XMAS NO1' ? { special: 'Xmas No 1' } : {})
                   }));
               }
           });
@@ -100,7 +103,6 @@ export async function recalculateAllDataClientSide(
       const cumulativeTStats: { [tId: string]: any } = {};
       teams.forEach(t => cumulativeTStats[t.id] = { points: 0, goalDifference: 0, goalsFor: 0, goalsAgainst: 0, wins: 0, draws: 0, losses: 0, gamesPlayed: 0 });
 
-      // Process every week to build history
       for (let week = 0; week <= 38; week++) {
           if (week > 0) {
               const weekMatches = playedMatches.filter(m => m.week === week);
@@ -186,7 +188,6 @@ export async function recalculateAllDataClientSide(
           });
       }
 
-      // Finalize User profiles with latest stats
       for (const u of allUsers) {
           const hist = allHistories[u.id];
           const latest = hist.weeklyScores.find(s => s.week === latestAbsoluteWeek) || hist.weeklyScores[hist.weeklyScores.length - 1];
@@ -228,7 +229,7 @@ export async function recalculateAllDataClientSide(
                       const awardId = `2025-${period.id}-${w.uId}`;
                       addOp(b => b.set(doc(firestore, 'monthlyMimoM', awardId), {
                           id: awardId, userId: w.uId, month: period.month || period.id, year: period.year, type: 'winner', improvement: w.improvement,
-                          special: period.id === 'xmas' ? 'Xmas No 1' : undefined
+                          ...(period.id === 'xmas' ? { special: 'Xmas No 1' } : {})
                       }));
                   });
 

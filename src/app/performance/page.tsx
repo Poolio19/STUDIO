@@ -38,6 +38,7 @@ export default function PerformancePage() {
 
   const activeUsers = useMemo(() => {
     if (!users || !predictions) return [];
+    // Only players with a full current season prediction
     const activeIds = new Set(predictions.filter(p => p.rankings?.length === 20).map(p => p.userId || (p as any).id));
     return users.filter(u => u.name && activeIds.has(u.id)).sort((a, b) => a.rank - b.rank);
   }, [users, predictions]);

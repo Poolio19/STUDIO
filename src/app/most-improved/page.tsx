@@ -95,7 +95,6 @@ export default function MostImprovedPage() {
     
     const rawPeriod = allAwardPeriods.find(p => currentWeek >= p.startWeek && currentWeek < p.endWeek) || allAwardPeriods[allAwardPeriods.length - 1];
     
-    // Check if anyone has actually scored points in this month
     const hasProgress = users.some(u => {
         if (!activeUserIds.has(u.id)) return false;
         const h = userHistories.find(hist => hist.userId === u.id);
@@ -105,7 +104,6 @@ export default function MostImprovedPage() {
         return currentS > startS;
     });
 
-    // If no progress yet, we are in Week 1 of a new month. Pivot to prev month.
     const isTransition = !hasProgress && currentWeek >= rawPeriod.startWeek && currentWeek > 0;
     
     if (isTransition) {
@@ -159,7 +157,6 @@ export default function MostImprovedPage() {
         const isPast = period.endWeek <= currentWeek;
         const isFuture = !isPast && !isCurrent && period.startWeek > currentWeek;
 
-        // Rule: Don't show in Hall of Fame if in Week 1 transition or if it's the very first week of the month
         const hideDueToTransition = transitionContext.isFinal && transitionContext.period.id === period.id;
         const hideDueToWeekOne = isCurrent && !transitionContext.isFinal;
 
@@ -192,7 +189,6 @@ export default function MostImprovedPage() {
 
   const getWinnerRowStyle = (rank: number, improvement: number) => {
       if (improvement <= 0) return {};
-      // Yellow for winner, Slate for runner-up
       if (rank === 1) return { backgroundColor: 'rgba(250, 204, 21, 0.2)' };
       if (ladderData.topImp !== ladderData.ruImp && improvement === ladderData.ruImp) return { backgroundColor: 'rgba(148, 163, 184, 0.2)' };
       return {};
@@ -274,7 +270,7 @@ export default function MostImprovedPage() {
                                             <div className="flex-1 flex flex-col justify-center px-2 text-center overflow-hidden">
                                                 <p className="text-[13px] font-bold text-slate-900 tracking-tight">{award.runnersUp.length > 1 ? 'JoRuMiMoM' : 'RuMiMoM'}</p>
                                                 <p className="text-[12px] font-bold truncate leading-tight my-0.5">{ru.name}</p>
-                                                <p className="text-[11px] font-black uppercase text-slate-950/80">{formatImprovementText(ru.improvement)}</p>
+                                                <p className={cn("text-[11px] font-black uppercase text-slate-950/80")}>{formatImprovementText(ru.improvement)}</p>
                                                 <p className="text-[10px] font-medium text-slate-950/60">{formatPrizeMoney(ru.prize || 0)}</p>
                                             </div>
                                         </div>

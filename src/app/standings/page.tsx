@@ -61,9 +61,9 @@ export default function StandingsPage() {
         
         const finalStandings = standingsData.map(standing => {
             const team = teamMap.get(standing.teamId)!;
-            // CRITICAL: Sort form guide by matchDatePlay strictly
+            // SORT BY PLAY DATE CHRONOLOGICALLY
             const teamMatches = played.filter(m => m.homeTeamId === standing.teamId || m.awayTeamId === standing.teamId)
-                .sort((a,b) => new Date(a.matchDatePlay).getTime() - new Date(b.matchDatePlay).getTime()).slice(-6);
+                .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime()).slice(-6);
             
             const recentResults = teamMatches.map(m => {
                 const hS = Number(m.homeScore); const aS = Number(m.awayScore);
@@ -87,7 +87,7 @@ export default function StandingsPage() {
                 ranksByWeek[ws.week][ws.teamId] = ws.rank;
             });
             const data = [];
-            for (let w = 0; week <= maxW; week++) {
+            for (let w = 0; w <= maxW; w++) {
                 const entry: any = { week: w };
                 teamsData.forEach(t => entry[t.name] = ranksByWeek[w]?.[t.id] ?? 20);
                 data.push(entry);

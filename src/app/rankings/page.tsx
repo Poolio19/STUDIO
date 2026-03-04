@@ -38,6 +38,7 @@ export default function RankingsPage() {
 
   const activeUsers = useMemo(() => {
     if (!users || !predictions) return [];
+    // Strictly filter for current season entries
     const activeIds = new Set(predictions.filter(p => p.rankings?.length === 20).map(p => p.userId || (p as any).id));
     return users.filter(u => u.name && activeIds.has(u.id)).sort((a, b) => a.rank - b.rank);
   }, [users, predictions]);
