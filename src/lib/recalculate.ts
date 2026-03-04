@@ -80,15 +80,16 @@ export async function recalculateAllDataClientSide(
                   let type: 'winner' | 'runner-up' = 'winner';
                   if (award.type.toLowerCase().includes('ru')) type = 'runner-up';
                   const awardId = `hist-${uId}-${monthData.season}-${monthData.month}-${idx}`.replace(/[^a-zA-Z0-9-]/g, '-');
-                  addOp(b => b.set(doc(firestore, 'monthlyMimoM', awardId), {
+                  const awardData: any = {
                       id: awardId, 
                       userId: uId, 
                       month: monthData.month.toLowerCase(), 
                       year: year, 
                       type: type,
-                      improvement: Number(award.improvement ?? 0),
-                      ...(award.type === 'XMAS NO1' ? { special: 'Xmas No 1' } : {})
-                  }));
+                      improvement: Number(award.improvement ?? 0)
+                  };
+                  if (award.type === 'XMAS NO1') awardData.special = 'Xmas No 1';
+                  addOp(b => b.set(doc(firestore, 'monthlyMimoM', awardId), awardData));
               }
           });
       });
@@ -226,10 +227,11 @@ export async function recalculateAllDataClientSide(
 
                   winners.forEach(w => {
                       const awardId = `2025-${period.id}-${w.uId}`;
-                      addOp(b => b.set(doc(firestore, 'monthlyMimoM', awardId), {
-                          id: awardId, userId: w.uId, month: period.month || period.id, year: period.year, type: 'winner', improvement: Number(w.improvement),
-                          ...(period.id === 'xmas' ? { special: 'Xmas No 1' } : {})
-                      }));
+                      const awardData: any = {
+                          id: awardId, userId: w.uId, month: period.month || period.id, year: period.year, type: 'winner', improvement: Number(w.improvement)
+                      };
+                      if (period.id === 'xmas') awardData.special = 'Xmas No 1';
+                      addOp(b => b.set(doc(firestore, 'monthlyMimoM', awardId), awardData));
                   });
 
                   if (period.id !== 'xmas' && winners.length === 1 && periodScores.length > 1) {

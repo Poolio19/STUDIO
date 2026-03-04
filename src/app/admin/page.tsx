@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Users, Database, Save, RefreshCw, Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { Loader2, Users, Database, RefreshCw } from 'lucide-react';
 import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
@@ -28,7 +28,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-import type { Match, Team, WeekResults, User as UserProfile } from '@/lib/types';
+import type { Match, Team, User as UserProfile } from '@/lib/types';
 import { recalculateAllDataClientSide } from '@/lib/recalculate';
 
 import { useForm, Controller } from 'react-hook-form';
@@ -163,6 +163,7 @@ export default function AdminPage() {
   React.useEffect(() => {
     if (!initialWeekSet) return;
     const results = weekFixtures.map(fixture => {
+      // Prepopulate with MatchDateOrig as requested, but favor matchDatePlay if it exists
       const dateToUse = new Date(fixture.matchDatePlay || fixture.matchDateOrig);
       return {
         id: fixture.id,
