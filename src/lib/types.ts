@@ -1,4 +1,3 @@
-
 export type User = {
   id: string;
   name: string;
@@ -63,7 +62,8 @@ export type Match = {
     awayTeamId: string;
     homeScore: number;
     awayScore: number;
-    matchDate: string;
+    matchDateOrig: string;
+    matchDatePlay: string;
 };
 
 export type MatchResult = {

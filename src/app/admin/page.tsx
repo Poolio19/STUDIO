@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -12,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Users, Database, Save, RefreshCw } from 'lucide-react';
+import { Loader2, Users, Database, Save, RefreshCw, Calendar as CalendarIcon } from 'lucide-react';
 import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
@@ -66,6 +65,7 @@ const scoresFormSchema = z.object({
     id: z.string(),
     homeScore: z.preprocess(scoreTransformer, z.number().int()),
     awayScore: z.preprocess(scoreTransformer, z.number().int()),
+    matchDatePlay: z.string(),
   })),
 });
 
@@ -152,7 +152,7 @@ export default function AdminPage() {
   const weekFixtures = React.useMemo(() => {
     return allMatches
       .filter(fixture => fixture.week === selectedWeek)
-      .sort((a,b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime());
+      .sort((a,b) => new Date(a.matchDatePlay).getTime() - new Date(b.matchDatePlay).getTime());
   }, [selectedWeek, allMatches]);
 
   React.useEffect(() => {
@@ -161,6 +161,7 @@ export default function AdminPage() {
       id: fixture.id,
       homeScore: fixture.homeScore,
       awayScore: fixture.awayScore,
+      matchDatePlay: fixture.matchDatePlay,
     }));
     scoresForm.reset({ week: selectedWeek, results: results });
   }, [selectedWeek, weekFixtures, scoresForm, initialWeekSet]);
@@ -168,16 +169,20 @@ export default function AdminPage() {
   const onWriteResultsFileSubmit = (data: ScoresFormValues) => {
     setIsWritingFile(true);
     setLatestFileContent(null);
-    const validResults = data.results.filter(r => (Number(r.homeScore) >= 0 && Number(r.awayScore) >= 0) || (Number(r.homeScore) === -2 && Number(r.awayScore) === -2));
     try {
       const weekResultsData = {
         week: data.week,
-        results: validResults.map(r => ({ id: r.id, homeScore: Number(r.homeScore), awayScore: Number(r.awayScore) })),
+        results: data.results.map(r => ({ 
+            id: r.id, 
+            homeScore: Number(r.homeScore), 
+            awayScore: Number(r.awayScore),
+            matchDatePlay: r.matchDatePlay
+        })),
       };
       setLatestFileContent(JSON.stringify(weekResultsData, null, 2));
-      toast({ title: 'Content Created!', description: `Results content for ${validResults.length} matches is ready.` });
+      toast({ title: 'Batch Ready!', description: `Content for ${data.results.length} matches is staged.` });
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Content Creation Failed', description: error.message });
+      toast({ variant: 'destructive', title: 'Preparation Failed', description: error.message });
     } finally {
       setIsWritingFile(false);
     }
@@ -187,18 +192,21 @@ export default function AdminPage() {
     if (!firestore || !latestFileContent) return;
     setIsImportingFile(true);
     try {
-      const weekData: WeekResults = JSON.parse(latestFileContent);
+      const weekData: any = JSON.parse(latestFileContent);
       const batch = writeBatch(firestore);
-      const scoredResults = weekData.results.filter(r => (Number(r.homeScore) >= 0 && Number(r.awayScore) >= 0) || (Number(r.homeScore) === -2 && Number(r.awayScore) === -2));
-      for (const result of scoredResults) {
+      for (const result of weekData.results) {
         if (!result.id) continue;
-        batch.update(doc(firestore, 'matches', result.id), { homeScore: Number(result.homeScore), awayScore: Number(result.awayScore) });
+        batch.update(doc(firestore, 'matches', result.id), { 
+            homeScore: Number(result.homeScore), 
+            awayScore: Number(result.awayScore),
+            matchDatePlay: result.matchDatePlay
+        });
       }
       await batch.commit();
       await fetchAllMatches();
-      toast({ title: 'Import Complete!', description: `Updated ${scoredResults.length} matches.` });
+      toast({ title: 'Database Updated!', description: `Saved ${weekData.results.length} match records.` });
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Database Update Failed', description: error.message });
+      toast({ variant: 'destructive', title: 'Write Failed', description: error.message });
     } finally {
       setIsImportingFile(false);
     }
@@ -223,7 +231,7 @@ export default function AdminPage() {
   const handleImportAuthUsers = async () => {
     if (!firestore) return;
     setIsImportingUsers(true);
-    toast({ title: 'Starting Strict Identity Sync...', description: 'Syncing IDs and cleaning up duplicates.' });
+    toast({ title: 'Starting Identity Sync...', description: 'Syncing IDs and historical stats.' });
     
     try {
         const allUsersSnap = await getDocs(collection(firestore, 'users'));
@@ -241,7 +249,7 @@ export default function AdminPage() {
                 deletedCount++;
             }
         }
-        if (deletedCount > 0) toast({ title: `Removed ${deletedCount} duplicate profiles.` });
+        if (deletedCount > 0) toast({ title: `Removed ${deletedCount} duplicates.` });
 
         const authChunks = [];
         const authChunkSize = 50;
@@ -251,13 +259,11 @@ export default function AdminPage() {
 
         let totalCreated = 0;
         let totalUpdated = 0;
-        let chunkIndex = 1;
 
         for (const chunk of authChunks) {
             const result = await bulkCreateAuthUsersChunk(chunk);
             totalCreated += result.createdCount;
             totalUpdated += result.updatedCount;
-            chunkIndex++;
         }
         
         const dbChunks = [];
@@ -266,7 +272,6 @@ export default function AdminPage() {
             dbChunks.push(historicalPlayersData.slice(i, i + dbChunkSize));
         }
 
-        chunkIndex = 1;
         for (const chunk of dbChunks) {
             const batch = writeBatch(firestore);
             chunk.forEach(player => {
@@ -279,11 +284,10 @@ export default function AdminPage() {
                 }, { merge: true });
             });
             await batch.commit();
-            chunkIndex++;
         }
 
         toast({
-            title: 'Strict Identity Sync Complete!',
+            title: 'Identity Sync Complete!',
             description: `Auth: ${totalCreated} new, ${totalUpdated} fixed. Historical stats restored.`,
         });
     } catch (error: any) {
@@ -340,8 +344,8 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-2">
             <CardHeader>
-                <CardTitle>Step 1 &amp; 2: Enter &amp; Write Results</CardTitle>
-                <CardDescription>Select a week, enter scores, then save to DB.</CardDescription>
+                <CardTitle>Step 1 &amp; 2: Results &amp; Played Dates</CardTitle>
+                <CardDescription>Select a week, enter scores and adjust Played Dates if rescheduled.</CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={scoresForm.handleSubmit(onWriteResultsFileSubmit)} className="space-y-4">
@@ -359,36 +363,49 @@ export default function AdminPage() {
                       </Select>
                     )}
                   />
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     {weekFixtures.map((fixture, index) => {
                        const homeTeam = teamsMap.get(fixture.homeTeamId);
                        const awayTeam = teamsMap.get(fixture.awayTeamId);
                       return (
-                        <div key={fixture.id} className="grid grid-cols-[1fr_auto_10px_auto_1fr] items-center gap-2">
-                            <span className="text-right font-medium">{homeTeam?.name || fixture.homeTeamId}</span>
-                            <Controller
-                                control={scoresForm.control}
-                                name={`results.${index}.homeScore`}
-                                render={({ field }) => (
-                                    <Input {...field} type="text" className="w-20 text-center h-8" value={displayScore(field.value)} onChange={e => field.onChange(e.target.value.toUpperCase())} />
-                                )}
-                            />
-                            <span className="text-center font-bold">-</span>
-                             <Controller
-                                control={scoresForm.control}
-                                name={`results.${index}.awayScore`}
-                                render={({ field }) => (
-                                    <Input {...field} type="text" className="w-20 text-center h-8" value={displayScore(field.value)} onChange={e => field.onChange(e.target.value.toUpperCase())} />
-                                )}
-                            />
-                            <span className="font-medium">{awayTeam?.name || fixture.awayTeamId}</span>
+                        <div key={fixture.id} className="p-2 border rounded-md bg-muted/5 space-y-2">
+                            <div className="grid grid-cols-[1fr_auto_10px_auto_1fr] items-center gap-2">
+                                <span className="text-right font-medium text-sm">{homeTeam?.name || fixture.homeTeamId}</span>
+                                <Controller
+                                    control={scoresForm.control}
+                                    name={`results.${index}.homeScore`}
+                                    render={({ field }) => (
+                                        <Input {...field} type="text" className="w-12 text-center h-8" value={displayScore(field.value)} onChange={e => field.onChange(e.target.value.toUpperCase())} />
+                                    )}
+                                />
+                                <span className="text-center font-bold">-</span>
+                                 <Controller
+                                    control={scoresForm.control}
+                                    name={`results.${index}.awayScore`}
+                                    render={({ field }) => (
+                                        <Input {...field} type="text" className="w-12 text-center h-8" value={displayScore(field.value)} onChange={e => field.onChange(e.target.value.toUpperCase())} />
+                                    )}
+                                />
+                                <span className="font-medium text-sm">{awayTeam?.name || fixture.awayTeamId}</span>
+                            </div>
+                            <div className="flex items-center gap-2 px-2">
+                                <CalendarIcon className="size-3 text-muted-foreground" />
+                                <span className="text-[10px] uppercase font-bold text-muted-foreground w-20">Played:</span>
+                                <Controller
+                                    control={scoresForm.control}
+                                    name={`results.${index}.matchDatePlay`}
+                                    render={({ field }) => (
+                                        <Input {...field} type="text" className="flex-1 text-[10px] h-6 bg-background" placeholder="YYYY-MM-DDTHH:MM:SSZ" />
+                                    )}
+                                />
+                            </div>
                         </div>
                       )
                     })}
                   </div>
-                  <div className='flex items-center gap-4'>
-                    <Button type="submit" disabled={isWritingFile}>{isWritingFile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} 1. Prepare Week {selectedWeek}</Button>
-                    <Button type="button" onClick={handleImportResultsFile} disabled={isImportingFile || !latestFileContent}>{isImportingFile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} 2. Write to DB</Button>
+                  <div className='flex items-center gap-4 pt-4'>
+                    <Button type="submit" disabled={isWritingFile}>{isWritingFile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} 1. Prepare Changes</Button>
+                    <Button type="button" onClick={handleImportResultsFile} disabled={isImportingFile || !latestFileContent}>{isImportingFile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} 2. Save to Database</Button>
                   </div>
                 </form>
             </CardContent>
@@ -419,7 +436,7 @@ export default function AdminPage() {
                           <Button variant="outline" className="w-full" disabled={isImportingUsers}>{isImportingUsers ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Users className="mr-2 h-4 w-4" />} Bulk Sync & Force Reset</Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
-                          <AlertDialogHeader><AlertDialogTitle>Strict Identity Sync</AlertDialogTitle><AlertDialogDescription>Resets passwords to `Password`, forces canonical UIDs (usr_XXX), and cleans up duplicate profile documents in Firestore.</AlertDialogDescription></AlertDialogHeader>
+                          <AlertDialogHeader><AlertDialogTitle>Strict Identity Sync</AlertDialogTitle><AlertDialogDescription>Resets passwords to `Password` and restores canonical UIDs.</AlertDialogDescription></AlertDialogHeader>
                           <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction onClick={handleImportAuthUsers}>Sync & Reset Now</AlertDialogAction>
@@ -433,7 +450,7 @@ export default function AdminPage() {
       <Card>
           <CardHeader>
               <CardTitle className="flex items-center gap-2"><Database className="size-5" /> Live Career Stats (Editable)</CardTitle>
-              <CardDescription>Manually adjust historical tallies stored in Firestore. These are seeded from JSON but saved to DB.</CardDescription>
+              <CardDescription>Manually adjust historical tallies stored in Firestore.</CardDescription>
           </CardHeader>
           <CardContent>
               <div className="overflow-x-auto">

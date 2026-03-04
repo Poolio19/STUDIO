@@ -122,7 +122,7 @@ export default function MostImprovedPage() {
         return currentScore > startScore;
     });
 
-    // We are in Week 1 of a month if we've passed the start week but no one has scored yet
+    // Week 1 Transition Phase: Stuck at 0 pts change, show previous month
     const isWeekOneTransition = !hasProgress && currentWeek >= rawPeriod.startWeek && currentWeek > 0;
     
     if (isWeekOneTransition) {
@@ -277,7 +277,7 @@ export default function MostImprovedPage() {
                                         <TableCell className="p-2 font-black text-center">{user.displayRank}</TableCell>
                                         <TableCell className="p-2">
                                             <div className="flex items-center gap-3">
-                                                <Avatar className="h-8 w-8 rounded-none shrink-0"><AvatarImage src={getAvatarUrl(user.avatar)} className="object-cover h-full w-full" /><AvatarFallback className="rounded-none">{user.name.charAt(0)}</AvatarFallback></Avatar>
+                                                <Avatar className="h-8 w-8 rounded-none shrink-0"><AvatarImage src={getAvatarUrl(user.avatar)} className="object-cover h-full w-full rounded-none" /><AvatarFallback className="rounded-none">{user.name.charAt(0)}</AvatarFallback></Avatar>
                                                 <span className="font-bold truncate">{user.name}</span>
                                             </div>
                                         </TableCell>
@@ -313,7 +313,7 @@ export default function MostImprovedPage() {
                                         return (
                                             <div key={winner.id} style={style} className={cn("rounded-none flex items-stretch h-[100px] overflow-hidden shadow-sm border", isXmas && "border-2")}>
                                                 {isXmas && <Holly />}
-                                                <Avatar className="w-1/4 h-full rounded-none shrink-0 border-r bg-card"><AvatarImage src={getAvatarUrl(winner.avatar)} className="object-cover h-full" /><AvatarFallback className="rounded-none">{winner.name?.charAt(0)}</AvatarFallback></Avatar>
+                                                <Avatar className="w-1/4 h-full rounded-none shrink-0 border-r bg-card"><AvatarImage src={getAvatarUrl(winner.avatar)} className="object-cover h-full rounded-none" /><AvatarFallback className="rounded-none">{winner.name?.charAt(0)}</AvatarFallback></Avatar>
                                                 <div className="flex-1 flex flex-col justify-center px-2 text-center overflow-hidden">
                                                     <p className={cn("text-[13px] font-bold tracking-tight", isXmas ? "text-white" : "text-yellow-950")}>{title}</p>
                                                     <p className="text-[12px] font-bold truncate leading-tight my-0.5">{winner.name}</p>
@@ -327,7 +327,7 @@ export default function MostImprovedPage() {
                                         const title = award.runnersUp.length > 1 ? 'JoRuMiMoM' : 'RuMiMoM';
                                         return (
                                             <div key={ru.id} style={getDilutedBackground('slate', award.runnersUp.length)} className="rounded-none flex items-stretch h-[100px] overflow-hidden shadow-sm border border-slate-600/10">
-                                                <Avatar className="w-1/4 h-full rounded-none shrink-0 border-r bg-card"><AvatarImage src={getAvatarUrl(ru.avatar)} className="object-cover h-full" /><AvatarFallback className="rounded-none">{ru.name?.charAt(0)}</AvatarFallback></Avatar>
+                                                <Avatar className="w-1/4 h-full rounded-none shrink-0 border-r bg-card"><AvatarImage src={getAvatarUrl(ru.avatar)} className="object-cover h-full rounded-none" /><AvatarFallback className="rounded-none">{ru.name?.charAt(0)}</AvatarFallback></Avatar>
                                                 <div className="flex-1 flex flex-col justify-center px-2 text-center overflow-hidden">
                                                     <p className="text-[13px] font-bold text-slate-900 tracking-tight">{title}</p>
                                                     <p className="text-[12px] font-bold truncate leading-tight my-0.5">{ru.name}</p>

@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "UserProfile": {
@@ -195,9 +194,10 @@
         "awayTeamId": { "type": "string" },
         "homeScore": { "type": "number" },
         "awayScore": { "type": "number" },
-        "matchDate": { "type": "string", "format": "date-time" }
+        "matchDateOrig": { "type": "string", "format": "date-time" },
+        "matchDatePlay": { "type": "string", "format": "date-time" }
       },
-      "required": ["week", "homeTeamId", "awayTeamId", "homeScore", "awayScore", "matchDate"]
+      "required": ["week", "homeTeamId", "awayTeamId", "homeScore", "awayScore", "matchDateOrig", "matchDatePlay"]
     },
     "Message": {
       "title": "Message",
@@ -305,6 +305,3 @@
     ]
   }
 }
-    
-
-    

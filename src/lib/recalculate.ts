@@ -17,6 +17,7 @@ import { allAwardPeriods } from './award-periods';
 /**
  * Recalculates all derived data and seeds historical records.
  * Strictly calculates ranks among active 2025-26 players only (~106 entries).
+ * Enforces Number() coercion to fix Goal Difference bugs.
  */
 export async function recalculateAllDataClientSide(
   firestore: Firestore,
@@ -97,18 +98,11 @@ export async function recalculateAllDataClientSide(
       });
 
       const playedMatches = allMatches.filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1)
-          .sort((a,b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime());
+          .sort((a,b) => new Date(a.matchDatePlay).getTime() - new Date(b.matchDatePlay).getTime());
       
       const playedWeeks = [0, ...new Set(playedMatches.map(m => m.week))].sort((a,b) => a-b);
       const latestAbsoluteWeek = Math.max(0, ...playedWeeks);
 
-      let chronologicalWeek = 0;
-      const playedWeeksSet = new Set(playedWeeks);
-      for (let i = 1; i <= 38; i++) {
-          if (playedWeeksSet.has(i)) chronologicalWeek = i;
-          else break;
-      }
-      
       const cumulativeTStats: { [tId: string]: any } = {};
       teams.forEach(t => cumulativeTStats[t.id] = { points: 0, goalDifference: 0, goalsFor: 0, goalsAgainst: 0, wins: 0, draws: 0, losses: 0, gamesPlayed: 0 });
 
@@ -125,15 +119,15 @@ export async function recalculateAllDataClientSide(
                   
                   h.goalsFor = Number(h.goalsFor) + hS;
                   h.goalsAgainst = Number(h.goalsAgainst) + aS;
-                  h.gamesPlayed++;
+                  h.gamesPlayed = Number(h.gamesPlayed) + 1;
                   
                   a.goalsFor = Number(a.goalsFor) + aS;
                   a.goalsAgainst = Number(a.goalsAgainst) + hS;
-                  a.gamesPlayed++;
+                  a.gamesPlayed = Number(a.gamesPlayed) + 1;
                   
-                  if (hS > aS) { h.points += 3; h.wins++; a.losses++; }
-                  else if (hS < aS) { a.points += 3; a.wins++; h.losses++; }
-                  else { h.points++; h.draws++; a.points++; a.draws++; }
+                  if (hS > aS) { h.points = Number(h.points) + 3; h.wins = Number(h.wins) + 1; a.losses = Number(a.losses) + 1; }
+                  else if (hS < aS) { a.points = Number(a.points) + 3; a.wins = Number(a.wins) + 1; h.losses = Number(h.losses) + 1; }
+                  else { h.points = Number(h.points) + 1; h.draws = Number(h.draws) + 1; a.points = Number(a.points) + 1; a.draws = Number(a.draws) + 1; }
                   
                   h.goalDifference = Number(h.goalsFor) - Number(h.goalsAgainst);
                   a.goalDifference = Number(a.goalsFor) - Number(a.goalsAgainst);
@@ -145,7 +139,6 @@ export async function recalculateAllDataClientSide(
           
           const weekRanks = new Map(tRanked.map((s, i) => [s.teamId, i + 1]));
 
-          // Record standings for every week to ensure graph lines move correctly
           tRanked.forEach((s, idx) => {
               addOp(b => b.set(doc(firestore, 'weeklyTeamStandings', `wk${week}-${s.teamId}`), { week, teamId: s.teamId, rank: idx + 1 }));
           });
@@ -156,9 +149,8 @@ export async function recalculateAllDataClientSide(
                   const rank = weekRanks.get(t.id) || 20;
                   addOp(b => b.set(doc(firestore, 'standings', t.id), { teamId: t.id, rank, ...s }));
                   
-                  // Form guide strictly ordered by DATE
                   const teamMatches = playedMatches.filter(m => (m.homeTeamId === t.id || m.awayTeamId === t.id))
-                      .sort((a,b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime()).slice(-6);
+                      .sort((a,b) => new Date(a.matchDatePlay).getTime() - new Date(b.matchDatePlay).getTime()).slice(-6);
                   
                   const results = teamMatches.map(m => {
                       const hS = Number(m.homeScore);
@@ -180,7 +172,7 @@ export async function recalculateAllDataClientSide(
                   const actual = weekRanks.get(tId);
                   if (actual) {
                       const points = (5 - Math.abs((idx + 1) - actual));
-                      score += points;
+                      score = Number(score) + Number(points);
                       if (week === latestAbsoluteWeek) {
                           addOp(b => b.set(doc(firestore, 'playerTeamScores', `${u.id}-${tId}`), { userId: u.id, teamId: tId, score: points }));
                       }
@@ -243,7 +235,6 @@ export async function recalculateAllDataClientSide(
                   periodScores.sort((a,b) => b.improvement - a.improvement || b.score - a.score);
                   const topImp = periodScores[0].improvement;
                   
-                  // Solitary Xmas rule: Only one winner based on score tie-breaker
                   const winners = isXmas ? [periodScores[0]] : periodScores.filter(s => s.improvement === topImp);
 
                   winners.forEach(w => {

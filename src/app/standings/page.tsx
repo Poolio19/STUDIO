@@ -68,9 +68,9 @@ export default function StandingsPage() {
         
         const finalStandingsWithTeamData = standingsData.map(standing => {
             const team = teamMap.get(standing.teamId)!;
-            // SORT BY DATE to handle rescheduled games (e.g. Wk 31 appearing correctly)
+            // SORT BY PLAY DATE to ensure chronological sequence (e.g. W31 played early appears correctly)
             const teamMatches = playedMatches.filter(m => m.homeTeamId === standing.teamId || m.awayTeamId === standing.teamId)
-                .sort((a,b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime()).slice(-6);
+                .sort((a,b) => new Date(a.matchDatePlay).getTime() - new Date(b.matchDatePlay).getTime()).slice(-6);
             
             const recentResults: FormResult[] = teamMatches.map(m => {
                 const hS = Number(m.homeScore);
@@ -79,7 +79,7 @@ export default function StandingsPage() {
                 if (hS === aS) res = 'D';
                 else if (m.homeTeamId === standing.teamId) res = hS > aS ? 'W' : 'L';
                 else res = aS > hS ? 'W' : 'L';
-                return { result: res, week: m.week, date: m.matchDate };
+                return { result: res, week: m.week, date: m.matchDatePlay };
             });
             while (recentResults.length < 6) recentResults.unshift({ result: '-', week: 0, date: '' });
 
