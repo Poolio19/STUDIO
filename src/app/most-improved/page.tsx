@@ -128,7 +128,7 @@ export default function MostImprovedPage() {
             const endData = history.weeklyScores.filter(ws => ws.week <= (isFinal ? period.endWeek : currentWeek)).reverse()[0];
 
             if (startData && endData) {
-                const improvement = endData.score - startData.score;
+                const improvement = Number(endData.score) - Number(startData.score);
                 const rankChangeInMonth = (startData.rank > 0 && endData.rank > 0) ? startData.rank - endData.rank : 0;
                 results.push({ ...user, improvement, rankChangeInMonth, displayRank: 0 });
             }
@@ -164,17 +164,17 @@ export default function MostImprovedPage() {
         
         if (!hideDueToWeekOne && !hideDueToTransition && (isPast || isCurrent)) {
             const periodAwards = monthlyMimoMAwards.filter(a => 
-                a.year === period.year && (a.month.toLowerCase() === (period.month || period.id).toLowerCase() || (a.special === 'Xmas No 1' && period.id === 'xmas'))
+                a.year === period.year && (String(a.month).toLowerCase() === (period.month || period.id).toLowerCase() || (a.special === 'Xmas No 1' && period.id === 'xmas'))
             );
             
             const rawWinners = periodAwards.filter(a => a.type === 'winner').map(a => {
                 const u = userMap.get(a.userId);
-                return u ? { ...u, improvement: a.improvement ?? 0 } : null;
+                return u ? { ...u, improvement: Number(a.improvement ?? 0) } : null;
             }).filter(u => !!u);
 
             const rawRunnersUp = periodAwards.filter(a => a.type === 'runner-up').map(a => {
                 const u = userMap.get(a.userId);
-                return u ? { ...u, improvement: a.improvement ?? 0 } : null;
+                return u ? { ...u, improvement: Number(a.improvement ?? 0) } : null;
             }).filter(u => !!u);
 
             const winPrize = period.id === 'xmas' ? 10 : (10 / (rawWinners.length || 1));

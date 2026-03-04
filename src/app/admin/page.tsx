@@ -355,17 +355,17 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-2">
             <CardHeader>
-                <CardTitle>Step 1 &amp; 2: Results &amp; Played Dates</CardTitle>
+                <CardTitle>Results &amp; Played Dates</CardTitle>
                 <CardDescription>Select a week, enter scores and adjust Played Dates if rescheduled.</CardDescription>
             </CardHeader>
             <CardContent>
-                <form onSubmit={scoresForm.handleSubmit(onWriteResultsFileSubmit)} className="space-y-4">
+                <form onSubmit={scoresForm.handleSubmit(onWriteResultsFileSubmit)} className="space-y-6">
                   <Controller
                     control={scoresForm.control}
                     name="week"
                     render={({ field }) => (
                       <Select onValueChange={(value) => field.onChange(parseInt(value, 10))} value={String(field.value)}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="w-full lg:w-[200px]"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           {Array.from({ length: 38 }, (_, i) => i + 1).map(week => (
                             <SelectItem key={week} value={String(week)}>Week {week}</SelectItem>
@@ -374,14 +374,26 @@ export default function AdminPage() {
                       </Select>
                     )}
                   />
-                  <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="hidden lg:grid grid-cols-[1fr_auto_10px_auto_1fr_240px] items-center gap-4 px-4 text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                        <span className="text-right">Home</span>
+                        <span className="w-12 text-center">Score</span>
+                        <span />
+                        <span className="w-12 text-center">Score</span>
+                        <span className="text-left">Away</span>
+                        <span className="text-center">Actually Played (Y/M/D/Time)</span>
+                    </div>
                     {weekFixtures.map((fixture, index) => {
                        const homeTeam = teamsMap.get(fixture.homeTeamId);
                        const awayTeam = teamsMap.get(fixture.awayTeamId);
                       return (
-                        <div key={fixture.id} className="p-3 border rounded-md bg-muted/5 space-y-3">
-                            <div className="grid grid-cols-[1fr_auto_10px_auto_1fr] items-center gap-2">
-                                <span className="text-right font-medium text-sm">{homeTeam?.name || fixture.homeTeamId}</span>
+                        <div key={fixture.id} className="p-3 border rounded-md bg-muted/5">
+                            <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_10px_auto_1fr_240px] items-center gap-4">
+                                <div className="flex items-center justify-end gap-2 lg:gap-0 lg:block lg:text-right">
+                                    <span className="lg:hidden text-[10px] uppercase font-bold text-muted-foreground mr-auto">Home:</span>
+                                    <span className="font-medium text-sm">{homeTeam?.name || fixture.homeTeamId}</span>
+                                </div>
+                                
                                 <Controller
                                     control={scoresForm.control}
                                     name={`results.${index}.homeScore`}
@@ -389,7 +401,7 @@ export default function AdminPage() {
                                         <Input {...field} type="text" className="w-12 text-center h-8" value={displayScore(field.value)} onChange={e => field.onChange(e.target.value.toUpperCase())} />
                                     )}
                                 />
-                                <span className="text-center font-bold">-</span>
+                                <span className="text-center font-bold hidden lg:inline">-</span>
                                  <Controller
                                     control={scoresForm.control}
                                     name={`results.${index}.awayScore`}
@@ -397,59 +409,55 @@ export default function AdminPage() {
                                         <Input {...field} type="text" className="w-12 text-center h-8" value={displayScore(field.value)} onChange={e => field.onChange(e.target.value.toUpperCase())} />
                                     )}
                                 />
-                                <span className="font-medium text-sm">{awayTeam?.name || fixture.awayTeamId}</span>
-                            </div>
-                            <div className="flex flex-wrap items-center gap-3 px-2 pt-2 border-t border-muted">
-                                <div className="flex items-center gap-1.5 min-w-[80px]">
-                                    <CalendarIcon className="size-3.5 text-muted-foreground" />
-                                    <span className="text-[10px] uppercase font-bold text-muted-foreground">Played Date:</span>
+                                
+                                <div className="flex items-center justify-start gap-2 lg:gap-0 lg:block lg:text-left">
+                                    <span className="font-medium text-sm">{awayTeam?.name || fixture.awayTeamId}</span>
+                                    <span className="lg:hidden text-[10px] uppercase font-bold text-muted-foreground ml-auto">Away:</span>
                                 </div>
-                                <div className="flex items-center gap-1 flex-1 min-w-[200px]">
+
+                                <div className="flex items-center gap-1.5 justify-center pt-2 lg:pt-0 border-t lg:border-t-0 border-muted">
                                     <Controller
                                         control={scoresForm.control}
                                         name={`results.${index}.playYear`}
                                         render={({ field }) => (
-                                            <Input {...field} className="w-16 h-7 text-[11px] text-center px-1" placeholder="YYYY" />
+                                            <Input {...field} className="w-14 h-7 text-[11px] text-center px-1" placeholder="YYYY" />
                                         )}
                                     />
                                     <Controller
                                         control={scoresForm.control}
                                         name={`results.${index}.playMonth`}
                                         render={({ field }) => (
-                                            <Input {...field} className="w-10 h-7 text-[11px] text-center px-1" placeholder="MM" />
+                                            <Input {...field} className="w-9 h-7 text-[11px] text-center px-1" placeholder="MM" />
                                         )}
                                     />
                                     <Controller
                                         control={scoresForm.control}
                                         name={`results.${index}.playDay`}
                                         render={({ field }) => (
-                                            <Input {...field} className="w-10 h-7 text-[11px] text-center px-1" placeholder="DD" />
+                                            <Input {...field} className="w-9 h-7 text-[11px] text-center px-1" placeholder="DD" />
                                         )}
                                     />
-                                    <div className="flex items-center gap-1 ml-2">
-                                        <Clock className="size-3.5 text-muted-foreground" />
-                                        <Controller
-                                            control={scoresForm.control}
-                                            name={`results.${index}.playTime`}
-                                            render={({ field }) => (
-                                                <Select onValueChange={field.onChange} value={field.value}>
-                                                    <SelectTrigger className="w-20 h-7 text-[11px] px-2"><SelectValue /></SelectTrigger>
-                                                    <SelectContent>
-                                                        {timeOptions.map(t => <SelectItem key={t} value={t} className="text-[11px]">{t}</SelectItem>)}
-                                                    </SelectContent>
-                                                </Select>
-                                            )}
-                                        />
-                                    </div>
+                                    <Controller
+                                        control={scoresForm.control}
+                                        name={`results.${index}.playTime`}
+                                        render={({ field }) => (
+                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                <SelectTrigger className="w-[70px] h-7 text-[11px] px-1.5"><SelectValue /></SelectTrigger>
+                                                <SelectContent>
+                                                    {timeOptions.map(t => <SelectItem key={t} value={t} className="text-[11px]">{t}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                        )}
+                                    />
                                 </div>
                             </div>
                         </div>
                       )
                     })}
                   </div>
-                  <div className='flex items-center gap-4 pt-4'>
-                    <Button type="submit" disabled={isWritingFile}>{isWritingFile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} 1. Prepare Changes</Button>
-                    <Button type="button" onClick={handleImportResultsFile} disabled={isImportingFile || !latestFileContent}>{isImportingFile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} 2. Save to Database</Button>
+                  <div className='flex items-center gap-4 pt-4 border-t'>
+                    <Button type="submit" disabled={isWritingFile} className="flex-1 lg:flex-none">{isWritingFile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} 1. Prepare Changes</Button>
+                    <Button type="button" onClick={handleImportResultsFile} disabled={isImportingFile || !latestFileContent} className="flex-1 lg:flex-none">{isImportingFile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} 2. Save to Database</Button>
                   </div>
                 </form>
             </CardContent>

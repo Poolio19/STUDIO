@@ -79,7 +79,6 @@ export async function recalculateAllDataClientSide(
               if (uId) {
                   let type: 'winner' | 'runner-up' = 'winner';
                   if (award.type.toLowerCase().includes('ru')) type = 'runner-up';
-                  // Clean ID to avoid path errors
                   const awardId = `hist-${uId}-${monthData.season}-${monthData.month}-${idx}`.replace(/[^a-zA-Z0-9-]/g, '-');
                   addOp(b => b.set(doc(firestore, 'monthlyMimoM', awardId), {
                       id: awardId, 
@@ -87,7 +86,7 @@ export async function recalculateAllDataClientSide(
                       month: monthData.month.toLowerCase(), 
                       year: year, 
                       type: type,
-                      improvement: award.improvement ?? 0,
+                      improvement: Number(award.improvement ?? 0),
                       ...(award.type === 'XMAS NO1' ? { special: 'Xmas No 1' } : {})
                   }));
               }
@@ -103,7 +102,7 @@ export async function recalculateAllDataClientSide(
       const cumulativeTStats: { [tId: string]: any } = {};
       teams.forEach(t => cumulativeTStats[t.id] = { points: 0, goalDifference: 0, goalsFor: 0, goalsAgainst: 0, wins: 0, draws: 0, losses: 0, gamesPlayed: 0 });
 
-      for (let week = 0; week <= 38; week++) {
+      for (let week = 0; week <= latestAbsoluteWeek; week++) {
           if (week > 0) {
               const weekMatches = playedMatches.filter(m => m.week === week);
               weekMatches.forEach(m => {
@@ -130,7 +129,7 @@ export async function recalculateAllDataClientSide(
           }
 
           const tRanked = Object.entries(cumulativeTStats).map(([teamId, s]) => ({ teamId, ...s, name: teamMap.get(teamId)?.name || '' }))
-              .sort((a,b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.name.localeCompare(b.name));
+              .sort((a,b) => Number(b.points) - Number(a.points) || Number(b.goalDifference) - Number(a.goalDifference) || Number(b.goalsFor) - Number(a.goalsFor) || a.name.localeCompare(b.name));
           
           const weekRanks = new Map(tRanked.map((s, i) => [s.teamId, i + 1]));
 
@@ -175,7 +174,7 @@ export async function recalculateAllDataClientSide(
           });
           
           const uRanked = activeUsersForRankings.map(u => ({...u, score: uScores[u.id]}))
-              .sort((a, b) => b.score - a.score || (a.isPro ? -1 : 1) || (a.name || '').localeCompare(b.name || ''));
+              .sort((a, b) => Number(b.score) - Number(a.score) || (a.isPro ? -1 : 1) || (a.name || '').localeCompare(b.name || ''));
           
           const scoresOnly = uRanked.map(u => u.score);
           uRanked.forEach((u) => {
@@ -184,7 +183,7 @@ export async function recalculateAllDataClientSide(
           });
 
           allUsers.filter(u => !activeUserIds.has(u.id)).forEach(u => {
-              allHistories[u.id].weeklyScores.push({ week, score: uScores[u.id] || 0, rank: 0 });
+              allHistories[u.id].weeklyScores.push({ week, score: Number(uScores[u.id] || 0), rank: 0 });
           });
       }
 
@@ -196,11 +195,11 @@ export async function recalculateAllDataClientSide(
           const relevantRanks = hist.weeklyScores.filter(s => s.week > 0 && s.rank > 0).map(s => s.rank);
           
           addOp(b => b.set(doc(firestore, 'users', u.id), {
-              score: latest?.score || 0, rank: latest?.rank || 0, previousScore: prev.score, previousRank: prev.rank,
-              scoreChange: (latest?.score || 0) - prev.score, 
+              score: Number(latest?.score || 0), rank: latest?.rank || 0, previousScore: Number(prev.score), previousRank: prev.rank,
+              scoreChange: Number((latest?.score || 0) - prev.score), 
               rankChange: prev.rank > 0 && (latest?.rank || 0) > 0 ? prev.rank - latest.rank : 0,
-              maxScore: relevantScores.length > 0 ? Math.max(...relevantScores) : (latest?.score || 0), 
-              minScore: relevantScores.length > 0 ? Math.min(...relevantScores) : (latest?.score || 0),
+              maxScore: relevantScores.length > 0 ? Math.max(...relevantScores) : Number(latest?.score || 0), 
+              minScore: relevantScores.length > 0 ? Math.min(...relevantScores) : Number(latest?.score || 0),
               maxRank: relevantRanks.length > 0 ? Math.min(...relevantRanks) : (latest?.rank || 0),
               minRank: relevantRanks.length > 0 ? Math.max(...relevantRanks) : (latest?.rank || 0)
           }, { merge: true }));
@@ -216,7 +215,7 @@ export async function recalculateAllDataClientSide(
                   const sData = h.weeklyScores.find(ws => ws.week === period.startWeek);
                   const eData = h.weeklyScores.filter(ws => ws.week <= (latestAbsoluteWeek >= period.endWeek ? period.endWeek : latestAbsoluteWeek)).reverse()[0];
                   if (sData && eData) {
-                      periodScores.push({ uId: u.id, improvement: eData.score - sData.score, score: eData.score });
+                      periodScores.push({ uId: u.id, improvement: Number(eData.score - sData.score), score: Number(eData.score) });
                   }
               });
 
@@ -228,7 +227,7 @@ export async function recalculateAllDataClientSide(
                   winners.forEach(w => {
                       const awardId = `2025-${period.id}-${w.uId}`;
                       addOp(b => b.set(doc(firestore, 'monthlyMimoM', awardId), {
-                          id: awardId, userId: w.uId, month: period.month || period.id, year: period.year, type: 'winner', improvement: w.improvement,
+                          id: awardId, userId: w.uId, month: period.month || period.id, year: period.year, type: 'winner', improvement: Number(w.improvement),
                           ...(period.id === 'xmas' ? { special: 'Xmas No 1' } : {})
                       }));
                   });
@@ -239,7 +238,7 @@ export async function recalculateAllDataClientSide(
                           periodScores.filter(s => s.improvement === runnerUpImp).forEach(ru => {
                               const ruAwardId = `2025-${period.id}-ru-${ru.uId}`;
                               addOp(b => b.set(doc(firestore, 'monthlyMimoM', ruAwardId), {
-                                  id: ruAwardId, userId: ru.uId, month: period.month || period.id, year: period.year, type: 'runner-up', improvement: ru.improvement
+                                  id: ruAwardId, userId: ru.uId, month: period.month || period.id, year: period.year, type: 'runner-up', improvement: Number(ru.improvement)
                               }));
                           });
                       }

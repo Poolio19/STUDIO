@@ -61,7 +61,7 @@ export default function StandingsPage() {
         
         const finalStandings = standingsData.map(standing => {
             const team = teamMap.get(standing.teamId)!;
-            // SORT BY PLAY DATE CHRONOLOGICALLY
+            // CHRONOLOGICAL FORM GUIDE
             const teamMatches = played.filter(m => m.homeTeamId === standing.teamId || m.awayTeamId === standing.teamId)
                 .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime()).slice(-6);
             
@@ -130,7 +130,7 @@ export default function StandingsPage() {
                 <TableHead className="hidden md:table-cell text-center">Plyd</TableHead>
                 <TableHead className="text-center">GD</TableHead>
                 <TableHead className="text-center">Pts</TableHead>
-                <TableHead colSpan={6} className="text-center">Form Guide (L-R: Chronological Play-Order)</TableHead>
+                <TableHead colSpan={6} className="text-center">Form Guide (Chronological Order)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
