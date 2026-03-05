@@ -157,14 +157,15 @@ export default function AdminPage() {
   const weekFixtures = React.useMemo(() => {
     return allMatches
       .filter(fixture => fixture.week === selectedWeek)
-      .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime());
+      .sort((a,b) => new Date(a.matchDateOrig).getTime() - new Date(b.matchDateOrig).getTime());
   }, [selectedWeek, allMatches]);
 
   React.useEffect(() => {
-    if (!initialWeekSet) return;
+    if (!initialWeekSet || weekFixtures.length === 0) return;
     const results = weekFixtures.map(fixture => {
-      // Prepopulate with MatchDateOrig as primary source for 'Actually Played' columns
-      const dateToUse = new Date(fixture.matchDateOrig);
+      // Prioritize saved MatchDatePlay, but default to MatchDateOrig for prepopulation
+      const dateStr = fixture.matchDatePlay || fixture.matchDateOrig;
+      const dateToUse = new Date(dateStr);
       return {
         id: fixture.id,
         homeScore: fixture.homeScore,
