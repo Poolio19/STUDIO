@@ -29,7 +29,6 @@ import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { allAwardPeriods } from '@/lib/award-periods';
-import historicalPlayersData from '@/lib/historical-players.json';
 
 const getRankChangeIcon = (change: number) => {
   if (change > 0) return ArrowUp;
@@ -154,17 +153,16 @@ export default function MostImprovedPage() {
     const userMap = new Map(users.map(u => [u.id, u]));
 
     return allAwardPeriods.map(period => {
-        const isCurrent = (transitionContext.period.id === period.id && !transitionContext.isFinal);
+        const isCurrentAwardPeriod = (transitionContext.period.id === period.id && !transitionContext.isFinal);
         const isPast = period.endWeek <= currentWeek;
-        const isFuture = !isPast && !isCurrent && period.startWeek > currentWeek;
+        const isFuture = !isPast && !isCurrentAwardPeriod && period.startWeek > currentWeek;
 
-        // Rule: Hide current month results in grid until Week 2 scores are in
-        const hideDueToTransition = transitionContext.isFinal && transitionContext.period.id === period.id;
-        const hideDueToWeekOne = isCurrent && !transitionContext.isFinal;
+        // Hide current month grid item until Week 2 scores are in (progress exists)
+        const hideDueToWeekOne = isCurrentAwardPeriod && ladderData.list.every(u => u.improvement === 0);
 
         let winners: any[] = []; let runnersUp: any[] = [];
         
-        if (!hideDueToWeekOne && !hideDueToTransition && (isPast || isCurrent)) {
+        if (!hideDueToWeekOne && (isPast || isCurrentAwardPeriod)) {
             const periodAwards = monthlyMimoMAwards.filter(a => 
                 a.year === period.year && (String(a.month).toLowerCase() === (period.month || period.id).toLowerCase() || (a.special === 'Xmas No 1' && period.id === 'xmas'))
             );
@@ -185,9 +183,9 @@ export default function MostImprovedPage() {
             runnersUp = rawRunnersUp.map(r => ({ ...r, prize: ruPrize }));
         }
         
-        return { id: period.id, label: period.id === 'xmas' ? 'Xmas No. 1' : period.abbreviation, isCurrent, isFuture, winners, runnersUp };
+        return { id: period.id, label: period.id === 'xmas' ? 'Xmas No. 1' : period.abbreviation, isCurrent: isCurrentAwardPeriod, isFuture, winners, runnersUp };
     });
-  }, [users, monthlyMimoMAwards, currentWeek, transitionContext]);
+  }, [users, monthlyMimoMAwards, currentWeek, transitionContext, ladderData]);
 
   const getWinnerRowStyle = (rank: number, improvement: number) => {
       if (improvement <= 0) return {};
@@ -259,7 +257,7 @@ export default function MostImprovedPage() {
                                             {award.id === 'xmas' && <Holly />}
                                             <Avatar className="w-1/4 h-full rounded-none shrink-0 border-r bg-card"><AvatarImage src={getAvatarUrl(winner.avatar)} className="object-cover h-full rounded-none" /><AvatarFallback className="rounded-none">{winner.name?.charAt(0)}</AvatarFallback></Avatar>
                                             <div className="flex-1 flex flex-col justify-center px-2 text-center overflow-hidden">
-                                                <p className={cn("text-[13px] font-bold tracking-tight", award.id === 'xmas' ? "text-white" : "text-yellow-900")}>{award.id === 'xmas' ? 'Xmas No 1' : (award.winners.length > 1 ? 'JoMiMoM' : 'MiMoM')}</p>
+                                                <p className={cn("text-[13px] font-bold tracking-tight", award.id === 'xmas' ? "text-white" : (award.winners.length > 1 ? 'JoMiMoM' : 'MiMoM'))}>{award.id === 'xmas' ? 'Xmas No 1' : (award.winners.length > 1 ? 'JoMiMoM' : 'MiMoM')}</p>
                                                 <p className="text-[12px] font-bold truncate leading-tight my-0.5">{winner.name}</p>
                                                 <p className={cn("text-[11px] font-black uppercase", award.id === 'xmas' ? "text-yellow-400" : "text-yellow-950/80")}>{formatImprovementText(winner.improvement)}</p>
                                                 <p className={cn("text-[10px] font-medium", award.id === 'xmas' ? "text-white/80" : "text-yellow-950/60")}>{formatPrizeMoney(winner.prize || 0)}</p>

@@ -79,7 +79,6 @@ export async function recalculateAllDataClientSide(
               if (uId) {
                   let type: 'winner' | 'runner-up' = 'winner';
                   if (award.type.toLowerCase().includes('ru')) type = 'runner-up';
-                  // Fixed potential ID issues and typos
                   const cleanMonth = monthData.month.toLowerCase().replace('auf', 'aug');
                   const awardId = `hist-${uId}-${monthData.season}-${cleanMonth}-${idx}`.replace(/[^a-zA-Z0-9-]/g, '-');
                   const awardData: any = {
@@ -96,7 +95,6 @@ export async function recalculateAllDataClientSide(
           });
       });
 
-      // SORT BY PLAYED DATE FOR CHRONOLOGICAL FORM
       const playedMatches = allMatches.filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1)
           .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime());
       
@@ -115,7 +113,6 @@ export async function recalculateAllDataClientSide(
                   const hS = Number(m.homeScore);
                   const aS = Number(m.awayScore);
                   
-                  // FIXED GD BUG: Explicit number coercion to prevent string concatenation
                   h.goalsFor = Number(h.goalsFor) + hS;
                   h.goalsAgainst = Number(h.goalsAgainst) + aS;
                   h.gamesPlayed = Number(h.gamesPlayed) + 1;
@@ -138,7 +135,6 @@ export async function recalculateAllDataClientSide(
           
           const weekRanks = new Map(tRanked.map((s, i) => [s.teamId, i + 1]));
 
-          // RECORD EVERY WEEK FOR GRAPH SLOPES
           tRanked.forEach((s, idx) => {
               addOp(b => b.set(doc(firestore, 'weeklyTeamStandings', `wk${week}-${s.teamId}`), { week, teamId: s.teamId, rank: idx + 1 }));
           });

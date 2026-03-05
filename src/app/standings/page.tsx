@@ -61,9 +61,13 @@ export default function StandingsPage() {
         
         const finalStandings = standingsData.map(standing => {
             const team = teamMap.get(standing.teamId)!;
-            // CHRONOLOGICAL FORM GUIDE based on matchDatePlay
             const teamMatches = played.filter(m => m.homeTeamId === standing.teamId || m.awayTeamId === standing.teamId)
-                .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime()).slice(-6);
+                .sort((a,b) => {
+                    const dateA = new Date(a.matchDatePlay || a.matchDateOrig).getTime();
+                    const dateB = new Date(b.matchDatePlay || b.matchDateOrig).getTime();
+                    return dateA - dateB;
+                })
+                .slice(-6);
             
             const recentResults = teamMatches.map(m => {
                 const hS = Number(m.homeScore); const aS = Number(m.awayScore);
