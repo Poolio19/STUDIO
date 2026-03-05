@@ -94,7 +94,6 @@ export async function recalculateAllDataClientSide(
                   let type: 'winner' | 'runner-up' = 'winner';
                   if (award.type.toLowerCase().includes('ru')) type = 'runner-up';
                   
-                  // Fix ID and Month mapping
                   const cleanMonth = monthData.month.toLowerCase()
                     .replace('auf', 'aug')
                     .replace('auf', 'aug')
@@ -102,7 +101,7 @@ export async function recalculateAllDataClientSide(
                   
                   const awardId = `hist-${uId}-${monthData.season}-${cleanMonth}-${idx}`
                     .replace(/[^a-zA-Z0-9-]/g, '-')
-                    .replace('use-', 'usr-'); // Ensure usr_ prefix
+                    .replace('use-', 'usr-');
 
                   const awardData: any = {
                       id: awardId, 
@@ -119,7 +118,7 @@ export async function recalculateAllDataClientSide(
       });
 
       const playedMatches = allMatches.filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1)
-          .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime());
+          .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig || 0).getTime() - new Date(b.matchDatePlay || b.matchDateOrig || 0).getTime());
       
       const playedWeeks = [0, ...new Set(playedMatches.map(m => m.week))].sort((a,b) => a-b);
       const latestAbsoluteWeek = Math.max(0, ...playedWeeks);

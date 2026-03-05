@@ -95,7 +95,7 @@ export default function MostImprovedPage() {
     
     const rawPeriod = allAwardPeriods.find(p => currentWeek >= p.startWeek && currentWeek < p.endWeek) || allAwardPeriods[allAwardPeriods.length - 1];
     
-    // TRANSITION LOGIC: If no progress exists in current month (March), stick to February Final results
+    // TRANSITION LOGIC: If no progress exists in current month, stick to previous finalized result
     const hasProgress = users.some(u => {
         if (!activeUserIds.has(u.id)) return false;
         const h = userHistories.find(hist => hist.userId === u.id);
@@ -158,7 +158,7 @@ export default function MostImprovedPage() {
         const isPast = period.endWeek <= currentWeek;
         const isFuture = !isPast && !isCurrentAwardPeriod && period.startWeek > currentWeek;
 
-        // Reveal Rule: Finalized months are always shown. Current month hidden if 0 points.
+        // Reveal Rule: Show previous months always. Current month only if progress started.
         const hideDueToWeekOne = isCurrentAwardPeriod && ladderData.list.every(u => u.improvement === 0);
 
         let winners: any[] = []; let runnersUp: any[] = [];

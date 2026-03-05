@@ -168,9 +168,10 @@ export default function AdminPage() {
     if (!initialWeekSet || weekFixtures.length === 0) return;
     
     const results = weekFixtures.map(fixture => {
-      // Pre-populate with matchDateOrig if matchDatePlay is not yet set or modified
-      const dateStr = fixture.matchDatePlay || fixture.matchDateOrig;
+      // PRE-POPULATION Ground Truth: Always use MatchDateOrig as the fallback for Actually Played cells
+      const dateStr = fixture.matchDateOrig || new Date().toISOString();
       const dateToUse = new Date(dateStr);
+      
       return {
         id: fixture.id,
         homeScore: fixture.homeScore,
