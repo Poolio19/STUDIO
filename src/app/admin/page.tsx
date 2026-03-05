@@ -13,8 +13,6 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Users, Database, RefreshCw } from 'lucide-react';
 import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-
 import { collection, doc, writeBatch, getDocs, query, deleteDoc, updateDoc, orderBy } from 'firebase/firestore';
 import {
   AlertDialog,
@@ -44,6 +42,7 @@ import {
 import { Input } from '@/components/ui/input';
 
 import historicalPlayersData from '@/lib/historical-players.json';
+import pastFixturesData from '@/lib/past-fixtures.json';
 import { bulkCreateAuthUsersChunk } from './actions';
 
 const scoreTransformer = (val: 'P' | 'p' | number | string | null | undefined) => {
@@ -162,8 +161,9 @@ export default function AdminPage() {
 
   React.useEffect(() => {
     if (!initialWeekSet || weekFixtures.length === 0) return;
+    
     const results = weekFixtures.map(fixture => {
-      // Prioritize saved MatchDatePlay, but default to MatchDateOrig for prepopulation
+      // PRE-POPULATE: Prefer saved MatchDatePlay, default to MatchDateOrig (Proposed)
       const dateStr = fixture.matchDatePlay || fixture.matchDateOrig;
       const dateToUse = new Date(dateStr);
       return {
@@ -225,7 +225,7 @@ export default function AdminPage() {
     }
   };
 
- const handleFullUpdateAndRecalculate = async () => {
+  const handleFullUpdateAndRecalculate = async () => {
     if (!firestore) return;
     setIsUpdating(true);
     try {
