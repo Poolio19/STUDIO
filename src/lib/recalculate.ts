@@ -51,8 +51,9 @@ export async function recalculateAllDataClientSide(
       let matchSyncCount = 0;
       allMatches.forEach(m => {
           if (!m.matchDatePlay) {
-              matchSyncBatch.update(doc(firestore, 'matches', m.id), { matchDatePlay: m.matchDateOrig });
-              m.matchDatePlay = m.matchDateOrig;
+              const dateToUse = m.matchDateOrig || new Date().toISOString();
+              matchSyncBatch.update(doc(firestore, 'matches', m.id), { matchDatePlay: dateToUse });
+              m.matchDatePlay = dateToUse;
               matchSyncCount++;
           }
       });
@@ -92,8 +93,17 @@ export async function recalculateAllDataClientSide(
               if (uId) {
                   let type: 'winner' | 'runner-up' = 'winner';
                   if (award.type.toLowerCase().includes('ru')) type = 'runner-up';
-                  const cleanMonth = monthData.month.toLowerCase().replace('auf', 'aug').replace('sep', 'sept');
-                  const awardId = `hist-${uId}-${monthData.season}-${cleanMonth}-${idx}`.replace(/[^a-zA-Z0-9-]/g, '-');
+                  
+                  // Fix ID and Month mapping
+                  const cleanMonth = monthData.month.toLowerCase()
+                    .replace('auf', 'aug')
+                    .replace('auf', 'aug')
+                    .replace('sep', 'sept');
+                  
+                  const awardId = `hist-${uId}-${monthData.season}-${cleanMonth}-${idx}`
+                    .replace(/[^a-zA-Z0-9-]/g, '-')
+                    .replace('use-', 'usr-'); // Ensure usr_ prefix
+
                   const awardData: any = {
                       id: awardId, 
                       userId: uId, 

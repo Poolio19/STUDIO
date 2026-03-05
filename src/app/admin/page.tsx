@@ -168,6 +168,7 @@ export default function AdminPage() {
     if (!initialWeekSet || weekFixtures.length === 0) return;
     
     const results = weekFixtures.map(fixture => {
+      // Pre-populate with matchDateOrig if matchDatePlay is not yet set or modified
       const dateStr = fixture.matchDatePlay || fixture.matchDateOrig;
       const dateToUse = new Date(dateStr);
       return {
@@ -512,18 +513,16 @@ export default function AdminPage() {
           </CardHeader>
           <CardContent>
               <div className="overflow-x-auto">
+                <TooltipProvider>
                 <div className="grid grid-cols-[200px_repeat(17,1fr)] gap-1 pb-2 min-w-[1200px]">
                   <span className="font-medium text-muted-foreground text-sm sticky left-0 bg-card">Player</span>
-                  <TooltipProvider>
                     {historicalDataHeaders.map(header => (
                       <Tooltip key={header.key}><TooltipTrigger asChild><Button variant="ghost" size="sm" className="p-1 h-auto font-medium text-xs">{header.label}</Button></TooltipTrigger><TooltipContent><p>{header.tooltip}</p></TooltipContent></Tooltip>
                     ))}
-                  </TooltipProvider>
                 </div>
                 {dbUsers?.map((player) => (
                   <div key={player.id} className="grid grid-cols-[200px_repeat(17,1fr)] gap-1 items-center hover:bg-muted/50 rounded-md">
                       <span className="font-medium text-sm truncate sticky left-0 bg-card py-1 border-r pr-2">{player.name}</span>
-                       <TooltipProvider>
                        {historicalDataHeaders.map(header => (
                           <div key={header.key} className="w-full text-center">
                             <Input 
@@ -537,9 +536,9 @@ export default function AdminPage() {
                             />
                           </div>
                        ))}
-                       </TooltipProvider>
                   </div>
                 ))}
+                </TooltipProvider>
               </div>
           </CardContent>
         </Card>

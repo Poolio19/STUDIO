@@ -95,7 +95,7 @@ export default function MostImprovedPage() {
     
     const rawPeriod = allAwardPeriods.find(p => currentWeek >= p.startWeek && currentWeek < p.endWeek) || allAwardPeriods[allAwardPeriods.length - 1];
     
-    // TRANSITION LOGIC: If no progress exists in March (Week 1), stick to February Final
+    // TRANSITION LOGIC: If no progress exists in current month (March), stick to February Final results
     const hasProgress = users.some(u => {
         if (!activeUserIds.has(u.id)) return false;
         const h = userHistories.find(hist => hist.userId === u.id);
