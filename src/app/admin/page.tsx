@@ -168,10 +168,14 @@ export default function AdminPage() {
     if (!initialWeekSet || weekFixtures.length === 0) return;
     
     const results = weekFixtures.map(fixture => {
-      // PRE-POPULATION Ground Truth: Always use MatchDateOrig as the fallback for Actually Played cells
+      // Correctly pre-populate from MatchDateOrig
       const dateStr = fixture.matchDateOrig || new Date().toISOString();
       const dateToUse = new Date(dateStr);
       
+      const hours = String(dateToUse.getUTCHours()).padStart(2, '0');
+      const minutes = String(dateToUse.getUTCMinutes()).padStart(2, '0');
+      const formattedTime = `${hours}:${minutes}`;
+
       return {
         id: fixture.id,
         homeScore: fixture.homeScore,
@@ -179,7 +183,7 @@ export default function AdminPage() {
         playYear: String(dateToUse.getUTCFullYear()),
         playMonth: String(dateToUse.getUTCMonth() + 1).padStart(2, '0'),
         playDay: String(dateToUse.getUTCDate()).padStart(2, '0'),
-        playTime: `${String(dateToUse.getUTCHours()).padStart(2, '0')}:${String(dateToUse.getUTCMinutes()).padStart(2, '0')}`,
+        playTime: timeOptions.includes(formattedTime) ? formattedTime : "15:00",
       };
     });
     scoresForm.reset({ week: selectedWeek, results: results });
@@ -364,7 +368,7 @@ export default function AdminPage() {
         <Card className="lg:col-span-2">
             <CardHeader>
                 <CardTitle>Results &amp; Played Dates</CardTitle>
-                <CardDescription>Select a week, enter scores and adjust Played Dates if rescheduled.</CardDescription>
+                <CardDescription>Adjust scores and played dates. Fields are pre-populated from the original schedule.</CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={scoresForm.handleSubmit(onWriteResultsFileSubmit)} className="space-y-6">

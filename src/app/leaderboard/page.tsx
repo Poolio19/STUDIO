@@ -68,13 +68,8 @@ export default function LeaderboardPage() {
   const currentWeek = useMemo(() => {
     if (matchesData && matchesData.length > 0) {
       const playedMatches = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
-      const playedWeeks = new Set(playedMatches.map(m => m.week));
-      let latest = 0;
-      for (let i = 1; i <= 38; i++) {
-          if (playedWeeks.has(i)) latest = i;
-          else break;
-      }
-      return latest;
+      const playedWeeks = playedMatches.map(m => m.week);
+      return playedWeeks.length > 0 ? Math.max(...playedWeeks) : 0;
     }
     return 0;
   }, [matchesData]);
