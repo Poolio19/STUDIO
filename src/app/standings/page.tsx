@@ -61,6 +61,8 @@ export default function StandingsPage() {
         
         const finalStandings = standingsData.map(standing => {
             const team = teamMap.get(standing.teamId)!;
+            
+            // CHRONOLOGICAL FORM: Sort strictly by matchDatePlay to handle rescheduled games
             const teamMatches = played.filter(m => m.homeTeamId === standing.teamId || m.awayTeamId === standing.teamId)
                 .sort((a,b) => {
                     const dateA = new Date(a.matchDatePlay || a.matchDateOrig).getTime();

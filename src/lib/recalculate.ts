@@ -44,7 +44,20 @@ export async function recalculateAllDataClientSide(
       
       const activeUsersForRankings = allUsers.filter(u => activeUserIds.has(u.id));
 
-      progressCallback('Clearing derived database tables...');
+      progressCallback('Updating match dates and clearing derived tables...');
+      
+      // SYNC: Ensure all matches have a matchDatePlay ground truth
+      const matchSyncBatch = writeBatch(firestore);
+      let matchSyncCount = 0;
+      allMatches.forEach(m => {
+          if (!m.matchDatePlay) {
+              matchSyncBatch.update(doc(firestore, 'matches', m.id), { matchDatePlay: m.matchDateOrig });
+              m.matchDatePlay = m.matchDateOrig;
+              matchSyncCount++;
+          }
+      });
+      if (matchSyncCount > 0) await matchSyncBatch.commit();
+
       const derivedCollections = ['standings', 'playerTeamScores', 'teamRecentResults', 'weeklyTeamStandings', 'userHistories', 'monthlyMimoM'];
       for (const colName of derivedCollections) {
           const snap = await getDocs(collection(firestore, colName));
@@ -79,7 +92,7 @@ export async function recalculateAllDataClientSide(
               if (uId) {
                   let type: 'winner' | 'runner-up' = 'winner';
                   if (award.type.toLowerCase().includes('ru')) type = 'runner-up';
-                  const cleanMonth = monthData.month.toLowerCase().replace('auf', 'aug');
+                  const cleanMonth = monthData.month.toLowerCase().replace('auf', 'aug').replace('sep', 'sept');
                   const awardId = `hist-${uId}-${monthData.season}-${cleanMonth}-${idx}`.replace(/[^a-zA-Z0-9-]/g, '-');
                   const awardData: any = {
                       id: awardId, 
@@ -229,7 +242,7 @@ export async function recalculateAllDataClientSide(
                   winners.forEach(w => {
                       const awardId = `2025-${period.id}-${w.uId}`;
                       const awardData: any = {
-                          id: awardId, userId: w.uId, month: period.month || period.id, year: period.year, type: 'winner', improvement: Number(w.improvement)
+                          id: awardId, userId: w.uId, month: period.month || period.special || '', year: period.year, type: 'winner', improvement: Number(w.improvement)
                       };
                       if (period.id === 'xmas') awardData.special = 'Xmas No 1';
                       addOp(b => b.set(doc(firestore, 'monthlyMimoM', awardId), awardData));
@@ -241,7 +254,7 @@ export async function recalculateAllDataClientSide(
                           periodScores.filter(s => s.improvement === runnerUpImp).forEach(ru => {
                               const ruAwardId = `2025-${period.id}-ru-${ru.uId}`;
                               addOp(b => b.set(doc(firestore, 'monthlyMimoM', ruAwardId), {
-                                  id: ruAwardId, userId: ru.uId, month: period.month || period.id, year: period.year, type: 'runner-up', improvement: Number(ru.improvement)
+                                  id: ruAwardId, userId: ru.uId, month: period.month || period.special || '', year: period.year, type: 'runner-up', improvement: Number(ru.improvement)
                               }));
                           });
                       }
