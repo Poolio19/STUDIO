@@ -156,8 +156,7 @@ export default function MostImprovedPage() {
     return allAwardPeriods.map(period => {
         const isCurrentAwardPeriod = (transitionContext.period.id === period.id && !transitionContext.isFinal);
         const isPast = period.endWeek <= currentWeek;
-        const isFuture = !isPast && !isCurrentAwardPeriod && period.startWeek > currentWeek;
-
+        
         // Reveal Rule: Show previous months always. Current month only if progress started.
         const hideDueToWeekOne = isCurrentAwardPeriod && ladderData.list.every(u => u.improvement === 0);
 
@@ -183,6 +182,8 @@ export default function MostImprovedPage() {
             winners = rawWinners.map(w => ({ ...w, prize: winPrize }));
             runnersUp = rawRunnersUp.map(r => ({ ...r, prize: ruPrize }));
         }
+        
+        const isFuture = !isPast && !isCurrentAwardPeriod && period.startWeek > currentWeek;
         
         return { id: period.id, label: period.id === 'xmas' ? 'Xmas No. 1' : period.abbreviation, isCurrent: isCurrentAwardPeriod, isFuture, winners, runnersUp };
     });

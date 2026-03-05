@@ -11,6 +11,7 @@ import {
 import type { Team, Prediction, User as UserProfile, UserHistory, Match } from '@/lib/types';
 import historicalMimoAwardsData from './historical-mimo-awards.json';
 import { allAwardPeriods } from './award-periods';
+import localFixtures from './past-fixtures.json';
 
 /**
  * Recalculates all derived data and seeds historical records.
@@ -46,14 +47,22 @@ export async function recalculateAllDataClientSide(
 
       progressCallback('Updating match dates and clearing derived tables...');
       
-      // SYNC: Ensure all matches have a matchDatePlay ground truth
+      // SYNC: Ensure all matches have MatchDateOrig and MatchDatePlay ground truth from local JSON if missing
       const matchSyncBatch = writeBatch(firestore);
       let matchSyncCount = 0;
-      allMatches.forEach(m => {
-          if (!m.matchDatePlay) {
-              const dateToUse = m.matchDateOrig || new Date().toISOString();
-              matchSyncBatch.update(doc(firestore, 'matches', m.id), { matchDatePlay: dateToUse });
-              m.matchDatePlay = dateToUse;
+      localFixtures.forEach((localMatch: any) => {
+          const dbMatch = allMatches.find(m => m.id === localMatch.id);
+          const needsUpdate = !dbMatch || !dbMatch.matchDateOrig || !dbMatch.matchDatePlay;
+          
+          if (needsUpdate) {
+              const dateToUse = localMatch.matchDateOrig || new Date().toISOString();
+              matchSyncBatch.set(doc(firestore, 'matches', localMatch.id), {
+                  ...localMatch,
+                  matchDateOrig: localMatch.matchDateOrig || dateToUse,
+                  matchDatePlay: dbMatch?.matchDatePlay || localMatch.matchDatePlay || dateToUse,
+                  homeScore: Number(dbMatch?.homeScore ?? localMatch.homeScore),
+                  awayScore: Number(dbMatch?.awayScore ?? localMatch.awayScore)
+              }, { merge: true });
               matchSyncCount++;
           }
       });
@@ -96,7 +105,6 @@ export async function recalculateAllDataClientSide(
                   
                   const cleanMonth = monthData.month.toLowerCase()
                     .replace('auf', 'aug')
-                    .replace('auf', 'aug')
                     .replace('sep', 'sept');
                   
                   const awardId = `hist-${uId}-${monthData.season}-${cleanMonth}-${idx}`
@@ -117,7 +125,9 @@ export async function recalculateAllDataClientSide(
           });
       });
 
-      const playedMatches = allMatches.filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1)
+      const playedMatches = [...allMatches, ...localFixtures as Match[]]
+          .filter((m, i, self) => i === self.findIndex(t => t.id === m.id)) // Unique only
+          .filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1)
           .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig || 0).getTime() - new Date(b.matchDatePlay || b.matchDateOrig || 0).getTime());
       
       const playedWeeks = [0, ...new Set(playedMatches.map(m => m.week))].sort((a,b) => a-b);
