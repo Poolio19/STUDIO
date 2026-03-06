@@ -52,6 +52,8 @@ export default function PerformancePage() {
     if (!activeUsers.length || !userHistories) return { chartData: [], yAxisDomain: [0, 10], chartConfig: {}, legendUsers: [] };
     
     const activeHistories = userHistories.filter(h => activeUsers.some(u => u.id === h.userId));
+    
+    // Strictly slice history at current week
     const allScores = activeHistories.flatMap(h => h.weeklyScores.filter(w => w.week <= currentWk).map(w => w.score));
     
     if (!allScores.length) return { chartData: [], yAxisDomain: [0, 10], chartConfig: {}, legendUsers: [] };
@@ -114,7 +116,10 @@ export default function PerformancePage() {
                         if (!u) return <div key={i} />;
                         const isMe = u.id === resolvedUserId;
                         return (
-                            <div key={u.id} className={cn("flex items-center space-x-2 truncate p-0.5 rounded transition-all", isMe && "bg-primary/20 ring-1 ring-primary/50 scale-105 shadow-sm")}>
+                            <div key={u.id} className={cn(
+                                "flex items-center space-x-2 truncate p-1 rounded transition-all", 
+                                isMe && "bg-primary/20 ring-1 ring-primary/50 scale-105 shadow-sm"
+                            )}>
                                 <span className="h-2 w-2 rounded-sm shrink-0" style={{ backgroundColor: chartConfig[u.name]?.colour }}></span>
                                 <span className={cn("truncate", isMe && "font-black text-primary")}>{`${u.score} ${formatLegendName(u.name)}`}</span>
                             </div>

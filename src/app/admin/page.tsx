@@ -164,9 +164,14 @@ export default function AdminPage() {
       .sort((a,b) => new Date(a.matchDateOrig).getTime() - new Date(b.matchDateOrig).getTime());
   }, [selectedWeek, allMatches]);
 
+  // Handle pre-population of the results array when the week changes or data loads
   React.useEffect(() => {
     if (!initialWeekSet || weekFixtures.length === 0) return;
     
+    // CRITICAL: Do not reset if the user has started editing (form is dirty)
+    // This prevents manual entries from being wiped out by background refreshes
+    if (scoresForm.formState.isDirty && scoresForm.getValues('results').length > 0) return;
+
     const results = weekFixtures.map(fixture => {
       const dateStr = fixture.matchDateOrig || new Date().toISOString();
       const dateToUse = new Date(dateStr);
@@ -226,6 +231,8 @@ export default function AdminPage() {
       }
       await batch.commit();
       await fetchAllMatches();
+      // Reset form dirty state after save
+      scoresForm.reset(scoresForm.getValues());
       toast({ title: 'Database Updated!', description: `Saved ${weekData.results.length} match records.` });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Write Failed', description: error.message });

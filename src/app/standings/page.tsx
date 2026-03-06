@@ -93,6 +93,7 @@ export default function StandingsPage() {
                 ranksByWeek[ws.week][ws.teamId] = ws.rank;
             });
             const data = [];
+            // Strictly cap at maxW (Week 29)
             for (let w = 0; w <= maxW; w++) {
                 const entry: any = { week: w };
                 teamsData.forEach(t => entry[t.name] = ranksByWeek[w]?.[t.id] ?? 20);

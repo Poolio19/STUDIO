@@ -112,7 +112,10 @@ export default function RankingsPage() {
                         if (!u) return <div key={i} />;
                         const isMe = u.id === resolvedUserId;
                         return (
-                            <div key={u.id} className={cn("flex items-center space-x-2 truncate p-0.5 rounded transition-all", isMe && "bg-primary/20 ring-1 ring-primary/50 scale-105 shadow-sm")}>
+                            <div key={u.id} className={cn(
+                                "flex items-center space-x-2 truncate p-1 rounded transition-all", 
+                                isMe && "bg-primary/20 ring-1 ring-primary/50 scale-105 shadow-sm"
+                            )}>
                                 <span className="h-2 w-2 rounded-sm shrink-0" style={{ backgroundColor: chartConfig[u.name]?.colour }}></span>
                                 <span className={cn("truncate", isMe && "font-black text-primary")}>{`${u.rank} ${formatLegendName(u.name)}`}</span>
                             </div>

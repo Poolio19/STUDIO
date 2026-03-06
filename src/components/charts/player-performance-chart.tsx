@@ -37,6 +37,15 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers, ch
     return ticks;
   }, [yAxisDomain]);
 
+  // CRITICAL: Sort lines so current user is rendered last (on top)
+  const orderedLines = React.useMemo(() => {
+    return [...sortedUsers].sort((a, b) => {
+        if (a.id === currentUserId) return 1;
+        if (b.id === currentUserId) return -1;
+        return 0;
+    });
+  }, [sortedUsers, currentUserId]);
+
   return (
     <div className="relative">
       <ChartContainer config={chartConfig} className="h-[600px] w-full">
@@ -64,11 +73,7 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers, ch
               domain={yAxisDomain}
               ticks={yAxisTicks}
             />
-              {[...sortedUsers].sort((a, b) => {
-                  if (a.id === currentUserId) return 1;
-                  if (b.id === currentUserId) return -1;
-                  return 0;
-              }).map((user) => {
+              {orderedLines.map((user) => {
                   const isCurrentUser = user.id === currentUserId;
                   return (
                     <Line
