@@ -158,7 +158,6 @@ export default function MostImprovedPage() {
         const isCurrentAwardPeriod = (transitionContext.period.id === period.id && !transitionContext.isFinal);
         const isPast = period.endWeek <= currentWeek;
         
-        // finalized months are always visible
         const hideDueToWeekOne = isCurrentAwardPeriod && ladderData.list.every(u => u.improvement === 0);
 
         let winners: any[] = []; let runnersUp: any[] = [];
@@ -192,12 +191,12 @@ export default function MostImprovedPage() {
 
   const getWinnerRowStyle = (rank: number, improvement: number) => {
       if (improvement <= 0) return {};
-      // Intensify color based on number of sharers
       const sharerCount = ladderData.sharers;
+      // Intensify color based on number of sharers (JoMiMoM logic)
       const alpha = Math.max(0.1, 0.4 - (sharerCount * 0.05));
       
-      if (rank === 1) return { backgroundColor: `rgba(250, 204, 21, ${alpha + 0.1})` }; // Gold
-      if (ladderData.topImp !== ladderData.ruImp && improvement === ladderData.ruImp) return { backgroundColor: `rgba(148, 163, 184, 0.2)` }; // Slate
+      if (rank === 1) return { backgroundColor: `rgba(250, 204, 21, ${alpha + 0.15})` }; // Gold
+      if (ladderData.topImp !== ladderData.ruImp && improvement === ladderData.ruImp) return { backgroundColor: `rgba(148, 163, 184, 0.25)` }; // Slate
       return {};
   };
 

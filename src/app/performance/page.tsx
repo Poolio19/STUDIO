@@ -13,7 +13,6 @@ import type { User, UserHistory, Match, Prediction } from '@/lib/types';
 import { useCollection, useFirestore, useMemoFirebase, useResolvedUserId } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
-import historicalPlayersData from '@/lib/historical-players.json';
 import { cn } from '@/lib/utils';
 
 export default function PerformancePage() {
@@ -34,7 +33,7 @@ export default function PerformancePage() {
 
   const currentWk = useMemo(() => {
     if (!matchesData) return 0;
-    // Strictly define "played" as matches with non-negative scores up to Week 29
+    // Strictly cap at Week 29
     const played = matchesData.filter(m => Number(m.homeScore) !== -1 && Number(m.awayScore) !== -1 && m.week <= 29);
     return played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
   }, [matchesData]);
@@ -52,8 +51,6 @@ export default function PerformancePage() {
     if (!activeUsers.length || !userHistories) return { chartData: [], yAxisDomain: [0, 10], chartConfig: {}, legendUsers: [] };
     
     const activeHistories = userHistories.filter(h => activeUsers.some(u => u.id === h.userId));
-    
-    // Filter history entries strictly up to currentWk
     const allScores = activeHistories.flatMap(h => h.weeklyScores.filter(w => w.week <= currentWk).map(w => w.score));
     
     if (!allScores.length) return { chartData: [], yAxisDomain: [0, 10], chartConfig: {}, legendUsers: [] };
@@ -61,7 +58,6 @@ export default function PerformancePage() {
     const minS = Math.min(...allScores); const maxS = Math.max(...allScores);
     const domain: [number, number] = [minS - 5, maxS + 5];
 
-    // Array of weeks from 0 to currentWk
     const weeks = Array.from({ length: currentWk + 1 }, (_, i) => i);
     const data = weeks.map(week => {
       const entry: any = { week: `Wk ${week}` };
@@ -110,7 +106,7 @@ export default function PerformancePage() {
           <Card className="flex justify-center items-center h-[600px]"><Loader2 className="size-8 animate-spin text-muted-foreground" /></Card>
       ) : (
           <Card>
-            <CardHeader><CardTitle>Player Scores By Week</CardTitle><CardDescription>Weekly score progression for active season players.</CardDescription></CardHeader>
+            <CardHeader><CardTitle>Player Scores By Week</CardTitle><CardDescription>Weekly score progression capped at Week 29.</CardDescription></CardHeader>
             <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-9 gap-x-4 gap-y-1 text-[10px] mb-6">
                     {legendUsers.map((u, i) => {

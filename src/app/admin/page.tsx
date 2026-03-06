@@ -157,7 +157,6 @@ export default function AdminPage() {
       .sort((a,b) => new Date(a.matchDateOrig).getTime() - new Date(b.matchDateOrig).getTime());
   }, [selectedWeek, allMatches]);
 
-  // Set the default week initially once
   React.useEffect(() => {
     if (defaultWeek > 0 && !initialWeekSet && allMatches.length > 0) {
       scoresForm.setValue('week', defaultWeek);
@@ -165,11 +164,10 @@ export default function AdminPage() {
     }
   }, [defaultWeek, scoresForm, initialWeekSet, allMatches]);
 
-  // Handle pre-population of the results array when the week changes
   React.useEffect(() => {
     if (!initialWeekSet || weekFixtures.length === 0) return;
     
-    // CRITICAL: Do not reset if the user has started editing (form is dirty)
+    // CRITICAL: Prevent reset if user has manual edits
     if (scoresForm.formState.isDirty) return;
 
     const results = weekFixtures.map(fixture => {
@@ -231,7 +229,7 @@ export default function AdminPage() {
       }
       await batch.commit();
       await fetchAllMatches();
-      // Reset form to acknowledging the new baseline to prevent "stale refresh"
+      // Reset form to acknowledge new baseline
       scoresForm.reset(scoresForm.getValues());
       toast({ title: 'Database Updated!', description: `Saved ${weekData.results.length} match records.` });
     } catch (error: any) {

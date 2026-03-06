@@ -15,7 +15,7 @@ import localFixtures from './past-fixtures.json';
 
 /**
  * Recalculates all derived data and seeds historical records.
- * Strictly capped at Week 29 to ignore rogue data.
+ * Capped at Week 29 for UI display but processes all data.
  */
 export async function recalculateAllDataClientSide(
   firestore: Firestore,
@@ -51,9 +51,8 @@ export async function recalculateAllDataClientSide(
       let matchSyncCount = 0;
       localFixtures.forEach((localMatch: any) => {
           const dbMatch = dbMatches.find(m => m.id === localMatch.id);
-          const needsUpdate = !dbMatch || !dbMatch.matchDateOrig || !dbMatch.matchDatePlay;
-          
-          if (needsUpdate) {
+          // If match exists in DB but lacks dates, or if it doesn't exist yet, seed it with Orig values
+          if (!dbMatch || !dbMatch.matchDateOrig || !dbMatch.matchDatePlay) {
               const dateToUse = localMatch.matchDateOrig || new Date().toISOString();
               matchSyncBatch.set(doc(firestore, 'matches', localMatch.id), {
                   ...localMatch,
@@ -88,7 +87,7 @@ export async function recalculateAllDataClientSide(
           if (opCount >= 499) { mainBatches.push(writeBatch(firestore)); bIdx++; opCount = 0; }
       };
 
-      progressCallback('Seeding historical records...');
+      progressCallback('Seeding historical awards...');
       const userByName = new Map();
       allUsers.forEach(u => { if (u.name) userByName.set(u.name.toLowerCase().trim(), u.id); });
 
@@ -116,8 +115,8 @@ export async function recalculateAllDataClientSide(
       const finalMatchesDocs = await getDocs(collection(firestore, 'matches'));
       const playedMatches = finalMatchesDocs.docs
           .map(d => d.data() as Match)
-          // STRICT CAP: Filter played matches up to Week 29. Ignore rogue future data.
-          .filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1 && m.week <= 29)
+          // Process ALL played matches, but UI handles the "cap"
+          .filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1)
           .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig || 0).getTime() - new Date(b.matchDatePlay || b.matchDateOrig || 0).getTime());
       
       const playedWeeks = [0, ...new Set(playedMatches.map(m => m.week))].sort((a,b) => a-b);
