@@ -15,7 +15,7 @@ import localFixtures from './past-fixtures.json';
 
 /**
  * Recalculates all derived data and seeds historical records.
- * Robustly calculates ranks and changes based on actual played sequence.
+ * Strictly capped at Week 29 to ignore rogue data.
  */
 export async function recalculateAllDataClientSide(
   firestore: Firestore,
@@ -116,8 +116,8 @@ export async function recalculateAllDataClientSide(
       const finalMatchesDocs = await getDocs(collection(firestore, 'matches'));
       const playedMatches = finalMatchesDocs.docs
           .map(d => d.data() as Match)
-          // Strictly filter played matches: must have scores AND must be within valid season weeks
-          .filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1 && m.week <= 38)
+          // STRICT CAP: Filter played matches up to Week 29. Ignore rogue future data.
+          .filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1 && m.week <= 29)
           .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig || 0).getTime() - new Date(b.matchDatePlay || b.matchDateOrig || 0).getTime());
       
       const playedWeeks = [0, ...new Set(playedMatches.map(m => m.week))].sort((a,b) => a-b);
@@ -127,7 +127,6 @@ export async function recalculateAllDataClientSide(
       const cumulativeTStats: { [tId: string]: any } = {};
       teams.forEach(t => cumulativeTStats[t.id] = { points: 0, goalDifference: 0, goalsFor: 0, goalsAgainst: 0, wins: 0, draws: 0, losses: 0, gamesPlayed: 0 });
 
-      // Run through every played week sequentially
       for (let weekIdx = 0; weekIdx < playedWeeks.length; weekIdx++) {
           const currentWeekNum = playedWeeks[weekIdx];
           
@@ -165,7 +164,6 @@ export async function recalculateAllDataClientSide(
               addOp(b => b.set(doc(firestore, 'weeklyTeamStandings', `wk${currentWeekNum}-${s.teamId}`), { week: currentWeekNum, teamId: s.teamId, rank: idx + 1 }));
           });
 
-          // Final standings write (based on the very last week in playedWeeks)
           if (currentWeekNum === latestAbsoluteWeek) {
               teams.forEach(t => {
                   const s = cumulativeTStats[t.id];

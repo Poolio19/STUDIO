@@ -12,7 +12,7 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"
+} from "@/components/ui/accordion";
 import {
     Table,
     TableBody,
@@ -57,18 +57,17 @@ export default function StandingsPage() {
         }
 
         const teamMap = new Map(teamsData.map(t => [t.id, t]));
-        // Ground truth for "played" matches: have non-negative scores and valid week <= current real season progress
-        const played = matchesData.filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1 && m.week <= 38)
+        
+        // GROUND TRUTH: Only count games played up to Week 29. Ignore rogue future data.
+        const played = matchesData.filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1 && m.week <= 29)
             .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime());
         
-        // Latest week is based on valid played matches
         const maxW = played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
 
         const finalStandings = standingsData.map(standing => {
             const team = teamMap.get(standing.teamId)!;
             
-            // CHRONOLOGICAL FORM: Sort strictly by matchDatePlay to handle rescheduled games
-            // Take the last 6 played games for the form guide
+            // CHRONOLOGICAL FORM: Last 6 played games ending at maxW
             const teamMatches = played.filter(m => m.homeTeamId === standing.teamId || m.awayTeamId === standing.teamId)
                 .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime())
                 .slice(-6);
@@ -89,11 +88,12 @@ export default function StandingsPage() {
         const finalChartData = (() => {
             const ranksByWeek: any = {};
             weeklyTeamStandings.forEach(ws => {
-                if (!ranksByWeek[ws.week]) ranksByWeek[ws.week] = {};
-                ranksByWeek[ws.week][ws.teamId] = ws.rank;
+                if (ws.week <= maxW) {
+                    if (!ranksByWeek[ws.week]) ranksByWeek[ws.week] = {};
+                    ranksByWeek[ws.week][ws.teamId] = ws.rank;
+                }
             });
             const data = [];
-            // Strictly cap at maxW (Week 29) to avoid horizontal flat lines into future weeks
             for (let w = 0; w <= maxW; w++) {
                 const entry: any = { week: w };
                 teamsData.forEach(t => entry[t.name] = ranksByWeek[w]?.[t.id] ?? 20);
@@ -137,7 +137,7 @@ export default function StandingsPage() {
                 <TableHead className="hidden md:table-cell text-center">Plyd</TableHead>
                 <TableHead className="text-center">GD</TableHead>
                 <TableHead className="text-center">Pts</TableHead>
-                <TableHead colSpan={6} className="text-center">Form Guide (Chronological Order)</TableHead>
+                <TableHead colSpan={6} className="text-center">Form Guide (W{latestWeek - 5} - W{latestWeek})</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
