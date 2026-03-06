@@ -34,18 +34,17 @@ export default function RankingsPage() {
 
   const currentWk = useMemo(() => {
     if (!matchesData) return 0;
-    const played = matchesData.filter(m => Number(m.homeScore) !== -1 && Number(m.awayScore) !== -1);
-    // Capping at Week 29 as per requirements
+    // Strictly define "played" as matches with non-negative scores up to Week 29
+    const played = matchesData.filter(m => Number(m.homeScore) !== -1 && Number(m.awayScore) !== -1 && m.week <= 29);
     return played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
   }, [matchesData]);
 
   const activeUsers = useMemo(() => {
     if (!users || !predictions) return [];
-    const historicalUserIds = new Set(historicalPlayersData.map(p => p.id));
     const activeIds = new Set(predictions.filter(p => p.rankings?.length === 20).map(p => p.userId || (p as any).id));
     
     return users
-        .filter(u => u.name && (historicalUserIds.has(u.id) || u.isPro) && activeIds.has(u.id))
+        .filter(u => u.name && activeIds.has(u.id))
         .sort((a, b) => a.rank - b.rank);
   }, [users, predictions]);
 
@@ -70,7 +69,7 @@ export default function RankingsPage() {
     });
 
     const config = activeUsers.reduce((acc, u, i) => {
-      acc[u.name] = { label: u.name, colour: `hsl(var(--chart-color-${(i % 50) + 1}))` };
+      acc[u.name] = { label: u.name, colour: `hsl(var(--chart-color-${(i % 100) + 1}))` };
       return acc;
     }, {} as any);
     

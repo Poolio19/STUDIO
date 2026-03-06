@@ -116,7 +116,7 @@ export default function MostImprovedPage() {
   }, [currentWeek, users, userHistories, activeUserIds]);
 
   const ladderData = useMemo(() => {
-    if (!users || !userHistories || !transitionContext || !activeUserIds.size) return { list: [], topImp: 0, ruImp: 0 };
+    if (!users || !userHistories || !transitionContext || !activeUserIds.size) return { list: [], topImp: 0, ruImp: 0, sharers: 0 };
 
     const { period, isFinal } = transitionContext;
     const results: (User & { improvement: number, rankChangeInMonth: number, displayRank: number })[] = [];
@@ -146,7 +146,8 @@ export default function MostImprovedPage() {
     });
 
     const imps = [...new Set(list.map(u => u.improvement))].sort((a, b) => b - a);
-    return { list, topImp: imps[0], ruImp: imps[1] };
+    const sharers = list.filter(u => u.improvement === imps[0]).length;
+    return { list, topImp: imps[0], ruImp: imps[1], sharers };
   }, [users, userHistories, transitionContext, currentWeek, activeUserIds]);
   
   const hallOfFameData = useMemo(() => {
@@ -191,8 +192,12 @@ export default function MostImprovedPage() {
 
   const getWinnerRowStyle = (rank: number, improvement: number) => {
       if (improvement <= 0) return {};
-      if (rank === 1) return { backgroundColor: 'rgba(250, 204, 21, 0.2)' }; // Yellow Gold Winner
-      if (ladderData.topImp !== ladderData.ruImp && improvement === ladderData.ruImp) return { backgroundColor: 'rgba(148, 163, 184, 0.2)' }; // Slate RU
+      // Intensify color based on number of sharers
+      const sharerCount = ladderData.sharers;
+      const alpha = Math.max(0.1, 0.4 - (sharerCount * 0.05));
+      
+      if (rank === 1) return { backgroundColor: `rgba(250, 204, 21, ${alpha + 0.1})` }; // Gold
+      if (ladderData.topImp !== ladderData.ruImp && improvement === ladderData.ruImp) return { backgroundColor: `rgba(148, 163, 184, 0.2)` }; // Slate
       return {};
   };
 
