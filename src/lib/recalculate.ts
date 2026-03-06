@@ -113,10 +113,11 @@ export async function recalculateAllDataClientSide(
           });
       });
 
-      const finalMatches = await getDocs(collection(firestore, 'matches'));
-      const playedMatches = finalMatches.docs
+      const finalMatchesDocs = await getDocs(collection(firestore, 'matches'));
+      const playedMatches = finalMatchesDocs.docs
           .map(d => d.data() as Match)
-          .filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1)
+          // Strictly filter played matches: must have scores AND must be within valid season weeks
+          .filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1 && m.week <= 38)
           .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig || 0).getTime() - new Date(b.matchDatePlay || b.matchDateOrig || 0).getTime());
       
       const playedWeeks = [0, ...new Set(playedMatches.map(m => m.week))].sort((a,b) => a-b);
@@ -126,9 +127,12 @@ export async function recalculateAllDataClientSide(
       const cumulativeTStats: { [tId: string]: any } = {};
       teams.forEach(t => cumulativeTStats[t.id] = { points: 0, goalDifference: 0, goalsFor: 0, goalsAgainst: 0, wins: 0, draws: 0, losses: 0, gamesPlayed: 0 });
 
-      for (let week = 0; week <= latestAbsoluteWeek; week++) {
-          if (week > 0) {
-              const weekMatches = playedMatches.filter(m => m.week === week);
+      // Run through every played week sequentially
+      for (let weekIdx = 0; weekIdx < playedWeeks.length; weekIdx++) {
+          const currentWeekNum = playedWeeks[weekIdx];
+          
+          if (currentWeekNum > 0) {
+              const weekMatches = playedMatches.filter(m => m.week === currentWeekNum);
               weekMatches.forEach(m => {
                   const h = cumulativeTStats[m.homeTeamId];
                   const a = cumulativeTStats[m.awayTeamId];
@@ -158,10 +162,11 @@ export async function recalculateAllDataClientSide(
           const weekRanks = new Map(tRanked.map((s, i) => [s.teamId, i + 1]));
 
           tRanked.forEach((s, idx) => {
-              addOp(b => b.set(doc(firestore, 'weeklyTeamStandings', `wk${week}-${s.teamId}`), { week, teamId: s.teamId, rank: idx + 1 }));
+              addOp(b => b.set(doc(firestore, 'weeklyTeamStandings', `wk${currentWeekNum}-${s.teamId}`), { week: currentWeekNum, teamId: s.teamId, rank: idx + 1 }));
           });
 
-          if (week === latestAbsoluteWeek) {
+          // Final standings write (based on the very last week in playedWeeks)
+          if (currentWeekNum === latestAbsoluteWeek) {
               teams.forEach(t => {
                   const s = cumulativeTStats[t.id];
                   addOp(b => b.set(doc(firestore, 'standings', t.id), { teamId: t.id, rank: weekRanks.get(t.id) || 20, ...s }));
@@ -189,7 +194,7 @@ export async function recalculateAllDataClientSide(
                   if (actual) {
                       const points = (5 - Math.abs((idx + 1) - actual));
                       score = Number(score) + Number(points);
-                      if (week === latestAbsoluteWeek) {
+                      if (currentWeekNum === latestAbsoluteWeek) {
                           addOp(b => b.set(doc(firestore, 'playerTeamScores', `${u.id}-${tId}`), { userId: u.id, teamId: tId, score: points }));
                       }
                   }
@@ -203,11 +208,11 @@ export async function recalculateAllDataClientSide(
           const scoresOnly = uRanked.map(u => u.score);
           uRanked.forEach((u) => {
               const competitionRank = scoresOnly.indexOf(u.score) + 1;
-              allHistories[u.id].weeklyScores.push({ week, score: u.score, rank: competitionRank });
+              allHistories[u.id].weeklyScores.push({ week: currentWeekNum, score: u.score, rank: competitionRank });
           });
 
           allUsers.filter(u => !activeUserIds.has(u.id)).forEach(u => {
-              allHistories[u.id].weeklyScores.push({ week, score: Number(uScores[u.id] || 0), rank: 0 });
+              allHistories[u.id].weeklyScores.push({ week: currentWeekNum, score: Number(uScores[u.id] || 0), rank: 0 });
           });
       }
 

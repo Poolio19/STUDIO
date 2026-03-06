@@ -34,7 +34,8 @@ export default function RankingsPage() {
 
   const currentWk = useMemo(() => {
     if (!matchesData) return 0;
-    const played = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
+    const played = matchesData.filter(m => Number(m.homeScore) !== -1 && Number(m.awayScore) !== -1);
+    // Capping at Week 29 as per requirements
     return played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
   }, [matchesData]);
 
@@ -54,6 +55,7 @@ export default function RankingsPage() {
     const activeHistories = userHistories.filter(h => activeUsers.some(u => u.id === h.userId));
     const domain: [number, number] = [0, activeUsers.length + 1];
 
+    // Filter history weeks strictly up to currentWk
     const weeks = Array.from({ length: currentWk + 1 }, (_, i) => i);
     const data = weeks.map(week => {
       const entry: any = { week: `Wk ${week}` };

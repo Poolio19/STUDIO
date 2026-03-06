@@ -34,7 +34,9 @@ export default function PerformancePage() {
 
   const currentWk = useMemo(() => {
     if (!matchesData) return 0;
-    const played = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
+    // Strictly define "played" as matches with non-negative scores
+    const played = matchesData.filter(m => Number(m.homeScore) !== -1 && Number(m.awayScore) !== -1);
+    // Capping at Week 29 as per requirements if that's the latest played
     return played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
   }, [matchesData]);
 
@@ -53,7 +55,7 @@ export default function PerformancePage() {
     
     const activeHistories = userHistories.filter(h => activeUsers.some(u => u.id === h.userId));
     
-    // Strictly slice history at current week
+    // Filter history entries strictly up to currentWk
     const allScores = activeHistories.flatMap(h => h.weeklyScores.filter(w => w.week <= currentWk).map(w => w.score));
     
     if (!allScores.length) return { chartData: [], yAxisDomain: [0, 10], chartConfig: {}, legendUsers: [] };
@@ -61,6 +63,7 @@ export default function PerformancePage() {
     const minS = Math.min(...allScores); const maxS = Math.max(...allScores);
     const domain: [number, number] = [minS - 5, maxS + 5];
 
+    // Array of weeks from 0 to currentWk
     const weeks = Array.from({ length: currentWk + 1 }, (_, i) => i);
     const data = weeks.map(week => {
       const entry: any = { week: `Wk ${week}` };

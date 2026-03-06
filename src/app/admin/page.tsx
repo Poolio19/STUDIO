@@ -150,13 +150,6 @@ export default function AdminPage() {
     defaultValues: { week: 1, results: [] },
   });
 
-  React.useEffect(() => {
-    if (defaultWeek > 0 && !initialWeekSet && allMatches.length > 0) {
-      scoresForm.setValue('week', defaultWeek, { shouldDirty: false });
-      setInitialWeekSet(true);
-    }
-  }, [defaultWeek, scoresForm, initialWeekSet, allMatches]);
-
   const selectedWeek = scoresForm.watch('week');
   const weekFixtures = React.useMemo(() => {
     return allMatches
@@ -164,13 +157,21 @@ export default function AdminPage() {
       .sort((a,b) => new Date(a.matchDateOrig).getTime() - new Date(b.matchDateOrig).getTime());
   }, [selectedWeek, allMatches]);
 
-  // Handle pre-population of the results array when the week changes or data loads
+  // Set the default week initially once
+  React.useEffect(() => {
+    if (defaultWeek > 0 && !initialWeekSet && allMatches.length > 0) {
+      scoresForm.setValue('week', defaultWeek);
+      setInitialWeekSet(true);
+    }
+  }, [defaultWeek, scoresForm, initialWeekSet, allMatches]);
+
+  // Handle pre-population of the results array when the week changes
   React.useEffect(() => {
     if (!initialWeekSet || weekFixtures.length === 0) return;
     
     // CRITICAL: Do not reset if the user has started editing (form is dirty)
     // This prevents manual entries from being wiped out by background refreshes
-    if (scoresForm.formState.isDirty && scoresForm.getValues('results').length > 0) return;
+    if (scoresForm.formState.isDirty) return;
 
     const results = weekFixtures.map(fixture => {
       const dateStr = fixture.matchDateOrig || new Date().toISOString();
@@ -191,7 +192,7 @@ export default function AdminPage() {
       };
     });
     scoresForm.reset({ week: selectedWeek, results: results });
-  }, [selectedWeek, weekFixtures, scoresForm, initialWeekSet]);
+  }, [selectedWeek, weekFixtures, initialWeekSet, scoresForm]);
 
   const onWriteResultsFileSubmit = (data: ScoresFormValues) => {
     setIsWritingFile(true);

@@ -57,18 +57,20 @@ export default function StandingsPage() {
         }
 
         const teamMap = new Map(teamsData.map(t => [t.id, t]));
-        const played = matchesData.filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1);
+        // Ground truth for "played" matches: have non-negative scores and valid week <= current real season progress
+        const played = matchesData.filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1 && m.week <= 38)
+            .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime());
         
+        // Latest week is based on valid played matches
+        const maxW = played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
+
         const finalStandings = standingsData.map(standing => {
             const team = teamMap.get(standing.teamId)!;
             
             // CHRONOLOGICAL FORM: Sort strictly by matchDatePlay to handle rescheduled games
+            // Take the last 6 played games for the form guide
             const teamMatches = played.filter(m => m.homeTeamId === standing.teamId || m.awayTeamId === standing.teamId)
-                .sort((a,b) => {
-                    const dateA = new Date(a.matchDatePlay || a.matchDateOrig).getTime();
-                    const dateB = new Date(b.matchDatePlay || b.matchDateOrig).getTime();
-                    return dateA - dateB;
-                })
+                .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime())
                 .slice(-6);
             
             const recentResults = teamMatches.map(m => {
@@ -84,8 +86,6 @@ export default function StandingsPage() {
             return { ...standing, ...team, recentResults };
         }).sort((a,b) => a.rank - b.rank);
 
-        const maxW = played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
-
         const finalChartData = (() => {
             const ranksByWeek: any = {};
             weeklyTeamStandings.forEach(ws => {
@@ -93,7 +93,7 @@ export default function StandingsPage() {
                 ranksByWeek[ws.week][ws.teamId] = ws.rank;
             });
             const data = [];
-            // Strictly cap at maxW (Week 29)
+            // Strictly cap at maxW (Week 29) to avoid horizontal flat lines into future weeks
             for (let w = 0; w <= maxW; w++) {
                 const entry: any = { week: w };
                 teamsData.forEach(t => entry[t.name] = ranksByWeek[w]?.[t.id] ?? 20);
@@ -179,19 +179,27 @@ export default function StandingsPage() {
                         <AccordionTrigger className="text-lg font-bold">Week {wNum}</AccordionTrigger>
                         <AccordionContent>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                                {weeklyResults.get(wNum)?.map((m, idx) => (
-                                    <div key={idx} className="flex items-center justify-center p-3 rounded-lg border">
-                                        <div className="flex items-center gap-3 justify-end w-2/5">
-                                            <span className="font-medium text-right text-xs">{m.homeTeam.name}</span>
-                                            <div className="flex items-center justify-center size-8 rounded-full shrink-0" style={{ backgroundColor: m.homeTeam.bgColourSolid }}><Icons.logo className="size-5" style={{ color: m.homeTeam.iconColour }} /></div>
+                                {weeklyResults.get(wNum)?.map((m, idx) => {
+                                    const HomeIcon = Icons[m.homeTeam.logo as IconName] || Icons.match;
+                                    const AwayIcon = Icons[m.awayTeam.logo as IconName] || Icons.match;
+                                    return (
+                                        <div key={idx} className="flex items-center justify-center p-3 rounded-lg border">
+                                            <div className="flex items-center gap-3 justify-end w-2/5">
+                                                <span className="font-medium text-right text-xs">{m.homeTeam.name}</span>
+                                                <div className="flex items-center justify-center size-8 rounded-full shrink-0" style={{ backgroundColor: m.homeTeam.bgColourSolid }}>
+                                                    <HomeIcon className="size-5" style={{ color: m.homeTeam.iconColour }} />
+                                                </div>
+                                            </div>
+                                            <div className="font-bold text-lg px-4 text-center whitespace-nowrap">{m.homeScore} - {m.awayScore}</div>
+                                            <div className="flex items-center gap-3 w-2/5">
+                                                <div className="flex items-center justify-center size-8 rounded-full shrink-0" style={{ backgroundColor: m.awayTeam.bgColourSolid }}>
+                                                    <AwayIcon className="size-5" style={{ color: m.awayTeam.iconColour }} />
+                                                </div>
+                                                <span className="font-medium text-xs">{m.awayTeam.name}</span>
+                                            </div>
                                         </div>
-                                        <div className="font-bold text-lg px-4 text-center">{m.homeScore} - {m.awayScore}</div>
-                                        <div className="flex items-center gap-3 w-2/5">
-                                            <div className="flex items-center justify-center size-8 rounded-full shrink-0" style={{ backgroundColor: m.awayTeam.bgColourSolid }}><Icons.logo className="size-5" style={{ color: m.awayTeam.iconColour }} /></div>
-                                            <span className="font-medium text-xs">{m.awayTeam.name}</span>
-                                        </div>
-                                    </div>
-                                ))}
+                                    )
+                                })}
                             </div>
                         </AccordionContent>
                     </AccordionItem>
