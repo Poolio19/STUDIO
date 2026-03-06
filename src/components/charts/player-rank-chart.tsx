@@ -64,7 +64,11 @@ export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers, chartConf
               domain={yAxisDomain}
               ticks={yAxisTicks}
             />
-              {sortedUsers.map((user) => {
+              {[...sortedUsers].sort((a, b) => {
+                  if (a.id === currentUserId) return 1;
+                  if (b.id === currentUserId) return -1;
+                  return 0;
+              }).map((user) => {
                   const isCurrentUser = user.id === currentUserId;
                   return (
                     <Line
@@ -72,9 +76,10 @@ export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers, chartConf
                     dataKey={user.name}
                     type="monotone"
                     stroke={chartConfig[user.name]?.colour}
-                    strokeWidth={isCurrentUser ? 3.5 : 1.5}
+                    strokeWidth={isCurrentUser ? 4 : 1.5}
                     strokeOpacity={isCurrentUser ? 1 : 0.7}
                     dot={false}
+                    connectNulls
                     />
                   )
               })}

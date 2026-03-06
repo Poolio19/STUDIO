@@ -157,14 +157,14 @@ export default function MostImprovedPage() {
         const isCurrentAwardPeriod = (transitionContext.period.id === period.id && !transitionContext.isFinal);
         const isPast = period.endWeek <= currentWeek;
         
-        // Finalized months are always shown. Current month hidden until Week 2.
+        // finalized months are always visible
         const hideDueToWeekOne = isCurrentAwardPeriod && ladderData.list.every(u => u.improvement === 0);
 
         let winners: any[] = []; let runnersUp: any[] = [];
         
         if (!hideDueToWeekOne && (isPast || isCurrentAwardPeriod)) {
             const periodAwards = monthlyMimoMAwards.filter(a => 
-                a.year === period.year && (String(a.month).toLowerCase() === (period.month || period.id).toLowerCase() || (a.special === 'Xmas No 1' && period.id === 'xmas'))
+                a.year === period.year && (String(a.month).toLowerCase().substring(0,3) === (period.month || period.id).toLowerCase().substring(0,3) || (a.special === 'Xmas No 1' && period.id === 'xmas'))
             );
             
             const rawWinners = periodAwards.filter(a => a.type === 'winner').map(a => {
@@ -191,7 +191,7 @@ export default function MostImprovedPage() {
 
   const getWinnerRowStyle = (rank: number, improvement: number) => {
       if (improvement <= 0) return {};
-      if (rank === 1) return { backgroundColor: 'rgba(250, 204, 21, 0.2)' }; // Yellow Winner
+      if (rank === 1) return { backgroundColor: 'rgba(250, 204, 21, 0.2)' }; // Yellow Gold Winner
       if (ladderData.topImp !== ladderData.ruImp && improvement === ladderData.ruImp) return { backgroundColor: 'rgba(148, 163, 184, 0.2)' }; // Slate RU
       return {};
   };

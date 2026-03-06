@@ -47,7 +47,6 @@ export async function recalculateAllDataClientSide(
 
       progressCallback('Synchronizing match dates and clearing derived tables...');
       
-      // SYNC: Ensure all matches have ground truth from local JSON if missing
       const matchSyncBatch = writeBatch(firestore);
       let matchSyncCount = 0;
       localFixtures.forEach((localMatch: any) => {
@@ -114,7 +113,6 @@ export async function recalculateAllDataClientSide(
           });
       });
 
-      // CALCULATE STANDINGS
       const finalMatches = await getDocs(collection(firestore, 'matches'));
       const playedMatches = finalMatches.docs
           .map(d => d.data() as Match)
@@ -128,7 +126,6 @@ export async function recalculateAllDataClientSide(
       const cumulativeTStats: { [tId: string]: any } = {};
       teams.forEach(t => cumulativeTStats[t.id] = { points: 0, goalDifference: 0, goalsFor: 0, goalsAgainst: 0, wins: 0, draws: 0, losses: 0, gamesPlayed: 0 });
 
-      // Run through every week up to latest to build movement graphs
       for (let week = 0; week <= latestAbsoluteWeek; week++) {
           if (week > 0) {
               const weekMatches = playedMatches.filter(m => m.week === week);
@@ -214,7 +211,6 @@ export async function recalculateAllDataClientSide(
           });
       }
 
-      // Update User Profiles with "Change" values relative to previous PLAYED week
       for (const u of allUsers) {
           const hist = allHistories[u.id];
           const latest = hist.weeklyScores.find(s => s.week === latestAbsoluteWeek) || hist.weeklyScores[hist.weeklyScores.length - 1];

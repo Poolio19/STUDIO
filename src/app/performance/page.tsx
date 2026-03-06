@@ -14,6 +14,7 @@ import { useCollection, useFirestore, useMemoFirebase, useResolvedUserId } from 
 import { collection } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 import historicalPlayersData from '@/lib/historical-players.json';
+import { cn } from '@/lib/utils';
 
 export default function PerformancePage() {
   const firestore = useFirestore();
@@ -39,8 +40,6 @@ export default function PerformancePage() {
 
   const activeUsers = useMemo(() => {
     if (!users || !predictions) return [];
-    
-    // Strictly filter for current season entries (historical ID or Pro, and valid prediction)
     const historicalUserIds = new Set(historicalPlayersData.map(p => p.id));
     const activeIds = new Set(predictions.filter(p => p.rankings?.length === 20).map(p => p.userId || (p as any).id));
     
@@ -113,10 +112,11 @@ export default function PerformancePage() {
                 <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-9 gap-x-4 gap-y-1 text-[10px] mb-6">
                     {legendUsers.map((u, i) => {
                         if (!u) return <div key={i} />;
+                        const isMe = u.id === resolvedUserId;
                         return (
-                            <div key={u.id} className="flex items-center space-x-2 truncate">
+                            <div key={u.id} className={cn("flex items-center space-x-2 truncate p-0.5 rounded transition-all", isMe && "bg-primary/20 ring-1 ring-primary/50 scale-105 shadow-sm")}>
                                 <span className="h-2 w-2 rounded-sm shrink-0" style={{ backgroundColor: chartConfig[u.name]?.colour }}></span>
-                                <span className="truncate">{`${u.score} ${formatLegendName(u.name)}`}</span>
+                                <span className={cn("truncate", isMe && "font-black text-primary")}>{`${u.score} ${formatLegendName(u.name)}`}</span>
                             </div>
                         );
                     })}

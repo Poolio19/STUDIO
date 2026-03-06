@@ -168,7 +168,6 @@ export default function AdminPage() {
     if (!initialWeekSet || weekFixtures.length === 0) return;
     
     const results = weekFixtures.map(fixture => {
-      // Correctly pre-populate from MatchDateOrig
       const dateStr = fixture.matchDateOrig || new Date().toISOString();
       const dateToUse = new Date(dateStr);
       
