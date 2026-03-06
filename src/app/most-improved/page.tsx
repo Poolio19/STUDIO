@@ -192,11 +192,11 @@ export default function MostImprovedPage() {
   const getWinnerRowStyle = (rank: number, improvement: number) => {
       if (improvement <= 0) return {};
       const sharerCount = ladderData.sharers;
-      // Intensify color based on number of sharers (JoMiMoM logic)
+      // Intensify background based on number of winners
       const alpha = Math.max(0.1, 0.4 - (sharerCount * 0.05));
       
-      if (rank === 1) return { backgroundColor: `rgba(250, 204, 21, ${alpha + 0.15})` }; // Gold
-      if (ladderData.topImp !== ladderData.ruImp && improvement === ladderData.ruImp) return { backgroundColor: `rgba(148, 163, 184, 0.25)` }; // Slate
+      if (rank === 1) return { backgroundColor: `rgba(250, 204, 21, ${alpha + 0.15})` }; // Gold tint
+      if (ladderData.topImp !== ladderData.ruImp && improvement === ladderData.ruImp) return { backgroundColor: `rgba(148, 163, 184, 0.25)` }; // Slate tint
       return {};
   };
 

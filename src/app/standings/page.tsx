@@ -58,17 +58,19 @@ export default function StandingsPage() {
 
         const teamMap = new Map(teamsData.map(t => [t.id, t]));
         
-        // GROUND TRUTH: Cap at Week 29
-        const played = matchesData.filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1 && m.week <= 29)
+        // GROUND TRUTH: Find latest week with actual played results
+        const played = matchesData.filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1)
             .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime());
         
+        // Strict cap at 29 unless data proves otherwise
         const maxW = played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
+        const displayLimit = Math.min(maxW, 29);
 
         const finalStandings = standingsData.map(standing => {
             const team = teamMap.get(standing.teamId)!;
             
-            // CHRONOLOGICAL FORM: Last 6 played games ending at Week 29
-            const teamMatches = played.filter(m => m.homeTeamId === standing.teamId || m.awayTeamId === standing.teamId)
+            // CHRONOLOGICAL FORM: Last 6 played games ending at the display limit
+            const teamMatches = played.filter(m => (m.homeTeamId === standing.teamId || m.awayTeamId === standing.teamId) && m.week <= displayLimit)
                 .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime())
                 .slice(-6);
             
@@ -88,13 +90,13 @@ export default function StandingsPage() {
         const finalChartData = (() => {
             const ranksByWeek: any = {};
             weeklyTeamStandings.forEach(ws => {
-                if (ws.week <= 29) {
+                if (ws.week <= displayLimit) {
                     if (!ranksByWeek[ws.week]) ranksByWeek[ws.week] = {};
                     ranksByWeek[ws.week][ws.teamId] = ws.rank;
                 }
             });
             const data = [];
-            for (let w = 0; w <= 29; w++) {
+            for (let w = 0; w <= displayLimit; w++) {
                 const entry: any = { week: w };
                 teamsData.forEach(t => entry[t.name] = ranksByWeek[w]?.[t.id]);
                 data.push(entry);
@@ -103,14 +105,14 @@ export default function StandingsPage() {
         })();
 
         const resultsByW = new Map();
-        played.sort((a,b) => a.week - b.week).forEach(m => {
+        played.filter(m => m.week <= displayLimit).sort((a,b) => a.week - b.week).forEach(m => {
             const list = resultsByW.get(m.week) || [];
             const h = teamMap.get(m.homeTeamId); const a = teamMap.get(m.awayTeamId);
             if (h && a) list.push({ ...m, homeTeam: h, awayTeam: a });
             resultsByW.set(m.week, list);
         });
 
-        return { standingsWithTeamData: finalStandings, chartData: finalChartData, weeklyResults: resultsByW, latestWeek: maxW };
+        return { standingsWithTeamData: finalStandings, chartData: finalChartData, weeklyResults: resultsByW, latestWeek: displayLimit };
     }, [isLoading, teamsData, matchesData, standingsData, weeklyTeamStandings]);
 
     const getResultColor = (res: string) => {
@@ -137,7 +139,7 @@ export default function StandingsPage() {
                 <TableHead className="hidden md:table-cell text-center">Plyd</TableHead>
                 <TableHead className="text-center">GD</TableHead>
                 <TableHead className="text-center">Pts</TableHead>
-                <TableHead colSpan={6} className="text-center">Form Guide (W{latestWeek - 5} - W{latestWeek})</TableHead>
+                <TableHead colSpan={6} className="text-center">Form Guide (Latest 6 Played)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

@@ -34,8 +34,9 @@ export default function RankingsPage() {
   const currentWk = useMemo(() => {
     if (!matchesData) return 0;
     // Strictly cap at Week 29
-    const played = matchesData.filter(m => Number(m.homeScore) !== -1 && Number(m.awayScore) !== -1 && m.week <= 29);
-    return played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
+    const played = matchesData.filter(m => Number(m.homeScore) !== -1 && Number(m.awayScore) !== -1);
+    const maxW = played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
+    return Math.min(maxW, 29);
   }, [matchesData]);
 
   const activeUsers = useMemo(() => {
@@ -104,7 +105,7 @@ export default function RankingsPage() {
           <Card className="flex justify-center items-center h-[600px]"><Loader2 className="size-8 animate-spin text-muted-foreground" /></Card>
       ) : (
           <Card>
-            <CardHeader><CardTitle>Player Position By Week</CardTitle><CardDescription>Weekly rank progression capped at Week 29.</CardDescription></CardHeader>
+            <CardHeader><CardTitle>Player Position By Week</CardTitle><CardDescription>Weekly rank progression capped at Week {currentWk}.</CardDescription></CardHeader>
             <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-9 gap-x-4 gap-y-1 text-[10px] mb-6">
                     {legendUsers.map((u, i) => {

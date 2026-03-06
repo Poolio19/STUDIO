@@ -129,20 +129,9 @@ export default function AdminPage() {
 
   const defaultWeek = React.useMemo(() => {
     if (!allMatches || allMatches.length === 0) return 1;
-    const matchesByWeek: Record<number, Match[]> = {};
-    for (const match of allMatches) {
-        if (!matchesByWeek[match.week]) matchesByWeek[match.week] = [];
-        matchesByWeek[match.week].push(match);
-    }
-    for (let i = 1; i <= 38; i++) {
-        const weekMatches = matchesByWeek[i];
-        if (weekMatches && weekMatches.length > 0) {
-            const isComplete = weekMatches.every(m => Number(m.homeScore) >= 0);
-            if (!isComplete) return i;
-        }
-    }
-    const latestDefinedWeek = Math.max(...Object.keys(matchesByWeek).map(Number));
-    return (latestDefinedWeek > 0 && latestDefinedWeek < 38) ? latestDefinedWeek + 1 : (latestDefinedWeek > 0 ? latestDefinedWeek : 1);
+    const playedWeeks = [...new Set(allMatches.filter(m => Number(m.homeScore) >= 0).map(m => m.week))];
+    const latest = playedWeeks.length > 0 ? Math.max(...playedWeeks) : 0;
+    return (latest < 38) ? latest + 1 : 38;
   }, [allMatches]);
   
   const scoresForm = useForm<ScoresFormValues>({
@@ -167,10 +156,11 @@ export default function AdminPage() {
   React.useEffect(() => {
     if (!initialWeekSet || weekFixtures.length === 0) return;
     
-    // CRITICAL: Prevent reset if user has manual edits
+    // CRITICAL: Prevent reset if user has manual edits (isDirty)
     if (scoresForm.formState.isDirty) return;
 
     const results = weekFixtures.map(fixture => {
+      // Use Played date if exists, else fall back to original schedule
       const dateStr = fixture.matchDatePlay || fixture.matchDateOrig || new Date().toISOString();
       const dateToUse = new Date(dateStr);
       
@@ -229,7 +219,7 @@ export default function AdminPage() {
       }
       await batch.commit();
       await fetchAllMatches();
-      // Reset form to acknowledge new baseline
+      // Reset form baseline to acknowledge the save
       scoresForm.reset(scoresForm.getValues());
       toast({ title: 'Database Updated!', description: `Saved ${weekData.results.length} match records.` });
     } catch (error: any) {
@@ -372,7 +362,7 @@ export default function AdminPage() {
         <Card className="lg:col-span-2">
             <CardHeader>
                 <CardTitle>Results &amp; Played Dates</CardTitle>
-                <CardDescription>Adjust scores and played dates. Fields are pre-populated from the original schedule.</CardDescription>
+                <CardDescription>Adjust scores and played dates. Date fields pre-populate from the original schedule.</CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={scoresForm.handleSubmit(onWriteResultsFileSubmit)} className="space-y-6">

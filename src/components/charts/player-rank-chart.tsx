@@ -35,7 +35,7 @@ export function PlayerRankChart({ chartData, yAxisDomain, sortedUsers, chartConf
     return ticks.sort((a, b) => a - b);
   }, [yAxisDomain]);
 
-  // CRITICAL: Sort lines so current user is rendered last (on top)
+  // CRITICAL: Render the current user's line last so it is on top of the visual stack
   const orderedLines = React.useMemo(() => {
     return [...sortedUsers].sort((a, b) => {
         if (a.id === currentUserId) return 1;

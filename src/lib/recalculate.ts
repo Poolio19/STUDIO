@@ -51,7 +51,7 @@ export async function recalculateAllDataClientSide(
       let matchSyncCount = 0;
       localFixtures.forEach((localMatch: any) => {
           const dbMatch = dbMatches.find(m => m.id === localMatch.id);
-          // If match exists in DB but lacks dates, or if it doesn't exist yet, seed it with Orig values
+          // Always ensure ground truth dates exist
           if (!dbMatch || !dbMatch.matchDateOrig || !dbMatch.matchDatePlay) {
               const dateToUse = localMatch.matchDateOrig || new Date().toISOString();
               matchSyncBatch.set(doc(firestore, 'matches', localMatch.id), {
@@ -99,7 +99,7 @@ export async function recalculateAllDataClientSide(
                   let type: 'winner' | 'runner-up' = 'winner';
                   if (award.type.toLowerCase().includes('ru')) type = 'runner-up';
                   
-                  const cleanMonth = monthData.month.toLowerCase().replace('auf', 'aug').replace('sep', 'sept');
+                  const cleanMonth = monthData.month.toLowerCase();
                   const awardId = `hist-${uId}-${monthData.season}-${cleanMonth}-${idx}`.replace(/[^a-zA-Z0-9-]/g, '-');
 
                   const awardData: any = {
@@ -115,7 +115,6 @@ export async function recalculateAllDataClientSide(
       const finalMatchesDocs = await getDocs(collection(firestore, 'matches'));
       const playedMatches = finalMatchesDocs.docs
           .map(d => d.data() as Match)
-          // Process ALL played matches, but UI handles the "cap"
           .filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1)
           .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig || 0).getTime() - new Date(b.matchDatePlay || b.matchDateOrig || 0).getTime());
       
