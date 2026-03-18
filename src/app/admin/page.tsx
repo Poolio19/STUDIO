@@ -153,6 +153,7 @@ export default function AdminPage() {
     }
   }, [defaultWeek, scoresForm, initialWeekSet, allMatches]);
 
+  // SYNC FORM WITH DATA
   React.useEffect(() => {
     if (!initialWeekSet || weekFixtures.length === 0) return;
     
@@ -219,7 +220,7 @@ export default function AdminPage() {
       }
       await batch.commit();
       await fetchAllMatches();
-      // Reset form baseline to acknowledge the save
+      // Reset form baseline to acknowledge the save and clear isDirty
       scoresForm.reset(scoresForm.getValues());
       toast({ title: 'Database Updated!', description: `Saved ${weekData.results.length} match records.` });
     } catch (error: any) {

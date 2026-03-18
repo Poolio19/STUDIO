@@ -15,7 +15,7 @@ import localFixtures from './past-fixtures.json';
 
 /**
  * Recalculates all derived data and seeds historical records.
- * Capped at Week 29 for UI display but processes all data.
+ * Capped at real-world played week for display.
  */
 export async function recalculateAllDataClientSide(
   firestore: Firestore,
@@ -51,18 +51,18 @@ export async function recalculateAllDataClientSide(
       let matchSyncCount = 0;
       localFixtures.forEach((localMatch: any) => {
           const dbMatch = dbMatches.find(m => m.id === localMatch.id);
-          // Always ensure ground truth dates exist
-          if (!dbMatch || !dbMatch.matchDateOrig || !dbMatch.matchDatePlay) {
-              const dateToUse = localMatch.matchDateOrig || new Date().toISOString();
-              matchSyncBatch.set(doc(firestore, 'matches', localMatch.id), {
-                  ...localMatch,
-                  matchDateOrig: localMatch.matchDateOrig || dateToUse,
-                  matchDatePlay: dbMatch?.matchDatePlay || localMatch.matchDatePlay || dateToUse,
-                  homeScore: Number(dbMatch?.homeScore ?? localMatch.homeScore),
-                  awayScore: Number(dbMatch?.awayScore ?? localMatch.awayScore)
-              }, { merge: true });
-              matchSyncCount++;
-          }
+          // Safety fallback for dates to avoid undefined error
+          const dateOrig = localMatch.matchDateOrig || new Date().toISOString();
+          const datePlay = dbMatch?.matchDatePlay || localMatch.matchDatePlay || dateOrig;
+
+          matchSyncBatch.set(doc(firestore, 'matches', localMatch.id), {
+              ...localMatch,
+              matchDateOrig: dateOrig,
+              matchDatePlay: datePlay,
+              homeScore: Number(dbMatch?.homeScore ?? localMatch.homeScore),
+              awayScore: Number(dbMatch?.awayScore ?? localMatch.awayScore)
+          }, { merge: true });
+          matchSyncCount++;
       });
       if (matchSyncCount > 0) await matchSyncBatch.commit();
 

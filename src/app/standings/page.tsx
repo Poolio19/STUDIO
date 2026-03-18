@@ -62,9 +62,8 @@ export default function StandingsPage() {
         const played = matchesData.filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1)
             .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime());
         
-        // Strict cap at 29 unless data proves otherwise
-        const maxW = played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
-        const displayLimit = Math.min(maxW, 29);
+        // Strict cap at real-world played maximum
+        const displayLimit = played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
 
         const finalStandings = standingsData.map(standing => {
             const team = teamMap.get(standing.teamId)!;
@@ -105,7 +104,7 @@ export default function StandingsPage() {
         })();
 
         const resultsByW = new Map();
-        played.filter(m => m.week <= displayLimit).sort((a,b) => a.week - b.week).forEach(m => {
+        played.sort((a,b) => a.week - b.week).forEach(m => {
             const list = resultsByW.get(m.week) || [];
             const h = teamMap.get(m.homeTeamId); const a = teamMap.get(m.awayTeamId);
             if (h && a) list.push({ ...m, homeTeam: h, awayTeam: a });
