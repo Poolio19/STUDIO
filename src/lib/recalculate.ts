@@ -51,7 +51,6 @@ export async function recalculateAllDataClientSide(
       let matchSyncCount = 0;
       localFixtures.forEach((localMatch: any) => {
           const dbMatch = dbMatches.find(m => m.id === localMatch.id);
-          // Safety fallback for dates to avoid undefined error
           const dateOrig = localMatch.matchDateOrig || new Date().toISOString();
           const datePlay = dbMatch?.matchDatePlay || localMatch.matchDatePlay || dateOrig;
 
