@@ -92,6 +92,7 @@ export default function AdminPage() {
   const [isImportingUsers, setIsImportingUsers] = React.useState(false);
   const [initialWeekSet, setInitialWeekSet] = React.useState(false);
   const [isSavingStats, setIsSavingStats] = React.useState<string | null>(null);
+  const [lastResetWeek, setLastResetWeek] = React.useState<number | null>(null);
 
   const [latestFileContent, setLatestFileContent] = React.useState<string | null>(null);
 
@@ -156,9 +157,14 @@ export default function AdminPage() {
 
   // SYNC FORM WITH DATA
   React.useEffect(() => {
-    // CRITICAL: If the user has started editing, don't reset underneath them
-    if (scoresForm.formState.isDirty) return;
-    if (weekFixtures.length === 0) return;
+    if (!selectedWeek || weekFixtures.length === 0) return;
+
+    // Detect if the user actually switched weeks in the dropdown
+    const weekChanged = lastResetWeek !== selectedWeek;
+    
+    // Only return early if we are on the same week AND the form has unsaved changes.
+    // If the week changed, we ALWAYS reset to load the correct fixtures.
+    if (scoresForm.formState.isDirty && !weekChanged) return;
 
     const results = weekFixtures.map(fixture => {
       const dateStr = fixture.matchDatePlay || fixture.matchDateOrig || new Date().toISOString();
@@ -178,8 +184,10 @@ export default function AdminPage() {
         playTime: timeOptions.includes(formattedTime) ? formattedTime : "15:00",
       };
     });
+
     scoresForm.reset({ week: selectedWeek, results: results });
-  }, [selectedWeek, weekFixtures, scoresForm]);
+    setLastResetWeek(selectedWeek);
+  }, [selectedWeek, weekFixtures, scoresForm, lastResetWeek]);
 
   const onWriteResultsFileSubmit = (data: ScoresFormValues) => {
     setIsWritingFile(true);

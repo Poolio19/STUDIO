@@ -13,6 +13,8 @@ import historicalMimoAwardsData from './historical-mimo-awards.json';
 import { allAwardPeriods } from './award-periods';
 import localFixtures from './past-fixtures.json';
 
+const SEASON_CAP_WEEK = 29;
+
 /**
  * Recalculates all derived data and seeds historical records.
  * Strictly capped at Week 29 to align with current real-world progress.
@@ -48,24 +50,38 @@ export async function recalculateAllDataClientSide(
       progressCallback('Synchronizing fixtures from JSON...');
       
       const matchSyncBatch = writeBatch(firestore);
-      let matchSyncCount = 0;
-      localFixtures.forEach((localMatch: any) => {
-          if (localMatch.week > 29) return; // STRICT CAP AT WEEK 29
+      const jsonMatchIds = new Set(localFixtures.map((m: any) => m.id));
+      
+      // Delete rogue matches in Firestore that are not in the JSON
+      dbMatches.forEach(dbMatch => {
+          if (!jsonMatchIds.has(dbMatch.id)) {
+              matchSyncBatch.delete(doc(firestore, 'matches', dbMatch.id));
+          }
+      });
 
+      localFixtures.forEach((localMatch: any) => {
+          // Process ALL matches for structure, but we will ONLY process scores up to the CAP
           const dbMatch = dbMatches.find(m => m.id === localMatch.id);
           const dateOrig = localMatch.matchDateOrig || new Date().toISOString();
           const datePlay = dbMatch?.matchDatePlay || localMatch.matchDatePlay || dateOrig;
+
+          // Strictly cap scores at 29
+          const homeScore = Number(localMatch.week) <= SEASON_CAP_WEEK 
+            ? Number(dbMatch?.homeScore ?? localMatch.homeScore) 
+            : -1;
+          const awayScore = Number(localMatch.week) <= SEASON_CAP_WEEK 
+            ? Number(dbMatch?.awayScore ?? localMatch.awayScore) 
+            : -1;
 
           matchSyncBatch.set(doc(firestore, 'matches', localMatch.id), {
               ...localMatch,
               matchDateOrig: dateOrig,
               matchDatePlay: datePlay,
-              homeScore: Number(dbMatch?.homeScore ?? localMatch.homeScore),
-              awayScore: Number(dbMatch?.awayScore ?? localMatch.awayScore)
+              homeScore: homeScore,
+              awayScore: awayScore
           }, { merge: true });
-          matchSyncCount++;
       });
-      if (matchSyncCount > 0) await matchSyncBatch.commit();
+      await matchSyncBatch.commit();
 
       const derivedCollections = ['standings', 'playerTeamScores', 'teamRecentResults', 'weeklyTeamStandings', 'userHistories', 'monthlyMimoM'];
       for (const colName of derivedCollections) {
@@ -116,7 +132,7 @@ export async function recalculateAllDataClientSide(
       const finalMatchesDocs = await getDocs(collection(firestore, 'matches'));
       const playedMatches = finalMatchesDocs.docs
           .map(d => d.data() as Match)
-          .filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1 && m.week <= 29)
+          .filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1 && m.week <= SEASON_CAP_WEEK)
           .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig || 0).getTime() - new Date(b.matchDatePlay || b.matchDateOrig || 0).getTime());
       
       const playedWeeks = [0, ...new Set(playedMatches.map(m => m.week))].sort((a,b) => a-b);

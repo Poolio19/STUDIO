@@ -58,7 +58,7 @@ export default function StandingsPage() {
 
         const teamMap = new Map(teamsData.map(t => [t.id, t]));
         
-        // GROUND TRUTH: Cap strictly at Week 29. Ignore any rogue future data.
+        // GROUND TRUTH: Find the actual latest week with recorded scores, capped at 29
         const played = matchesData
             .filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1 && m.week <= 29)
             .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime());
@@ -69,7 +69,7 @@ export default function StandingsPage() {
             const team = teamMap.get(standing.teamId)!;
             if (!team) return null;
             
-            // CHRONOLOGICAL FORM: Last 6 played games ending at the display limit
+            // CHRONOLOGICAL FORM: Last 6 played games ending at the display limit, sorted by DATE
             const teamMatches = played.filter(m => (m.homeTeamId === standing.teamId || m.awayTeamId === standing.teamId))
                 .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime())
                 .slice(-6);
