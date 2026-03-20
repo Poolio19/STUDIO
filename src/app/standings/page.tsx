@@ -62,7 +62,7 @@ export default function StandingsPage() {
         const played = matchesData.filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1)
             .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime());
         
-        // Strict cap at real-world played maximum
+        // Strict cap at real-world played maximum (e.g. Week 29)
         const displayLimit = played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
 
         const finalStandings = standingsData.map(standing => {
