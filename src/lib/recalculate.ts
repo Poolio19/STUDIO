@@ -15,7 +15,7 @@ import localFixtures from './past-fixtures.json';
 
 /**
  * Recalculates all derived data and seeds historical records.
- * Capped at real-world played week for display.
+ * Strictly capped at Week 29 to align with current real-world progress.
  */
 export async function recalculateAllDataClientSide(
   firestore: Firestore,
@@ -45,11 +45,13 @@ export async function recalculateAllDataClientSide(
       
       const activeUsersForRankings = allUsers.filter(u => activeUserIds.has(u.id));
 
-      progressCallback('Synchronizing match dates and clearing derived tables...');
+      progressCallback('Synchronizing fixtures from JSON...');
       
       const matchSyncBatch = writeBatch(firestore);
       let matchSyncCount = 0;
       localFixtures.forEach((localMatch: any) => {
+          if (localMatch.week > 29) return; // STRICT CAP AT WEEK 29
+
           const dbMatch = dbMatches.find(m => m.id === localMatch.id);
           const dateOrig = localMatch.matchDateOrig || new Date().toISOString();
           const datePlay = dbMatch?.matchDatePlay || localMatch.matchDatePlay || dateOrig;
@@ -114,12 +116,12 @@ export async function recalculateAllDataClientSide(
       const finalMatchesDocs = await getDocs(collection(firestore, 'matches'));
       const playedMatches = finalMatchesDocs.docs
           .map(d => d.data() as Match)
-          .filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1)
+          .filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1 && m.week <= 29)
           .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig || 0).getTime() - new Date(b.matchDatePlay || b.matchDateOrig || 0).getTime());
       
       const playedWeeks = [0, ...new Set(playedMatches.map(m => m.week))].sort((a,b) => a-b);
-      const latestAbsoluteWeek = playedWeeks[playedWeeks.length - 1] || 0;
-      const previousPlayedWeek = playedWeeks[playedWeeks.length - 2] ?? 0;
+      const latestAbsoluteWeek = Math.max(...playedWeeks);
+      const previousPlayedWeek = playedWeeks.length >= 2 ? playedWeeks[playedWeeks.length - 2] : 0;
 
       const cumulativeTStats: { [tId: string]: any } = {};
       teams.forEach(t => cumulativeTStats[t.id] = { points: 0, goalDifference: 0, goalsFor: 0, goalsAgainst: 0, wins: 0, draws: 0, losses: 0, gamesPlayed: 0 });

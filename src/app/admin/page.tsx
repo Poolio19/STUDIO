@@ -129,7 +129,8 @@ export default function AdminPage() {
 
   const defaultWeek = React.useMemo(() => {
     if (!allMatches || allMatches.length === 0) return 1;
-    const playedWeeks = [...new Set(allMatches.filter(m => Number(m.homeScore) >= 0).map(m => m.week))];
+    const playedMatches = allMatches.filter(m => Number(m.homeScore) >= 0);
+    const playedWeeks = [...new Set(playedMatches.map(m => m.week))];
     const latest = playedWeeks.length > 0 ? Math.max(...playedWeeks) : 0;
     return (latest < 38) ? latest + 1 : 38;
   }, [allMatches]);
@@ -155,13 +156,11 @@ export default function AdminPage() {
 
   // SYNC FORM WITH DATA
   React.useEffect(() => {
-    if (!initialWeekSet || weekFixtures.length === 0) return;
-    
-    // CRITICAL: Prevent reset if user has manual edits (isDirty)
+    // CRITICAL: If the user has started editing, don't reset underneath them
     if (scoresForm.formState.isDirty) return;
+    if (weekFixtures.length === 0) return;
 
     const results = weekFixtures.map(fixture => {
-      // Use Played date if exists, else fall back to original schedule
       const dateStr = fixture.matchDatePlay || fixture.matchDateOrig || new Date().toISOString();
       const dateToUse = new Date(dateStr);
       
@@ -180,7 +179,7 @@ export default function AdminPage() {
       };
     });
     scoresForm.reset({ week: selectedWeek, results: results });
-  }, [selectedWeek, weekFixtures, initialWeekSet, scoresForm]);
+  }, [selectedWeek, weekFixtures, scoresForm]);
 
   const onWriteResultsFileSubmit = (data: ScoresFormValues) => {
     setIsWritingFile(true);
@@ -220,7 +219,7 @@ export default function AdminPage() {
       }
       await batch.commit();
       await fetchAllMatches();
-      // Reset form baseline to acknowledge the save and clear isDirty
+      // Reset form baseline to current values to clear isDirty after save
       scoresForm.reset(scoresForm.getValues());
       toast({ title: 'Database Updated!', description: `Saved ${weekData.results.length} match records.` });
     } catch (error: any) {
@@ -363,7 +362,7 @@ export default function AdminPage() {
         <Card className="lg:col-span-2">
             <CardHeader>
                 <CardTitle>Results &amp; Played Dates</CardTitle>
-                <CardDescription>Adjust scores and played dates. Date fields pre-populate from the original schedule.</CardDescription>
+                <CardDescription>Adjust scores and played dates. Dates pre-populate from the original schedule.</CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={scoresForm.handleSubmit(onWriteResultsFileSubmit)} className="space-y-6">
@@ -382,30 +381,30 @@ export default function AdminPage() {
                     )}
                   />
                   <div className="space-y-2">
-                    <div className="hidden lg:grid grid-cols-[1fr_auto_10px_auto_1fr_240px] items-center gap-4 px-4 text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
-                        <span className="text-right">Home</span>
+                    <div className="hidden lg:grid grid-cols-[1fr_auto_10px_auto_1fr_240px] items-center gap-4 px-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2 border-b pb-2">
+                        <span className="text-right">Home Team</span>
                         <span className="w-12 text-center">Score</span>
                         <span />
                         <span className="w-12 text-center">Score</span>
-                        <span className="text-left">Away</span>
+                        <span className="text-left">Away Team</span>
                         <span className="text-center">Actually Played (Y/M/D/Time)</span>
                     </div>
                     {weekFixtures.map((fixture, index) => {
                        const homeTeam = teamsMap.get(fixture.homeTeamId);
                        const awayTeam = teamsMap.get(fixture.awayTeamId);
                       return (
-                        <div key={fixture.id} className="p-3 border rounded-md bg-muted/5">
+                        <div key={fixture.id} className="p-3 border rounded-md bg-muted/5 transition-colors hover:bg-muted/10">
                             <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_10px_auto_1fr_240px] items-center gap-4">
                                 <div className="flex items-center justify-end gap-2 lg:gap-0 lg:block lg:text-right">
                                     <span className="lg:hidden text-[10px] uppercase font-bold text-muted-foreground mr-auto">Home:</span>
-                                    <span className="font-medium text-sm">{homeTeam?.name || fixture.homeTeamId}</span>
+                                    <span className="font-bold text-sm">{homeTeam?.name || fixture.homeTeamId}</span>
                                 </div>
                                 
                                 <Controller
                                     control={scoresForm.control}
                                     name={`results.${index}.homeScore`}
                                     render={({ field }) => (
-                                        <Input {...field} type="text" className="w-12 text-center h-8" value={displayScore(field.value)} onChange={e => field.onChange(e.target.value.toUpperCase())} />
+                                        <Input {...field} type="text" className="w-12 text-center h-8 font-black" value={displayScore(field.value)} onChange={e => field.onChange(e.target.value.toUpperCase())} />
                                     )}
                                 />
                                 <span className="text-center font-bold hidden lg:inline">-</span>
@@ -413,35 +412,35 @@ export default function AdminPage() {
                                     control={scoresForm.control}
                                     name={`results.${index}.awayScore`}
                                     render={({ field }) => (
-                                        <Input {...field} type="text" className="w-12 text-center h-8" value={displayScore(field.value)} onChange={e => field.onChange(e.target.value.toUpperCase())} />
+                                        <Input {...field} type="text" className="w-12 text-center h-8 font-black" value={displayScore(field.value)} onChange={e => field.onChange(e.target.value.toUpperCase())} />
                                     )}
                                 />
                                 
                                 <div className="flex items-center justify-start gap-2 lg:gap-0 lg:block lg:text-left">
-                                    <span className="font-medium text-sm">{awayTeam?.name || fixture.awayTeamId}</span>
+                                    <span className="font-bold text-sm">{awayTeam?.name || fixture.awayTeamId}</span>
                                     <span className="lg:hidden text-[10px] uppercase font-bold text-muted-foreground ml-auto">Away:</span>
                                 </div>
 
-                                <div className="flex items-center gap-1.5 justify-center pt-2 lg:pt-0 border-t lg:border-t-0 border-muted">
+                                <div className="flex items-center gap-1 justify-center pt-2 lg:pt-0 border-t lg:border-t-0 border-muted">
                                     <Controller
                                         control={scoresForm.control}
                                         name={`results.${index}.playYear`}
                                         render={({ field }) => (
-                                            <Input {...field} className="w-14 h-7 text-[11px] text-center px-1" placeholder="YYYY" />
+                                            <Input {...field} className="w-[54px] h-7 text-[11px] text-center px-1 font-medium" placeholder="YYYY" />
                                         )}
                                     />
                                     <Controller
                                         control={scoresForm.control}
                                         name={`results.${index}.playMonth`}
                                         render={({ field }) => (
-                                            <Input {...field} className="w-9 h-7 text-[11px] text-center px-1" placeholder="MM" />
+                                            <Input {...field} className="w-[34px] h-7 text-[11px] text-center px-1 font-medium" placeholder="MM" />
                                         )}
                                     />
                                     <Controller
                                         control={scoresForm.control}
                                         name={`results.${index}.playDay`}
                                         render={({ field }) => (
-                                            <Input {...field} className="w-9 h-7 text-[11px] text-center px-1" placeholder="DD" />
+                                            <Input {...field} className="w-[34px] h-7 text-[11px] text-center px-1 font-medium" placeholder="DD" />
                                         )}
                                     />
                                     <Controller
@@ -449,7 +448,7 @@ export default function AdminPage() {
                                         name={`results.${index}.playTime`}
                                         render={({ field }) => (
                                             <Select onValueChange={field.onChange} value={field.value}>
-                                                <SelectTrigger className="w-[70px] h-7 text-[11px] px-1.5"><SelectValue /></SelectTrigger>
+                                                <SelectTrigger className="w-[68px] h-7 text-[11px] px-1.5 font-medium"><SelectValue /></SelectTrigger>
                                                 <SelectContent>
                                                     {timeOptions.map(t => <SelectItem key={t} value={t} className="text-[11px]">{t}</SelectItem>)}
                                                 </SelectContent>

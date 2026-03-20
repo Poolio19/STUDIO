@@ -77,11 +77,11 @@ export default function MostImprovedPage() {
   const { data: monthlyMimoMAwards, isLoading: mimoMLoading } = useCollection<MonthlyMimoM>(mimoMQuery);
   const { data: predictions, isLoading: predictionsLoading } = useCollection<Prediction>(predictionsQuery);
 
-  const isLoading = usersLoading || matchesLoading || historiesLoading || mimoMLoading || predictionsLoading;
+  const isLoading = usersLoading || historiesLoading || matchesLoading || mimoMLoading || predictionsLoading;
 
   const currentWeek = useMemo(() => {
     if (!matchesData) return 0;
-    const played = matchesData.filter(m => Number(m.homeScore) !== -1 && Number(m.awayScore) !== -1);
+    const played = matchesData.filter(m => Number(m.homeScore) !== -1 && Number(m.awayScore) !== -1 && m.week <= 29);
     return played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
   }, [matchesData]);
 
@@ -95,7 +95,6 @@ export default function MostImprovedPage() {
     
     const rawPeriod = allAwardPeriods.find(p => currentWeek >= p.startWeek && currentWeek < p.endWeek) || allAwardPeriods[allAwardPeriods.length - 1];
     
-    // TRANSITION LOGIC: Check for point changes in current period
     const hasProgress = users.some(u => {
         if (!activeUserIds.has(u.id)) return false;
         const h = userHistories.find(hist => hist.userId === u.id);
@@ -192,11 +191,11 @@ export default function MostImprovedPage() {
   const getWinnerRowStyle = (rank: number, improvement: number) => {
       if (improvement <= 0) return {};
       const sharerCount = ladderData.sharers;
-      // Intensity of gold/slate background
-      const alpha = Math.max(0.1, 0.4 - (sharerCount * 0.05));
+      // INTENSIFIED: Bolder colors when sharing
+      const alpha = Math.min(0.8, 0.2 + (sharerCount * 0.15));
       
-      if (rank === 1) return { backgroundColor: `rgba(250, 204, 21, ${alpha + 0.15})` };
-      if (ladderData.topImp !== ladderData.ruImp && improvement === ladderData.ruImp) return { backgroundColor: `rgba(148, 163, 184, 0.25)` };
+      if (rank === 1) return { backgroundColor: `rgba(250, 204, 21, ${alpha})` };
+      if (ladderData.topImp !== ladderData.ruImp && improvement === ladderData.ruImp) return { backgroundColor: `rgba(148, 163, 184, 0.4)` };
       return {};
   };
 
@@ -225,7 +224,7 @@ export default function MostImprovedPage() {
                             {ladderData.list.length > 0 ? ladderData.list.map((user) => {
                                 const Icon = getRankChangeIcon(user.rankChangeInMonth);
                                 return (
-                                    <TableRow key={user.id} style={getWinnerRowStyle(user.displayRank, user.improvement)} className="transition-colors hover:brightness-95">
+                                    <TableRow key={user.id} style={getWinnerRowStyle(user.displayRank, user.improvement)} className="transition-colors hover:brightness-95 border-b">
                                         <TableCell className="p-2 font-black text-center">{user.displayRank}</TableCell>
                                         <TableCell className="p-2">
                                             <div className="flex items-center gap-3">

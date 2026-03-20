@@ -31,12 +31,7 @@ export default function PerformancePage() {
   
   const isLoading = usersLoading || historiesLoading || matchesLoading || predictionsLoading;
 
-  const currentWk = useMemo(() => {
-    if (!matchesData) return 0;
-    // Strictly find max week with recorded scores
-    const played = matchesData.filter(m => Number(m.homeScore) !== -1 && Number(m.awayScore) !== -1);
-    return played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
-  }, [matchesData]);
+  const currentWk = 29; // STRICT CAP AT WEEK 29
 
   const activeUsers = useMemo(() => {
     if (!users || !predictions) return [];

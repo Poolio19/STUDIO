@@ -58,18 +58,19 @@ export default function StandingsPage() {
 
         const teamMap = new Map(teamsData.map(t => [t.id, t]));
         
-        // GROUND TRUTH: Find latest week with actual played results
-        const played = matchesData.filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1)
+        // GROUND TRUTH: Cap strictly at Week 29. Ignore any rogue future data.
+        const played = matchesData
+            .filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1 && m.week <= 29)
             .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime());
         
-        // Strict cap at real-world played maximum (e.g. Week 29)
-        const displayLimit = played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
+        const displayLimit = 29;
 
         const finalStandings = standingsData.map(standing => {
             const team = teamMap.get(standing.teamId)!;
+            if (!team) return null;
             
             // CHRONOLOGICAL FORM: Last 6 played games ending at the display limit
-            const teamMatches = played.filter(m => (m.homeTeamId === standing.teamId || m.awayTeamId === standing.teamId) && m.week <= displayLimit)
+            const teamMatches = played.filter(m => (m.homeTeamId === standing.teamId || m.awayTeamId === standing.teamId))
                 .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime())
                 .slice(-6);
             
@@ -84,7 +85,7 @@ export default function StandingsPage() {
             while (recentResults.length < 6) recentResults.unshift({ result: '-', week: 0 });
 
             return { ...standing, ...team, recentResults };
-        }).sort((a,b) => a.rank - b.rank);
+        }).filter((t): t is any => !!t).sort((a,b) => a.rank - b.rank);
 
         const finalChartData = (() => {
             const ranksByWeek: any = {};
@@ -138,7 +139,7 @@ export default function StandingsPage() {
                 <TableHead className="hidden md:table-cell text-center">Plyd</TableHead>
                 <TableHead className="text-center">GD</TableHead>
                 <TableHead className="text-center">Pts</TableHead>
-                <TableHead colSpan={6} className="text-center">Form Guide (Latest 6 Played)</TableHead>
+                <TableHead colSpan={6} className="text-center">Form Guide (Weeks 24-29 Chronological)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

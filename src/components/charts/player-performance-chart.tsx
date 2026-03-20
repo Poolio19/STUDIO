@@ -37,7 +37,7 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers, ch
     return ticks;
   }, [yAxisDomain]);
 
-  // CRITICAL: Render the current user's line last so it is on top of the visual stack
+  // CRITICAL: Render the current user's line last so it is on top of the visual stack (SVG layering)
   const orderedLines = React.useMemo(() => {
     return [...sortedUsers].sort((a, b) => {
         if (a.id === currentUserId) return 1;
