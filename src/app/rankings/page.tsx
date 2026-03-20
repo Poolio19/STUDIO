@@ -31,7 +31,11 @@ export default function RankingsPage() {
 
   const isLoading = usersLoading || historiesLoading || matchesLoading || predictionsLoading;
 
-  const currentWk = 29; // STRICT CAP AT WEEK 29
+  const currentWk = useMemo(() => {
+    if (!matchesData) return 0;
+    const played = matchesData.filter(m => Number(m.homeScore) >= 0);
+    return played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
+  }, [matchesData]);
 
   const activeUsers = useMemo(() => {
     if (!users || !predictions) return [];
@@ -99,7 +103,7 @@ export default function RankingsPage() {
           <Card className="flex justify-center items-center h-[600px]"><Loader2 className="size-8 animate-spin text-muted-foreground" /></Card>
       ) : (
           <Card>
-            <CardHeader><CardTitle>Player Position By Week</CardTitle><CardDescription>Weekly rank progression capped at Week {currentWk}.</CardDescription></CardHeader>
+            <CardHeader><CardTitle>Player Position By Week</CardTitle><CardDescription>Weekly rank progression up to Week {currentWk}.</CardDescription></CardHeader>
             <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-9 gap-x-4 gap-y-1 text-[10px] mb-6">
                     {legendUsers.map((u, i) => {

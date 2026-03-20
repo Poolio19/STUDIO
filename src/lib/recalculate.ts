@@ -13,11 +13,9 @@ import historicalMimoAwardsData from './historical-mimo-awards.json';
 import { allAwardPeriods } from './award-periods';
 import localFixtures from './past-fixtures.json';
 
-const SEASON_CAP_WEEK = 29;
-
 /**
  * Recalculates all derived data and seeds historical records.
- * Strictly capped at Week 29 to align with current real-world progress.
+ * Dynamically detects the current week based on matches with recorded scores.
  */
 export async function recalculateAllDataClientSide(
   firestore: Firestore,
@@ -60,18 +58,13 @@ export async function recalculateAllDataClientSide(
       });
 
       localFixtures.forEach((localMatch: any) => {
-          // Process ALL matches for structure, but we will ONLY process scores up to the CAP
           const dbMatch = dbMatches.find(m => m.id === localMatch.id);
           const dateOrig = localMatch.matchDateOrig || new Date().toISOString();
           const datePlay = dbMatch?.matchDatePlay || localMatch.matchDatePlay || dateOrig;
 
-          // Strictly cap scores at 29
-          const homeScore = Number(localMatch.week) <= SEASON_CAP_WEEK 
-            ? Number(dbMatch?.homeScore ?? localMatch.homeScore) 
-            : -1;
-          const awayScore = Number(localMatch.week) <= SEASON_CAP_WEEK 
-            ? Number(dbMatch?.awayScore ?? localMatch.awayScore) 
-            : -1;
+          // Scores are preserved if they exist in Firestore, otherwise taken from JSON
+          const homeScore = Number(dbMatch?.homeScore !== undefined ? dbMatch.homeScore : localMatch.homeScore);
+          const awayScore = Number(dbMatch?.awayScore !== undefined ? dbMatch.awayScore : localMatch.awayScore);
 
           matchSyncBatch.set(doc(firestore, 'matches', localMatch.id), {
               ...localMatch,
@@ -130,13 +123,14 @@ export async function recalculateAllDataClientSide(
       });
 
       const finalMatchesDocs = await getDocs(collection(firestore, 'matches'));
-      const playedMatches = finalMatchesDocs.docs
-          .map(d => d.data() as Match)
-          .filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1 && m.week <= SEASON_CAP_WEEK)
+      const allMatchesData = finalMatchesDocs.docs.map(d => d.data() as Match);
+      
+      const playedMatches = allMatchesData
+          .filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1)
           .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig || 0).getTime() - new Date(b.matchDatePlay || b.matchDateOrig || 0).getTime());
       
       const playedWeeks = [0, ...new Set(playedMatches.map(m => m.week))].sort((a,b) => a-b);
-      const latestAbsoluteWeek = Math.max(...playedWeeks);
+      const latestAbsoluteWeek = playedWeeks.length > 1 ? Math.max(...playedWeeks) : 0;
       const previousPlayedWeek = playedWeeks.length >= 2 ? playedWeeks[playedWeeks.length - 2] : 0;
 
       const cumulativeTStats: { [tId: string]: any } = {};

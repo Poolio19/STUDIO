@@ -58,12 +58,12 @@ export default function StandingsPage() {
 
         const teamMap = new Map(teamsData.map(t => [t.id, t]));
         
-        // GROUND TRUTH: Find the actual latest week with recorded scores, capped at 29
+        // GROUND TRUTH: Find the actual latest week with recorded scores
         const played = matchesData
-            .filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1 && m.week <= 29)
+            .filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1)
             .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime());
         
-        const displayLimit = 29;
+        const displayLimit = played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
 
         const finalStandings = standingsData.map(standing => {
             const team = teamMap.get(standing.teamId)!;
@@ -124,6 +124,11 @@ export default function StandingsPage() {
 
   if (isLoading) return <div className="flex h-96 items-center justify-center"><Loader2 className="size-8 animate-spin text-muted-foreground" /></div>;
 
+  const formGuideWeeks = standingsWithTeamData.length > 0 ? { 
+      start: Math.min(...standingsWithTeamData[0].recentResults.filter((r:any) => r.week > 0).map((r:any) => r.week)),
+      end: Math.max(...standingsWithTeamData[0].recentResults.filter((r:any) => r.week > 0).map((r:any) => r.week))
+  } : { start: 0, end: 0 };
+
   return (
     <div className="space-y-8">
       <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData as (Team & { rank: number })[]} />
@@ -139,7 +144,7 @@ export default function StandingsPage() {
                 <TableHead className="hidden md:table-cell text-center">Plyd</TableHead>
                 <TableHead className="text-center">GD</TableHead>
                 <TableHead className="text-center">Pts</TableHead>
-                <TableHead colSpan={6} className="text-center">Form Guide (Weeks 24-29 Chronological)</TableHead>
+                <TableHead colSpan={6} className="text-center">Form Guide (Weeks {formGuideWeeks.start}-{formGuideWeeks.end} Chronological)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Users, Database, RefreshCw } from 'lucide-react';
+import { Loader2, Users, Database } from 'lucide-react';
 import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc, writeBatch, getDocs, query, deleteDoc, updateDoc, orderBy } from 'firebase/firestore';
 import {
@@ -157,7 +157,7 @@ export default function AdminPage() {
 
   // SYNC FORM WITH DATA
   React.useEffect(() => {
-    if (!selectedWeek || weekFixtures.length === 0) return;
+    if (weekFixtures.length === 0) return;
 
     // Detect if the user actually switched weeks in the dropdown
     const weekChanged = lastResetWeek !== selectedWeek;
