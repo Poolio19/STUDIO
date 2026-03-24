@@ -141,9 +141,14 @@ export default function StandingsPage() {
                 <TableHead className="w-[50px]">Pos</TableHead>
                 <TableHead className="w-[48px]"></TableHead>
                 <TableHead className="min-w-[120px]">Team</TableHead>
-                <TableHead className="hidden md:table-cell text-center">Plyd</TableHead>
+                <TableHead className="text-center">P</TableHead>
+                <TableHead className="hidden sm:table-cell text-center">W</TableHead>
+                <TableHead className="hidden sm:table-cell text-center">D</TableHead>
+                <TableHead className="hidden sm:table-cell text-center">L</TableHead>
+                <TableHead className="hidden md:table-cell text-center">GF</TableHead>
+                <TableHead className="hidden md:table-cell text-center">GA</TableHead>
                 <TableHead className="text-center">GD</TableHead>
-                <TableHead className="text-center">Pts</TableHead>
+                <TableHead className="text-center font-bold">Pts</TableHead>
                 <TableHead colSpan={6} className="text-center">Form Guide (Chronological)</TableHead>
               </TableRow>
             </TableHeader>
@@ -156,7 +161,12 @@ export default function StandingsPage() {
                       <TableCell className="font-medium rounded-l-md">{team.rank}</TableCell>
                       <TableCell className="p-0"><div className="flex items-center justify-center h-full"><div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}><TeamIcon className={cn("size-5", team.id === 'team_12' && "scale-x-[-1]")} style={{ color: team.iconColour }} /></div></div></TableCell>
                       <TableCell><span className="font-medium">{team.name}</span></TableCell>
-                      <TableCell className="hidden md:table-cell text-center">{team.gamesPlayed}</TableCell>
+                      <TableCell className="text-center">{team.gamesPlayed}</TableCell>
+                      <TableCell className="hidden sm:table-cell text-center">{team.wins}</TableCell>
+                      <TableCell className="hidden sm:table-cell text-center">{team.draws}</TableCell>
+                      <TableCell className="hidden sm:table-cell text-center">{team.losses}</TableCell>
+                      <TableCell className="hidden md:table-cell text-center">{team.goalsFor}</TableCell>
+                      <TableCell className="hidden md:table-cell text-center">{team.goalsAgainst}</TableCell>
                       <TableCell className="text-center">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
                       <TableCell className="text-center font-bold">{team.points}</TableCell>
                       {team.recentResults.map((res, i) => (
