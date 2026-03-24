@@ -80,9 +80,11 @@ export default function RankingsPage() {
   const surnameCounts = useMemo(() => {
     const counts = new Map<string, number>();
     activeUsers.forEach(u => {
-      const parts = u.name.split(' ');
-      const s = parts[parts.length - 1];
-      counts.set(s, (counts.get(s) || 0) + 1);
+      if (u.name) {
+        const parts = u.name.split(' ');
+        const s = parts[parts.length - 1];
+        counts.set(s, (counts.get(s) || 0) + 1);
+      }
     });
     return counts;
   }, [activeUsers]);

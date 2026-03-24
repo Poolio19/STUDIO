@@ -159,38 +159,60 @@ export default function AdminPage() {
     }
   }, [defaultWeek, scoresForm, initialWeekSet, allMatches]);
 
-  // SYNC FORM WITH DATA
+  // SYNC FORM WITH DATA - ENHANCED WEEK SWITCHING
   React.useEffect(() => {
     if (weekFixtures.length === 0) return;
 
-    // CRITICAL: Detect if the week changed in the dropdown.
-    // If it changed, we MUST reset the form to load the correct matches.
     const weekChanged = lastResetWeek !== selectedWeek;
     
-    // If we are on the same week and have manual edits, do not overwrite.
-    if (scoresForm.formState.isDirty && !weekChanged) return;
+    // If the week changed in the dropdown, we MUST reset the form to load correct data
+    // Even if the form was "dirty", we assume the user wants to see the new week's data
+    if (weekChanged) {
+        const results = weekFixtures.map(fixture => {
+            const dateStr = fixture.matchDatePlay || fixture.matchDateOrig || new Date().toISOString();
+            const dateToUse = new Date(dateStr);
+            
+            const hours = String(dateToUse.getUTCHours()).padStart(2, '0');
+            const minutes = String(dateToUse.getUTCMinutes()).padStart(2, '0');
+            const formattedTime = `${hours}:${minutes}`;
 
-    const results = weekFixtures.map(fixture => {
-      const dateStr = fixture.matchDatePlay || fixture.matchDateOrig || new Date().toISOString();
-      const dateToUse = new Date(dateStr);
-      
-      const hours = String(dateToUse.getUTCHours()).padStart(2, '0');
-      const minutes = String(dateToUse.getUTCMinutes()).padStart(2, '0');
-      const formattedTime = `${hours}:${minutes}`;
+            return {
+                id: fixture.id,
+                homeScore: fixture.homeScore,
+                awayScore: fixture.awayScore,
+                playYear: String(dateToUse.getUTCFullYear()),
+                playMonth: String(dateToUse.getUTCMonth() + 1).padStart(2, '0'),
+                playDay: String(dateToUse.getUTCDate()).padStart(2, '0'),
+                playTime: timeOptions.includes(formattedTime) ? formattedTime : "15:00",
+            };
+        });
 
-      return {
-        id: fixture.id,
-        homeScore: fixture.homeScore,
-        awayScore: fixture.awayScore,
-        playYear: String(dateToUse.getUTCFullYear()),
-        playMonth: String(dateToUse.getUTCMonth() + 1).padStart(2, '0'),
-        playDay: String(dateToUse.getUTCDate()).padStart(2, '0'),
-        playTime: timeOptions.includes(formattedTime) ? formattedTime : "15:00",
-      };
-    });
+        scoresForm.reset({ week: selectedWeek, results: results });
+        setLastResetWeek(selectedWeek);
+        return;
+    }
 
-    scoresForm.reset({ week: selectedWeek, results: results });
-    setLastResetWeek(selectedWeek);
+    // Otherwise, if we are on the same week, only update if the form isn't dirty
+    if (!scoresForm.formState.isDirty) {
+        const results = weekFixtures.map(fixture => {
+            const dateStr = fixture.matchDatePlay || fixture.matchDateOrig || new Date().toISOString();
+            const dateToUse = new Date(dateStr);
+            const hours = String(dateToUse.getUTCHours()).padStart(2, '0');
+            const minutes = String(dateToUse.getUTCMinutes()).padStart(2, '0');
+            const formattedTime = `${hours}:${minutes}`;
+
+            return {
+                id: fixture.id,
+                homeScore: fixture.homeScore,
+                awayScore: fixture.awayScore,
+                playYear: String(dateToUse.getUTCFullYear()),
+                playMonth: String(dateToUse.getUTCMonth() + 1).padStart(2, '0'),
+                playDay: String(dateToUse.getUTCDate()).padStart(2, '0'),
+                playTime: timeOptions.includes(formattedTime) ? formattedTime : "15:00",
+            };
+        });
+        scoresForm.reset({ week: selectedWeek, results: results });
+    }
   }, [selectedWeek, weekFixtures, scoresForm, lastResetWeek]);
 
   const onWriteResultsFileSubmit = (data: ScoresFormValues) => {
