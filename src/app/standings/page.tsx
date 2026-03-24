@@ -61,28 +61,23 @@ export default function StandingsPage() {
         const teamMap = new Map(teamsData.map(t => [t.id, t]));
         const recentMap = new Map(recentResultsData?.map(r => [r.teamId, r.results]) || []);
         
-        const played = matchesData
-            .filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0);
-        
+        const played = matchesData.filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0);
         const latestW = played.length > 0 ? Math.max(...weeklyTeamStandings.map(ws => Number(ws.week))) : 0;
 
         const finalStandings = standingsData.map(standing => {
-            const team = teamMap.get(standing.teamId)!;
+            const team = teamMap.get(standing.teamId);
             if (!team) return null;
             return { ...standing, ...team, recentResults: recentMap.get(team.id) || Array(6).fill('NG') };
         }).filter((t): t is any => !!t).sort((a,b) => a.rank - b.rank);
 
         const finalChartData = (() => {
-            const ranksByWeek: any = {};
-            weeklyTeamStandings.forEach(ws => {
-                const wNum = Number(ws.week);
-                if (!ranksByWeek[wNum]) ranksByWeek[wNum] = {};
-                ranksByWeek[wNum][ws.teamId] = ws.rank;
-            });
             const data = [];
             for (let w = 0; w <= latestW; w++) {
                 const entry: any = { week: w };
-                teamsData.forEach(t => entry[t.name] = ranksByWeek[w]?.[t.id]);
+                teamsData.forEach(t => {
+                    const ws = weeklyTeamStandings.find(s => Number(s.week) === w && s.teamId === t.id);
+                    if (ws) entry[t.name] = ws.rank;
+                });
                 data.push(entry);
             }
             return data;
@@ -100,6 +95,7 @@ export default function StandingsPage() {
     }, [isLoading, teamsData, matchesData, standingsData, weeklyTeamStandings, recentResultsData]);
 
     const getResultColor = (res: string) => {
+        if (res === 'NG') return 'bg-muted text-muted-foreground opacity-40';
         if (res.includes('L') && res.includes('W')) return 'bg-orange-400 text-white';
         if (res.includes('W')) return 'bg-green-500 text-white';
         if (res.includes('D')) return 'bg-blue-300 text-white';
@@ -122,9 +118,9 @@ export default function StandingsPage() {
                 <TableHead className="w-[48px]"></TableHead>
                 <TableHead className="min-w-[120px]">Team</TableHead>
                 <TableHead className="text-center">P</TableHead>
-                <TableHead className="hidden sm:table-cell text-center">W</TableHead>
-                <TableHead className="hidden sm:table-cell text-center">D</TableHead>
-                <TableHead className="hidden sm:table-cell text-center">L</TableHead>
+                <TableHead className="text-center">W</TableHead>
+                <TableHead className="text-center">D</TableHead>
+                <TableHead className="text-center">L</TableHead>
                 <TableHead className="hidden md:table-cell text-center">GF</TableHead>
                 <TableHead className="hidden md:table-cell text-center">GA</TableHead>
                 <TableHead className="text-center">GD</TableHead>
@@ -141,17 +137,17 @@ export default function StandingsPage() {
                       <TableCell className="p-0"><div className="flex items-center justify-center h-full"><div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}><TeamIcon className={cn("size-5", team.id === 'team_12' && "scale-x-[-1]")} style={{ color: team.iconColour }} /></div></div></TableCell>
                       <TableCell><span className="font-medium">{team.name}</span></TableCell>
                       <TableCell className="text-center">{team.gamesPlayed}</TableCell>
-                      <TableCell className="hidden sm:table-cell text-center">{team.wins}</TableCell>
-                      <TableCell className="hidden sm:table-cell text-center">{team.draws}</TableCell>
-                      <TableCell className="hidden sm:table-cell text-center">{team.losses}</TableCell>
+                      <TableCell className="text-center">{team.wins}</TableCell>
+                      <TableCell className="text-center">{team.draws}</TableCell>
+                      <TableCell className="text-center">{team.losses}</TableCell>
                       <TableCell className="hidden md:table-cell text-center">{team.goalsFor}</TableCell>
                       <TableCell className="hidden md:table-cell text-center">{team.goalsAgainst}</TableCell>
                       <TableCell className="text-center">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
                       <TableCell className="text-center font-bold">{team.points}</TableCell>
                       {team.recentResults.map((res: string, i: number) => (
                       <TableCell key={i} className={cn("text-center font-black p-0 w-12", i === 5 && 'rounded-r-md')}>
-                          <div className={cn("flex flex-col items-center justify-center h-10 w-full text-xs", getResultColor(res), i === 5 && 'rounded-r-md')}>
-                            <span className="text-[9px] leading-none opacity-70 mb-0.5">W{latestWeek - (5 - i)}</span>
+                          <div className={cn("flex flex-col items-center justify-center h-10 w-full text-[10px]", getResultColor(res), i === 5 && 'rounded-r-md')}>
+                            <span className="text-[8px] leading-none opacity-70 mb-0.5">W{latestWeek - (5 - i)}</span>
                             <span className="leading-none tracking-tighter">{res}</span>
                           </div>
                       </TableCell>

@@ -37,7 +37,6 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers, ch
     return ticks;
   }, [yAxisDomain]);
 
-  // CRITICAL: Render the current user's line last so it is on top of the visual stack (SVG layering)
   const orderedLines = React.useMemo(() => {
     return [...sortedUsers].sort((a, b) => {
         if (a.id === currentUserId) return 1;
@@ -52,12 +51,7 @@ export function PlayerPerformanceChart({ chartData, yAxisDomain, sortedUsers, ch
         <ResponsiveContainer>
           <LineChart
             data={chartData}
-            margin={{
-              top: 20,
-              right: 20,
-              left: -20,
-              bottom: 20,
-            }}
+            margin={{ top: 20, right: 20, left: -20, bottom: 20 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" />
             <XAxis
