@@ -59,8 +59,9 @@ export default function StandingsPage() {
         const teamMap = new Map(teamsData.map(t => [t.id, t]));
         
         // GROUND TRUTH: Identify played matches strictly by recorded scores
+        // We filter out any matches > Week 29 to remove rogue future data
         const played = matchesData
-            .filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0)
+            .filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0 && Number(m.week) <= 29)
             .sort((a,b) => {
                 const da = new Date(a.matchDatePlay || a.matchDateOrig).getTime();
                 const db = new Date(b.matchDatePlay || b.matchDateOrig).getTime();
@@ -149,7 +150,7 @@ export default function StandingsPage() {
                 <TableHead className="hidden md:table-cell text-center">Plyd</TableHead>
                 <TableHead className="text-center">GD</TableHead>
                 <TableHead className="text-center">Pts</TableHead>
-                <TableHead colSpan={6} className="text-center">Form Guide (Last 6 Games Chronological)</TableHead>
+                <TableHead colSpan={6} className="text-center">Form Guide (W{formGuideWeeks.start}-W{formGuideWeeks.end})</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

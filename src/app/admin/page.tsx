@@ -166,7 +166,6 @@ export default function AdminPage() {
     const weekChanged = lastResetWeek !== selectedWeek;
     
     // If the week changed in the dropdown, we MUST reset the form to load correct data
-    // Even if the form was "dirty", we assume the user wants to see the new week's data
     if (weekChanged) {
         const results = weekFixtures.map(fixture => {
             const dateStr = fixture.matchDatePlay || fixture.matchDateOrig || new Date().toISOString();

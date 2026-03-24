@@ -63,8 +63,8 @@ export async function recalculateAllDataClientSide(
           const datePlay = dbMatch?.matchDatePlay || localMatch.matchDatePlay || dateOrig;
 
           // Scores are preserved if they exist in Firestore, otherwise taken from JSON
-          const homeScore = Number(dbMatch?.homeScore !== undefined ? dbMatch.homeScore : localMatch.homeScore);
-          const awayScore = Number(dbMatch?.awayScore !== undefined ? dbMatch.awayScore : localMatch.awayScore);
+          const homeScore = Number(dbMatch?.homeScore !== undefined && dbMatch.homeScore !== -1 ? dbMatch.homeScore : localMatch.homeScore);
+          const awayScore = Number(dbMatch?.awayScore !== undefined && dbMatch.awayScore !== -1 ? dbMatch.awayScore : localMatch.awayScore);
 
           matchSyncBatch.set(doc(firestore, 'matches', localMatch.id), {
               ...localMatch,
@@ -126,8 +126,9 @@ export async function recalculateAllDataClientSide(
       const finalMatchesDocs = await getDocs(collection(firestore, 'matches'));
       const allMatchesData = finalMatchesDocs.docs.map(d => d.data() as Match);
       
+      // Filter for Week 29 cap to remove rogue future results
       const playedMatches = allMatchesData
-          .filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0)
+          .filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0 && Number(m.week) <= 29)
           .sort((a,b) => {
               const da = new Date(a.matchDatePlay || a.matchDateOrig || 0).getTime();
               const db = new Date(b.matchDatePlay || b.matchDateOrig || 0).getTime();
