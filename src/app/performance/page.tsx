@@ -33,8 +33,8 @@ export default function PerformancePage() {
 
   const currentWk = useMemo(() => {
     if (!matchesData) return 0;
-    const played = matchesData.filter(m => Number(m.homeScore) >= 0);
-    return played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
+    const played = matchesData.filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0);
+    return played.length > 0 ? Math.max(...played.map(m => Number(m.week))) : 0;
   }, [matchesData]);
 
   const activeUsers = useMemo(() => {
@@ -50,7 +50,7 @@ export default function PerformancePage() {
     if (!activeUsers.length || !userHistories) return { chartData: [], yAxisDomain: [0, 10], chartConfig: {}, legendUsers: [] };
     
     const activeHistories = userHistories.filter(h => activeUsers.some(u => u.id === h.userId));
-    const allScores = activeHistories.flatMap(h => h.weeklyScores.filter(w => w.week <= currentWk).map(w => w.score));
+    const allScores = activeHistories.flatMap(h => h.weeklyScores.filter(w => Number(w.week) <= currentWk).map(w => w.score));
     
     if (!allScores.length) return { chartData: [], yAxisDomain: [0, 10], chartConfig: {}, legendUsers: [] };
     
@@ -62,7 +62,7 @@ export default function PerformancePage() {
       const entry: any = { week: `Wk ${week}` };
       activeHistories.forEach(h => {
         const u = activeUsers.find(user => user.id === h.userId);
-        if (u) entry[u.name] = h.weeklyScores.find(w => w.week === week)?.score;
+        if (u) entry[u.name] = h.weeklyScores.find(w => Number(w.week) === week)?.score;
       });
       return entry;
     });

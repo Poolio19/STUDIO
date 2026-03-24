@@ -58,12 +58,16 @@ export default function StandingsPage() {
 
         const teamMap = new Map(teamsData.map(t => [t.id, t]));
         
-        // GROUND TRUTH: Find the actual latest week with recorded scores
+        // GROUND TRUTH: Identify played matches strictly by recorded scores
         const played = matchesData
-            .filter(m => Number(m.homeScore) > -1 && Number(m.awayScore) > -1)
-            .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime());
+            .filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0)
+            .sort((a,b) => {
+                const da = new Date(a.matchDatePlay || a.matchDateOrig).getTime();
+                const db = new Date(b.matchDatePlay || b.matchDateOrig).getTime();
+                return da - db || Number(a.week) - Number(b.week) || a.id.localeCompare(b.id);
+            });
         
-        const displayLimit = played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
+        const displayLimit = played.length > 0 ? Math.max(...played.map(m => Number(m.week))) : 0;
 
         const finalStandings = standingsData.map(standing => {
             const team = teamMap.get(standing.teamId)!;
@@ -90,9 +94,10 @@ export default function StandingsPage() {
         const finalChartData = (() => {
             const ranksByWeek: any = {};
             weeklyTeamStandings.forEach(ws => {
-                if (ws.week <= displayLimit) {
-                    if (!ranksByWeek[ws.week]) ranksByWeek[ws.week] = {};
-                    ranksByWeek[ws.week][ws.teamId] = ws.rank;
+                const wNum = Number(ws.week);
+                if (wNum <= displayLimit) {
+                    if (!ranksByWeek[wNum]) ranksByWeek[wNum] = {};
+                    ranksByWeek[wNum][ws.teamId] = ws.rank;
                 }
             });
             const data = [];
@@ -105,11 +110,11 @@ export default function StandingsPage() {
         })();
 
         const resultsByW = new Map();
-        played.sort((a,b) => a.week - b.week).forEach(m => {
-            const list = resultsByW.get(m.week) || [];
+        played.sort((a,b) => Number(a.week) - Number(b.week)).forEach(m => {
+            const list = resultsByW.get(Number(m.week)) || [];
             const h = teamMap.get(m.homeTeamId); const a = teamMap.get(m.awayTeamId);
             if (h && a) list.push({ ...m, homeTeam: h, awayTeam: a });
-            resultsByW.set(m.week, list);
+            resultsByW.set(Number(m.week), list);
         });
 
         return { standingsWithTeamData: finalStandings, chartData: finalChartData, weeklyResults: resultsByW, latestWeek: displayLimit };
@@ -144,7 +149,7 @@ export default function StandingsPage() {
                 <TableHead className="hidden md:table-cell text-center">Plyd</TableHead>
                 <TableHead className="text-center">GD</TableHead>
                 <TableHead className="text-center">Pts</TableHead>
-                <TableHead colSpan={6} className="text-center">Form Guide (Weeks {formGuideWeeks.start}-{formGuideWeeks.end} Chronological)</TableHead>
+                <TableHead colSpan={6} className="text-center">Form Guide (W{formGuideWeeks.start}-{formGuideWeeks.end} Chronological)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

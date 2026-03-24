@@ -33,8 +33,8 @@ export default function RankingsPage() {
 
   const currentWk = useMemo(() => {
     if (!matchesData) return 0;
-    const played = matchesData.filter(m => Number(m.homeScore) >= 0);
-    return played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
+    const played = matchesData.filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0);
+    return played.length > 0 ? Math.max(...played.map(m => Number(m.week))) : 0;
   }, [matchesData]);
 
   const activeUsers = useMemo(() => {
@@ -58,7 +58,7 @@ export default function RankingsPage() {
       activeHistories.forEach(h => {
         const u = activeUsers.find(user => user.id === h.userId);
         if (u) {
-            const val = h.weeklyScores.find(w => w.week === week)?.rank;
+            const val = h.weeklyScores.find(w => Number(w.week) === week)?.rank;
             if (val && val > 0) entry[u.name] = val;
         }
       });

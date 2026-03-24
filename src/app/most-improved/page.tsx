@@ -81,8 +81,8 @@ export default function MostImprovedPage() {
 
   const currentWeek = useMemo(() => {
     if (!matchesData) return 0;
-    const played = matchesData.filter(m => Number(m.homeScore) !== -1 && Number(m.awayScore) !== -1 && m.week <= 29);
-    return played.length > 0 ? Math.max(...played.map(m => m.week)) : 0;
+    const played = matchesData.filter(m => Number(m.homeScore) !== -1 && Number(m.awayScore) !== -1);
+    return played.length > 0 ? Math.max(...played.map(m => Number(m.week))) : 0;
   }, [matchesData]);
 
   const activeUserIds = useMemo(() => {
@@ -99,8 +99,8 @@ export default function MostImprovedPage() {
         if (!activeUserIds.has(u.id)) return false;
         const h = userHistories.find(hist => hist.userId === u.id);
         if (!h) return false;
-        const currentS = h.weeklyScores.find(ws => ws.week === currentWeek)?.score ?? 0;
-        const startS = h.weeklyScores.find(ws => ws.week === rawPeriod.startWeek)?.score ?? 0;
+        const currentS = h.weeklyScores.find(ws => Number(ws.week) === currentWeek)?.score ?? 0;
+        const startS = h.weeklyScores.find(ws => Number(ws.week) === rawPeriod.startWeek)?.score ?? 0;
         return currentS > startS;
     });
 
@@ -124,8 +124,8 @@ export default function MostImprovedPage() {
     players.forEach(user => {
         const history = userHistories.find(h => h.userId === user.id);
         if (history) {
-            const startData = history.weeklyScores.find(ws => ws.week === period.startWeek);
-            const endData = history.weeklyScores.filter(ws => ws.week <= (isFinal ? period.endWeek : currentWeek)).reverse()[0];
+            const startData = history.weeklyScores.find(ws => Number(ws.week) === period.startWeek);
+            const endData = history.weeklyScores.filter(ws => Number(ws.week) <= (isFinal ? period.endWeek : currentWeek)).reverse()[0];
 
             if (startData && endData) {
                 const improvement = Number(endData.score) - Number(startData.score);
@@ -163,7 +163,7 @@ export default function MostImprovedPage() {
         
         if (!hideDueToWeekOne && (isPast || isCurrentAwardPeriod)) {
             const periodAwards = monthlyMimoMAwards.filter(a => 
-                a.year === period.year && (String(a.month).toLowerCase().substring(0,3) === (period.month || period.id).toLowerCase().substring(0,3) || (a.special === 'Xmas No 1' && period.id === 'xmas'))
+                Number(a.year) === period.year && (String(a.month).toLowerCase().substring(0,3) === (period.month || period.id).toLowerCase().substring(0,3) || (a.special === 'Xmas No 1' && period.id === 'xmas'))
             );
             
             const rawWinners = periodAwards.filter(a => a.type === 'winner').map(a => {
@@ -191,11 +191,11 @@ export default function MostImprovedPage() {
   const getWinnerRowStyle = (rank: number, improvement: number) => {
       if (improvement <= 0) return {};
       const sharerCount = ladderData.sharers;
-      // INTENSIFIED: Bolder colors when sharing
-      const alpha = Math.min(0.8, 0.2 + (sharerCount * 0.15));
+      // INTENSIFIED: Scale background intensity based on sharing.
+      const alpha = Math.min(0.9, 0.3 + (sharerCount * 0.15));
       
       if (rank === 1) return { backgroundColor: `rgba(250, 204, 21, ${alpha})` };
-      if (ladderData.topImp !== ladderData.ruImp && improvement === ladderData.ruImp) return { backgroundColor: `rgba(148, 163, 184, 0.4)` };
+      if (ladderData.topImp !== ladderData.ruImp && improvement === ladderData.ruImp) return { backgroundColor: `rgba(148, 163, 184, 0.5)` };
       return {};
   };
 

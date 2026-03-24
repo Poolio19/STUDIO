@@ -131,7 +131,7 @@ export default function AdminPage() {
   const defaultWeek = React.useMemo(() => {
     if (!allMatches || allMatches.length === 0) return 1;
     const playedMatches = allMatches.filter(m => Number(m.homeScore) >= 0);
-    const playedWeeks = [...new Set(playedMatches.map(m => m.week))];
+    const playedWeeks = [...new Set(playedMatches.map(m => Number(m.week)))];
     const latest = playedWeeks.length > 0 ? Math.max(...playedWeeks) : 0;
     return (latest < 38) ? latest + 1 : 38;
   }, [allMatches]);
@@ -144,8 +144,12 @@ export default function AdminPage() {
   const selectedWeek = scoresForm.watch('week');
   const weekFixtures = React.useMemo(() => {
     return allMatches
-      .filter(fixture => fixture.week === selectedWeek)
-      .sort((a,b) => new Date(a.matchDateOrig).getTime() - new Date(b.matchDateOrig).getTime());
+      .filter(fixture => Number(fixture.week) === selectedWeek)
+      .sort((a,b) => {
+          const da = new Date(a.matchDateOrig || 0).getTime();
+          const db = new Date(b.matchDateOrig || 0).getTime();
+          return da - db || a.id.localeCompare(b.id);
+      });
   }, [selectedWeek, allMatches]);
 
   React.useEffect(() => {
@@ -159,11 +163,11 @@ export default function AdminPage() {
   React.useEffect(() => {
     if (weekFixtures.length === 0) return;
 
-    // Detect if the user actually switched weeks in the dropdown
+    // CRITICAL: Detect if the week changed in the dropdown.
+    // If it changed, we MUST reset the form to load the correct matches.
     const weekChanged = lastResetWeek !== selectedWeek;
     
-    // Only return early if we are on the same week AND the form has unsaved changes.
-    // If the week changed, we ALWAYS reset to load the correct fixtures.
+    // If we are on the same week and have manual edits, do not overwrite.
     if (scoresForm.formState.isDirty && !weekChanged) return;
 
     const results = weekFixtures.map(fixture => {
