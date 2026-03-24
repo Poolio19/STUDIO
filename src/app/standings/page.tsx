@@ -129,11 +129,6 @@ export default function StandingsPage() {
 
   if (isLoading) return <div className="flex h-96 items-center justify-center"><Loader2 className="size-8 animate-spin text-muted-foreground" /></div>;
 
-  const formGuideWeeks = standingsWithTeamData.length > 0 ? { 
-      start: Math.min(...standingsWithTeamData[0].recentResults.filter((r:any) => r.week > 0).map((r:any) => r.week)),
-      end: Math.max(...standingsWithTeamData[0].recentResults.filter((r:any) => r.week > 0).map((r:any) => r.week))
-  } : { start: 0, end: 0 };
-
   return (
     <div className="space-y-8">
       <TeamStandingsChart chartData={chartData} sortedTeams={standingsWithTeamData as (Team & { rank: number })[]} />
