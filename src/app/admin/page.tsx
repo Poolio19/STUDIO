@@ -161,11 +161,9 @@ export default function AdminPage() {
 
   // SYNC FORM WITH DATA - ENHANCED WEEK SWITCHING
   React.useEffect(() => {
-    if (weekFixtures.length === 0) return;
-
     const weekChanged = lastResetWeek !== selectedWeek;
     
-    // If the week changed in the dropdown, we MUST reset the form to load correct data
+    // IF WEEK CHANGED: Force a hard reset to load correct week's data
     if (weekChanged) {
         const results = weekFixtures.map(fixture => {
             const dateStr = fixture.matchDatePlay || fixture.matchDateOrig || new Date().toISOString();
@@ -191,8 +189,8 @@ export default function AdminPage() {
         return;
     }
 
-    // Otherwise, if we are on the same week, only update if the form isn't dirty
-    if (!scoresForm.formState.isDirty) {
+    // IF DATA REFRESHED (Same Week): Only update if the form isn't being edited
+    if (!scoresForm.formState.isDirty && weekFixtures.length > 0) {
         const results = weekFixtures.map(fixture => {
             const dateStr = fixture.matchDatePlay || fixture.matchDateOrig || new Date().toISOString();
             const dateToUse = new Date(dateStr);

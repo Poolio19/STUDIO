@@ -33,8 +33,7 @@ export default function RankingsPage() {
 
   const currentWk = useMemo(() => {
     if (!matchesData) return 0;
-    // Strictly cap at Week 29 based on recorded scores
-    const played = matchesData.filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0 && Number(m.week) <= 29);
+    const played = matchesData.filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0);
     return played.length > 0 ? Math.max(...played.map(m => Number(m.week))) : 0;
   }, [matchesData]);
 

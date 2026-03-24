@@ -58,10 +58,9 @@ export default function StandingsPage() {
 
         const teamMap = new Map(teamsData.map(t => [t.id, t]));
         
-        // GROUND TRUTH: Identify played matches strictly by recorded scores
-        // We filter out any matches > Week 29 to remove rogue future data
+        // IDENTIFY PLAYED MATCHES: All games with recorded scores
         const played = matchesData
-            .filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0 && Number(m.week) <= 29)
+            .filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0)
             .sort((a,b) => {
                 const da = new Date(a.matchDatePlay || a.matchDateOrig).getTime();
                 const db = new Date(b.matchDatePlay || b.matchDateOrig).getTime();
@@ -74,7 +73,7 @@ export default function StandingsPage() {
             const team = teamMap.get(standing.teamId)!;
             if (!team) return null;
             
-            // CHRONOLOGICAL FORM: Last 6 played games based on Actual Play Date
+            // CHRONOLOGICAL FORM: Last 6 played games strictly by Actual Play Date
             const teamMatches = played.filter(m => (m.homeTeamId === standing.teamId || m.awayTeamId === standing.teamId))
                 .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime())
                 .slice(-6);
@@ -150,7 +149,7 @@ export default function StandingsPage() {
                 <TableHead className="hidden md:table-cell text-center">Plyd</TableHead>
                 <TableHead className="text-center">GD</TableHead>
                 <TableHead className="text-center">Pts</TableHead>
-                <TableHead colSpan={6} className="text-center">Form Guide (W{formGuideWeeks.start}-W{formGuideWeeks.end})</TableHead>
+                <TableHead colSpan={6} className="text-center">Form Guide (Chronological)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

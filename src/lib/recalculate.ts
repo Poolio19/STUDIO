@@ -15,7 +15,7 @@ import localFixtures from './past-fixtures.json';
 
 /**
  * Recalculates all derived data and seeds historical records.
- * Dynamically detects the current week based on matches with recorded scores.
+ * Treat localFixtures as the primary source of truth for dates and scores.
  */
 export async function recalculateAllDataClientSide(
   firestore: Firestore,
@@ -60,11 +60,11 @@ export async function recalculateAllDataClientSide(
       localFixtures.forEach((localMatch: any) => {
           const dbMatch = dbMatches.find(m => m.id === localMatch.id);
           const dateOrig = localMatch.matchDateOrig || new Date().toISOString();
-          const datePlay = dbMatch?.matchDatePlay || localMatch.matchDatePlay || dateOrig;
-
-          // Scores are preserved if they exist in Firestore, otherwise taken from JSON
-          const homeScore = Number(dbMatch?.homeScore !== undefined && dbMatch.homeScore !== -1 ? dbMatch.homeScore : localMatch.homeScore);
-          const awayScore = Number(dbMatch?.awayScore !== undefined && dbMatch.awayScore !== -1 ? dbMatch.awayScore : localMatch.awayScore);
+          
+          // JSON IS SOURCE OF TRUTH: Prefer JSON dates/scores if they are valid
+          const datePlay = localMatch.matchDatePlay || dbMatch?.matchDatePlay || dateOrig;
+          const homeScore = Number(localMatch.homeScore !== undefined && localMatch.homeScore !== -1 ? localMatch.homeScore : (dbMatch?.homeScore ?? -1));
+          const awayScore = Number(localMatch.awayScore !== undefined && localMatch.awayScore !== -1 ? localMatch.awayScore : (dbMatch?.awayScore ?? -1));
 
           matchSyncBatch.set(doc(firestore, 'matches', localMatch.id), {
               ...localMatch,
@@ -126,9 +126,9 @@ export async function recalculateAllDataClientSide(
       const finalMatchesDocs = await getDocs(collection(firestore, 'matches'));
       const allMatchesData = finalMatchesDocs.docs.map(d => d.data() as Match);
       
-      // Filter for Week 29 cap to remove rogue future results
+      // Filter for games with recorded scores
       const playedMatches = allMatchesData
-          .filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0 && Number(m.week) <= 29)
+          .filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0)
           .sort((a,b) => {
               const da = new Date(a.matchDatePlay || a.matchDateOrig || 0).getTime();
               const db = new Date(b.matchDatePlay || b.matchDateOrig || 0).getTime();
