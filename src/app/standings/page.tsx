@@ -96,10 +96,14 @@ export default function StandingsPage() {
 
     const getResultColor = (res: string) => {
         if (res === 'NG') return 'bg-muted text-muted-foreground opacity-40';
-        if (res.includes('L') && res.includes('W')) return 'bg-orange-400 text-white';
-        if (res.includes('W')) return 'bg-green-500 text-white';
-        if (res.includes('D')) return 'bg-blue-300 text-white';
-        if (res.includes('L')) return 'bg-red-500 text-white';
+        if (res.length > 1) {
+            if (res.includes('W') && !res.includes('L')) return 'bg-green-600 text-white';
+            if (res.includes('L') && !res.includes('W')) return 'bg-red-600 text-white';
+            return 'bg-orange-400 text-white';
+        }
+        if (res === 'W') return 'bg-green-500 text-white';
+        if (res === 'D') return 'bg-blue-300 text-white';
+        if (res === 'L') return 'bg-red-500 text-white';
         return 'bg-muted text-muted-foreground opacity-40';
     };
 

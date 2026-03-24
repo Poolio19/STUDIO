@@ -6,33 +6,25 @@ import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Database } from 'lucide-react';
-import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, writeBatch, getDocs, query, updateDoc, orderBy } from 'firebase/firestore';
+import { Loader2 } from 'lucide-react';
+import { useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { collection, doc, writeBatch, getDocs, query, orderBy } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
-import type { Match, Team, User as UserProfile } from '@/lib/types';
+import type { Match, Team } from '@/lib/types';
 import { recalculateAllDataClientSide } from '@/lib/recalculate';
 
 import { useForm, Controller } from 'react-hook-form';
@@ -86,7 +78,6 @@ export default function AdminPage() {
   const [isUpdating, setIsUpdating] = React.useState(false);
   const [isWritingFile, setIsWritingFile] = React.useState(false);
   const [isImportingFile, setIsImportingFile] = React.useState(false);
-  const [initialWeekSet, setInitialWeekSet] = React.useState(false);
   const [lastResetWeek, setLastResetWeek] = React.useState<number | null>(null);
   const [latestFileContent, setLatestFileContent] = React.useState<string | null>(null);
 
@@ -100,9 +91,6 @@ export default function AdminPage() {
       router.replace('/leaderboard');
     }
   }, [user, isUserLoading, router, isAdmin]);
-
-  const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('name', 'asc')) : null, [firestore]);
-  const { data: dbUsers } = useCollection<UserProfile>(usersQuery);
 
   const fetchAllMatches = React.useCallback(async () => {
     if (!firestore) return;
@@ -137,7 +125,8 @@ export default function AdminPage() {
   React.useEffect(() => {
     if (weekFixtures.length === 0) return;
     
-    if (lastResetWeek !== selectedWeek) {
+    // Force reset if week changed, OR if form is clean and we have new data
+    if (lastResetWeek !== selectedWeek || (!scoresForm.formState.isDirty && weekFixtures.length > 0)) {
         const results = weekFixtures.map(fixture => {
             const dateStr = fixture.matchDatePlay || fixture.matchDateOrig || new Date().toISOString();
             const d = new Date(dateStr);

@@ -9,7 +9,6 @@ import {
   type WriteBatch,
 } from 'firebase/firestore';
 import type { Team, Prediction, User as UserProfile, UserHistory, Match } from '@/lib/types';
-import historicalMimoAwardsData from './historical-mimo-awards.json';
 import { allAwardPeriods } from './award-periods';
 import localFixtures from './past-fixtures.json';
 
@@ -193,7 +192,11 @@ export async function recalculateAllDataClientSide(
               .sort((a, b) => Number(b.score) - Number(a.score) || (a.isPro ? -1 : 1) || (a.name || '').localeCompare(b.name || ''));
           
           const scoresOnly = uRanked.map(u => u.score);
-          uRanked.forEach((u) => allHistories[u.id].weeklyScores.push({ week: Number(w), score: Number(u.score), rank: scoresOnly.indexOf(u.score) + 1 }));
+          uRanked.forEach((u) => {
+              if (allHistories[u.id]) {
+                  allHistories[u.id].weeklyScores.push({ week: Number(w), score: Number(u.score), rank: scoresOnly.indexOf(u.score) + 1 });
+              }
+          });
       }
 
       allUsers.forEach(u => {
