@@ -38,11 +38,13 @@ export default function StandingsPage() {
     const matchesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'matches')) : null, [firestore]);
     const standingsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'standings')) : null, [firestore]);
     const weeklyTeamStandingsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'weeklyTeamStandings')) : null, [firestore]);
+    const recentResultsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'teamRecentResults') : null, [firestore]);
     
     const { data: teamsData, isLoading: teamsLoading } = useCollection<Team>(teamsQuery);
     const { data: matchesData, isLoading: matchesLoading } = useCollection<Match>(matchesQuery);
     const { data: standingsData, isLoading: standingsLoading } = useCollection<CurrentStanding>(standingsQuery);
     const { data: weeklyTeamStandings, isLoading: weeklyStandingsLoading } = useCollection<WeeklyTeamStanding>(weeklyTeamStandingsQuery);
+    const { data: recentResultsData } = useCollection<any>(recentResultsQuery);
 
     const isLoading = teamsLoading || matchesLoading || standingsLoading || weeklyStandingsLoading;
     
@@ -57,51 +59,28 @@ export default function StandingsPage() {
         }
 
         const teamMap = new Map(teamsData.map(t => [t.id, t]));
+        const recentMap = new Map(recentResultsData?.map(r => [r.teamId, r.results]) || []);
         
-        // IDENTIFY PLAYED MATCHES: All games with recorded scores
         const played = matchesData
-            .filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0)
-            .sort((a,b) => {
-                const da = new Date(a.matchDatePlay || a.matchDateOrig).getTime();
-                const db = new Date(b.matchDatePlay || b.matchDateOrig).getTime();
-                return da - db || Number(a.week) - Number(b.week) || a.id.localeCompare(b.id);
-            });
+            .filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0);
         
-        const displayLimit = played.length > 0 ? Math.max(...played.map(m => Number(m.week))) : 0;
+        const latestW = played.length > 0 ? Math.max(...weeklyTeamStandings.map(ws => Number(ws.week))) : 0;
 
         const finalStandings = standingsData.map(standing => {
             const team = teamMap.get(standing.teamId)!;
             if (!team) return null;
-            
-            // CHRONOLOGICAL FORM: Last 6 played games strictly by Actual Play Date
-            const teamMatches = played.filter(m => (m.homeTeamId === standing.teamId || m.awayTeamId === standing.teamId))
-                .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime())
-                .slice(-6);
-            
-            const recentResults = teamMatches.map(m => {
-                const hS = Number(m.homeScore); const aS = Number(m.awayScore);
-                let res: 'W' | 'D' | 'L' = 'D';
-                if (hS === aS) res = 'D';
-                else if (m.homeTeamId === standing.teamId) res = hS > aS ? 'W' : 'L';
-                else res = aS > hS ? 'W' : 'L';
-                return { result: res, week: m.week };
-            });
-            while (recentResults.length < 6) recentResults.unshift({ result: '-', week: 0 });
-
-            return { ...standing, ...team, recentResults };
+            return { ...standing, ...team, recentResults: recentMap.get(team.id) || Array(6).fill('NG') };
         }).filter((t): t is any => !!t).sort((a,b) => a.rank - b.rank);
 
         const finalChartData = (() => {
             const ranksByWeek: any = {};
             weeklyTeamStandings.forEach(ws => {
                 const wNum = Number(ws.week);
-                if (wNum <= displayLimit) {
-                    if (!ranksByWeek[wNum]) ranksByWeek[wNum] = {};
-                    ranksByWeek[wNum][ws.teamId] = ws.rank;
-                }
+                if (!ranksByWeek[wNum]) ranksByWeek[wNum] = {};
+                ranksByWeek[wNum][ws.teamId] = ws.rank;
             });
             const data = [];
-            for (let w = 0; w <= displayLimit; w++) {
+            for (let w = 0; w <= latestW; w++) {
                 const entry: any = { week: w };
                 teamsData.forEach(t => entry[t.name] = ranksByWeek[w]?.[t.id]);
                 data.push(entry);
@@ -117,14 +96,15 @@ export default function StandingsPage() {
             resultsByW.set(Number(m.week), list);
         });
 
-        return { standingsWithTeamData: finalStandings, chartData: finalChartData, weeklyResults: resultsByW, latestWeek: displayLimit };
-    }, [isLoading, teamsData, matchesData, standingsData, weeklyTeamStandings]);
+        return { standingsWithTeamData: finalStandings, chartData: finalChartData, weeklyResults: resultsByW, latestWeek: latestW };
+    }, [isLoading, teamsData, matchesData, standingsData, weeklyTeamStandings, recentResultsData]);
 
     const getResultColor = (res: string) => {
-        if (res === 'W') return 'bg-green-500 text-white';
-        if (res === 'D') return 'bg-blue-300 text-white';
-        if (res === 'L') return 'bg-red-500 text-white';
-        return 'bg-muted text-muted-foreground';
+        if (res.includes('L') && res.includes('W')) return 'bg-orange-400 text-white';
+        if (res.includes('W')) return 'bg-green-500 text-white';
+        if (res.includes('D')) return 'bg-blue-300 text-white';
+        if (res.includes('L')) return 'bg-red-500 text-white';
+        return 'bg-muted text-muted-foreground opacity-40';
     };
 
   if (isLoading) return <div className="flex h-96 items-center justify-center"><Loader2 className="size-8 animate-spin text-muted-foreground" /></div>;
@@ -149,12 +129,11 @@ export default function StandingsPage() {
                 <TableHead className="hidden md:table-cell text-center">GA</TableHead>
                 <TableHead className="text-center">GD</TableHead>
                 <TableHead className="text-center font-bold">Pts</TableHead>
-                <TableHead colSpan={6} className="text-center">Form Guide (Chronological)</TableHead>
+                <TableHead colSpan={6} className="text-center">Form Guide (Last 6 Weeks)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {standingsWithTeamData.map(team => {
-                  if (!team) return null;
                   const TeamIcon = Icons[team.logo as IconName] || Icons.match;
                   return (
                   <TableRow key={team.id} style={{ backgroundColor: team.bgColourFaint, color: team.textColour }} className="border-b-4 border-transparent">
@@ -169,11 +148,11 @@ export default function StandingsPage() {
                       <TableCell className="hidden md:table-cell text-center">{team.goalsAgainst}</TableCell>
                       <TableCell className="text-center">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
                       <TableCell className="text-center font-bold">{team.points}</TableCell>
-                      {team.recentResults.map((res, i) => (
-                      <TableCell key={i} className={cn("text-center font-bold p-0 w-12", i === 5 && 'rounded-r-md')}>
-                          <div className={cn("flex flex-col items-center justify-center h-10 w-full", getResultColor(res.result), i === 5 && 'rounded-r-md')}>
-                            <span className="text-[9px] leading-none opacity-70 mb-0.5">{res.week > 0 ? `W${res.week}` : ''}</span>
-                            <span className="leading-none">{res.result}</span>
+                      {team.recentResults.map((res: string, i: number) => (
+                      <TableCell key={i} className={cn("text-center font-black p-0 w-12", i === 5 && 'rounded-r-md')}>
+                          <div className={cn("flex flex-col items-center justify-center h-10 w-full text-xs", getResultColor(res), i === 5 && 'rounded-r-md')}>
+                            <span className="text-[9px] leading-none opacity-70 mb-0.5">W{latestWeek - (5 - i)}</span>
+                            <span className="leading-none tracking-tighter">{res}</span>
                           </div>
                       </TableCell>
                       ))}
@@ -188,7 +167,7 @@ export default function StandingsPage() {
       <Separator />
 
       <Card>
-        <CardHeader className="items-center"><CardTitle className="bg-black text-yellow-400 p-2 rounded-md">Week by Week Results</CardTitle><CardDescription>Full history of results.</CardDescription></CardHeader>
+        <CardHeader className="items-center"><CardTitle className="bg-black text-yellow-400 p-2 rounded-md">Week by Week Results</CardTitle><CardDescription>Detailed results for every gameweek.</CardDescription></CardHeader>
         <CardContent>
             <Accordion type="single" collapsible defaultValue={`week-${latestWeek}`}>
                 {[...weeklyResults.keys()].sort((a,b) => b-a).map(wNum => (
@@ -196,23 +175,23 @@ export default function StandingsPage() {
                         <AccordionTrigger className="text-lg font-bold">Week {wNum}</AccordionTrigger>
                         <AccordionContent>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                                {weeklyResults.get(wNum)?.map((m, idx) => {
+                                {weeklyResults.get(wNum)?.map((m: any, idx: number) => {
                                     const HomeIcon = Icons[m.homeTeam.logo as IconName] || Icons.match;
                                     const AwayIcon = Icons[m.awayTeam.logo as IconName] || Icons.match;
                                     return (
-                                        <div key={idx} className="flex items-center justify-center p-3 rounded-lg border">
+                                        <div key={idx} className="flex items-center justify-center p-3 rounded-lg border bg-muted/5">
                                             <div className="flex items-center gap-3 justify-end w-2/5">
-                                                <span className="font-medium text-right text-xs">{m.homeTeam.name}</span>
+                                                <span className="font-bold text-right text-xs truncate">{m.homeTeam.name}</span>
                                                 <div className="flex items-center justify-center size-8 rounded-full shrink-0" style={{ backgroundColor: m.homeTeam.bgColourSolid }}>
                                                     <HomeIcon className="size-5" style={{ color: m.homeTeam.iconColour }} />
                                                 </div>
                                             </div>
-                                            <div className="font-bold text-lg px-4 text-center whitespace-nowrap">{m.homeScore} - {m.awayScore}</div>
+                                            <div className="font-black text-xl px-4 text-center whitespace-nowrap min-w-[80px]">{m.homeScore} - {m.awayScore}</div>
                                             <div className="flex items-center gap-3 w-2/5">
                                                 <div className="flex items-center justify-center size-8 rounded-full shrink-0" style={{ backgroundColor: m.awayTeam.bgColourSolid }}>
                                                     <AwayIcon className="size-5" style={{ color: m.awayTeam.iconColour }} />
                                                 </div>
-                                                <span className="font-medium text-xs">{m.awayTeam.name}</span>
+                                                <span className="font-bold text-xs truncate">{m.awayTeam.name}</span>
                                             </div>
                                         </div>
                                     )

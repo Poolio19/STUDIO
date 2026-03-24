@@ -159,8 +159,10 @@ export default function AdminPage() {
     }
   }, [defaultWeek, scoresForm, initialWeekSet, allMatches]);
 
-  // SYNC FORM WITH DATA - ENHANCED WEEK SWITCHING
+  // CRITICAL FIX: Sync form with selected week and data
   React.useEffect(() => {
+    if (weekFixtures.length === 0) return;
+
     const weekChanged = lastResetWeek !== selectedWeek;
     
     // IF WEEK CHANGED: Force a hard reset to load correct week's data
@@ -190,7 +192,7 @@ export default function AdminPage() {
     }
 
     // IF DATA REFRESHED (Same Week): Only update if the form isn't being edited
-    if (!scoresForm.formState.isDirty && weekFixtures.length > 0) {
+    if (!scoresForm.formState.isDirty) {
         const results = weekFixtures.map(fixture => {
             const dateStr = fixture.matchDatePlay || fixture.matchDateOrig || new Date().toISOString();
             const dateToUse = new Date(dateStr);
