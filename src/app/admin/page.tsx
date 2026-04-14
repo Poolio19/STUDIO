@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
 
-const scoreTransformer = (val: 'P' | 'p' | number | string | null | undefined) => {
+const scoreTransformer = (val: any) => {
     if (val === undefined || val === null || val === '') return -1;
     if (typeof val === 'string' && val.toLowerCase() === 'p') return -2;
     const num = Number(val);
@@ -133,7 +133,6 @@ export default function AdminPage() {
   React.useEffect(() => {
     if (weekFixtures.length === 0) return;
     
-    // FORCE RESET IF WEEK CHANGED
     if (lastResetWeek !== selectedWeek || (!scoresForm.formState.isDirty && weekFixtures.length > 0)) {
         const results = weekFixtures.map(fixture => {
             const dateStr = fixture.matchDatePlay || fixture.matchDateOrig || new Date().toISOString();

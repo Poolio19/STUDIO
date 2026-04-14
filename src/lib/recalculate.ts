@@ -12,45 +12,46 @@ import {
 import type { Team, Prediction, User as UserProfile, UserHistory, Match } from '@/lib/types';
 import localFixtures from './past-fixtures.json';
 
+// EXACT dates provided by user for Monday start boundaries
 const weekStarts = [
-    { week: 1, date: "2025-08-11T00:00:00Z" },
-    { week: 2, date: "2025-08-18T00:00:00Z" },
-    { week: 3, date: "2025-08-25T00:00:00Z" },
-    { week: 4, date: "2025-09-08T00:00:00Z" },
-    { week: 5, date: "2025-09-15T00:00:00Z" },
-    { week: 6, date: "2025-09-22T00:00:00Z" },
-    { week: 7, date: "2025-09-29T00:00:00Z" },
-    { week: 8, date: "2025-10-13T00:00:00Z" },
-    { week: 9, date: "2025-10-20T00:00:00Z" },
-    { week: 10, date: "2025-10-27T00:00:00Z" },
-    { week: 11, date: "2025-11-03T00:00:00Z" },
-    { week: 12, date: "2025-11-17T00:00:00Z" },
-    { week: 13, date: "2025-11-24T00:00:00Z" },
-    { week: 14, date: "2025-12-01T00:00:00Z" },
-    { week: 15, date: "2025-12-05T00:00:00Z" },
-    { week: 16, date: "2025-12-08T00:00:00Z" },
-    { week: 17, date: "2025-12-15T00:00:00Z" },
-    { week: 18, date: "2025-12-22T00:00:00Z" },
-    { week: 19, date: "2025-12-29T00:00:00Z" },
-    { week: 20, date: "2026-01-01T00:00:00Z" },
-    { week: 21, date: "2026-01-05T00:00:00Z" },
-    { week: 22, date: "2026-01-12T00:00:00Z" },
-    { week: 23, date: "2026-01-19T00:00:00Z" },
-    { week: 24, date: "2026-01-26T00:00:00Z" },
-    { week: 25, date: "2026-02-02T00:00:00Z" },
-    { week: 26, date: "2026-02-09T00:00:00Z" },
-    { week: 27, date: "2026-02-16T00:00:00Z" },
-    { week: 28, date: "2026-02-23T00:00:00Z" },
-    { week: 29, date: "2026-03-02T00:00:00Z" },
-    { week: 30, date: "2026-03-09T00:00:00Z" },
-    { week: 31, date: "2026-03-16T00:00:00Z" },
-    { week: 32, date: "2026-04-06T00:00:00Z" },
-    { week: 33, date: "2026-04-13T00:00:00Z" },
-    { week: 34, date: "2026-04-20T00:00:00Z" },
-    { week: 35, date: "2026-04-27T00:00:00Z" },
-    { week: 36, date: "2026-05-04T00:00:00Z" },
-    { week: 37, date: "2026-05-11T00:00:00Z" },
-    { week: 38, date: "2026-05-18T00:00:00Z" },
+    { week: 1, date: "2025-08-18T00:00:00Z" },
+    { week: 2, date: "2025-08-25T00:00:00Z" },
+    { week: 3, date: "2025-08-31T00:00:00Z" },
+    { week: 4, date: "2025-09-14T00:00:00Z" },
+    { week: 5, date: "2025-09-21T00:00:00Z" },
+    { week: 6, date: "2025-09-29T00:00:00Z" },
+    { week: 7, date: "2025-10-05T00:00:00Z" },
+    { week: 8, date: "2025-10-20T00:00:00Z" },
+    { week: 9, date: "2025-10-26T00:00:00Z" },
+    { week: 10, date: "2025-11-03T00:00:00Z" },
+    { week: 11, date: "2025-11-09T00:00:00Z" },
+    { week: 12, date: "2025-11-24T00:00:00Z" },
+    { week: 13, date: "2025-11-30T00:00:00Z" },
+    { week: 14, date: "2025-12-04T00:00:00Z" },
+    { week: 15, date: "2025-12-08T00:00:00Z" },
+    { week: 16, date: "2025-12-15T00:00:00Z" },
+    { week: 17, date: "2025-12-22T00:00:00Z" },
+    { week: 18, date: "2025-12-28T00:00:00Z" },
+    { week: 19, date: "2026-01-01T00:00:00Z" },
+    { week: 20, date: "2026-01-04T00:00:00Z" },
+    { week: 21, date: "2026-01-08T00:00:00Z" },
+    { week: 22, date: "2026-01-19T00:00:00Z" },
+    { week: 23, date: "2026-01-26T00:00:00Z" },
+    { week: 24, date: "2026-02-02T00:00:00Z" },
+    { week: 25, date: "2026-02-08T00:00:00Z" },
+    { week: 26, date: "2026-02-12T00:00:00Z" },
+    { week: 27, date: "2026-02-23T00:00:00Z" },
+    { week: 28, date: "2026-03-01T00:00:00Z" },
+    { week: 29, date: "2026-03-05T00:00:00Z" },
+    { week: 30, date: "2026-03-16T00:00:00Z" },
+    { week: 31, date: "2026-03-22T00:00:00Z" },
+    { week: 32, date: "2026-04-13T00:00:00Z" },
+    { week: 33, date: "2026-04-20T00:00:00Z" },
+    { week: 34, date: "2026-04-27T00:00:00Z" },
+    { week: 35, date: "2026-05-02T00:00:00Z" },
+    { week: 36, date: "2026-05-09T00:00:00Z" },
+    { week: 37, date: "2026-05-17T00:00:00Z" },
+    { week: 38, date: "2026-05-24T00:00:00Z" },
 ].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
 function getCompetitionWeek(dateStr: string): number {
@@ -66,39 +67,30 @@ export async function recalculateAllDataClientSide(
   progressCallback: (message: string) => void
 ) {
     try {
-      progressCallback("Initializing sync engine...");
+      progressCallback("Initializing master sync...");
   
-      const [teamsSnap, usersSnap, predictionsSnap, currentMatchesSnap] = await Promise.all([
+      const [teamsSnap, usersSnap, predictionsSnap] = await Promise.all([
         getDocs(collection(firestore, 'teams')),
         getDocs(collection(firestore, 'users')),
-        getDocs(collection(firestore, 'predictions')),
-        getDocs(collection(firestore, 'matches'))
+        getDocs(collection(firestore, 'predictions'))
       ]);
   
       const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
       const teamMap = new Map(teams.map(t => [t.id, t]));
       const allUsers = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
       const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
-      const dbMatches = currentMatchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match));
       
       const activeUserIds = new Set(predictions.filter(p => p.rankings && p.rankings.length === 20).map(p => p.userId || (p as any).id));
       const activeUsersForRankings = allUsers.filter(u => activeUserIds.has(u.id));
 
-      progressCallback('Synchronizing fixtures...');
+      progressCallback('Overwriting fixtures from JSON...');
       const matchSyncBatch = writeBatch(firestore);
       localFixtures.forEach((localMatch: any) => {
-          const dbMatch = dbMatches.find(m => m.id === localMatch.id);
-          
-          // PRESERVE FIRESTORE SCORES
-          const finalHomeScore = (dbMatch && dbMatch.homeScore !== -1) ? Number(dbMatch.homeScore) : Number(localMatch.homeScore ?? -1);
-          const finalAwayScore = (dbMatch && dbMatch.awayScore !== -1) ? Number(dbMatch.awayScore) : Number(localMatch.awayScore ?? -1);
-          const datePlay = localMatch.matchDatePlay || dbMatch?.matchDatePlay || localMatch.matchDateOrig;
-
+          // STRICTLY overwrite with JSON scores
           matchSyncBatch.set(doc(firestore, 'matches', localMatch.id), {
               ...localMatch,
-              homeScore: finalHomeScore,
-              awayScore: finalAwayScore,
-              matchDatePlay: datePlay
+              homeScore: Number(localMatch.homeScore ?? -1),
+              awayScore: Number(localMatch.awayScore ?? -1)
           }, { merge: true });
       });
       await matchSyncBatch.commit();
@@ -125,12 +117,13 @@ export async function recalculateAllDataClientSide(
           if (opCount >= 499) { mainBatches.push(writeBatch(firestore)); bIdx++; opCount = 0; }
       };
 
-      const finalMatchesSnap = await getDocs(collection(firestore, 'matches'));
-      const playedMatches = finalMatchesSnap.docs.map(d => d.data() as Match)
-          .filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0)
-          .sort((a,b) => new Date(a.matchDatePlay).getTime() - new Date(b.matchDatePlay).getTime());
+      const playedMatches = localFixtures
+          .filter((m: any) => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0)
+          .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime());
       
-      const latestAbsoluteWeek = playedMatches.length > 0 ? Math.max(...playedMatches.map(m => getCompetitionWeek(m.matchDatePlay))) : 0;
+      const latestAbsoluteWeek = playedMatches.length > 0 
+        ? Math.max(...playedMatches.map(m => getCompetitionWeek(m.matchDatePlay || m.matchDateOrig))) 
+        : 0;
 
       const cumulativeTStats: { [tId: string]: any } = {};
       teams.forEach(t => cumulativeTStats[t.id] = { points: 0, goalDifference: 0, goalsFor: 0, goalsAgainst: 0, wins: 0, draws: 0, losses: 0, gamesPlayed: 0 });
@@ -138,7 +131,7 @@ export async function recalculateAllDataClientSide(
       const weekResultsByTeamAndWeek = new Map<string, string>();
 
       for (let w = 0; w <= latestAbsoluteWeek; w++) {
-          const weekMatches = playedMatches.filter(m => getCompetitionWeek(m.matchDatePlay) === w);
+          const weekMatches = playedMatches.filter(m => getCompetitionWeek(m.matchDatePlay || m.matchDateOrig) === w);
           
           weekMatches.forEach(m => {
               const h = cumulativeTStats[m.homeTeamId]; const a = cumulativeTStats[m.awayTeamId];
