@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -99,7 +100,6 @@ export default function AdminPage() {
     const matches = matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match));
     setAllMatches(matches);
 
-    // Default to the latest week with scores upon initial load
     if (!hasSetDefaultWeek.current) {
         const played = matches.filter(m => Number(m.homeScore) !== -1);
         if (played.length > 0) {
@@ -133,8 +133,7 @@ export default function AdminPage() {
   React.useEffect(() => {
     if (weekFixtures.length === 0) return;
     
-    // Force reset if week changed, OR if form is clean and we have new data
-    // This allows manual edits to persist (if form is dirty) while ensuring week switches work.
+    // FORCE RESET IF WEEK CHANGED
     if (lastResetWeek !== selectedWeek || (!scoresForm.formState.isDirty && weekFixtures.length > 0)) {
         const results = weekFixtures.map(fixture => {
             const dateStr = fixture.matchDatePlay || fixture.matchDateOrig || new Date().toISOString();
@@ -263,9 +262,33 @@ export default function AdminPage() {
                                 <div className="flex items-center justify-end gap-2 lg:gap-0 lg:block lg:text-right">
                                     <span className="font-bold text-sm">{homeTeam?.name || fixture.homeTeamId}</span>
                                 </div>
-                                <Controller control={scoresForm.control} name={`results.${index}.homeScore`} render={({ field }) => (<Input {...field} type="text" className="w-12 text-center h-8 font-black" value={displayScore(field.value)} onChange={e => field.onChange(e.target.value.toUpperCase())} />)} />
+                                <Controller 
+                                    control={scoresForm.control} 
+                                    name={`results.${index}.homeScore`} 
+                                    render={({ field }) => (
+                                        <Input 
+                                            {...field} 
+                                            type="text" 
+                                            className="w-12 text-center h-8 font-black" 
+                                            value={displayScore(field.value) || ''} 
+                                            onChange={e => field.onChange(e.target.value.toUpperCase())} 
+                                        />
+                                    )} 
+                                />
                                 <span className="text-center font-bold hidden lg:inline">-</span>
-                                <Controller control={scoresForm.control} name={`results.${index}.awayScore`} render={({ field }) => (<Input {...field} type="text" className="w-12 text-center h-8 font-black" value={displayScore(field.value)} onChange={e => field.onChange(e.target.value.toUpperCase())} />)} />
+                                <Controller 
+                                    control={scoresForm.control} 
+                                    name={`results.${index}.awayScore`} 
+                                    render={({ field }) => (
+                                        <Input 
+                                            {...field} 
+                                            type="text" 
+                                            className="w-12 text-center h-8 font-black" 
+                                            value={displayScore(field.value) || ''} 
+                                            onChange={e => field.onChange(e.target.value.toUpperCase())} 
+                                        />
+                                    )} 
+                                />
                                 <div className="flex items-center justify-start gap-2 lg:gap-0 lg:block lg:text-left">
                                     <span className="font-bold text-sm">{awayTeam?.name || fixture.awayTeamId}</span>
                                 </div>

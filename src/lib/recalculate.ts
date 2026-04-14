@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -87,11 +88,11 @@ export async function recalculateAllDataClientSide(
       const matchSyncBatch = writeBatch(firestore);
       localFixtures.forEach((localMatch: any) => {
           const dbMatch = dbMatches.find(m => m.id === localMatch.id);
-          const datePlay = localMatch.matchDatePlay || dbMatch?.matchDatePlay || localMatch.matchDateOrig;
           
-          // CRITICAL: Prioritize Database scores if they exist, so UI entries aren't lost
+          // PRESERVE FIRESTORE SCORES: Database is the master for results
           const finalHomeScore = (dbMatch && dbMatch.homeScore !== -1) ? Number(dbMatch.homeScore) : Number(localMatch.homeScore ?? -1);
           const finalAwayScore = (dbMatch && dbMatch.awayScore !== -1) ? Number(dbMatch.awayScore) : Number(localMatch.awayScore ?? -1);
+          const datePlay = localMatch.matchDatePlay || dbMatch?.matchDatePlay || localMatch.matchDateOrig;
 
           matchSyncBatch.set(doc(firestore, 'matches', localMatch.id), {
               ...localMatch,
@@ -102,7 +103,7 @@ export async function recalculateAllDataClientSide(
       });
       await matchSyncBatch.commit();
 
-      // Clear derived data
+      // Clear derived collections
       const derivedCollections = ['standings', 'playerTeamScores', 'teamRecentResults', 'weeklyTeamStandings', 'userHistories'];
       for (const colName of derivedCollections) {
           const snap = await getDocs(collection(firestore, colName));

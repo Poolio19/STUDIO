@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -97,8 +98,6 @@ export default function StandingsPage() {
     const getResultColor = (res: string) => {
         if (!res || res === 'NG') return 'bg-muted text-muted-foreground opacity-40';
         if (res.length > 1) {
-            // Priority: L takes over W if mixed, but display concatenated colors? 
-            // Better: If multiple, use orange if mixed, green if WW, red if LL
             if (res.includes('W') && !res.includes('L')) return 'bg-green-600 text-white';
             if (res.includes('L') && !res.includes('W')) return 'bg-red-600 text-white';
             return 'bg-orange-400 text-white';
@@ -140,7 +139,13 @@ export default function StandingsPage() {
                   return (
                   <TableRow key={team.id} style={{ backgroundColor: team.bgColourFaint, color: team.textColour }} className="border-b-4 border-transparent">
                       <TableCell className="font-medium rounded-l-md">{team.rank}</TableCell>
-                      <TableCell className="p-0"><div className="flex items-center justify-center h-full"><div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}><TeamIcon className={cn("size-5", team.id === 'team_12' && "scale-x-[-1]")} style={{ color: team.iconColour }} /></div></div></TableCell>
+                      <TableCell className="p-0">
+                        <div className="flex items-center justify-center h-full">
+                            <div className="flex items-center justify-center size-8 rounded-full" style={{ backgroundColor: team.bgColourSolid }}>
+                                <TeamIcon className={cn("size-5", team.id === 'team_12' && "scale-x-[-1]")} style={{ color: team.iconColour }} />
+                            </div>
+                        </div>
+                      </TableCell>
                       <TableCell><span className="font-medium">{team.name}</span></TableCell>
                       <TableCell className="text-center">{team.gamesPlayed}</TableCell>
                       <TableCell className="text-center">{team.wins}</TableCell>
