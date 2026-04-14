@@ -132,7 +132,7 @@ export default function AdminPage() {
   React.useEffect(() => {
     if (weekFixtures.length === 0) return;
     
-    // Hard refresh form when switching weeks
+    // Forced reset when switching weeks to avoid sticky data
     if (lastResetWeek !== selectedWeek) {
         const results = weekFixtures.map(fixture => {
             const dateStr = fixture.matchDatePlay || fixture.matchDateOrig || new Date().toISOString();
@@ -145,9 +145,9 @@ export default function AdminPage() {
                 id: fixture.id,
                 homeScore: fixture.homeScore ?? -1,
                 awayScore: fixture.awayScore ?? -1,
-                playYear: String(d.getUTCFullYear()) ?? '',
-                playMonth: String(d.getUTCMonth() + 1).padStart(2, '0') ?? '',
-                playDay: String(d.getUTCDate()).padStart(2, '0') ?? '',
+                playYear: String(d.getUTCFullYear()) || '',
+                playMonth: String(d.getUTCMonth() + 1).padStart(2, '0') || '',
+                playDay: String(d.getUTCDate()).padStart(2, '0') || '',
                 playTime: timeOptions.includes(formattedTime) ? formattedTime : "15:00",
             };
         });
@@ -193,7 +193,6 @@ export default function AdminPage() {
       }
       await batch.commit();
       await fetchAllMatches();
-      // Ensure we don't reset manual entries prematurely
       toast({ title: 'Database Updated!' });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Write Failed', description: error.message });
@@ -271,7 +270,7 @@ export default function AdminPage() {
                                             {...field} 
                                             type="text" 
                                             className="w-12 text-center h-8 font-black" 
-                                            value={displayScore(field.value) ?? ''} 
+                                            value={displayScore(field.value)} 
                                             onChange={e => field.onChange(e.target.value.toUpperCase())} 
                                         />
                                     )} 
@@ -285,7 +284,7 @@ export default function AdminPage() {
                                             {...field} 
                                             type="text" 
                                             className="w-12 text-center h-8 font-black" 
-                                            value={displayScore(field.value) ?? ''} 
+                                            value={displayScore(field.value)} 
                                             onChange={e => field.onChange(e.target.value.toUpperCase())} 
                                         />
                                     )} 
@@ -294,9 +293,9 @@ export default function AdminPage() {
                                     <span className="font-bold text-sm">{awayTeam?.name || fixture.awayTeamId}</span>
                                 </div>
                                 <div className="flex items-center gap-1 justify-center pt-2 lg:pt-0">
-                                    <Controller control={scoresForm.control} name={`results.${index}.playYear`} render={({ field }) => (<Input {...field} className="w-[54px] h-7 text-[11px] text-center px-1" value={field.value ?? ''} placeholder="YYYY" />)} />
-                                    <Controller control={scoresForm.control} name={`results.${index}.playMonth`} render={({ field }) => (<Input {...field} className="w-[34px] h-7 text-[11px] text-center px-1" value={field.value ?? ''} placeholder="MM" />)} />
-                                    <Controller control={scoresForm.control} name={`results.${index}.playDay`} render={({ field }) => (<Input {...field} className="w-[34px] h-7 text-[11px] text-center px-1" value={field.value ?? ''} placeholder="DD" />)} />
+                                    <Controller control={scoresForm.control} name={`results.${index}.playYear`} render={({ field }) => (<Input {...field} className="w-[54px] h-7 text-[11px] text-center px-1" value={field.value || ''} placeholder="YYYY" />)} />
+                                    <Controller control={scoresForm.control} name={`results.${index}.playMonth`} render={({ field }) => (<Input {...field} className="w-[34px] h-7 text-[11px] text-center px-1" value={field.value || ''} placeholder="MM" />)} />
+                                    <Controller control={scoresForm.control} name={`results.${index}.playDay`} render={({ field }) => (<Input {...field} className="w-[34px] h-7 text-[11px] text-center px-1" value={field.value || ''} placeholder="DD" />)} />
                                     <Controller control={scoresForm.control} name={`results.${index}.playTime`} render={({ field }) => (
                                         <Select onValueChange={field.onChange} value={field.value || "15:00"}>
                                             <SelectTrigger className="w-[68px] h-7 text-[11px] px-1.5"><SelectValue /></SelectTrigger>
