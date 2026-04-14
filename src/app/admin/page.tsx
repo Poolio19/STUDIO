@@ -133,7 +133,8 @@ export default function AdminPage() {
   React.useEffect(() => {
     if (weekFixtures.length === 0) return;
     
-    if (lastResetWeek !== selectedWeek || (!scoresForm.formState.isDirty && weekFixtures.length > 0)) {
+    // Hard refresh form when switching weeks
+    if (lastResetWeek !== selectedWeek) {
         const results = weekFixtures.map(fixture => {
             const dateStr = fixture.matchDatePlay || fixture.matchDateOrig || new Date().toISOString();
             const d = new Date(dateStr);
@@ -145,9 +146,9 @@ export default function AdminPage() {
                 id: fixture.id,
                 homeScore: fixture.homeScore ?? -1,
                 awayScore: fixture.awayScore ?? -1,
-                playYear: String(d.getUTCFullYear()),
-                playMonth: String(d.getUTCMonth() + 1).padStart(2, '0'),
-                playDay: String(d.getUTCDate()).padStart(2, '0'),
+                playYear: String(d.getUTCFullYear()) ?? '',
+                playMonth: String(d.getUTCMonth() + 1).padStart(2, '0') ?? '',
+                playDay: String(d.getUTCDate()).padStart(2, '0') ?? '',
                 playTime: timeOptions.includes(formattedTime) ? formattedTime : "15:00",
             };
         });

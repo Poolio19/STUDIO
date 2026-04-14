@@ -83,10 +83,9 @@ export async function recalculateAllDataClientSide(
       const activeUserIds = new Set(predictions.filter(p => p.rankings && p.rankings.length === 20).map(p => p.userId || (p as any).id));
       const activeUsersForRankings = allUsers.filter(u => activeUserIds.has(u.id));
 
-      progressCallback('Overwriting fixtures from JSON...');
+      progressCallback('Updating fixtures from Master JSON...');
       const matchSyncBatch = writeBatch(firestore);
       localFixtures.forEach((localMatch: any) => {
-          // STRICTLY overwrite with JSON scores
           matchSyncBatch.set(doc(firestore, 'matches', localMatch.id), {
               ...localMatch,
               homeScore: Number(localMatch.homeScore ?? -1),
