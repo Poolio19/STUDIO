@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -9,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import { useMemo } from 'react';
 import { PlayerRankChart } from '@/components/charts/player-rank-chart';
-import type { User, UserHistory, Match, Prediction } from '@/lib/types';
+import type { User, UserHistory, Prediction } from '@/lib/types';
 import { useCollection, useFirestore, useMemoFirebase, useResolvedUserId } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
@@ -20,22 +21,14 @@ export default function RankingsPage() {
   const resolvedUserId = useResolvedUserId();
 
   const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
-  const matchesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'matches') : null, [firestore]);
   const historiesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'userHistories') : null, [firestore]);
   const predictionsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'predictions') : null, [firestore]);
 
   const { data: users, isLoading: usersLoading } = useCollection<User>(usersQuery);
-  const { data: matchesData, isLoading: matchesLoading } = useCollection<Match>(matchesQuery);
   const { data: userHistories, isLoading: historiesLoading } = useCollection<UserHistory>(historiesQuery);
   const { data: predictions, isLoading: predictionsLoading } = useCollection<Prediction>(predictionsQuery);
 
-  const isLoading = usersLoading || historiesLoading || matchesLoading || predictionsLoading;
-
-  const currentWk = useMemo(() => {
-    if (!matchesData) return 0;
-    const played = matchesData.filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0);
-    return played.length > 0 ? Math.max(...played.map(m => Number(m.week))) : 0;
-  }, [matchesData]);
+  const isLoading = usersLoading || historiesLoading || predictionsLoading;
 
   const activeUsers = useMemo(() => {
     if (!users || !predictions) return [];
@@ -46,13 +39,17 @@ export default function RankingsPage() {
         .sort((a, b) => a.rank - b.rank);
   }, [users, predictions]);
 
-  const { chartData, yAxisDomain, chartConfig, legendUsers } = useMemo(() => {
-    if (!activeUsers.length || !userHistories) return { chartData: [], yAxisDomain: [0, 10], chartConfig: {}, legendUsers: [] };
+  const { chartData, yAxisDomain, chartConfig, legendUsers, currentWk } = useMemo(() => {
+    if (!activeUsers.length || !userHistories) return { chartData: [], yAxisDomain: [0, 10], chartConfig: {}, legendUsers: [], currentWk: 0 };
     
     const activeHistories = userHistories.filter(h => activeUsers.some(u => u.id === h.userId));
+    
+    const allWks = activeHistories.flatMap(h => h.weeklyScores.map(ws => Number(ws.week)));
+    const maxWk = allWks.length > 0 ? Math.max(...allWks) : 0;
+
     const domain: [number, number] = [0, activeUsers.length + 1];
 
-    const weeks = Array.from({ length: currentWk + 1 }, (_, i) => i);
+    const weeks = Array.from({ length: maxWk + 1 }, (_, i) => i);
     const data = weeks.map(week => {
       const entry: any = { week: `Wk ${week}` };
       activeHistories.forEach(h => {
@@ -74,8 +71,8 @@ export default function RankingsPage() {
     const legend: (User | undefined)[] = new Array(numCols * numRows).fill(undefined);
     activeUsers.forEach((u, i) => legend[(i % numRows) * numCols + Math.floor(i / numRows)] = u);
 
-    return { chartData: data, yAxisDomain: domain, chartConfig: config, legendUsers: legend };
-  }, [activeUsers, userHistories, currentWk]);
+    return { chartData: data, yAxisDomain: domain, chartConfig: config, legendUsers: legend, currentWk: maxWk };
+  }, [activeUsers, userHistories]);
 
   const surnameCounts = useMemo(() => {
     const counts = new Map<string, number>();

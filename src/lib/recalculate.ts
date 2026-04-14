@@ -13,44 +13,44 @@ import type { Team, Prediction, User as UserProfile, UserHistory, Match } from '
 import localFixtures from './past-fixtures.json';
 
 const weekStarts = [
-    { week: 1, date: "2025-08-18T00:00:00Z" },
-    { week: 2, date: "2025-08-25T00:00:00Z" },
-    { week: 3, date: "2025-08-31T00:00:00Z" },
-    { week: 4, date: "2025-09-14T00:00:00Z" },
-    { week: 5, date: "2025-09-21T00:00:00Z" },
-    { week: 6, date: "2025-09-29T00:00:00Z" },
-    { week: 7, date: "2025-10-05T00:00:00Z" },
-    { week: 8, date: "2025-10-20T00:00:00Z" },
-    { week: 9, date: "2025-10-26T00:00:00Z" },
-    { week: 10, date: "2025-11-03T00:00:00Z" },
-    { week: 11, date: "2025-11-09T00:00:00Z" },
-    { week: 12, date: "2025-11-24T00:00:00Z" },
-    { week: 13, date: "2025-11-30T00:00:00Z" },
-    { week: 14, date: "2025-12-04T00:00:00Z" },
-    { week: 15, date: "2025-12-08T00:00:00Z" },
-    { week: 16, date: "2025-12-15T00:00:00Z" },
-    { week: 17, date: "2025-12-22T00:00:00Z" },
-    { week: 18, date: "2025-12-28T00:00:00Z" },
-    { week: 19, date: "2026-01-01T00:00:00Z" },
-    { week: 20, date: "2026-01-04T00:00:00Z" },
-    { week: 21, date: "2026-01-08T00:00:00Z" },
-    { week: 22, date: "2026-01-19T00:00:00Z" },
-    { week: 23, date: "2026-01-26T00:00:00Z" },
-    { week: 24, date: "2026-02-02T00:00:00Z" },
-    { week: 25, date: "2026-02-08T00:00:00Z" },
-    { week: 26, date: "2026-02-12T00:00:00Z" },
-    { week: 27, date: "2026-02-23T00:00:00Z" },
-    { week: 28, date: "2026-03-01T00:00:00Z" },
-    { week: 29, date: "2026-03-05T00:00:00Z" },
-    { week: 30, date: "2026-03-16T00:00:00Z" },
-    { week: 31, date: "2026-03-22T00:00:00Z" },
-    { week: 32, date: "2026-04-13T00:00:00Z" },
-    { week: 33, date: "2026-04-20T00:00:00Z" },
-    { week: 34, date: "2026-04-27T00:00:00Z" },
-    { week: 35, date: "2026-05-02T00:00:00Z" },
-    { week: 36, date: "2026-05-09T00:00:00Z" },
-    { week: 37, date: "2026-05-17T00:00:00Z" },
-    { week: 38, date: "2026-05-24T00:00:00Z" },
+    { week: 1, date: "2025-08-11T00:00:00Z" },
+    { week: 2, date: "2025-08-18T00:00:00Z" },
+    { week: 3, date: "2025-08-25T00:00:00Z" },
+    { week: 4, date: "2025-09-08T00:00:00Z" },
+    { week: 5, date: "2025-09-15T00:00:00Z" },
+    { week: 6, date: "2025-09-22T00:00:00Z" },
+    { week: 7, date: "2025-09-29T00:00:00Z" },
+    { week: 8, date: "2025-10-13T00:00:00Z" },
+    { week: 9, date: "2025-10-20T00:00:00Z" },
+    { week: 10, date: "2025-10-27T00:00:00Z" },
+    { week: 11, date: "2025-11-03T00:00:00Z" },
+    { week: 12, date: "2025-11-17T00:00:00Z" },
+    { week: 13, date: "2025-11-24T00:00:00Z" },
+    { week: 14, date: "2025-12-01T00:00:00Z" },
+    { week: 15, date: "2025-12-05T00:00:00Z" },
+    { week: 16, date: "2025-12-08T00:00:00Z" },
+    { week: 17, date: "2025-12-15T00:00:00Z" },
+    { week: 18, date: "2025-12-22T00:00:00Z" },
+    { week: 19, date: "2025-12-29T00:00:00Z" },
+    { week: 20, date: "2026-01-01T00:00:00Z" },
+    { week: 21, date: "2026-01-05T00:00:00Z" },
+    { week: 22, date: "2026-01-12T00:00:00Z" },
+    { week: 23, date: "2026-01-19T00:00:00Z" },
+    { week: 24, date: "2026-01-26T00:00:00Z" },
+    { week: 25, date: "2026-02-02T00:00:00Z" },
+    { week: 26, date: "2026-02-09T00:00:00Z" },
+    { week: 27, date: "2026-02-16T00:00:00Z" },
+    { week: 28, date: "2026-02-23T00:00:00Z" },
+    { week: 29, date: "2026-03-02T00:00:00Z" },
+    { week: 30, date: "2026-03-09T00:00:00Z" },
+    { week: 31, date: "2026-03-16T00:00:00Z" },
+    { week: 32, date: "2026-04-06T00:00:00Z" },
+    { week: 33, date: "2026-04-13T00:00:00Z" },
+    { week: 34, date: "2026-04-20T00:00:00Z" },
+    { week: 35, date: "2026-04-27T00:00:00Z" },
+    { week: 36, date: "2026-05-04T00:00:00Z" },
+    { week: 37, date: "2026-05-11T00:00:00Z" },
+    { week: 38, date: "2026-05-18T00:00:00Z" },
 ].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
 function getCompetitionWeek(dateStr: string): number {
@@ -89,7 +89,7 @@ export async function recalculateAllDataClientSide(
       localFixtures.forEach((localMatch: any) => {
           const dbMatch = dbMatches.find(m => m.id === localMatch.id);
           
-          // PRESERVE FIRESTORE SCORES: Database is the master for results
+          // PRESERVE FIRESTORE SCORES
           const finalHomeScore = (dbMatch && dbMatch.homeScore !== -1) ? Number(dbMatch.homeScore) : Number(localMatch.homeScore ?? -1);
           const finalAwayScore = (dbMatch && dbMatch.awayScore !== -1) ? Number(dbMatch.awayScore) : Number(localMatch.awayScore ?? -1);
           const datePlay = localMatch.matchDatePlay || dbMatch?.matchDatePlay || localMatch.matchDateOrig;
@@ -176,7 +176,8 @@ export async function recalculateAllDataClientSide(
                   addOp(b => b.set(doc(firestore, 'standings', t.id), { teamId: t.id, rank: weekRanks.get(t.id) || 20, ...cumulativeTStats[t.id] }));
                   const form: string[] = [];
                   for (let i = latestAbsoluteWeek; i > Math.max(-1, latestAbsoluteWeek - 6); i--) {
-                      form.unshift(weekResultsByTeamAndWeek.get(`${i}-${t.id}`) || 'NG');
+                      const res = weekResultsByTeamAndWeek.get(`${i}-${t.id}`) || 'NG';
+                      form.unshift(res);
                   }
                   addOp(b => b.set(doc(firestore, 'teamRecentResults', t.id), { teamId: t.id, results: form }));
               });
