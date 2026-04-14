@@ -9,7 +9,6 @@ import {
   type WriteBatch,
 } from 'firebase/firestore';
 import type { Team, Prediction, User as UserProfile, UserHistory, Match } from '@/lib/types';
-import { allAwardPeriods } from './award-periods';
 import localFixtures from './past-fixtures.json';
 
 const weekStarts = [
@@ -68,23 +67,23 @@ export async function recalculateAllDataClientSide(
     try {
       progressCallback("Initializing sync engine...");
   
-      const [teamsSnap, matchesSnap, usersSnap, predictionsSnap] = await Promise.all([
+      const [teamsSnap, usersSnap, predictionsSnap, currentMatchesSnap] = await Promise.all([
         getDocs(collection(firestore, 'teams')),
-        getDocs(collection(firestore, 'matches')),
         getDocs(collection(firestore, 'users')),
         getDocs(collection(firestore, 'predictions')),
+        getDocs(collection(firestore, 'matches'))
       ]);
   
       const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
       const teamMap = new Map(teams.map(t => [t.id, t]));
-      const dbMatches = matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match));
       const allUsers = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
       const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
+      const dbMatches = currentMatchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match));
       
       const activeUserIds = new Set(predictions.filter(p => p.rankings && p.rankings.length === 20).map(p => p.userId || (p as any).id));
       const activeUsersForRankings = allUsers.filter(u => activeUserIds.has(u.id));
 
-      progressCallback('Synchronizing fixtures...');
+      progressCallback('Synchronizing fixtures from JSON...');
       const matchSyncBatch = writeBatch(firestore);
       localFixtures.forEach((localMatch: any) => {
           const dbMatch = dbMatches.find(m => m.id === localMatch.id);
@@ -129,18 +128,34 @@ export async function recalculateAllDataClientSide(
       const cumulativeTStats: { [tId: string]: any } = {};
       teams.forEach(t => cumulativeTStats[t.id] = { points: 0, goalDifference: 0, goalsFor: 0, goalsAgainst: 0, wins: 0, draws: 0, losses: 0, gamesPlayed: 0 });
 
+      const weekResultsByTeamAndWeek = new Map<string, string>();
+
       for (let w = 0; w <= latestAbsoluteWeek; w++) {
           const weekMatches = playedMatches.filter(m => getCompetitionWeek(m.matchDatePlay) === w);
+          
           weekMatches.forEach(m => {
               const h = cumulativeTStats[m.homeTeamId]; const a = cumulativeTStats[m.awayTeamId];
               const hS = Number(m.homeScore); const aS = Number(m.awayScore);
-              h.goalsFor = Number(h.goalsFor) + hS; h.goalsAgainst = Number(h.goalsAgainst) + aS; h.gamesPlayed = Number(h.gamesPlayed) + 1;
-              a.goalsFor = Number(a.goalsFor) + aS; a.goalsAgainst = Number(a.goalsAgainst) + hS; a.gamesPlayed = Number(a.gamesPlayed) + 1;
-              if (hS > aS) { h.points = Number(h.points) + 3; h.wins = Number(h.wins) + 1; a.losses = Number(a.losses) + 1; }
-              else if (hS < aS) { a.points = Number(a.points) + 3; a.wins = Number(a.wins) + 1; h.losses = Number(h.losses) + 1; }
+              
+              h.goalsFor = Number(h.goalsFor) + hS; 
+              h.goalsAgainst = Number(h.goalsAgainst) + aS; 
+              h.gamesPlayed = Number(h.gamesPlayed) + 1;
+              
+              a.goalsFor = Number(a.goalsFor) + aS; 
+              a.goalsAgainst = Number(a.goalsAgainst) + hS; 
+              a.gamesPlayed = Number(a.gamesPlayed) + 1;
+              
+              let hRes = 'D'; let aRes = 'D';
+              if (hS > aS) { h.points = Number(h.points) + 3; h.wins = Number(h.wins) + 1; a.losses = Number(a.losses) + 1; hRes = 'W'; aRes = 'L'; }
+              else if (hS < aS) { a.points = Number(a.points) + 3; a.wins = Number(a.wins) + 1; h.losses = Number(h.losses) + 1; hRes = 'L'; aRes = 'W'; }
               else { h.points = Number(h.points) + 1; h.draws = Number(h.draws) + 1; a.points = Number(a.points) + 1; a.draws = Number(a.draws) + 1; }
+              
               h.goalDifference = Number(h.goalsFor) - Number(h.goalsAgainst);
               a.goalDifference = Number(a.goalsFor) - Number(a.goalsAgainst);
+
+              const hKey = `${w}-${m.homeTeamId}`; const aKey = `${w}-${m.awayTeamId}`;
+              weekResultsByTeamAndWeek.set(hKey, (weekResultsByTeamAndWeek.get(hKey) || '') + hRes);
+              weekResultsByTeamAndWeek.set(aKey, (weekResultsByTeamAndWeek.get(aKey) || '') + aRes);
           });
 
           const tRanked = Object.entries(cumulativeTStats).map(([teamId, s]) => ({ teamId, ...s, name: teamMap.get(teamId)?.name || '' }))
@@ -153,19 +168,8 @@ export async function recalculateAllDataClientSide(
               teams.forEach(t => {
                   addOp(b => b.set(doc(firestore, 'standings', t.id), { teamId: t.id, rank: weekRanks.get(t.id) || 20, ...cumulativeTStats[t.id] }));
                   const form: string[] = [];
-                  for (let i = latestAbsoluteWeek; i > Math.max(0, latestAbsoluteWeek - 6); i--) {
-                      const weekGames = playedMatches.filter(m => getCompetitionWeek(m.matchDatePlay) === i && (m.homeTeamId === t.id || m.awayTeamId === t.id));
-                      if (weekGames.length === 0) form.unshift('NG');
-                      else {
-                          let res = '';
-                          weekGames.forEach(m => {
-                              const hS = Number(m.homeScore); const aS = Number(m.awayScore);
-                              if (hS === aS) res += 'D';
-                              else if (m.homeTeamId === t.id) res += hS > aS ? 'W' : 'L';
-                              else res += aS > hS ? 'W' : 'L';
-                          });
-                          form.unshift(res);
-                      }
+                  for (let i = latestAbsoluteWeek; i > Math.max(-1, latestAbsoluteWeek - 6); i--) {
+                      form.unshift(weekResultsByTeamAndWeek.get(`${i}-${t.id}`) || 'NG');
                   }
                   addOp(b => b.set(doc(firestore, 'teamRecentResults', t.id), { teamId: t.id, results: form }));
               });

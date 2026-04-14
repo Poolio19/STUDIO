@@ -61,8 +61,7 @@ export default function StandingsPage() {
         const teamMap = new Map(teamsData.map(t => [t.id, t]));
         const recentMap = new Map(recentResultsData?.map(r => [r.teamId, r.results]) || []);
         
-        const played = matchesData.filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0);
-        const latestW = played.length > 0 ? Math.max(...weeklyTeamStandings.map(ws => Number(ws.week))) : 0;
+        const latestW = weeklyTeamStandings.length > 0 ? Math.max(...weeklyTeamStandings.map(ws => Number(ws.week))) : 0;
 
         const finalStandings = standingsData.map(standing => {
             const team = teamMap.get(standing.teamId);
@@ -84,6 +83,7 @@ export default function StandingsPage() {
         })();
 
         const resultsByW = new Map();
+        const played = matchesData.filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0);
         played.sort((a,b) => Number(a.week) - Number(b.week)).forEach(m => {
             const list = resultsByW.get(Number(m.week)) || [];
             const h = teamMap.get(m.homeTeamId); const a = teamMap.get(m.awayTeamId);
@@ -95,7 +95,7 @@ export default function StandingsPage() {
     }, [isLoading, teamsData, matchesData, standingsData, weeklyTeamStandings, recentResultsData]);
 
     const getResultColor = (res: string) => {
-        if (res === 'NG') return 'bg-muted text-muted-foreground opacity-40';
+        if (!res || res === 'NG') return 'bg-muted text-muted-foreground opacity-40';
         if (res.length > 1) {
             if (res.includes('W') && !res.includes('L')) return 'bg-green-600 text-white';
             if (res.includes('L') && !res.includes('W')) return 'bg-red-600 text-white';

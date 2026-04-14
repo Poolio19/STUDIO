@@ -11,8 +11,8 @@ import {
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, doc, writeBatch, getDocs, query, orderBy } from 'firebase/firestore';
+import { useFirestore, useUser } from '@/firebase';
+import { collection, doc, writeBatch, getDocs, query } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -83,6 +83,7 @@ export default function AdminPage() {
 
   const [allMatches, setAllMatches] = React.useState<Match[]>([]);
   const [teamsMap, setTeamsMap] = React.useState<Map<string, Team>>(new Map());
+  const hasSetDefaultWeek = React.useRef(false);
 
   const isAdmin = user?.email === 'jim.poole@prempred.com' || user?.email === 'jimpoolio@hotmail.com' || user?.uid === 'usr_009';
 
@@ -92,12 +93,27 @@ export default function AdminPage() {
     }
   }, [user, isUserLoading, router, isAdmin]);
 
+  const scoresForm = useForm<ScoresFormValues>({
+    resolver: zodResolver(scoresFormSchema),
+    defaultValues: { week: 1, results: [] },
+  });
+
   const fetchAllMatches = React.useCallback(async () => {
     if (!firestore) return;
     const matchesSnap = await getDocs(query(collection(firestore, 'matches')));
     const matches = matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match));
     setAllMatches(matches);
-  }, [firestore]);
+
+    // Default to the latest week with scores upon initial load
+    if (!hasSetDefaultWeek.current) {
+        const played = matches.filter(m => Number(m.homeScore) !== -1);
+        if (played.length > 0) {
+            const maxW = Math.max(...played.map(m => Number(m.week)));
+            scoresForm.setValue('week', maxW);
+        }
+        hasSetDefaultWeek.current = true;
+    }
+  }, [firestore, scoresForm]);
   
   React.useEffect(() => {
     if (!firestore || !user || !isAdmin) return;
@@ -110,11 +126,6 @@ export default function AdminPage() {
     fetchAllData();
   }, [firestore, fetchAllMatches, user, isAdmin]);
 
-  const scoresForm = useForm<ScoresFormValues>({
-    resolver: zodResolver(scoresFormSchema),
-    defaultValues: { week: 1, results: [] },
-  });
-
   const selectedWeek = scoresForm.watch('week');
   const weekFixtures = React.useMemo(() => {
     return allMatches
@@ -126,6 +137,7 @@ export default function AdminPage() {
     if (weekFixtures.length === 0) return;
     
     // Force reset if week changed, OR if form is clean and we have new data
+    // This allows manual edits to persist (if form is dirty) while ensuring week switches work.
     if (lastResetWeek !== selectedWeek || (!scoresForm.formState.isDirty && weekFixtures.length > 0)) {
         const results = weekFixtures.map(fixture => {
             const dateStr = fixture.matchDatePlay || fixture.matchDateOrig || new Date().toISOString();
