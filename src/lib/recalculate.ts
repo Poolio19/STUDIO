@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -12,7 +11,6 @@ import {
 import type { Team, Prediction, User as UserProfile, UserHistory, Match } from '@/lib/types';
 import localFixtures from './past-fixtures.json';
 
-// EXACT dates provided by user for Monday start boundaries
 const weekStarts = [
     { week: 1, date: "2025-08-18T00:00:00Z" },
     { week: 2, date: "2025-08-25T00:00:00Z" },
@@ -67,30 +65,53 @@ export async function recalculateAllDataClientSide(
   progressCallback: (message: string) => void
 ) {
     try {
-      progressCallback("Initializing master sync...");
+      progressCallback("Initializing Master Sync...");
   
-      const [teamsSnap, usersSnap, predictionsSnap] = await Promise.all([
+      const [teamsSnap, usersSnap, predictionsSnap, existingMatchesSnap] = await Promise.all([
         getDocs(collection(firestore, 'teams')),
         getDocs(collection(firestore, 'users')),
-        getDocs(collection(firestore, 'predictions'))
+        getDocs(collection(firestore, 'predictions')),
+        getDocs(collection(firestore, 'matches'))
       ]);
   
       const teams = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
       const teamMap = new Map(teams.map(t => [t.id, t]));
       const allUsers = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
       const predictions = predictionsSnap.docs.map(doc => ({ userId: doc.id, ...doc.data() } as Prediction));
+      const dbMatchesMap = new Map(existingMatchesSnap.docs.map(d => [d.id, d.data()]));
       
       const activeUserIds = new Set(predictions.filter(p => p.rankings && p.rankings.length === 20).map(p => p.userId || (p as any).id));
       const activeUsersForRankings = allUsers.filter(u => activeUserIds.has(u.id));
 
-      progressCallback('Updating fixtures from Master JSON...');
+      progressCallback('Merging Scores (Smart Sync)...');
       const matchSyncBatch = writeBatch(firestore);
+      
+      const finalPlayedMatches: any[] = [];
+
       localFixtures.forEach((localMatch: any) => {
-          matchSyncBatch.set(doc(firestore, 'matches', localMatch.id), {
+          const dbMatch: any = dbMatchesMap.get(localMatch.id);
+          
+          let hS = Number(localMatch.homeScore ?? -1);
+          let aS = Number(localMatch.awayScore ?? -1);
+
+          // SMART SYNC: If JSON has -1 but DB has a score, keep DB score
+          if (hS === -1 && dbMatch && Number(dbMatch.homeScore) >= 0) {
+              hS = Number(dbMatch.homeScore);
+              aS = Number(dbMatch.awayScore);
+          }
+
+          const finalMatch = {
               ...localMatch,
-              homeScore: Number(localMatch.homeScore ?? -1),
-              awayScore: Number(localMatch.awayScore ?? -1)
-          }, { merge: true });
+              homeScore: hS,
+              awayScore: aS,
+              matchDatePlay: localMatch.matchDatePlay || localMatch.matchDateOrig
+          };
+
+          matchSyncBatch.set(doc(firestore, 'matches', localMatch.id), finalMatch, { merge: true });
+          
+          if (hS >= 0 && aS >= 0) {
+              finalPlayedMatches.push(finalMatch);
+          }
       });
       await matchSyncBatch.commit();
 
@@ -116,13 +137,8 @@ export async function recalculateAllDataClientSide(
           if (opCount >= 499) { mainBatches.push(writeBatch(firestore)); bIdx++; opCount = 0; }
       };
 
-      const playedMatches = localFixtures
-          .filter((m: any) => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0)
-          .sort((a,b) => new Date(a.matchDatePlay || a.matchDateOrig).getTime() - new Date(b.matchDatePlay || b.matchDateOrig).getTime());
-      
-      const latestAbsoluteWeek = playedMatches.length > 0 
-        ? Math.max(...playedMatches.map(m => getCompetitionWeek(m.matchDatePlay || m.matchDateOrig))) 
-        : 0;
+      const sortedPlayed = [...finalPlayedMatches].sort((a,b) => new Date(a.matchDatePlay).getTime() - new Date(b.matchDatePlay).getTime());
+      const latestAbsoluteWeek = sortedPlayed.length > 0 ? Math.max(...sortedPlayed.map(m => getCompetitionWeek(m.matchDatePlay))) : 0;
 
       const cumulativeTStats: { [tId: string]: any } = {};
       teams.forEach(t => cumulativeTStats[t.id] = { points: 0, goalDifference: 0, goalsFor: 0, goalsAgainst: 0, wins: 0, draws: 0, losses: 0, gamesPlayed: 0 });
@@ -130,27 +146,22 @@ export async function recalculateAllDataClientSide(
       const weekResultsByTeamAndWeek = new Map<string, string>();
 
       for (let w = 0; w <= latestAbsoluteWeek; w++) {
-          const weekMatches = playedMatches.filter(m => getCompetitionWeek(m.matchDatePlay || m.matchDateOrig) === w);
+          const weekMatches = sortedPlayed.filter(m => getCompetitionWeek(m.matchDatePlay) === w);
           
           weekMatches.forEach(m => {
               const h = cumulativeTStats[m.homeTeamId]; const a = cumulativeTStats[m.awayTeamId];
               const hS = Number(m.homeScore); const aS = Number(m.awayScore);
               
-              h.goalsFor = Number(h.goalsFor) + hS; 
-              h.goalsAgainst = Number(h.goalsAgainst) + aS; 
-              h.gamesPlayed = Number(h.gamesPlayed) + 1;
-              
-              a.goalsFor = Number(a.goalsFor) + aS; 
-              a.goalsAgainst = Number(a.goalsAgainst) + hS; 
-              a.gamesPlayed = Number(a.gamesPlayed) + 1;
+              h.goalsFor += hS; h.goalsAgainst += aS; h.gamesPlayed += 1;
+              a.goalsFor += aS; a.goalsAgainst += hS; a.gamesPlayed += 1;
               
               let hRes = 'D'; let aRes = 'D';
-              if (hS > aS) { h.points = Number(h.points) + 3; h.wins = Number(h.wins) + 1; a.losses = Number(a.losses) + 1; hRes = 'W'; aRes = 'L'; }
-              else if (hS < aS) { a.points = Number(a.points) + 3; a.wins = Number(a.wins) + 1; h.losses = Number(h.losses) + 1; hRes = 'L'; aRes = 'W'; }
-              else { h.points = Number(h.points) + 1; h.draws = Number(h.draws) + 1; a.points = Number(a.points) + 1; a.draws = Number(a.draws) + 1; }
+              if (hS > aS) { h.points += 3; h.wins += 1; a.losses += 1; hRes = 'W'; aRes = 'L'; }
+              else if (hS < aS) { a.points += 3; a.wins += 1; h.losses += 1; hRes = 'L'; aRes = 'W'; }
+              else { h.points += 1; h.draws += 1; a.points += 1; a.draws += 1; }
               
-              h.goalDifference = Number(h.goalsFor) - Number(h.goalsAgainst);
-              a.goalDifference = Number(a.goalsFor) - Number(a.goalsAgainst);
+              h.goalDifference = h.goalsFor - h.goalsAgainst;
+              a.goalDifference = a.goalsFor - a.goalsAgainst;
 
               const hKey = `${w}-${m.homeTeamId}`; const aKey = `${w}-${m.awayTeamId}`;
               weekResultsByTeamAndWeek.set(hKey, (weekResultsByTeamAndWeek.get(hKey) || '') + hRes);
@@ -158,7 +169,7 @@ export async function recalculateAllDataClientSide(
           });
 
           const tRanked = Object.entries(cumulativeTStats).map(([teamId, s]) => ({ teamId, ...s, name: teamMap.get(teamId)?.name || '' }))
-              .sort((a,b) => Number(b.points) - Number(a.points) || Number(b.goalDifference) - Number(a.goalDifference) || Number(b.goalsFor) - Number(a.goalsFor) || a.name.localeCompare(b.name));
+              .sort((a,b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.name.localeCompare(b.name));
           
           const weekRanks = new Map(tRanked.map((s, i) => [s.teamId, i + 1]));
           tRanked.forEach((s, idx) => addOp(b => b.set(doc(firestore, 'weeklyTeamStandings', `wk${w}-${s.teamId}`), { week: Number(w), teamId: s.teamId, rank: idx + 1 })));
@@ -193,7 +204,7 @@ export async function recalculateAllDataClientSide(
           });
           
           const uRanked = activeUsersForRankings.map(u => ({...u, score: uScores[u.id]}))
-              .sort((a, b) => Number(b.score) - Number(a.score) || (a.isPro ? -1 : 1) || (a.name || '').localeCompare(b.name || ''));
+              .sort((a, b) => b.score - a.score || (a.isPro ? -1 : 1) || (a.name || '').localeCompare(b.name || ''));
           
           const scoresOnly = uRanked.map(u => u.score);
           uRanked.forEach((u) => {

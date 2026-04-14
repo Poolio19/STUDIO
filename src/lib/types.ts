@@ -102,7 +102,7 @@ export type CurrentStanding = {
 
 export type TeamRecentResult = {
   teamId: string;
-  results: ('W' | 'D' | 'L' | '-')[];
+  results: string[]; // Can be "W", "WW", "NG", etc.
 };
 
 export type MonthlyMimoM = {

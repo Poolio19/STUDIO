@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -183,22 +182,25 @@ export default function StandingsPage() {
                         <AccordionContent>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                                 {weeklyResults.get(wNum)?.map((m: any, idx: number) => {
-                                    const HomeIcon = Icons[m.homeTeam.logo as IconName] || Icons.match;
-                                    const AwayIcon = Icons[m.awayTeam.logo as IconName] || Icons.match;
+                                    const teamMap = new Map(teamsData?.map(t => [t.id, t]) || []);
+                                    const h = teamMap.get(m.homeTeamId); const a = teamMap.get(m.awayTeamId);
+                                    if (!h || !a) return null;
+                                    const HomeIcon = Icons[h.logo as IconName] || Icons.match;
+                                    const AwayIcon = Icons[a.logo as IconName] || Icons.match;
                                     return (
                                         <div key={idx} className="flex items-center justify-center p-3 rounded-lg border bg-muted/5">
                                             <div className="flex items-center gap-3 justify-end w-2/5">
-                                                <span className="font-bold text-right text-xs truncate">{m.homeTeam.name}</span>
-                                                <div className="flex items-center justify-center size-8 rounded-full shrink-0" style={{ backgroundColor: m.homeTeam.bgColourSolid }}>
-                                                    <HomeIcon className="size-5" style={{ color: m.homeTeam.iconColour }} />
+                                                <span className="font-bold text-right text-xs truncate">{h.name}</span>
+                                                <div className="flex items-center justify-center size-8 rounded-full shrink-0" style={{ backgroundColor: h.bgColourSolid }}>
+                                                    <HomeIcon className="size-5" style={{ color: h.iconColour }} />
                                                 </div>
                                             </div>
                                             <div className="font-black text-xl px-4 text-center whitespace-nowrap min-w-[80px]">{m.homeScore} - {m.awayScore}</div>
                                             <div className="flex items-center gap-3 w-2/5">
-                                                <div className="flex items-center justify-center size-8 rounded-full shrink-0" style={{ backgroundColor: m.awayTeam.bgColourSolid }}>
-                                                    <AwayIcon className="size-5" style={{ color: m.awayTeam.iconColour }} />
+                                                <div className="flex items-center justify-center size-8 rounded-full shrink-0" style={{ backgroundColor: a.bgColourSolid }}>
+                                                    <AwayIcon className="size-5" style={{ color: a.iconColour }} />
                                                 </div>
-                                                <span className="font-bold text-xs truncate">{m.awayTeam.name}</span>
+                                                <span className="font-bold text-xs truncate">{a.name}</span>
                                             </div>
                                         </div>
                                     )

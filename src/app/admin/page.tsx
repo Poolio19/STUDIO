@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -194,7 +193,7 @@ export default function AdminPage() {
       }
       await batch.commit();
       await fetchAllMatches();
-      scoresForm.reset(scoresForm.getValues());
+      // Ensure we don't reset manual entries prematurely
       toast({ title: 'Database Updated!' });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Write Failed', description: error.message });
