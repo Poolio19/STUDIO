@@ -97,6 +97,8 @@ export default function StandingsPage() {
     const getResultColor = (res: string) => {
         if (!res || res === 'NG') return 'bg-muted text-muted-foreground opacity-40';
         if (res.length > 1) {
+            // Priority: L takes over W if mixed, but display concatenated colors? 
+            // Better: If multiple, use orange if mixed, green if WW, red if LL
             if (res.includes('W') && !res.includes('L')) return 'bg-green-600 text-white';
             if (res.includes('L') && !res.includes('W')) return 'bg-red-600 text-white';
             return 'bg-orange-400 text-white';

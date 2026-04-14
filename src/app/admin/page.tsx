@@ -3,12 +3,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useFirestore, useUser } from '@/firebase';
@@ -87,16 +82,16 @@ export default function AdminPage() {
 
   const isAdmin = user?.email === 'jim.poole@prempred.com' || user?.email === 'jimpoolio@hotmail.com' || user?.uid === 'usr_009';
 
+  const scoresForm = useForm<ScoresFormValues>({
+    resolver: zodResolver(scoresFormSchema),
+    defaultValues: { week: 1, results: [] },
+  });
+
   React.useEffect(() => {
     if (!isUserLoading && (!user || !isAdmin)) {
       router.replace('/leaderboard');
     }
   }, [user, isUserLoading, router, isAdmin]);
-
-  const scoresForm = useForm<ScoresFormValues>({
-    resolver: zodResolver(scoresFormSchema),
-    defaultValues: { week: 1, results: [] },
-  });
 
   const fetchAllMatches = React.useCallback(async () => {
     if (!firestore) return;
@@ -110,6 +105,8 @@ export default function AdminPage() {
         if (played.length > 0) {
             const maxW = Math.max(...played.map(m => Number(m.week)));
             scoresForm.setValue('week', maxW);
+        } else {
+            scoresForm.setValue('week', 1);
         }
         hasSetDefaultWeek.current = true;
     }
@@ -148,8 +145,8 @@ export default function AdminPage() {
 
             return {
                 id: fixture.id,
-                homeScore: fixture.homeScore,
-                awayScore: fixture.awayScore,
+                homeScore: fixture.homeScore ?? -1,
+                awayScore: fixture.awayScore ?? -1,
                 playYear: String(d.getUTCFullYear()),
                 playMonth: String(d.getUTCMonth() + 1).padStart(2, '0'),
                 playDay: String(d.getUTCDate()).padStart(2, '0'),
@@ -273,11 +270,11 @@ export default function AdminPage() {
                                     <span className="font-bold text-sm">{awayTeam?.name || fixture.awayTeamId}</span>
                                 </div>
                                 <div className="flex items-center gap-1 justify-center pt-2 lg:pt-0">
-                                    <Controller control={scoresForm.control} name={`results.${index}.playYear`} render={({ field }) => (<Input {...field} className="w-[54px] h-7 text-[11px] text-center px-1" placeholder="YYYY" />)} />
-                                    <Controller control={scoresForm.control} name={`results.${index}.playMonth`} render={({ field }) => (<Input {...field} className="w-[34px] h-7 text-[11px] text-center px-1" placeholder="MM" />)} />
-                                    <Controller control={scoresForm.control} name={`results.${index}.playDay`} render={({ field }) => (<Input {...field} className="w-[34px] h-7 text-[11px] text-center px-1" placeholder="DD" />)} />
+                                    <Controller control={scoresForm.control} name={`results.${index}.playYear`} render={({ field }) => (<Input {...field} className="w-[54px] h-7 text-[11px] text-center px-1" value={field.value || ''} placeholder="YYYY" />)} />
+                                    <Controller control={scoresForm.control} name={`results.${index}.playMonth`} render={({ field }) => (<Input {...field} className="w-[34px] h-7 text-[11px] text-center px-1" value={field.value || ''} placeholder="MM" />)} />
+                                    <Controller control={scoresForm.control} name={`results.${index}.playDay`} render={({ field }) => (<Input {...field} className="w-[34px] h-7 text-[11px] text-center px-1" value={field.value || ''} placeholder="DD" />)} />
                                     <Controller control={scoresForm.control} name={`results.${index}.playTime`} render={({ field }) => (
-                                        <Select onValueChange={field.onChange} value={field.value}>
+                                        <Select onValueChange={field.onChange} value={field.value || "15:00"}>
                                             <SelectTrigger className="w-[68px] h-7 text-[11px] px-1.5"><SelectValue /></SelectTrigger>
                                             <SelectContent>{timeOptions.map(t => <SelectItem key={t} value={t} className="text-[11px]">{t}</SelectItem>)}</SelectContent>
                                         </Select>

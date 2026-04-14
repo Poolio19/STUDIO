@@ -83,21 +83,27 @@ export async function recalculateAllDataClientSide(
       const activeUserIds = new Set(predictions.filter(p => p.rankings && p.rankings.length === 20).map(p => p.userId || (p as any).id));
       const activeUsersForRankings = allUsers.filter(u => activeUserIds.has(u.id));
 
-      progressCallback('Synchronizing fixtures from JSON...');
+      progressCallback('Synchronizing fixtures...');
       const matchSyncBatch = writeBatch(firestore);
       localFixtures.forEach((localMatch: any) => {
           const dbMatch = dbMatches.find(m => m.id === localMatch.id);
           const datePlay = localMatch.matchDatePlay || dbMatch?.matchDatePlay || localMatch.matchDateOrig;
+          
+          // CRITICAL: Prioritize Database scores if they exist, so UI entries aren't lost
+          const finalHomeScore = (dbMatch && dbMatch.homeScore !== -1) ? Number(dbMatch.homeScore) : Number(localMatch.homeScore ?? -1);
+          const finalAwayScore = (dbMatch && dbMatch.awayScore !== -1) ? Number(dbMatch.awayScore) : Number(localMatch.awayScore ?? -1);
+
           matchSyncBatch.set(doc(firestore, 'matches', localMatch.id), {
               ...localMatch,
-              homeScore: Number(localMatch.homeScore ?? -1),
-              awayScore: Number(localMatch.awayScore ?? -1),
+              homeScore: finalHomeScore,
+              awayScore: finalAwayScore,
               matchDatePlay: datePlay
           }, { merge: true });
       });
       await matchSyncBatch.commit();
 
-      const derivedCollections = ['standings', 'playerTeamScores', 'teamRecentResults', 'weeklyTeamStandings', 'userHistories', 'monthlyMimoM'];
+      // Clear derived data
+      const derivedCollections = ['standings', 'playerTeamScores', 'teamRecentResults', 'weeklyTeamStandings', 'userHistories'];
       for (const colName of derivedCollections) {
           const snap = await getDocs(collection(firestore, colName));
           let b = writeBatch(firestore); let c = 0;
@@ -118,8 +124,8 @@ export async function recalculateAllDataClientSide(
           if (opCount >= 499) { mainBatches.push(writeBatch(firestore)); bIdx++; opCount = 0; }
       };
 
-      const finalMatchesDocs = await getDocs(collection(firestore, 'matches'));
-      const playedMatches = finalMatchesDocs.docs.map(d => d.data() as Match)
+      const finalMatchesSnap = await getDocs(collection(firestore, 'matches'));
+      const playedMatches = finalMatchesSnap.docs.map(d => d.data() as Match)
           .filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0)
           .sort((a,b) => new Date(a.matchDatePlay).getTime() - new Date(b.matchDatePlay).getTime());
       
