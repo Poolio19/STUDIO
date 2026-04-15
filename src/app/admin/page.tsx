@@ -99,7 +99,7 @@ export default function AdminPage() {
     const matches = matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Match));
     setAllMatches(matches);
 
-    if (!hasSetDefaultWeek.current) {
+    if (!hasSetDefaultWeek.current && matches.length > 0) {
         const played = matches.filter(m => Number(m.homeScore) !== -1);
         if (played.length > 0) {
             const maxW = Math.max(...played.map(m => Number(m.week)));
@@ -132,7 +132,7 @@ export default function AdminPage() {
   React.useEffect(() => {
     if (weekFixtures.length === 0) return;
     
-    // Forced reset when switching weeks to avoid sticky data
+    // Forced reset when switching weeks to avoid sticky data or stale uncontrolled inputs
     if (lastResetWeek !== selectedWeek) {
         const results = weekFixtures.map(fixture => {
             const dateStr = fixture.matchDatePlay || fixture.matchDateOrig || new Date().toISOString();
@@ -234,7 +234,10 @@ export default function AdminPage() {
                     control={scoresForm.control}
                     name="week"
                     render={({ field }) => (
-                      <Select onValueChange={(value) => field.onChange(parseInt(value, 10))} value={String(field.value)}>
+                      <Select 
+                        onValueChange={(value) => field.onChange(parseInt(value, 10))} 
+                        value={field.value ? String(field.value) : ""}
+                      >
                         <SelectTrigger className="w-full lg:w-[200px]"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           {Array.from({ length: 38 }, (_, i) => i + 1).map(week => (

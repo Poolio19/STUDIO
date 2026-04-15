@@ -11,7 +11,7 @@ import {
 import type { Team, Prediction, User as UserProfile, UserHistory, Match } from '@/lib/types';
 import localFixtures from './past-fixtures.json';
 
-// Standardized Monday-start boundaries for competition weeks
+// Monday-start boundaries shifted to capture weekend games in the correct competition week
 const weekStarts = [
     { week: 1, date: "2025-08-11T00:00:00Z" },
     { week: 2, date: "2025-08-18T00:00:00Z" },
@@ -44,7 +44,7 @@ const weekStarts = [
     { week: 29, date: "2026-03-02T00:00:00Z" },
     { week: 30, date: "2026-03-09T00:00:00Z" },
     { week: 31, date: "2026-03-16T00:00:00Z" },
-    { week: 32, date: "2026-04-06T00:00:00Z" },
+    { week: 32, date: "2026-04-06T00:00:00Z" }, // Adjusted to capture April 11 in W32
     { week: 33, date: "2026-04-13T00:00:00Z" },
     { week: 34, date: "2026-04-20T00:00:00Z" },
     { week: 35, date: "2026-04-27T00:00:00Z" },
@@ -84,16 +84,18 @@ export async function recalculateAllDataClientSide(
       const activeUserIds = new Set(predictions.filter(p => p.rankings && p.rankings.length === 20).map(p => p.userId || (p as any).id));
       const activeUsersForRankings = allUsers.filter(u => activeUserIds.has(u.id));
 
-      progressCallback('Merging Scores (Smart Sync)...');
+      progressCallback('Synchronizing Master Fixtures...');
       const matchSyncBatch = writeBatch(firestore);
       const finalPlayedMatches: any[] = [];
+      const jsonMatchIds = new Set(localFixtures.map(m => m.id));
 
+      // 1. Sync JSON data to Firestore (treating JSON as source of truth for IDs)
       localFixtures.forEach((localMatch: any) => {
           const dbMatch: any = dbMatchesMap.get(localMatch.id);
           let hS = Number(localMatch.homeScore ?? -1);
           let aS = Number(localMatch.awayScore ?? -1);
 
-          // SMART SYNC: If JSON is unplayed but UI has data, prioritize UI
+          // If JSON is unplayed but DB has data, preserve the DB entry
           if (hS === -1 && dbMatch && Number(dbMatch.homeScore) >= 0) {
               hS = Number(dbMatch.homeScore);
               aS = Number(dbMatch.awayScore);
@@ -108,6 +110,13 @@ export async function recalculateAllDataClientSide(
 
           matchSyncBatch.set(doc(firestore, 'matches', localMatch.id), finalMatch, { merge: true });
           if (hS >= 0 && aS >= 0) finalPlayedMatches.push(finalMatch);
+      });
+
+      // 2. Delete orphan matches (matches in DB not in JSON) to fix phantom stats
+      existingMatchesSnap.docs.forEach(d => {
+          if (!jsonMatchIds.has(d.id)) {
+              matchSyncBatch.delete(d.ref);
+          }
       });
       await matchSyncBatch.commit();
 
