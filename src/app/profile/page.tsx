@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -38,6 +37,7 @@ import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { AuthForm } from '@/components/auth/auth-form';
 import { updatePassword, verifyBeforeUpdateEmail } from 'firebase/auth';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -242,9 +242,20 @@ export default function ProfilePage() {
   if (!authUser) return <div className="flex h-full w-full items-center justify-center"><AuthForm /></div>;
 
   const ttCount = (profile?.first || 0) + (profile?.second || 0) + (profile?.third || 0) + (profile?.fourth || 0) + (profile?.fifth || 0) + (profile?.sixth || 0) + (profile?.seventh || 0) + (profile?.eighth || 0) + (profile?.ninth || 0) + (profile?.tenth || 0);
+  const mustChangePassword = profile?.mustChangePassword === true;
 
   return (
     <div className="space-y-8">
+      {mustChangePassword && (
+        <Alert variant="destructive" className="border-2 animate-in fade-in slide-in-from-top-4 duration-500">
+            <ShieldCheck className="size-4" />
+            <AlertTitle className="font-black uppercase tracking-tight">Security Action Required</AlertTitle>
+            <AlertDescription className="font-medium">
+                Your account is currently locked. To access the Leaderboard and other features, you <strong>must</strong> update your password using the <strong>Account: Security</strong> section at the bottom of this page.
+            </AlertDescription>
+        </Alert>
+      )}
+
       <Card className="overflow-hidden border-2 shadow-2xl">
           <CardContent className="p-0">
               <div className="grid grid-cols-1 lg:grid-cols-3 items-stretch">
@@ -374,7 +385,7 @@ export default function ProfilePage() {
         </Card>
 
         <div className="space-y-8">
-          <Card>
+          <Card id="security-section" className={cn(mustChangePassword && "ring-4 ring-destructive ring-offset-4 ring-offset-background")}>
             <CardHeader><CardTitle>Account: Login Email</CardTitle></CardHeader>
             <CardContent>
               <Form {...emailForm}>
@@ -385,7 +396,7 @@ export default function ProfilePage() {
               </Form>
             </CardContent>
           </Card>
-           <Card>
+           <Card className={cn(mustChangePassword && "ring-4 ring-destructive ring-offset-4 ring-offset-background animate-pulse")}>
             <CardHeader><CardTitle>Account: Security</CardTitle></CardHeader>
             <CardContent>
               <Form {...passwordForm}>

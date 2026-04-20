@@ -143,13 +143,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   
   return (
     <SidebarProvider>
-      {!mustChangePassword && (
-        <Sidebar className="z-50">
-          <SidebarNav />
-        </Sidebar>
-      )}
+      <Sidebar className="z-50">
+        <SidebarNav />
+      </Sidebar>
       <SidebarInset className="flex flex-col overflow-hidden">
-        <header className={cn("flex h-16 shrink-0 items-center gap-2 border-b bg-card px-4 sticky top-0 z-40", mustChangePassword && "hidden")}>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-card px-4 sticky top-0 z-40">
           <div className="flex items-center gap-2">
             <SidebarTrigger className="flex -ml-1" />
           </div>

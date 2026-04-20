@@ -1,4 +1,3 @@
-
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -53,10 +52,16 @@ export function SidebarNav() {
 
   // Recognition by email OR canonical UID
   const isAdmin = authUser?.email === 'jim.poole@prempred.com' || authUser?.email === 'jimpoolio@hotmail.com' || authUser?.uid === 'usr_009';
+  const mustChangePassword = userProfile?.mustChangePassword === true;
 
   const visibleNavItems = navItems.filter(item => {
+    // If admin, show everything (unless restricted)
     if (item.href === '/admin') {
-      return isAdmin;
+      return isAdmin && !mustChangePassword;
+    }
+    // If password change is required, only show Profile link to prevent redirect confusion
+    if (mustChangePassword) {
+      return item.href === '/profile';
     }
     return true;
   });
@@ -108,6 +113,11 @@ export function SidebarNav() {
               </SidebarMenuItem>
             );
           })}
+          {mustChangePassword && (
+              <p className="px-2 py-4 text-[10px] font-bold text-destructive uppercase tracking-widest animate-pulse text-center border-t border-dashed mt-4">
+                Account Locked<br/>Update Security
+              </p>
+          )}
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="border-t p-2">
