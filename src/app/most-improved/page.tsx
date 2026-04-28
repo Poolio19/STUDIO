@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -150,11 +151,11 @@ export default function MostImprovedPage() {
   }, [users, userHistories, transitionContext, currentWeek, activeUserIds]);
   
   const hallOfFameData = useMemo(() => {
-    if (!users || !monthlyMimoMAwards || !transitionContext) return [];
+    if (!users || !monthlyMimoMAwards) return [];
     const userMap = new Map(users.map(u => [u.id, u]));
 
     return allAwardPeriods.map(period => {
-        const isCurrentAwardPeriod = (transitionContext.period.id === period.id && !transitionContext.isFinal);
+        const isCurrentAwardPeriod = (transitionContext?.period?.id === period.id && !transitionContext?.isFinal);
         const isPast = period.endWeek <= currentWeek;
         
         const hideDueToWeekOne = isCurrentAwardPeriod && ladderData.list.every(u => u.improvement === 0);
@@ -162,9 +163,13 @@ export default function MostImprovedPage() {
         let winners: any[] = []; let runnersUp: any[] = [];
         
         if (!hideDueToWeekOne && (isPast || isCurrentAwardPeriod)) {
-            const periodAwards = monthlyMimoMAwards.filter(a => 
-                Number(a.year) === period.year && (String(a.month).toLowerCase().substring(0,3) === (period.month || period.id).toLowerCase().substring(0,3) || (a.special === 'Xmas No 1' && period.id === 'xmas'))
-            );
+            // Find awards in Firestore matching this period
+            const periodAwards = monthlyMimoMAwards.filter(a => {
+                const yearMatch = Number(a.year) === period.year;
+                const monthMatch = a.month && period.month && a.month.toLowerCase().startsWith(period.month.toLowerCase().substring(0,3));
+                const specialMatch = (a.special === 'Xmas No 1' || a.month?.toLowerCase() === 'xmas') && period.id === 'xmas';
+                return yearMatch && (monthMatch || specialMatch);
+            });
             
             const rawWinners = periodAwards.filter(a => a.type === 'winner').map(a => {
                 const u = userMap.get(a.userId);
@@ -191,7 +196,6 @@ export default function MostImprovedPage() {
   const getWinnerRowStyle = (rank: number, improvement: number) => {
       if (improvement <= 0) return {};
       const sharerCount = ladderData.sharers;
-      // INTENSIFIED: Scale background intensity based on sharing.
       const alpha = Math.min(0.9, 0.3 + (sharerCount * 0.15));
       
       if (rank === 1) return { backgroundColor: `rgba(250, 204, 21, ${alpha})` };
@@ -199,7 +203,7 @@ export default function MostImprovedPage() {
       return {};
   };
 
-  if (isLoading) return <div className="flex h-96 items-center justify-center text-muted-foreground"><Loader2 className="size-5 animate-spin mr-2" /> Loading MiMoM Central...</div>;
+  if (isLoading && !users) return <div className="flex h-96 items-center justify-center text-muted-foreground"><Loader2 className="size-5 animate-spin mr-2" /> Loading MiMoM Central...</div>;
 
   return (
     <div className="flex flex-col gap-8">
@@ -255,7 +259,7 @@ export default function MostImprovedPage() {
                             if (award.isFuture) return null;
                             return (
                             <div key={award.id} className={cn("p-2 border rounded-lg flex flex-col items-center min-h-[240px]", award.isCurrent && "opacity-70")}>
-                                <p className="font-black mb-3 text-[11px] border-b w-full pb-1 uppercase tracking-widest text-muted-foreground/80">{award.label}</p>
+                                <p className="font-black mb-3 text-[11px] border-b w-full pb-1 uppercase tracking-widest text-muted-foreground/80 text-center">{award.label}</p>
                                 <div className="w-full space-y-2">
                                     {award.winners.map(winner => (
                                         <div key={winner.id} className={cn("rounded-none flex items-stretch h-[100px] overflow-hidden shadow-sm border", award.id === 'xmas' ? "bg-emerald-900 border-red-600 text-white border-2" : "bg-yellow-50 border-yellow-500")}>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -107,7 +108,7 @@ export default function StandingsPage() {
         return 'bg-muted text-muted-foreground opacity-40';
     };
 
-  if (isLoading) return <div className="flex h-96 items-center justify-center"><Loader2 className="size-8 animate-spin text-muted-foreground" /></div>;
+  if (isLoading && !standingsWithTeamData.length) return <div className="flex h-96 items-center justify-center"><Loader2 className="size-8 animate-spin text-muted-foreground" /></div>;
 
   return (
     <div className="space-y-8">
