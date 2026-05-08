@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -29,7 +28,7 @@ import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { collection, query, orderBy } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 
 export default function StandingsPage() {
