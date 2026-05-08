@@ -151,26 +151,23 @@ export default function MostImprovedPage() {
   }, [users, userHistories, transitionContext, currentWeek, activeUserIds]);
   
   const hallOfFameData = useMemo(() => {
-    // Resilience: Always show month slots even if data is loading
     const userMap = new Map(users?.map(u => [u.id, u]) || []);
 
     return allAwardPeriods.map(period => {
         const isCurrentAwardPeriod = (transitionContext?.period?.id === period.id && !transitionContext?.isFinal);
         const isPast = period.endWeek <= currentWeek;
         
-        const hideDueToWeekOne = isCurrentAwardPeriod && ladderData.list.every(u => u.improvement === 0);
-
         let winners: any[] = []; let runnersUp: any[] = [];
         
-        if (!hideDueToWeekOne && (isPast || isCurrentAwardPeriod) && monthlyMimoMAwards) {
-            // Find awards in Firestore matching this period
-            const periodAwards = monthlyMimoMAwards.filter(a => {
-                const yearMatch = Number(a.year) === period.year;
-                const monthMatch = a.month && period.month && a.month.toLowerCase().startsWith(period.month.toLowerCase().substring(0,3));
-                const specialMatch = (a.special === 'Xmas No 1' || a.month?.toLowerCase() === 'xmas') && period.id === 'xmas';
-                return yearMatch && (monthMatch || specialMatch);
-            });
-            
+        // 1. Try to find official awards in Firestore
+        const periodAwards = monthlyMimoMAwards?.filter(a => {
+            const yearMatch = Number(a.year) === period.year;
+            const monthMatch = a.month && period.month && a.month.toLowerCase().startsWith(period.month.toLowerCase().substring(0,3));
+            const specialMatch = (a.special === 'Xmas No 1' || a.month?.toLowerCase() === 'xmas') && period.id === 'xmas';
+            return yearMatch && (monthMatch || specialMatch);
+        });
+
+        if (periodAwards && periodAwards.length > 0) {
             const rawWinners = periodAwards.filter(a => a.type === 'winner').map(a => {
                 const u = userMap.get(a.userId);
                 return u ? { ...u, id: a.userId, name: u.name, avatar: u.avatar, improvement: Number(a.improvement ?? 0) } : null;
@@ -185,13 +182,45 @@ export default function MostImprovedPage() {
             const ruPrize = (rawWinners.length === 1 && rawRunnersUp.length > 0) ? (5 / rawRunnersUp.length) : 0;
             winners = rawWinners.map(w => ({ ...w, prize: winPrize }));
             runnersUp = rawRunnersUp.map(r => ({ ...r, prize: ruPrize }));
+        } 
+        // 2. If no official awards but month is past, AUTO-CALCULATE from history
+        else if (isPast && userHistories && users) {
+            const players = users.filter(u => !u.isPro && u.name && activeUserIds.has(u.id));
+            const autoList: any[] = [];
+            
+            players.forEach(user => {
+                const history = userHistories.find(h => h.userId === user.id);
+                if (history) {
+                    const sData = history.weeklyScores.find(ws => Number(ws.week) === period.startWeek);
+                    const eData = history.weeklyScores.filter(ws => Number(ws.week) <= period.endWeek).reverse()[0];
+                    if (sData && eData) autoList.push({ ...user, improvement: Number(eData.score) - Number(sData.score) });
+                }
+            });
+
+            if (autoList.length > 0) {
+                autoList.sort((a, b) => b.improvement - a.improvement || b.score - a.score);
+                const maxImp = autoList[0].improvement;
+                if (maxImp > 0) {
+                    const topTier = autoList.filter(u => u.improvement === maxImp);
+                    const winPrize = period.id === 'xmas' ? 10 : (10 / topTier.length);
+                    winners = topTier.map(w => ({ ...w, prize: winPrize }));
+
+                    if (topTier.length === 1) {
+                        const secondImp = autoList.find(u => u.improvement < maxImp)?.improvement;
+                        if (secondImp !== undefined && secondImp > 0) {
+                            const secondTier = autoList.filter(u => u.improvement === secondImp);
+                            runnersUp = secondTier.map(r => ({ ...r, prize: 5 / secondTier.length }));
+                        }
+                    }
+                }
+            }
         }
         
         const isFuture = !isPast && !isCurrentAwardPeriod && period.startWeek > currentWeek;
         
         return { id: period.id, label: period.id === 'xmas' ? 'Xmas No. 1' : period.abbreviation, isCurrent: isCurrentAwardPeriod, isFuture, winners, runnersUp };
     });
-  }, [users, monthlyMimoMAwards, currentWeek, transitionContext, ladderData]);
+  }, [users, monthlyMimoMAwards, currentWeek, transitionContext, userHistories, activeUserIds]);
 
   const getWinnerRowStyle = (rank: number, improvement: number) => {
       if (improvement <= 0) return {};

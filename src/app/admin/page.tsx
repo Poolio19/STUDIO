@@ -101,13 +101,14 @@ export default function AdminPage() {
     setAllMatches(matches);
 
     if (!hasSetDefaultWeek.current && matches.length > 0) {
-        // Robust default: highest week with a score >= 0
         const played = matches.filter(m => Number(m.homeScore) >= 0);
         if (played.length > 0) {
             const maxW = Math.max(...played.map(m => Number(m.week)));
             scoresForm.setValue('week', maxW);
+            setLastResetWeek(maxW);
         } else {
             scoresForm.setValue('week', 1);
+            setLastResetWeek(1);
         }
         hasSetDefaultWeek.current = true;
     }
@@ -134,7 +135,6 @@ export default function AdminPage() {
   React.useEffect(() => {
     if (weekFixtures.length === 0) return;
     
-    // Forced reset when switching weeks to ensure we show the correct fixtures
     if (lastResetWeek !== selectedWeek) {
         const results = weekFixtures.map(fixture => {
             const dateStr = fixture.matchDatePlay || fixture.matchDateOrig || new Date().toISOString();
