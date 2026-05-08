@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -9,57 +10,8 @@ import {
   type WriteBatch,
 } from 'firebase/firestore';
 import type { Team, Prediction, User as UserProfile, UserHistory, Match } from '@/lib/types';
+import { weekStarts, getCompetitionWeek } from './award-periods';
 import localFixtures from './past-fixtures.json';
-
-// Monday-start boundaries shifted to capture weekend games in the correct competition week
-const weekStarts = [
-    { week: 1, date: "2025-08-11T00:00:00Z" },
-    { week: 2, date: "2025-08-18T00:00:00Z" },
-    { week: 3, date: "2025-08-25T00:00:00Z" },
-    { week: 4, date: "2025-09-08T00:00:00Z" },
-    { week: 5, date: "2025-09-15T00:00:00Z" },
-    { week: 6, date: "2025-09-22T00:00:00Z" },
-    { week: 7, date: "2025-09-29T00:00:00Z" },
-    { week: 8, date: "2025-10-13T00:00:00Z" },
-    { week: 9, date: "2025-10-20T00:00:00Z" },
-    { week: 10, date: "2025-10-27T00:00:00Z" },
-    { week: 11, date: "2025-11-03T00:00:00Z" },
-    { week: 12, date: "2025-11-17T00:00:00Z" },
-    { week: 13, date: "2025-11-24T00:00:00Z" },
-    { week: 14, date: "2025-12-01T00:00:00Z" },
-    { week: 15, date: "2025-12-05T00:00:00Z" },
-    { week: 16, date: "2025-12-08T00:00:00Z" },
-    { week: 17, date: "2025-12-15T00:00:00Z" },
-    { week: 18, date: "2025-12-22T00:00:00Z" },
-    { week: 19, date: "2025-12-29T00:00:00Z" },
-    { week: 20, date: "2026-01-01T00:00:00Z" },
-    { week: 21, date: "2026-01-05T00:00:00Z" },
-    { week: 22, date: "2026-01-12T00:00:00Z" },
-    { week: 23, date: "2026-01-19T00:00:00Z" },
-    { week: 24, date: "2026-01-26T00:00:00Z" },
-    { week: 25, date: "2026-02-02T00:00:00Z" },
-    { week: 26, date: "2026-02-09T00:00:00Z" },
-    { week: 27, date: "2026-02-23T00:00:00Z" },
-    { week: 28, date: "2026-02-27T00:00:00Z" },
-    { week: 29, date: "2026-03-02T00:00:00Z" },
-    { week: 30, date: "2026-03-09T00:00:00Z" },
-    { week: 31, date: "2026-03-16T00:00:00Z" },
-    { week: 32, date: "2026-04-06T00:00:00Z" }, // Adjusted to capture April 11 in W32
-    { week: 33, date: "2026-04-13T00:00:00Z" },
-    { week: 34, date: "2026-04-20T00:00:00Z" },
-    { week: 35, date: "2026-04-27T00:00:00Z" },
-    { week: 36, date: "2026-05-04T00:00:00Z" },
-    { week: 37, date: "2026-05-11T00:00:00Z" },
-    { week: 38, date: "2026-05-18T00:00:00Z" },
-].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-function getCompetitionWeek(dateStr: string): number {
-    const d = new Date(dateStr).getTime();
-    for (const w of weekStarts) {
-        if (d >= new Date(w.date).getTime()) return w.week;
-    }
-    return 1;
-}
 
 export async function recalculateAllDataClientSide(
   firestore: Firestore,
@@ -89,13 +41,13 @@ export async function recalculateAllDataClientSide(
       const finalPlayedMatches: any[] = [];
       const jsonMatchIds = new Set(localFixtures.map(m => m.id));
 
-      // 1. Sync JSON data to Firestore (treating JSON as source of truth for IDs)
+      // 1. Sync JSON data to Firestore (treating JSON as source of truth for base match data)
       localFixtures.forEach((localMatch: any) => {
           const dbMatch: any = dbMatchesMap.get(localMatch.id);
           let hS = Number(localMatch.homeScore ?? -1);
           let aS = Number(localMatch.awayScore ?? -1);
 
-          // If JSON is unplayed but DB has data, preserve the DB entry
+          // SMART SYNC: If JSON is unplayed (-1) but Firestore has a real score, KEEP Firestore entry.
           if (hS === -1 && dbMatch && Number(dbMatch.homeScore) >= 0) {
               hS = Number(dbMatch.homeScore);
               aS = Number(dbMatch.awayScore);

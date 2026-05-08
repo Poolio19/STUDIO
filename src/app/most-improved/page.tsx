@@ -29,7 +29,7 @@ import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
-import { allAwardPeriods } from '@/lib/award-periods';
+import { allAwardPeriods, getCompetitionWeek } from '@/lib/award-periods';
 
 const getRankChangeIcon = (change: number) => {
   if (change > 0) return ArrowUp;
@@ -82,8 +82,8 @@ export default function MostImprovedPage() {
 
   const currentWeek = useMemo(() => {
     if (!matchesData) return 0;
-    const played = matchesData.filter(m => Number(m.homeScore) !== -1 && Number(m.awayScore) !== -1);
-    return played.length > 0 ? Math.max(...played.map(m => Number(m.week))) : 0;
+    const played = matchesData.filter(m => Number(m.homeScore) >= 0);
+    return played.length > 0 ? Math.max(...played.map(m => getCompetitionWeek(m.matchDatePlay || m.matchDateOrig))) : 0;
   }, [matchesData]);
 
   const activeUserIds = useMemo(() => {
@@ -151,8 +151,8 @@ export default function MostImprovedPage() {
   }, [users, userHistories, transitionContext, currentWeek, activeUserIds]);
   
   const hallOfFameData = useMemo(() => {
-    if (!users || !monthlyMimoMAwards) return [];
-    const userMap = new Map(users.map(u => [u.id, u]));
+    // Resilience: Always show month slots even if data is loading
+    const userMap = new Map(users?.map(u => [u.id, u]) || []);
 
     return allAwardPeriods.map(period => {
         const isCurrentAwardPeriod = (transitionContext?.period?.id === period.id && !transitionContext?.isFinal);
@@ -162,7 +162,7 @@ export default function MostImprovedPage() {
 
         let winners: any[] = []; let runnersUp: any[] = [];
         
-        if (!hideDueToWeekOne && (isPast || isCurrentAwardPeriod)) {
+        if (!hideDueToWeekOne && (isPast || isCurrentAwardPeriod) && monthlyMimoMAwards) {
             // Find awards in Firestore matching this period
             const periodAwards = monthlyMimoMAwards.filter(a => {
                 const yearMatch = Number(a.year) === period.year;
@@ -173,12 +173,12 @@ export default function MostImprovedPage() {
             
             const rawWinners = periodAwards.filter(a => a.type === 'winner').map(a => {
                 const u = userMap.get(a.userId);
-                return u ? { ...u, improvement: Number(a.improvement ?? 0) } : null;
+                return u ? { ...u, id: a.userId, name: u.name, avatar: u.avatar, improvement: Number(a.improvement ?? 0) } : null;
             }).filter(u => !!u);
 
             const rawRunnersUp = periodAwards.filter(a => a.type === 'runner-up').map(a => {
                 const u = userMap.get(a.userId);
-                return u ? { ...u, improvement: Number(a.improvement ?? 0) } : null;
+                return u ? { ...u, id: a.userId, name: u.name, avatar: u.avatar, improvement: Number(a.improvement ?? 0) } : null;
             }).filter(u => !!u);
 
             const winPrize = period.id === 'xmas' ? 10 : (10 / (rawWinners.length || 1));
