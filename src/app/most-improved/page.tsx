@@ -102,7 +102,7 @@ export default function MostImprovedPage() {
         if (!h) return false;
         const currentS = h.weeklyScores.find(ws => Number(ws.week) === currentWeek)?.score ?? 0;
         const startS = h.weeklyScores.find(ws => Number(ws.week) === rawPeriod.startWeek)?.score ?? 0;
-        return currentS > startS;
+        return currentS !== startS;
     });
 
     const isTransition = !hasProgress && currentWeek >= rawPeriod.startWeek && currentWeek > 0;
@@ -147,8 +147,10 @@ export default function MostImprovedPage() {
     });
 
     const imps = [...new Set(list.map(u => u.improvement))].sort((a, b) => b - a);
-    const sharers = list.filter(u => u.improvement === imps[0]).length;
-    return { list, topImp: imps[0], ruImp: imps[1], sharers };
+    const topImp = imps.length > 0 ? imps[0] : 0;
+    const ruImp = imps.length > 1 ? imps[1] : 0;
+    const sharers = list.filter(u => u.improvement === topImp).length;
+    return { list, topImp, ruImp, sharers };
   }, [users, userHistories, transitionContext, currentWeek, activeUserIds]);
   
   // Official awards + Auto-calculation fallback for the Hall of Fame
@@ -195,24 +197,22 @@ export default function MostImprovedPage() {
                 if (history) {
                     const sData = history.weeklyScores.find(ws => Number(ws.week) === period.startWeek);
                     const eData = history.weeklyScores.filter(ws => Number(ws.week) <= period.endWeek).reverse()[0];
-                    if (sData && eData) autoList.push({ ...user, improvement: Number(eData.score) - Number(sData.score) });
+                    if (sData && eData) autoList.push({ ...user, id: user.id, improvement: Number(eData.score) - Number(startData?.score ?? 0) });
                 }
             });
 
             if (autoList.length > 0) {
                 autoList.sort((a, b) => b.improvement - a.improvement || b.score - a.score);
                 const maxImp = autoList[0].improvement;
-                if (maxImp > 0) {
-                    const topTier = autoList.filter(u => u.improvement === maxImp);
-                    const winPrize = period.id === 'xmas' ? 10 : (10 / topTier.length);
-                    winners = topTier.map(w => ({ ...w, prize: winPrize }));
+                const topTier = autoList.filter(u => u.improvement === maxImp);
+                const winPrize = period.id === 'xmas' ? 10 : (10 / topTier.length);
+                winners = topTier.map(w => ({ ...w, prize: winPrize }));
 
-                    if (topTier.length === 1) {
-                        const secondImp = autoList.find(u => u.improvement < maxImp)?.improvement;
-                        if (secondImp !== undefined && secondImp > 0) {
-                            const secondTier = autoList.filter(u => u.improvement === secondImp);
-                            runnersUp = secondTier.map(r => ({ ...r, prize: 5 / secondTier.length }));
-                        }
+                if (topTier.length === 1) {
+                    const secondImp = autoList.find(u => u.improvement < maxImp)?.improvement;
+                    if (secondImp !== undefined) {
+                        const secondTier = autoList.filter(u => u.improvement === secondImp);
+                        runnersUp = secondTier.map(r => ({ ...r, prize: 5 / secondTier.length }));
                     }
                 }
             }
@@ -225,7 +225,7 @@ export default function MostImprovedPage() {
   }, [users, monthlyMimoMAwards, currentWeek, transitionContext, userHistories, activeUserIds]);
 
   const getWinnerRowStyle = (rank: number, improvement: number) => {
-      if (improvement <= 0) return {};
+      if (improvement === 0 && ladderData.topImp === 0) return {};
       if (rank === 1) return { backgroundColor: `rgba(250, 204, 21, 0.4)` };
       if (ladderData.topImp !== ladderData.ruImp && improvement === ladderData.ruImp) return { backgroundColor: `rgba(148, 163, 184, 0.2)` };
       return {};
@@ -270,7 +270,7 @@ export default function MostImprovedPage() {
                                         </TableCell>
                                     </TableRow>
                                 );
-                            }) : <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground italic">Loading competition data...</TableCell></TableRow>}
+                            }) : <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground italic">No historical progress data available yet.</TableCell></TableRow>}
                             </TableBody>
                         </Table>
                     </CardContent>

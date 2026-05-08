@@ -275,7 +275,7 @@ export default function AdminPage() {
                                             {...field} 
                                             type="text" 
                                             className="w-12 text-center h-8 font-black" 
-                                            value={displayScore(field.value) || ''} 
+                                            value={displayScore(field.value) ?? ''} 
                                             onChange={e => field.onChange(e.target.value.toUpperCase())} 
                                         />
                                     )} 
@@ -289,7 +289,7 @@ export default function AdminPage() {
                                             {...field} 
                                             type="text" 
                                             className="w-12 text-center h-8 font-black" 
-                                            value={displayScore(field.value) || ''} 
+                                            value={displayScore(field.value) ?? ''} 
                                             onChange={e => field.onChange(e.target.value.toUpperCase())} 
                                         />
                                     )} 
@@ -298,9 +298,9 @@ export default function AdminPage() {
                                     <span className="font-bold text-sm">{awayTeam?.name || fixture.awayTeamId}</span>
                                 </div>
                                 <div className="flex items-center gap-1 justify-center pt-2 lg:pt-0">
-                                    <Controller control={scoresForm.control} name={`results.${index}.playYear`} render={({ field }) => (<Input {...field} className="w-[54px] h-7 text-[11px] text-center px-1" value={field.value || ''} placeholder="YYYY" />)} />
-                                    <Controller control={scoresForm.control} name={`results.${index}.playMonth`} render={({ field }) => (<Input {...field} className="w-[34px] h-7 text-[11px] text-center px-1" value={field.value || ''} placeholder="MM" />)} />
-                                    <Controller control={scoresForm.control} name={`results.${index}.playDay`} render={({ field }) => (<Input {...field} className="w-[34px] h-7 text-[11px] text-center px-1" value={field.value || ''} placeholder="DD" />)} />
+                                    <Controller control={scoresForm.control} name={`results.${index}.playYear`} render={({ field }) => (<Input {...field} className="w-[54px] h-7 text-[11px] text-center px-1" value={field.value ?? ''} placeholder="YYYY" />)} />
+                                    <Controller control={scoresForm.control} name={`results.${index}.playMonth`} render={({ field }) => (<Input {...field} className="w-[34px] h-7 text-[11px] text-center px-1" value={field.value ?? ''} placeholder="MM" />)} />
+                                    <Controller control={scoresForm.control} name={`results.${index}.playDay`} render={({ field }) => (<Input {...field} className="w-[34px] h-7 text-[11px] text-center px-1" value={field.value ?? ''} placeholder="DD" />)} />
                                     <Controller control={scoresForm.control} name={`results.${index}.playTime`} render={({ field }) => (
                                         <Select onValueChange={field.onChange} value={field.value || "15:00"}>
                                             <SelectTrigger className="w-[68px] h-7 text-[11px] px-1.5"><SelectValue /></SelectTrigger>
