@@ -9,9 +9,17 @@ import {
   type WriteBatch,
 } from 'firebase/firestore';
 import type { Team, Prediction, User as UserProfile, UserHistory, Match } from '@/lib/types';
-import { weekStarts, getCompetitionWeek } from './award-periods';
+import { getCompetitionWeek } from './award-periods';
 import localFixtures from './past-fixtures.json';
+import prevSeasonData from './previous-season-standings-24-25.json';
 
+/**
+ * The Master Recalculation Engine
+ * 1. Synchronizes Firestore 'matches' with the local JSON file.
+ * 2. Calculates 'Week 0' baseline (25-26 predictions vs 24-25 actuals).
+ * 3. Computes weekly league standings and player scores.
+ * 4. Generates full progression history for graphs and MiMoM.
+ */
 export async function recalculateAllDataClientSide(
   firestore: Firestore,
   progressCallback: (message: string) => void
@@ -40,13 +48,13 @@ export async function recalculateAllDataClientSide(
       const finalPlayedMatches: any[] = [];
       const jsonMatchIds = new Set(localFixtures.map(m => m.id));
 
-      // 1. Sync JSON data to Firestore (treating JSON as source of truth for base match data)
+      // 1. Master Sync: Treat JSON as baseline, but preserve UI-entered scores for future games
       localFixtures.forEach((localMatch: any) => {
           const dbMatch: any = dbMatchesMap.get(localMatch.id);
           let hS = Number(localMatch.homeScore ?? -1);
           let aS = Number(localMatch.awayScore ?? -1);
 
-          // SMART SYNC: If JSON is unplayed (-1) but Firestore has a real score, KEEP Firestore entry.
+          // If JSON is unplayed but Firestore has a valid score, keep the Firestore version
           if (hS === -1 && dbMatch && Number(dbMatch.homeScore) >= 0) {
               hS = Number(dbMatch.homeScore);
               aS = Number(dbMatch.awayScore);
@@ -63,7 +71,7 @@ export async function recalculateAllDataClientSide(
           if (hS >= 0 && aS >= 0) finalPlayedMatches.push(finalMatch);
       });
 
-      // 2. Delete orphan matches (matches in DB not in JSON) to fix phantom stats
+      // 2. Orphan Cleanup: Delete matches in Firestore that are not in the JSON file
       existingMatchesSnap.docs.forEach(d => {
           if (!jsonMatchIds.has(d.id)) {
               matchSyncBatch.delete(d.ref);
@@ -71,7 +79,7 @@ export async function recalculateAllDataClientSide(
       });
       await matchSyncBatch.commit();
 
-      // Wipe derived data
+      // Wipe derived statistical tables
       const derivedCollections = ['standings', 'playerTeamScores', 'teamRecentResults', 'weeklyTeamStandings', 'userHistories'];
       for (const colName of derivedCollections) {
           const snap = await getDocs(collection(firestore, colName));
@@ -96,52 +104,69 @@ export async function recalculateAllDataClientSide(
       const sortedPlayed = [...finalPlayedMatches].sort((a,b) => new Date(a.matchDatePlay).getTime() - new Date(b.matchDatePlay).getTime());
       const latestAbsoluteWeek = sortedPlayed.length > 0 ? Math.max(...sortedPlayed.map(m => getCompetitionWeek(m.matchDatePlay))) : 0;
 
+      // Prepare Previous Season (Week 0) Ranks
+      const prevSeasonRankMap = new Map(prevSeasonData.map(s => [s.teamId, s.rank]));
+
       const cumulativeTStats: { [tId: string]: any } = {};
       teams.forEach(t => cumulativeTStats[t.id] = { points: 0, goalDifference: 0, goalsFor: 0, goalsAgainst: 0, wins: 0, draws: 0, losses: 0, gamesPlayed: 0 });
 
       const weekResultsByTeamAndWeek = new Map<string, string>();
 
+      // Loop through every week including the baseline (Week 0)
       for (let w = 0; w <= latestAbsoluteWeek; w++) {
-          const weekMatches = sortedPlayed.filter(m => getCompetitionWeek(m.matchDatePlay) === w);
-          
-          weekMatches.forEach(m => {
-              const h = cumulativeTStats[m.homeTeamId]; const a = cumulativeTStats[m.awayTeamId];
-              const hS = Number(m.homeScore); const aS = Number(m.awayScore);
-              
-              h.goalsFor += hS; h.goalsAgainst += aS; h.gamesPlayed += 1;
-              a.goalsFor += aS; a.goalsAgainst += hS; a.gamesPlayed += 1;
-              
-              let hRes = 'D'; let aRes = 'D';
-              if (hS > aS) { h.points += 3; h.wins += 1; a.losses += 1; hRes = 'W'; aRes = 'L'; }
-              else if (hS < aS) { a.points += 3; a.wins += 1; h.losses += 1; hRes = 'L'; aRes = 'W'; }
-              else { h.points += 1; h.draws += 1; a.points += 1; a.draws += 1; }
-              
-              h.goalDifference = Number(h.goalsFor - h.goalsAgainst);
-              a.goalDifference = Number(a.goalsFor - a.goalsAgainst);
+          let weekRanks = new Map<string, number>();
 
-              const hKey = `${w}-${m.homeTeamId}`; const aKey = `${w}-${m.awayTeamId}`;
-              weekResultsByTeamAndWeek.set(hKey, (weekResultsByTeamAndWeek.get(hKey) || '') + hRes);
-              weekResultsByTeamAndWeek.set(aKey, (weekResultsByTeamAndWeek.get(aKey) || '') + aRes);
-          });
-
-          const tRanked = Object.entries(cumulativeTStats).map(([teamId, s]) => ({ teamId, ...s, name: teamMap.get(teamId)?.name || '' }))
-              .sort((a,b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.name.localeCompare(b.name));
-          
-          const weekRanks = new Map(tRanked.map((s, i) => [s.teamId, i + 1]));
-          tRanked.forEach((s, idx) => addOp(b => b.set(doc(firestore, 'weeklyTeamStandings', `wk${w}-${s.teamId}`), { week: Number(w), teamId: s.teamId, rank: idx + 1 })));
-
-          if (w === latestAbsoluteWeek) {
+          if (w === 0) {
+              // Week 0: Use last season's final standings as the actual rank baseline
+              weekRanks = prevSeasonRankMap;
               teams.forEach(t => {
-                  addOp(b => b.set(doc(firestore, 'standings', t.id), { teamId: t.id, rank: weekRanks.get(t.id) || 20, ...cumulativeTStats[t.id] }));
-                  const form: string[] = [];
-                  for (let i = latestAbsoluteWeek; i > Math.max(-1, latestAbsoluteWeek - 6); i--) {
-                      const res = weekResultsByTeamAndWeek.get(`${i}-${t.id}`) || 'NG';
-                      form.unshift(res);
-                  }
-                  addOp(b => b.set(doc(firestore, 'teamRecentResults', t.id), { teamId: t.id, results: form }));
+                  const r = prevSeasonRankMap.get(t.id) || 20;
+                  addOp(b => b.set(doc(firestore, 'weeklyTeamStandings', `wk0-${t.id}`), { week: 0, teamId: t.id, rank: r }));
               });
+          } else {
+              // Normal Week: Calculate from played matches
+              const weekMatches = sortedPlayed.filter(m => getCompetitionWeek(m.matchDatePlay) === w);
+              
+              weekMatches.forEach(m => {
+                  const h = cumulativeTStats[m.homeTeamId]; const a = cumulativeTStats[m.awayTeamId];
+                  const hS = Number(m.homeScore); const aS = Number(m.awayScore);
+                  
+                  h.goalsFor += hS; h.goalsAgainst += aS; h.gamesPlayed += 1;
+                  a.goalsFor += aS; a.goalsAgainst += hS; a.gamesPlayed += 1;
+                  
+                  let hRes = 'D'; let aRes = 'D';
+                  if (hS > aS) { h.points += 3; h.wins += 1; a.losses += 1; hRes = 'W'; aRes = 'L'; }
+                  else if (hS < aS) { a.points += 3; a.wins += 1; h.losses += 1; hRes = 'L'; aRes = 'W'; }
+                  else { h.points += 1; h.draws += 1; a.points += 1; a.draws += 1; }
+                  
+                  h.goalDifference = Number(h.goalsFor - h.goalsAgainst);
+                  a.goalDifference = Number(a.goalsFor - a.goalsAgainst);
+
+                  const hKey = `${w}-${m.homeTeamId}`; const aKey = `${w}-${m.awayTeamId}`;
+                  weekResultsByTeamAndWeek.set(hKey, (weekResultsByTeamAndWeek.get(hKey) || '') + hRes);
+                  weekResultsByTeamAndWeek.set(aKey, (weekResultsByTeamAndWeek.get(aKey) || '') + aRes);
+              });
+
+              const tRanked = Object.entries(cumulativeTStats).map(([teamId, s]) => ({ teamId, ...s, name: teamMap.get(teamId)?.name || '' }))
+                  .sort((a,b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.name.localeCompare(b.name));
+              
+              weekRanks = new Map(tRanked.map((s, i) => [s.teamId, i + 1]));
+              tRanked.forEach((s, idx) => addOp(b => b.set(doc(firestore, 'weeklyTeamStandings', `wk${w}-${s.teamId}`), { week: Number(w), teamId: s.teamId, rank: idx + 1 })));
+
+              if (w === latestAbsoluteWeek) {
+                  teams.forEach(t => {
+                      addOp(b => b.set(doc(firestore, 'standings', t.id), { teamId: t.id, rank: weekRanks.get(t.id) || 20, ...cumulativeTStats[t.id] }));
+                      const form: string[] = [];
+                      for (let i = latestAbsoluteWeek; i > Math.max(-1, latestAbsoluteWeek - 6); i--) {
+                          const res = weekResultsByTeamAndWeek.get(`${i}-${t.id}`) || 'NG';
+                          form.unshift(res);
+                      }
+                      addOp(b => b.set(doc(firestore, 'teamRecentResults', t.id), { teamId: t.id, results: form }));
+                  });
+              }
           }
 
+          // Calculate User Scores for the week
           const uScores: { [uId: string]: number } = {};
           allUsers.forEach(u => {
               const pred = predictions.find(p => (p.userId || p.id) === u.id);
@@ -151,7 +176,9 @@ export async function recalculateAllDataClientSide(
                   if (actual) score += (5 - Math.abs((idx + 1) - actual));
               });
               uScores[u.id] = score;
-              if (w === latestAbsoluteWeek) {
+              
+              // Only write detailed team-by-team scores for the latest live week
+              if (w === latestAbsoluteWeek && w > 0) {
                   pred?.rankings.forEach((tId, idx) => {
                       const actual = weekRanks.get(tId);
                       addOp(b => b.set(doc(firestore, 'playerTeamScores', `${u.id}-${tId}`), { userId: u.id, teamId: tId, score: actual ? (5 - Math.abs((idx + 1) - actual)) : 0 }));
@@ -170,6 +197,7 @@ export async function recalculateAllDataClientSide(
           });
       }
 
+      // Update final user profile stats
       allUsers.forEach(u => {
           const h = allHistories[u.id];
           const latest = h.weeklyScores.find(s => Number(s.week) === latestAbsoluteWeek) || { score: 0, rank: 0 };

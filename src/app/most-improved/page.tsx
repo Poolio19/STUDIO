@@ -90,6 +90,7 @@ export default function MostImprovedPage() {
     return new Set(predictions.filter(p => p.rankings?.length === 20).map(p => p.userId || (p as any).id));
   }, [predictions]);
 
+  // Determine if we are in the middle of a month or at a boundary
   const transitionContext = useMemo(() => {
     if (!users || !userHistories || !activeUserIds.size) return null;
     
@@ -114,6 +115,7 @@ export default function MostImprovedPage() {
     return { period: rawPeriod, isFinal: false };
   }, [currentWeek, users, userHistories, activeUserIds]);
 
+  // Live Ladder Data for the current month
   const ladderData = useMemo(() => {
     if (!users || !userHistories || !transitionContext || !activeUserIds.size) return { list: [], topImp: 0, ruImp: 0, sharers: 0 };
 
@@ -149,6 +151,7 @@ export default function MostImprovedPage() {
     return { list, topImp: imps[0], ruImp: imps[1], sharers };
   }, [users, userHistories, transitionContext, currentWeek, activeUserIds]);
   
+  // Official awards + Auto-calculation fallback for the Hall of Fame
   const hallOfFameData = useMemo(() => {
     const userMap = new Map(users?.map(u => [u.id, u]) || []);
 
@@ -158,7 +161,7 @@ export default function MostImprovedPage() {
         
         let winners: any[] = []; let runnersUp: any[] = [];
         
-        // 1. Try to find official awards in Firestore
+        // 1. Try to find official award documents in Firestore
         const periodAwards = monthlyMimoMAwards?.filter(a => {
             const yearMatch = Number(a.year) === period.year;
             const monthMatch = a.month && period.month && a.month.toLowerCase().startsWith(period.month.toLowerCase().substring(0,3));
@@ -182,7 +185,7 @@ export default function MostImprovedPage() {
             winners = rawWinners.map(w => ({ ...w, prize: winPrize }));
             runnersUp = rawRunnersUp.map(r => ({ ...r, prize: ruPrize }));
         } 
-        // 2. If no official awards but month is past, AUTO-CALCULATE from history
+        // 2. Fallback: Auto-calculate from player history
         else if (isPast && userHistories && users) {
             const players = users.filter(u => !u.isPro && u.name && activeUserIds.has(u.id));
             const autoList: any[] = [];
@@ -223,15 +226,12 @@ export default function MostImprovedPage() {
 
   const getWinnerRowStyle = (rank: number, improvement: number) => {
       if (improvement <= 0) return {};
-      const sharerCount = ladderData.sharers;
-      const alpha = Math.min(0.9, 0.3 + (sharerCount * 0.15));
-      
-      if (rank === 1) return { backgroundColor: `rgba(250, 204, 21, ${alpha})` };
-      if (ladderData.topImp !== ladderData.ruImp && improvement === ladderData.ruImp) return { backgroundColor: `rgba(148, 163, 184, 0.5)` };
+      if (rank === 1) return { backgroundColor: `rgba(250, 204, 21, 0.4)` };
+      if (ladderData.topImp !== ladderData.ruImp && improvement === ladderData.ruImp) return { backgroundColor: `rgba(148, 163, 184, 0.2)` };
       return {};
   };
 
-  if (isLoading && !users) return <div className="flex h-96 items-center justify-center text-muted-foreground"><Loader2 className="size-5 animate-spin mr-2" /> Loading MiMoM Central...</div>;
+  if (isLoading && !users) return <div className="flex h-96 items-center justify-center text-muted-foreground"><Loader2 className="size-5 animate-spin mr-2" /> Loading MiMoM Data...</div>;
 
   return (
     <div className="flex flex-col gap-8">
@@ -240,7 +240,7 @@ export default function MostImprovedPage() {
                 <Card>
                     <CardHeader className="bg-gradient-to-r from-yellow-400/10 via-background to-slate-400/10">
                         <CardTitle>{transitionContext?.isFinal ? `MiMoM Final Standings for ${transitionContext.period.month || transitionContext.period.special}` : `In-Month MiMoM Standings`}</CardTitle>
-                        <CardDescription>{transitionContext?.isFinal ? `Results are locked. Prizes bagged.` : `Live progress for ${transitionContext?.period.month || transitionContext?.period.special}`}</CardDescription>
+                        <CardDescription>{transitionContext?.isFinal ? `Results are locked.` : `Live progress for ${transitionContext?.period.month || transitionContext?.period.special}`}</CardDescription>
                     </CardHeader>
                     <CardContent className="p-0">
                         <Table>
@@ -270,7 +270,7 @@ export default function MostImprovedPage() {
                                         </TableCell>
                                     </TableRow>
                                 );
-                            }) : <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground italic">No active competition data for this period.</TableCell></TableRow>}
+                            }) : <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground italic">Loading competition data...</TableCell></TableRow>}
                             </TableBody>
                         </Table>
                     </CardContent>

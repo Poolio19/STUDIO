@@ -134,6 +134,7 @@ export default function AdminPage() {
   React.useEffect(() => {
     if (weekFixtures.length === 0) return;
     
+    // Force form refresh if week changed or if initial load
     if (lastResetWeek !== selectedWeek) {
         const results = weekFixtures.map(fixture => {
             const dateStr = fixture.matchDatePlay || fixture.matchDateOrig || new Date().toISOString();
@@ -274,7 +275,7 @@ export default function AdminPage() {
                                             {...field} 
                                             type="text" 
                                             className="w-12 text-center h-8 font-black" 
-                                            value={displayScore(field.value)} 
+                                            value={displayScore(field.value) || ''} 
                                             onChange={e => field.onChange(e.target.value.toUpperCase())} 
                                         />
                                     )} 
@@ -288,7 +289,7 @@ export default function AdminPage() {
                                             {...field} 
                                             type="text" 
                                             className="w-12 text-center h-8 font-black" 
-                                            value={displayScore(field.value)} 
+                                            value={displayScore(field.value) || ''} 
                                             onChange={e => field.onChange(e.target.value.toUpperCase())} 
                                         />
                                     )} 
