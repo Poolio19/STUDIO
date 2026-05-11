@@ -72,7 +72,7 @@ export async function recalculateAllDataClientSide(
           if (hS >= 0 && aS >= 0) finalPlayedMatches.push(finalMatch);
       });
 
-      // 2. Orphan Cleanup: Delete matches in Firestore that are not in the JSON file (Fixed Arsenal played stat)
+      // 2. Orphan Cleanup: Delete matches in Firestore that are not in the JSON file
       existingMatchesSnap.docs.forEach(d => {
           if (!jsonMatchIds.has(d.id)) {
               matchSyncBatch.delete(d.ref);
