@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -73,7 +74,6 @@ export default function AdminPage() {
   const [isUpdating, setIsUpdating] = React.useState(false);
   const [isWritingFile, setIsWritingFile] = React.useState(false);
   const [isImportingFile, setIsImportingFile] = React.useState(false);
-  const [lastResetWeek, setLastResetWeek] = React.useState<number | null>(null);
   const [latestFileContent, setLatestFileContent] = React.useState<string | null>(null);
 
   const [allMatches, setAllMatches] = React.useState<Match[]>([]);
@@ -104,10 +104,8 @@ export default function AdminPage() {
         if (played.length > 0) {
             const maxW = Math.max(...played.map(m => Number(m.week)));
             scoresForm.setValue('week', maxW);
-            setLastResetWeek(maxW);
         } else {
             scoresForm.setValue('week', 1);
-            setLastResetWeek(1);
         }
         hasSetDefaultWeek.current = true;
     }
@@ -134,29 +132,25 @@ export default function AdminPage() {
   React.useEffect(() => {
     if (weekFixtures.length === 0) return;
     
-    // Force form refresh if week changed or if initial load
-    if (lastResetWeek !== selectedWeek) {
-        const results = weekFixtures.map(fixture => {
-            const dateStr = fixture.matchDatePlay || fixture.matchDateOrig || new Date().toISOString();
-            const d = new Date(dateStr);
-            const hours = String(d.getUTCHours()).padStart(2, '0');
-            const minutes = String(d.getUTCMinutes()).padStart(2, '0');
-            const formattedTime = `${hours}:${minutes}`;
+    const results = weekFixtures.map(fixture => {
+        const dateStr = fixture.matchDatePlay || fixture.matchDateOrig || new Date().toISOString();
+        const d = new Date(dateStr);
+        const hours = String(d.getUTCHours()).padStart(2, '0');
+        const minutes = String(d.getUTCMinutes()).padStart(2, '0');
+        const formattedTime = `${hours}:${minutes}`;
 
-            return {
-                id: fixture.id,
-                homeScore: fixture.homeScore ?? -1,
-                awayScore: fixture.awayScore ?? -1,
-                playYear: String(d.getUTCFullYear()) || '',
-                playMonth: String(d.getUTCMonth() + 1).padStart(2, '0') || '',
-                playDay: String(d.getUTCDate()).padStart(2, '0') || '',
-                playTime: timeOptions.includes(formattedTime) ? formattedTime : "15:00",
-            };
-        });
-        scoresForm.reset({ week: selectedWeek, results: results });
-        setLastResetWeek(selectedWeek);
-    }
-  }, [selectedWeek, weekFixtures, scoresForm, lastResetWeek]);
+        return {
+            id: fixture.id,
+            homeScore: fixture.homeScore ?? -1,
+            awayScore: fixture.awayScore ?? -1,
+            playYear: String(d.getUTCFullYear()) || '',
+            playMonth: String(d.getUTCMonth() + 1).padStart(2, '0') || '',
+            playDay: String(d.getUTCDate()).padStart(2, '0') || '',
+            playTime: timeOptions.includes(formattedTime) ? formattedTime : "15:00",
+        };
+    });
+    scoresForm.reset({ week: selectedWeek, results: results });
+  }, [selectedWeek, weekFixtures, scoresForm]);
 
   const onWriteResultsFileSubmit = (data: ScoresFormValues) => {
     setIsWritingFile(true);

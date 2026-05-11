@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -71,7 +72,7 @@ export async function recalculateAllDataClientSide(
           if (hS >= 0 && aS >= 0) finalPlayedMatches.push(finalMatch);
       });
 
-      // 2. Orphan Cleanup: Delete matches in Firestore that are not in the JSON file
+      // 2. Orphan Cleanup: Delete matches in Firestore that are not in the JSON file (Fixed Arsenal played stat)
       existingMatchesSnap.docs.forEach(d => {
           if (!jsonMatchIds.has(d.id)) {
               matchSyncBatch.delete(d.ref);
@@ -104,7 +105,7 @@ export async function recalculateAllDataClientSide(
       const sortedPlayed = [...finalPlayedMatches].sort((a,b) => new Date(a.matchDatePlay).getTime() - new Date(b.matchDatePlay).getTime());
       const latestAbsoluteWeek = sortedPlayed.length > 0 ? Math.max(...sortedPlayed.map(m => getCompetitionWeek(m.matchDatePlay))) : 0;
 
-      // Prepare Previous Season (Week 0) Ranks
+      // Prepare Previous Season (Week 0) Ranks from JSON
       const prevSeasonRankMap = new Map(prevSeasonData.map(s => [s.teamId, s.rank]));
 
       const cumulativeTStats: { [tId: string]: any } = {};

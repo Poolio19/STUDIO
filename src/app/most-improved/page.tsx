@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -80,17 +81,16 @@ export default function MostImprovedPage() {
   const isLoading = usersLoading || historiesLoading || matchesLoading || mimoMLoading || predictionsLoading;
 
   const currentWeek = useMemo(() => {
-    if (!matchesData) return 0;
+    if (!matchesData || matchesData.length === 0) return 0;
     const played = matchesData.filter(m => Number(m.homeScore) >= 0);
     return played.length > 0 ? Math.max(...played.map(m => getCompetitionWeek(m.matchDatePlay || m.matchDateOrig))) : 0;
   }, [matchesData]);
 
   const activeUserIds = useMemo(() => {
     if (!predictions) return new Set<string>();
-    return new Set(predictions.filter(p => p.rankings?.length === 20).map(p => p.userId || (p as any).id));
+    return new Set(predictions.filter(p => p.rankings && p.rankings.length === 20).map(p => p.userId || (p as any).id));
   }, [predictions]);
 
-  // Determine if we are in the middle of a month or at a boundary
   const transitionContext = useMemo(() => {
     if (!users || !userHistories || !activeUserIds.size) return null;
     
@@ -115,7 +115,6 @@ export default function MostImprovedPage() {
     return { period: rawPeriod, isFinal: false };
   }, [currentWeek, users, userHistories, activeUserIds]);
 
-  // Live Ladder Data for the current month
   const ladderData = useMemo(() => {
     if (!users || !userHistories || !transitionContext || !activeUserIds.size) return { list: [], topImp: 0, ruImp: 0, sharers: 0 };
 
@@ -153,9 +152,9 @@ export default function MostImprovedPage() {
     return { list, topImp, ruImp, sharers };
   }, [users, userHistories, transitionContext, currentWeek, activeUserIds]);
   
-  // Official awards + Auto-calculation fallback for the Hall of Fame
   const hallOfFameData = useMemo(() => {
-    const userMap = new Map(users?.map(u => [u.id, u]) || []);
+    if (!users) return [];
+    const userMap = new Map(users.map(u => [u.id, u]));
 
     return allAwardPeriods.map(period => {
         const isCurrentAwardPeriod = (transitionContext?.period?.id === period.id && !transitionContext?.isFinal);
@@ -163,7 +162,6 @@ export default function MostImprovedPage() {
         
         let winners: any[] = []; let runnersUp: any[] = [];
         
-        // 1. Try to find official award documents in Firestore
         const periodAwards = monthlyMimoMAwards?.filter(a => {
             const yearMatch = Number(a.year) === period.year;
             const monthMatch = a.month && period.month && a.month.toLowerCase().startsWith(period.month.toLowerCase().substring(0,3));
@@ -174,12 +172,12 @@ export default function MostImprovedPage() {
         if (periodAwards && periodAwards.length > 0) {
             const rawWinners = periodAwards.filter(a => a.type === 'winner').map(a => {
                 const u = userMap.get(a.userId);
-                return u ? { ...u, id: a.userId, name: u.name, avatar: u.avatar, improvement: Number(a.improvement ?? 0) } : null;
+                return u ? { ...u, id: a.userId, improvement: Number(a.improvement ?? 0) } : null;
             }).filter(u => !!u);
 
             const rawRunnersUp = periodAwards.filter(a => a.type === 'runner-up').map(a => {
                 const u = userMap.get(a.userId);
-                return u ? { ...u, id: a.userId, name: u.name, avatar: u.avatar, improvement: Number(a.improvement ?? 0) } : null;
+                return u ? { ...u, id: a.userId, improvement: Number(a.improvement ?? 0) } : null;
             }).filter(u => !!u);
 
             const winPrize = period.id === 'xmas' ? 10 : (10 / (rawWinners.length || 1));
@@ -187,8 +185,7 @@ export default function MostImprovedPage() {
             winners = rawWinners.map(w => ({ ...w, prize: winPrize }));
             runnersUp = rawRunnersUp.map(r => ({ ...r, prize: ruPrize }));
         } 
-        // 2. Fallback: Auto-calculate from player history
-        else if (isPast && userHistories && users) {
+        else if (isPast && userHistories) {
             const players = users.filter(u => !u.isPro && u.name && activeUserIds.has(u.id));
             const autoList: any[] = [];
             
@@ -196,8 +193,8 @@ export default function MostImprovedPage() {
                 const history = userHistories.find(h => h.userId === user.id);
                 if (history) {
                     const sData = history.weeklyScores.find(ws => Number(ws.week) === period.startWeek);
-                    const eData = history.weeklyScores.filter(ws => Number(ws.week) <= period.endWeek).reverse()[0];
-                    if (sData && eData) autoList.push({ ...user, id: user.id, improvement: Number(eData.score) - Number(startData?.score ?? 0) });
+                    const eData = history.weeklyScores.find(ws => Number(ws.week) === period.endWeek);
+                    if (sData && eData) autoList.push({ ...user, id: user.id, improvement: Number(eData.score) - Number(sData.score) });
                 }
             });
 
@@ -220,7 +217,7 @@ export default function MostImprovedPage() {
         
         const isFuture = !isPast && !isCurrentAwardPeriod && period.startWeek > currentWeek;
         
-        return { id: period.id, label: period.id === 'xmas' ? 'Xmas No. 1' : period.abbreviation, isCurrent: isCurrentAwardPeriod, isFuture, winners, runnersUp };
+        return { id: period.id, label: period.special || period.abbreviation, isCurrent: isCurrentAwardPeriod, isFuture, winners, runnersUp };
     });
   }, [users, monthlyMimoMAwards, currentWeek, transitionContext, userHistories, activeUserIds]);
 
@@ -231,7 +228,7 @@ export default function MostImprovedPage() {
       return {};
   };
 
-  if (isLoading && !users) return <div className="flex h-96 items-center justify-center text-muted-foreground"><Loader2 className="size-5 animate-spin mr-2" /> Loading MiMoM Data...</div>;
+  if (isLoading && !users) return <div className="flex h-96 items-center justify-center text-muted-foreground"><Loader2 className="size-5 animate-spin mr-2" /> Loading MiMoM...</div>;
 
   return (
     <div className="flex flex-col gap-8">
