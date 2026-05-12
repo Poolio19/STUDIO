@@ -152,79 +152,58 @@ export default function MostImprovedPage() {
         const isPast = period.endWeek <= currentWeek;
         const isXmasSlot = period.id === 'xmas';
         let winners: any[] = []; let runnersUp: any[] = [];
-        const periodAwards = monthlyMimoMAwards?.filter(a => {
-            const yearMatch = Number(a.year) === period.year;
-            const monthMatch = a.month && period.month && a.month.toLowerCase().startsWith(period.month.toLowerCase().substring(0,3));
-            const specialMatch = (a.special === 'Xmas No 1' || a.month?.toLowerCase() === 'xmas') && isXmasSlot;
-            return yearMatch && (monthMatch || specialMatch);
+
+        const players = users.filter(u => !u.isPro && u.name && activeUserIds.has(u.id));
+        const autoList: any[] = [];
+        players.forEach(user => {
+            const history = userHistories?.find(h => h.userId === user.id);
+            if (history) {
+                const sData = history.weeklyScores.find(ws => Number(ws.week) === period.startWeek);
+                const eData = history.weeklyScores.find(ws => Number(ws.week) === period.endWeek);
+                if (eData) {
+                    const val = isXmasSlot ? Number(eData.score) : (Number(eData.score) - Number(sData?.score ?? 0));
+                    autoList.push({ ...user, id: user.id, score: Number(eData.score), improvement: val, historyRank: eData.rank });
+                }
+            }
         });
 
-        if (periodAwards && periodAwards.length > 0) {
-            const rawWinners = periodAwards.filter(a => a.type === 'winner').map(a => {
-                const u = userMap.get(a.userId);
-                return u ? { ...u, id: a.userId, improvement: Number(a.improvement ?? 0) } : null;
-            }).filter(u => !!u);
-            const rawRunnersUp = periodAwards.filter(a => a.type === 'runner-up').map(a => {
-                const u = userMap.get(a.userId);
-                return u ? { ...u, id: a.userId, improvement: Number(a.improvement ?? 0) } : null;
-            }).filter(u => !!u);
+        if (isXmasSlot && autoList.length > 0) {
+            const maxScore = Math.max(...autoList.map(u => u.score));
+            const topTier = autoList.filter(u => u.score === maxScore);
+            
+            // XMAS tiered logic: 1:10, 2:5, 3:5, 4:2.5
+            let prize = 0;
+            const count = topTier.length;
+            if (count === 1) prize = 10;
+            else if (count === 2) prize = 5;
+            else if (count === 3) prize = 5;
+            else if (count >= 4) prize = 10 / count;
+
+            winners = topTier.map(w => ({ ...w, prize }));
+        } 
+        else if (isPast && autoList.length > 0) {
+            autoList.sort((a, b) => b.improvement - a.improvement || b.score - a.score || a.name.localeCompare(b.name));
+            const maxVal = autoList[0].improvement;
+            const topTier = autoList.filter(u => u.improvement === maxVal);
             
             let winPrize = 0;
             let ruPrize = 0;
-            if (isXmasSlot) {
-                winPrize = 10 / (rawWinners.length || 1);
+            
+            // Standard MiMoM: Joint winners share combined £15 pool
+            if (topTier.length > 1) {
+                winPrize = 15 / topTier.length;
             } else {
-                if (rawWinners.length > 1) {
-                    winPrize = 15 / rawWinners.length;
-                } else if (rawWinners.length === 1) {
-                    winPrize = 10;
-                    ruPrize = rawRunnersUp.length > 0 ? (5 / rawRunnersUp.length) : 0;
+                winPrize = 10;
+                const secondVal = autoList.find(u => u.improvement < maxVal)?.improvement;
+                if (secondVal !== undefined) {
+                    const secondTier = autoList.filter(u => u.improvement === secondVal);
+                    ruPrize = 5 / secondTier.length;
+                    runnersUp = secondTier.map(r => ({ ...r, prize: ruPrize }));
                 }
             }
-            winners = rawWinners.map(w => ({ ...w, prize: winPrize }));
-            runnersUp = rawRunnersUp.map(r => ({ ...r, prize: ruPrize }));
-        } 
-        else if (isPast && userHistories) {
-            const players = users.filter(u => !u.isPro && u.name && activeUserIds.has(u.id));
-            const autoList: any[] = [];
-            players.forEach(user => {
-                const history = userHistories.find(h => h.userId === user.id);
-                if (history) {
-                    const sData = history.weeklyScores.find(ws => Number(ws.week) === period.startWeek);
-                    const eData = history.weeklyScores.find(ws => Number(ws.week) === period.endWeek);
-                    if (eData) {
-                        const val = isXmasSlot ? Number(eData.score) : (Number(eData.score) - Number(sData?.score ?? 0));
-                        autoList.push({ ...user, id: user.id, score: Number(eData.score), improvement: val, historyRank: eData.rank });
-                    }
-                }
-            });
-            if (autoList.length > 0) {
-                if (isXmasSlot) {
-                    const maxScoreAtXmas = Math.max(...autoList.map(u => u.score));
-                    const topTier = autoList.filter(u => u.score === maxScoreAtXmas);
-                    winners = topTier.map(w => ({ ...w, prize: 10 / topTier.length }));
-                } else {
-                    autoList.sort((a, b) => b.improvement - a.improvement || b.score - a.score || a.name.localeCompare(b.name));
-                    const maxVal = autoList[0].improvement;
-                    const topTier = autoList.filter(u => u.improvement === maxVal);
-                    
-                    let winPrize = 0;
-                    let ruPrize = 0;
-                    if (topTier.length > 1) {
-                        winPrize = 15 / topTier.length;
-                    } else {
-                        winPrize = 10;
-                        const secondVal = autoList.find(u => u.improvement < maxVal)?.improvement;
-                        if (secondVal !== undefined) {
-                            const secondTier = autoList.filter(u => u.improvement === secondVal);
-                            ruPrize = 5 / secondTier.length;
-                            runnersUp = secondTier.map(r => ({ ...r, prize: ruPrize }));
-                        }
-                    }
-                    winners = topTier.map(w => ({ ...w, prize: winPrize }));
-                }
-            }
+            winners = topTier.map(w => ({ ...w, prize: winPrize }));
         }
+
         return { id: period.id, label: period.special || period.month || period.abbreviation, isCurrent: isCurrentAwardPeriod, isFuture: !isPast && !isCurrentAwardPeriod && period.startWeek > currentWeek, winners, runnersUp };
     });
   }, [users, monthlyMimoMAwards, currentWeek, transitionContext, userHistories, activeUserIds]);
@@ -330,4 +309,3 @@ export default function MostImprovedPage() {
     </div>
   );
 }
-

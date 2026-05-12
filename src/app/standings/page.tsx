@@ -68,7 +68,7 @@ export default function StandingsPage() {
             const team = teamMap.get(standing.teamId);
             if (!team) return null;
             return { ...standing, ...team, recentResults: recentMap.get(team.id) || Array(6).fill('NG') };
-        }).filter((t): t is any => !!t).sort((a,b) => a.rank - b.rank);
+        }).filter((t): t is any => !!t).sort((a,b) => Number(a.rank) - Number(b.rank));
 
         const finalChartData = (() => {
             const data = [];
@@ -76,7 +76,7 @@ export default function StandingsPage() {
                 const entry: any = { week: w };
                 teamsData.forEach(t => {
                     const ws = weeklyTeamStandings.find(s => Number(s.week) === w && s.teamId === t.id);
-                    if (ws) entry[t.name] = ws.rank;
+                    if (ws) entry[t.name] = Number(ws.rank);
                 });
                 data.push(entry);
             }
@@ -147,14 +147,14 @@ export default function StandingsPage() {
                         </div>
                       </TableCell>
                       <TableCell><span className="font-medium">{team.name}</span></TableCell>
-                      <TableCell className="text-center">{team.gamesPlayed}</TableCell>
-                      <TableCell className="text-center">{team.wins}</TableCell>
-                      <TableCell className="text-center">{team.draws}</TableCell>
-                      <TableCell className="text-center">{team.losses}</TableCell>
-                      <TableCell className="hidden md:table-cell text-center">{team.goalsFor}</TableCell>
-                      <TableCell className="hidden md:table-cell text-center">{team.goalsAgainst}</TableCell>
-                      <TableCell className="text-center">{team.goalDifference > 0 ? '+' : ''}{team.goalDifference}</TableCell>
-                      <TableCell className="text-center font-bold">{team.points}</TableCell>
+                      <TableCell className="text-center">{Number(team.gamesPlayed)}</TableCell>
+                      <TableCell className="text-center">{Number(team.wins)}</TableCell>
+                      <TableCell className="text-center">{Number(team.draws)}</TableCell>
+                      <TableCell className="text-center">{Number(team.losses)}</TableCell>
+                      <TableCell className="hidden md:table-cell text-center">{Number(team.goalsFor)}</TableCell>
+                      <TableCell className="hidden md:table-cell text-center">{Number(team.goalsAgainst)}</TableCell>
+                      <TableCell className="text-center">{Number(team.goalDifference) > 0 ? '+' : ''}{Number(team.goalDifference)}</TableCell>
+                      <TableCell className="text-center font-bold">{Number(team.points)}</TableCell>
                       {team.recentResults.map((res: string, i: number) => (
                       <TableCell key={i} className={cn("text-center font-black p-0 w-12", i === 5 && 'rounded-r-md')}>
                           <div className={cn("flex flex-col items-center justify-center h-10 w-full text-[10px]", getResultColor(res), i === 5 && 'rounded-r-md')}>

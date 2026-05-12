@@ -51,6 +51,7 @@ export async function recalculateAllDataClientSide(
           let hS = Number(localMatch.homeScore ?? -1);
           let aS = Number(localMatch.awayScore ?? -1);
 
+          // If JSON says unplayed (-1) but DB has a score, respect the manual entry
           if (hS === -1 && dbMatch && Number(dbMatch.homeScore) >= 0) {
               hS = Number(dbMatch.homeScore);
               aS = Number(dbMatch.awayScore);
@@ -67,7 +68,7 @@ export async function recalculateAllDataClientSide(
           if (hS >= 0 && aS >= 0) finalPlayedMatches.push(finalMatch);
       });
 
-      // 2. Delete Orphan Matches
+      // 2. Delete Orphan Matches (Master Sync Blueprint enforcement)
       existingMatchesSnap.docs.forEach(d => {
           if (!jsonMatchIds.has(d.id)) {
               matchSyncBatch.delete(d.ref);
@@ -154,7 +155,7 @@ export async function recalculateAllDataClientSide(
               });
 
               const tRanked = Object.entries(cumulativeTStats).map(([teamId, s]) => ({ teamId, ...s, name: teamMap.get(teamId)?.name || '' }))
-                  .sort((a,b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.name.localeCompare(b.name));
+                  .sort((a,b) => Number(b.points) - Number(a.points) || Number(b.goalDifference) - Number(a.goalDifference) || Number(b.goalsFor) - Number(a.goalsFor) || a.name.localeCompare(b.name));
               
               weekRanks = new Map(tRanked.map((s, i) => [s.teamId, i + 1]));
               tRanked.forEach((s, idx) => addOp(b => b.set(doc(firestore, 'weeklyTeamStandings', `wk${w}-${s.teamId}`), { week: Number(w), teamId: s.teamId, rank: idx + 1 })));
@@ -202,7 +203,7 @@ export async function recalculateAllDataClientSide(
           });
           
           const uRanked = activeUsersForRankings.map(u => ({...u, score: uScores[u.id]}))
-              .sort((a, b) => b.score - a.score || (a.isPro ? -1 : 1) || (a.name || '').localeCompare(b.name || ''));
+              .sort((a, b) => Number(b.score) - Number(a.score) || (a.isPro ? -1 : 1) || (a.name || '').localeCompare(b.name || ''));
           
           uRanked.forEach((u, idx) => {
               if (allHistories[u.id]) {
@@ -220,8 +221,8 @@ export async function recalculateAllDataClientSide(
           const latest = h?.weeklyScores.find(s => Number(s.week) === latestAbsoluteWeek) || { score: 0, rank: 0 };
           const prev = h?.weeklyScores.find(s => Number(s.week) === latestAbsoluteWeek - 1) || { score: 0, rank: 0 };
           addOp(b => b.set(doc(firestore, 'users', u.id), {
-              score: Number(latest.score), rank: latest.rank, previousScore: Number(prev.score), previousRank: prev.rank,
-              scoreChange: Number(latest.score - prev.score), rankChange: (prev.rank > 0 && latest.rank > 0) ? prev.rank - latest.rank : 0
+              score: Number(latest.score), rank: Number(latest.rank), previousScore: Number(prev.score), previousRank: Number(prev.rank),
+              scoreChange: Number(latest.score - prev.score), rankChange: (prev.rank > 0 && latest.rank > 0) ? Number(prev.rank - latest.rank) : 0
           }, { merge: true }));
           if (h) addOp(b => b.set(doc(firestore, 'userHistories', u.id), h));
       });
@@ -230,4 +231,3 @@ export async function recalculateAllDataClientSide(
       progressCallback("Recalculation Complete.");
     } catch (e: any) { throw e; }
 }
-
