@@ -28,8 +28,8 @@ import { ArrowUp, ArrowDown, Minus, Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
-import { allAwardPeriods, getCompetitionWeek } from '@/lib/award-periods';
+import { collection } from 'firebase/firestore';
+import { allAwardPeriods } from '@/lib/award-periods';
 
 const getRankChangeIcon = (change: number) => {
   if (change > 0) return ArrowUp;
@@ -43,7 +43,8 @@ const getRankChangeColour = (change: number) => {
     return 'text-gray-500';
 }
 
-const formatImprovementText = (val: number) => {
+const formatImprovementText = (val: number, isXmas?: boolean) => {
+    if (isXmas) return `${val} PTS`;
     const prefix = val >= 0 ? '+' : '';
     return `${prefix}${val}PTS`;
 }
@@ -93,41 +94,33 @@ export default function MostImprovedPage() {
 
   const transitionContext = useMemo(() => {
     if (!users || !userHistories || !activeUserIds.size) return null;
-    
     const rawPeriod = allAwardPeriods.find(p => currentWeek >= p.startWeek && currentWeek < p.endWeek) || allAwardPeriods[allAwardPeriods.length - 1];
-    
     const hasProgress = users.some(u => {
         if (!activeUserIds.has(u.id)) return false;
         const h = userHistories.find(hist => hist.userId === u.id);
         if (!h) return false;
-        const currentS = h.weeklyScores.find(ws => Number(ws.week) === currentWeek)?.score ?? 0;
+        const curS = h.weeklyScores.find(ws => Number(ws.week) === currentWeek)?.score ?? 0;
         const startS = h.weeklyScores.find(ws => Number(ws.week) === rawPeriod.startWeek)?.score ?? 0;
-        return currentS > startS;
+        return curS > startS;
     });
-
     const isTransition = !hasProgress && currentWeek >= rawPeriod.startWeek && currentWeek > 0;
-    
     if (isTransition) {
         const prevPeriod = allAwardPeriods.filter(p => p.endWeek <= currentWeek && p.id !== 'xmas').sort((a,b) => b.endWeek - a.endWeek)[0];
         if (prevPeriod) return { period: prevPeriod, isFinal: true };
     }
-    
     return { period: rawPeriod, isFinal: false };
   }, [currentWeek, users, userHistories, activeUserIds]);
 
   const ladderData = useMemo(() => {
     if (!users || !userHistories || !transitionContext || !activeUserIds.size) return { list: [], topImp: 0, ruImp: 0, sharers: 0 };
-
     const { period, isFinal } = transitionContext;
     const results: (User & { improvement: number, rankChangeInMonth: number, displayRank: number })[] = [];
     const players = users.filter(u => !u.isPro && u.name && activeUserIds.has(u.id));
-    
     players.forEach(user => {
         const history = userHistories.find(h => h.userId === user.id);
         if (history) {
             const startData = history.weeklyScores.find(ws => Number(ws.week) === period.startWeek);
             const endData = history.weeklyScores.filter(ws => Number(ws.week) <= (isFinal ? period.endWeek : currentWeek)).reverse()[0];
-
             if (startData && endData) {
                 const improvement = Number(endData.score) - Number(startData.score);
                 const rankChangeInMonth = (startData.rank > 0 && endData.rank > 0) ? startData.rank - endData.rank : 0;
@@ -135,52 +128,41 @@ export default function MostImprovedPage() {
             }
         }
     });
-
     results.sort((a, b) => b.improvement - a.improvement || b.score - a.score);
-    
     let r = 0; let lastI = Infinity;
     const list = results.map((u, i) => {
       if (u.improvement < lastI) r = i + 1;
       lastI = u.improvement;
       return { ...u, displayRank: r };
     });
-
     const imps = [...new Set(list.map(u => u.improvement))].sort((a, b) => b - a);
-    const topImp = imps.length > 0 ? imps[0] : 0;
-    const ruImp = imps.length > 1 ? imps[1] : 0;
-    const sharers = list.filter(u => u.improvement === topImp).length;
-    return { list, topImp, ruImp, sharers };
+    return { list, topImp: imps[0] || 0, ruImp: imps[1] || 0, sharers: list.filter(u => u.improvement === imps[0]).length };
   }, [users, userHistories, transitionContext, currentWeek, activeUserIds]);
   
   const hallOfFameData = useMemo(() => {
     if (!users) return [];
     const userMap = new Map(users.map(u => [u.id, u]));
-
     return allAwardPeriods.map(period => {
         const isCurrentAwardPeriod = (transitionContext?.period?.id === period.id && !transitionContext?.isFinal);
         const isPast = period.endWeek <= currentWeek;
-        
+        const isXmasSlot = period.id === 'xmas';
         let winners: any[] = []; let runnersUp: any[] = [];
-        
         const periodAwards = monthlyMimoMAwards?.filter(a => {
             const yearMatch = Number(a.year) === period.year;
             const monthMatch = a.month && period.month && a.month.toLowerCase().startsWith(period.month.toLowerCase().substring(0,3));
-            const specialMatch = (a.special === 'Xmas No 1' || a.month?.toLowerCase() === 'xmas') && period.id === 'xmas';
+            const specialMatch = (a.special === 'Xmas No 1' || a.month?.toLowerCase() === 'xmas') && isXmasSlot;
             return yearMatch && (monthMatch || specialMatch);
         });
-
         if (periodAwards && periodAwards.length > 0) {
             const rawWinners = periodAwards.filter(a => a.type === 'winner').map(a => {
                 const u = userMap.get(a.userId);
                 return u ? { ...u, id: a.userId, improvement: Number(a.improvement ?? 0) } : null;
             }).filter(u => !!u);
-
             const rawRunnersUp = periodAwards.filter(a => a.type === 'runner-up').map(a => {
                 const u = userMap.get(a.userId);
                 return u ? { ...u, id: a.userId, improvement: Number(a.improvement ?? 0) } : null;
             }).filter(u => !!u);
-
-            const winPrize = period.id === 'xmas' ? 10 : (10 / (rawWinners.length || 1));
+            const winPrize = isXmasSlot ? 10 : (10 / (rawWinners.length || 1));
             const ruPrize = (rawWinners.length === 1 && rawRunnersUp.length > 0) ? (5 / rawRunnersUp.length) : 0;
             winners = rawWinners.map(w => ({ ...w, prize: winPrize }));
             runnersUp = rawRunnersUp.map(r => ({ ...r, prize: ruPrize }));
@@ -188,36 +170,33 @@ export default function MostImprovedPage() {
         else if (isPast && userHistories) {
             const players = users.filter(u => !u.isPro && u.name && activeUserIds.has(u.id));
             const autoList: any[] = [];
-            
             players.forEach(user => {
                 const history = userHistories.find(h => h.userId === user.id);
                 if (history) {
                     const sData = history.weeklyScores.find(ws => Number(ws.week) === period.startWeek);
                     const eData = history.weeklyScores.find(ws => Number(ws.week) === period.endWeek);
-                    if (sData && eData) autoList.push({ ...user, id: user.id, improvement: Number(eData.score) - Number(sData.score) });
+                    if (eData) {
+                        const val = isXmasSlot ? Number(eData.score) : (Number(eData.score) - Number(sData?.score ?? 0));
+                        autoList.push({ ...user, id: user.id, improvement: val });
+                    }
                 }
             });
-
             if (autoList.length > 0) {
                 autoList.sort((a, b) => b.improvement - a.improvement || b.score - a.score);
-                const maxImp = autoList[0].improvement;
-                const topTier = autoList.filter(u => u.improvement === maxImp);
-                const winPrize = period.id === 'xmas' ? 10 : (10 / topTier.length);
+                const maxVal = autoList[0].improvement;
+                const topTier = autoList.filter(u => u.improvement === maxVal);
+                const winPrize = isXmasSlot ? 10 : (10 / topTier.length);
                 winners = topTier.map(w => ({ ...w, prize: winPrize }));
-
-                if (topTier.length === 1) {
-                    const secondImp = autoList.find(u => u.improvement < maxImp)?.improvement;
-                    if (secondImp !== undefined) {
-                        const secondTier = autoList.filter(u => u.improvement === secondImp);
+                if (topTier.length === 1 && !isXmasSlot) {
+                    const secondVal = autoList.find(u => u.improvement < maxVal)?.improvement;
+                    if (secondVal !== undefined) {
+                        const secondTier = autoList.filter(u => u.improvement === secondVal);
                         runnersUp = secondTier.map(r => ({ ...r, prize: 5 / secondTier.length }));
                     }
                 }
             }
         }
-        
-        const isFuture = !isPast && !isCurrentAwardPeriod && period.startWeek > currentWeek;
-        
-        return { id: period.id, label: period.special || period.month || period.abbreviation, isCurrent: isCurrentAwardPeriod, isFuture, winners, runnersUp };
+        return { id: period.id, label: period.special || period.month || period.abbreviation, isCurrent: isCurrentAwardPeriod, isFuture: !isPast && !isCurrentAwardPeriod && period.startWeek > currentWeek, winners, runnersUp };
     });
   }, [users, monthlyMimoMAwards, currentWeek, transitionContext, userHistories, activeUserIds]);
 
@@ -282,19 +261,20 @@ export default function MostImprovedPage() {
                     <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-6">
                         {hallOfFameData.map((award) => {
                             if (award.isFuture) return null;
+                            const isXmas = award.id === 'xmas';
                             return (
                             <div key={award.id} className={cn("p-2 border rounded-lg flex flex-col items-center min-h-[240px]", award.isCurrent && "opacity-70")}>
                                 <p className="font-black mb-3 text-[11px] border-b w-full pb-1 uppercase tracking-widest text-muted-foreground/80 text-center">{award.label}</p>
                                 <div className="w-full space-y-2">
                                     {award.winners.map(winner => (
-                                        <div key={winner.id} className={cn("rounded-none flex items-stretch h-[100px] overflow-hidden shadow-sm border", award.id === 'xmas' ? "bg-emerald-900 border-red-600 text-white border-2" : "bg-yellow-50 border-yellow-500")}>
-                                            {award.id === 'xmas' && <Holly />}
+                                        <div key={winner.id} className={cn("rounded-none flex items-stretch h-[100px] overflow-hidden shadow-sm border", isXmas ? "bg-emerald-900 border-red-600 text-white border-2" : "bg-yellow-50 border-yellow-500")}>
+                                            {isXmas && <Holly />}
                                             <Avatar className="w-1/4 h-full rounded-none shrink-0 border-r bg-card"><AvatarImage src={getAvatarUrl(winner.avatar)} className="object-cover h-full rounded-none" /><AvatarFallback className="rounded-none">{winner.name?.charAt(0)}</AvatarFallback></Avatar>
                                             <div className="flex-1 flex flex-col justify-center px-2 text-center overflow-hidden">
-                                                <p className={cn("text-[13px] font-bold tracking-tight", award.id === 'xmas' ? "text-white" : (award.winners.length > 1 ? 'JoMiMoM' : 'MiMoM'))}>{award.id === 'xmas' ? 'Xmas No 1' : (award.winners.length > 1 ? 'JoMiMoM' : 'MiMoM')}</p>
+                                                <p className={cn("text-[13px] font-bold tracking-tight", isXmas ? "text-white" : (award.winners.length > 1 ? 'JoMiMoM' : 'MiMoM'))}>{isXmas ? 'Xmas No 1' : (award.winners.length > 1 ? 'JoMiMoM' : 'MiMoM')}</p>
                                                 <p className="text-[12px] font-bold truncate leading-tight my-0.5">{winner.name}</p>
-                                                <p className={cn("text-[11px] font-black uppercase", award.id === 'xmas' ? "text-yellow-400" : "text-yellow-950/80")}>{formatImprovementText(winner.improvement)}</p>
-                                                <p className={cn("text-[10px] font-medium", award.id === 'xmas' ? "text-white/80" : "text-yellow-950/60")}>{formatPrizeMoney(winner.prize || 0)}</p>
+                                                <p className={cn("text-[11px] font-black uppercase", isXmas ? "text-yellow-400" : "text-yellow-950/80")}>{formatImprovementText(winner.improvement, isXmas)}</p>
+                                                <p className={cn("text-[10px] font-medium", isXmas ? "text-white/80" : "text-yellow-950/60")}>{formatPrizeMoney(winner.prize || 0)}</p>
                                             </div>
                                         </div>
                                     ))}

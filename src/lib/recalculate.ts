@@ -10,12 +10,12 @@ import {
   type WriteBatch,
 } from 'firebase/firestore';
 import type { Team, Prediction, User as UserProfile, UserHistory, Match } from '@/lib/types';
-import { getCompetitionWeek } from './award-periods';
 import localFixtures from './past-fixtures.json';
 import prevSeasonData from './previous-season-standings-24-25.json';
 
 /**
  * The Master Recalculation Engine
+ * Overhauled to generate full weekly history and strictly respect JSON master file.
  */
 export async function recalculateAllDataClientSide(
   firestore: Firestore,
@@ -45,11 +45,13 @@ export async function recalculateAllDataClientSide(
       const finalPlayedMatches: any[] = [];
       const jsonMatchIds = new Set(localFixtures.map(m => m.id));
 
+      // 1. Sync and Identify played matches
       localFixtures.forEach((localMatch: any) => {
           const dbMatch: any = dbMatchesMap.get(localMatch.id);
           let hS = Number(localMatch.homeScore ?? -1);
           let aS = Number(localMatch.awayScore ?? -1);
 
+          // Priority: If JSON says unplayed (-1) but DB has a score, KEEP the score
           if (hS === -1 && dbMatch && Number(dbMatch.homeScore) >= 0) {
               hS = Number(dbMatch.homeScore);
               aS = Number(dbMatch.awayScore);
@@ -66,6 +68,7 @@ export async function recalculateAllDataClientSide(
           if (hS >= 0 && aS >= 0) finalPlayedMatches.push(finalMatch);
       });
 
+      // 2. Delete Orphan Matches (Fixes "extra game" bugs like Arsenal 33)
       existingMatchesSnap.docs.forEach(d => {
           if (!jsonMatchIds.has(d.id)) {
               matchSyncBatch.delete(d.ref);
@@ -73,6 +76,7 @@ export async function recalculateAllDataClientSide(
       });
       await matchSyncBatch.commit();
 
+      progressCallback('Clearing derived tables...');
       const derivedCollections = ['standings', 'playerTeamScores', 'teamRecentResults', 'weeklyTeamStandings', 'userHistories'];
       for (const colName of derivedCollections) {
           const snap = await getDocs(collection(firestore, colName));
@@ -103,6 +107,7 @@ export async function recalculateAllDataClientSide(
 
       const weekResultsByTeamAndWeek = new Map<string, string>();
 
+      // 3. Full Week-by-Week Engine
       for (let w = 0; w <= latestAbsoluteWeek; w++) {
           let weekRanks = new Map<string, number>();
 
