@@ -1,10 +1,10 @@
 
 export const awardPeriods = [
-    { id: 'aug', month: 'August', year: 2025, startWeek: 0, endWeek: 0, abbreviation: 'AUG' },
-    { id: 'sep', month: 'September', year: 2025, startWeek: 0, endWeek: 4, abbreviation: 'SEPT' },
-    { id: 'oct', month: 'October', year: 2025, startWeek: 4, endWeek: 7, abbreviation: 'OCT' },
-    { id: 'nov', month: 'November', year: 2025, startWeek: 7, endWeek: 10, abbreviation: 'NOV' },
-    { id: 'dec', month: 'December', year: 2025, startWeek: 10, endWeek: 14, abbreviation: 'DEC' },
+    { id: 'aug', month: 'August', year: 2025, startWeek: 0, endWeek: 4, abbreviation: 'AUG' },
+    { id: 'sep', month: 'September', year: 2025, startWeek: 4, endWeek: 7, abbreviation: 'SEPT' },
+    { id: 'oct', month: 'October', year: 2025, startWeek: 7, endWeek: 10, abbreviation: 'OCT' },
+    { id: 'nov', month: 'November', year: 2025, startWeek: 10, endWeek: 14, abbreviation: 'NOV' },
+    { id: 'dec', month: 'December', year: 2025, startWeek: 14, endWeek: 19, abbreviation: 'DEC' },
     { id: 'jan', month: 'January', year: 2026, startWeek: 19, endWeek: 24, abbreviation: 'JAN' },
     { id: 'feb', month: 'February', year: 2026, startWeek: 24, endWeek: 28, abbreviation: 'FEB' },
     { id: 'mar', month: 'March', year: 2026, startWeek: 28, endWeek: 32, abbreviation: 'MAR' },
@@ -18,12 +18,12 @@ export const specialAwards = [
 
 // Chronological sort for the Hall of Fame display
 export const allAwardPeriods = [
-    awardPeriods[0], // Aug (Baseline)
-    awardPeriods[1], // Sep (W0-W4)
-    awardPeriods[2], // Oct (W4-W7)
-    awardPeriods[3], // Nov (W7-W10)
-    specialAwards[0], // Xmas (Overall leader at W17)
-    awardPeriods[4], // Dec (W10-W14)
+    awardPeriods[0], // Aug (W0-W4)
+    awardPeriods[1], // Sep (W4-W7)
+    awardPeriods[2], // Oct (W7-W10)
+    awardPeriods[3], // Nov (W10-W14)
+    specialAwards[0], // Xmas (Rank 1 at W17)
+    awardPeriods[4], // Dec (W14-W19)
     awardPeriods[5], // Jan (W19-W24)
     awardPeriods[6], // Feb (W24-W28)
     awardPeriods[7], // Mar (W28-W32)
