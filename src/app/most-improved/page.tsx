@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -50,6 +51,7 @@ const formatImprovementText = (val: number, isXmas?: boolean) => {
 
 const formatPrizeMoney = (val: number) => {
     if (val <= 0) return '£0.00';
+    if (val % 1 === 0) return `£${val}.00`;
     return `£${val.toFixed(2)}`;
 }
 
@@ -167,8 +169,15 @@ export default function MostImprovedPage() {
                 return u ? { ...u, id: a.userId, improvement: Number(a.improvement ?? 0) } : null;
             }).filter(u => !!u);
             
-            const winPrize = 10 / (rawWinners.length || 1);
-            const ruPrize = (rawWinners.length === 1 && rawRunnersUp.length > 0) ? (5 / rawRunnersUp.length) : 0;
+            // PRIZE LOGIC OVERHAUL: Joint winners split the combined pool (£15)
+            let winPrize = 0;
+            let ruPrize = 0;
+            if (rawWinners.length > 1) {
+                winPrize = 15 / rawWinners.length;
+            } else if (rawWinners.length === 1) {
+                winPrize = 10;
+                ruPrize = rawRunnersUp.length > 0 ? (5 / rawRunnersUp.length) : 0;
+            }
             winners = rawWinners.map(w => ({ ...w, prize: winPrize }));
             runnersUp = rawRunnersUp.map(r => ({ ...r, prize: ruPrize }));
         } 
@@ -188,23 +197,29 @@ export default function MostImprovedPage() {
             });
             if (autoList.length > 0) {
                 if (isXmasSlot) {
-                    // Christmas No 1 is strictly the person at Rank 1 (Ordinal)
+                    // Christmas No 1 logic: Strictly identify Rank 1 (Ordinal)
                     const topTier = autoList.filter(u => u.historyRank === 1);
-                    const winPrize = 10 / topTier.length;
-                    winners = topTier.map(w => ({ ...w, prize: winPrize }));
+                    winners = topTier.map(w => ({ ...w, prize: 10 / topTier.length }));
                 } else {
                     autoList.sort((a, b) => b.improvement - a.improvement || b.score - a.score || a.name.localeCompare(b.name));
                     const maxVal = autoList[0].improvement;
                     const topTier = autoList.filter(u => u.improvement === maxVal);
-                    const winPrize = 10 / topTier.length;
-                    winners = topTier.map(w => ({ ...w, prize: winPrize }));
-                    if (topTier.length === 1) {
+                    
+                    // COMBINED POOL LOGIC (£15 shared if ties)
+                    let winPrize = 0;
+                    let ruPrize = 0;
+                    if (topTier.length > 1) {
+                        winPrize = 15 / topTier.length;
+                    } else {
+                        winPrize = 10;
                         const secondVal = autoList.find(u => u.improvement < maxVal)?.improvement;
                         if (secondVal !== undefined) {
                             const secondTier = autoList.filter(u => u.improvement === secondVal);
-                            runnersUp = secondTier.map(r => ({ ...r, prize: 5 / secondTier.length }));
+                            ruPrize = 5 / secondTier.length;
+                            runnersUp = secondTier.map(r => ({ ...r, prize: ruPrize }));
                         }
                     }
+                    winners = topTier.map(w => ({ ...w, prize: winPrize }));
                 }
             }
         }

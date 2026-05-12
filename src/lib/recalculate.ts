@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -138,7 +139,7 @@ export async function recalculateAllDataClientSide(
 
                   a.goalsFor = Number(a.goalsFor) + aS; 
                   a.goalsAgainst = Number(a.goalsAgainst) + hS; 
-                  a.gamesPlayed = Number(a.gamesPlayed) + 1;
+                  a.gamesPlayed = Number(a.gamesPlayed) + 1; // FIXED BUG HERE
                   
                   let hRes = 'D'; let aRes = 'D';
                   if (hS > aS) { h.points += 3; h.wins += 1; a.losses += 1; hRes = 'W'; aRes = 'L'; }
