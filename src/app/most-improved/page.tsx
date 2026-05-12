@@ -114,21 +114,25 @@ export default function MostImprovedPage() {
   const ladderData = useMemo(() => {
     if (!users || !userHistories || !transitionContext || !activeUserIds.size) return { list: [], topImp: 0, ruImp: 0, sharers: 0 };
     const { period, isFinal } = transitionContext;
+    const isXmasSlot = period.id === 'xmas';
     const results: (User & { improvement: number, rankChangeInMonth: number, displayRank: number })[] = [];
     const players = users.filter(u => !u.isPro && u.name && activeUserIds.has(u.id));
+
     players.forEach(user => {
         const history = userHistories.find(h => h.userId === user.id);
         if (history) {
             const startData = history.weeklyScores.find(ws => Number(ws.week) === period.startWeek);
             const endData = history.weeklyScores.filter(ws => Number(ws.week) <= (isFinal ? period.endWeek : currentWeek)).reverse()[0];
             if (startData && endData) {
-                const improvement = Number(endData.score) - Number(startData.score);
+                const improvement = isXmasSlot ? Number(endData.score) : (Number(endData.score) - Number(startData.score));
                 const rankChangeInMonth = (startData.rank > 0 && endData.rank > 0) ? startData.rank - endData.rank : 0;
                 results.push({ ...user, improvement, rankChangeInMonth, displayRank: 0 });
             }
         }
     });
-    results.sort((a, b) => b.improvement - a.improvement || b.score - a.score);
+
+    results.sort((a, b) => b.improvement - a.improvement || b.score - a.score || a.name.localeCompare(b.name));
+    
     let r = 0; let lastI = Infinity;
     const list = results.map((u, i) => {
       if (u.improvement < lastI) r = i + 1;
@@ -153,6 +157,7 @@ export default function MostImprovedPage() {
             const specialMatch = (a.special === 'Xmas No 1' || a.month?.toLowerCase() === 'xmas') && isXmasSlot;
             return yearMatch && (monthMatch || specialMatch);
         });
+
         if (periodAwards && periodAwards.length > 0) {
             const rawWinners = periodAwards.filter(a => a.type === 'winner').map(a => {
                 const u = userMap.get(a.userId);
@@ -162,7 +167,8 @@ export default function MostImprovedPage() {
                 const u = userMap.get(a.userId);
                 return u ? { ...u, id: a.userId, improvement: Number(a.improvement ?? 0) } : null;
             }).filter(u => !!u);
-            const winPrize = isXmasSlot ? 10 : (10 / (rawWinners.length || 1));
+            
+            const winPrize = 10 / (rawWinners.length || 1);
             const ruPrize = (rawWinners.length === 1 && rawRunnersUp.length > 0) ? (5 / rawRunnersUp.length) : 0;
             winners = rawWinners.map(w => ({ ...w, prize: winPrize }));
             runnersUp = rawRunnersUp.map(r => ({ ...r, prize: ruPrize }));
@@ -182,10 +188,11 @@ export default function MostImprovedPage() {
                 }
             });
             if (autoList.length > 0) {
-                autoList.sort((a, b) => b.improvement - a.improvement || b.score - a.score);
+                // Strict sorting for Xmas sole leader where possible
+                autoList.sort((a, b) => b.improvement - a.improvement || b.score - a.score || a.name.localeCompare(b.name));
                 const maxVal = autoList[0].improvement;
                 const topTier = autoList.filter(u => u.improvement === maxVal);
-                const winPrize = isXmasSlot ? 10 : (10 / topTier.length);
+                const winPrize = 10 / topTier.length;
                 winners = topTier.map(w => ({ ...w, prize: winPrize }));
                 if (topTier.length === 1 && !isXmasSlot) {
                     const secondVal = autoList.find(u => u.improvement < maxVal)?.improvement;
@@ -224,13 +231,14 @@ export default function MostImprovedPage() {
                                 <TableRow>
                                     <TableHead className="w-[50px] text-center">Rank</TableHead>
                                     <TableHead>Player</TableHead>
-                                    <TableHead className="text-center">PTS Change</TableHead>
+                                    <TableHead className="text-center">{transitionContext?.period.id === 'xmas' ? 'Total Pts' : 'PTS Change'}</TableHead>
                                     <TableHead className="text-center">Pos Change</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                             {ladderData.list.length > 0 ? ladderData.list.map((user) => {
                                 const Icon = getRankChangeIcon(user.rankChangeInMonth);
+                                const isXmas = transitionContext?.period.id === 'xmas';
                                 return (
                                     <TableRow key={user.id} style={getWinnerRowStyle(user.displayRank, user.improvement)} className="transition-colors hover:brightness-95 border-b">
                                         <TableCell className="p-2 font-black text-center">{user.displayRank}</TableCell>
@@ -240,7 +248,7 @@ export default function MostImprovedPage() {
                                                 <span className="font-bold truncate">{user.name}</span>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="p-2 text-center font-black">{user.improvement >= 0 ? `+${user.improvement}` : user.improvement}</TableCell>
+                                        <TableCell className="p-2 text-center font-black">{isXmas ? user.improvement : (user.improvement >= 0 ? `+${user.improvement}` : user.improvement)}</TableCell>
                                         <TableCell className={cn("p-2 text-center font-black", getRankChangeColour(user.rankChangeInMonth))}>
                                             <div className="flex items-center justify-center gap-1"><Icon className="size-4" />{Math.abs(user.rankChangeInMonth)}</div>
                                         </TableCell>

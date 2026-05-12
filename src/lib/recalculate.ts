@@ -15,7 +15,7 @@ import prevSeasonData from './previous-season-standings-24-25.json';
 
 /**
  * The Master Recalculation Engine
- * Overhauled to generate full weekly history and strictly respect JSON master file.
+ * Generates full weekly history and strictly reconciles database matches with the JSON blueprint.
  */
 export async function recalculateAllDataClientSide(
   firestore: Firestore,
@@ -68,7 +68,7 @@ export async function recalculateAllDataClientSide(
           if (hS >= 0 && aS >= 0) finalPlayedMatches.push(finalMatch);
       });
 
-      // 2. Delete Orphan Matches (Fixes "extra game" bugs like Arsenal 33)
+      // 2. Delete Orphan Matches (Fixes "extra game" bugs)
       existingMatchesSnap.docs.forEach(d => {
           if (!jsonMatchIds.has(d.id)) {
               matchSyncBatch.delete(d.ref);
@@ -107,7 +107,7 @@ export async function recalculateAllDataClientSide(
 
       const weekResultsByTeamAndWeek = new Map<string, string>();
 
-      // 3. Full Week-by-Week Engine
+      // 3. Full Week-by-Week Standings & History Engine
       for (let w = 0; w <= latestAbsoluteWeek; w++) {
           let weekRanks = new Map<string, number>();
 
