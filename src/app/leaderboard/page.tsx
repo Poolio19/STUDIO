@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -67,7 +68,7 @@ export default function LeaderboardPage() {
   
   const currentWeek = useMemo(() => {
     if (matchesData && matchesData.length > 0) {
-      const playedMatches = matchesData.filter(m => m.homeScore !== -1 && m.awayScore !== -1);
+      const playedMatches = matchesData.filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0);
       const playedWeeks = playedMatches.map(m => m.week);
       return playedWeeks.length > 0 ? Math.max(...playedWeeks) : 0;
     }
@@ -91,7 +92,7 @@ export default function LeaderboardPage() {
     sortedUsers.forEach(u => breakdown.set(u.id, { total: 0, seasonal: 0, monthly: 0, proBounty: 0 }));
 
     const awardsMap: Record<string, { winners: string[], runnersUp: string[], special?: string }> = {};
-    monthlyMimoM.filter(m => m.year === 2025).forEach(m => {
+    monthlyMimoM.filter(m => m.year === 2025 || m.year === 2026).forEach(m => {
         const key = m.special || `${m.month}-${m.year}`;
         if (!awardsMap[key]) awardsMap[key] = { winners: [], runnersUp: [], special: m.special };
         if (m.type === 'winner') awardsMap[key].winners.push(m.userId);
@@ -100,18 +101,22 @@ export default function LeaderboardPage() {
 
     Object.values(awardsMap).forEach(award => {
         if (award.special === 'Xmas No 1') {
+            const prizePerWinner = 10 / (award.winners.length || 1);
             award.winners.forEach(id => {
                 const b = breakdown.get(id);
-                if (b) { b.total += 10; b.monthly += 10; }
+                if (b) { b.total += prizePerWinner; b.monthly += prizePerWinner; }
             });
             return;
         }
 
-        const winnerPrize = 10 / (award.winners.length || 1);
+        const combinedPool = (award.winners.length > 1) ? 15 : 10;
+        const winnerPrize = combinedPool / (award.winners.length || 1);
+        
         award.winners.forEach(id => {
             const b = breakdown.get(id);
             if (b) { b.total += winnerPrize; b.monthly += winnerPrize; }
         });
+
         if (award.winners.length === 1 && award.runnersUp.length > 0) {
             const runnerUpPrize = 5 / (award.runnersUp.length || 1);
             award.runnersUp.forEach(id => {
@@ -319,3 +324,4 @@ export default function LeaderboardPage() {
     </div>
   );
 }
+

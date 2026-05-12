@@ -51,7 +51,6 @@ export async function recalculateAllDataClientSide(
           let hS = Number(localMatch.homeScore ?? -1);
           let aS = Number(localMatch.awayScore ?? -1);
 
-          // Priority: If JSON says unplayed (-1) but DB has a score, KEEP the score
           if (hS === -1 && dbMatch && Number(dbMatch.homeScore) >= 0) {
               hS = Number(dbMatch.homeScore);
               aS = Number(dbMatch.awayScore);
@@ -68,7 +67,7 @@ export async function recalculateAllDataClientSide(
           if (hS >= 0 && aS >= 0) finalPlayedMatches.push(finalMatch);
       });
 
-      // 2. Delete Orphan Matches (Fixes "extra game" bugs)
+      // 2. Delete Orphan Matches
       existingMatchesSnap.docs.forEach(d => {
           if (!jsonMatchIds.has(d.id)) {
               matchSyncBatch.delete(d.ref);
@@ -139,7 +138,7 @@ export async function recalculateAllDataClientSide(
 
                   a.goalsFor = Number(a.goalsFor) + aS; 
                   a.goalsAgainst = Number(a.goalsAgainst) + hS; 
-                  a.gamesPlayed = Number(a.gamesPlayed) + 1; // FIXED BUG HERE
+                  a.gamesPlayed = Number(a.gamesPlayed) + 1;
                   
                   let hRes = 'D'; let aRes = 'D';
                   if (hS > aS) { h.points += 3; h.wins += 1; a.losses += 1; hRes = 'W'; aRes = 'L'; }
@@ -231,3 +230,4 @@ export async function recalculateAllDataClientSide(
       progressCallback("Recalculation Complete.");
     } catch (e: any) { throw e; }
 }
+

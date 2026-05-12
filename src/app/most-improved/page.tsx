@@ -84,7 +84,7 @@ export default function MostImprovedPage() {
 
   const currentWeek = useMemo(() => {
     if (!matchesData || matchesData.length === 0) return 0;
-    const played = matchesData.filter(m => Number(m.homeScore) >= 0);
+    const played = matchesData.filter(m => Number(m.homeScore) >= 0 && Number(m.awayScore) >= 0);
     return played.length > 0 ? Math.max(...played.map(m => Number(m.week))) : 0;
   }, [matchesData]);
 
@@ -169,14 +169,17 @@ export default function MostImprovedPage() {
                 return u ? { ...u, id: a.userId, improvement: Number(a.improvement ?? 0) } : null;
             }).filter(u => !!u);
             
-            // PRIZE LOGIC OVERHAUL: Joint winners split the combined pool (£15)
             let winPrize = 0;
             let ruPrize = 0;
-            if (rawWinners.length > 1) {
-                winPrize = 15 / rawWinners.length;
-            } else if (rawWinners.length === 1) {
-                winPrize = 10;
-                ruPrize = rawRunnersUp.length > 0 ? (5 / rawRunnersUp.length) : 0;
+            if (isXmasSlot) {
+                winPrize = 10 / (rawWinners.length || 1);
+            } else {
+                if (rawWinners.length > 1) {
+                    winPrize = 15 / rawWinners.length;
+                } else if (rawWinners.length === 1) {
+                    winPrize = 10;
+                    ruPrize = rawRunnersUp.length > 0 ? (5 / rawRunnersUp.length) : 0;
+                }
             }
             winners = rawWinners.map(w => ({ ...w, prize: winPrize }));
             runnersUp = rawRunnersUp.map(r => ({ ...r, prize: ruPrize }));
@@ -197,15 +200,14 @@ export default function MostImprovedPage() {
             });
             if (autoList.length > 0) {
                 if (isXmasSlot) {
-                    // Christmas No 1 logic: Strictly identify Rank 1 (Ordinal)
-                    const topTier = autoList.filter(u => u.historyRank === 1);
+                    const maxScoreAtXmas = Math.max(...autoList.map(u => u.score));
+                    const topTier = autoList.filter(u => u.score === maxScoreAtXmas);
                     winners = topTier.map(w => ({ ...w, prize: 10 / topTier.length }));
                 } else {
                     autoList.sort((a, b) => b.improvement - a.improvement || b.score - a.score || a.name.localeCompare(b.name));
                     const maxVal = autoList[0].improvement;
                     const topTier = autoList.filter(u => u.improvement === maxVal);
                     
-                    // COMBINED POOL LOGIC (£15 shared if ties)
                     let winPrize = 0;
                     let ruPrize = 0;
                     if (topTier.length > 1) {
@@ -328,3 +330,4 @@ export default function MostImprovedPage() {
     </div>
   );
 }
+
