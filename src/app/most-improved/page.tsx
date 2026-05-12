@@ -183,15 +183,18 @@ export default function MostImprovedPage() {
                     const eData = history.weeklyScores.find(ws => Number(ws.week) === period.endWeek);
                     if (eData) {
                         const val = isXmasSlot ? Number(eData.score) : (Number(eData.score) - Number(sData?.score ?? 0));
-                        autoList.push({ ...user, id: user.id, improvement: val, historyRank: eData.rank });
+                        autoList.push({ ...user, id: user.id, score: Number(eData.score), improvement: val, historyRank: eData.rank });
                     }
                 }
             });
             if (autoList.length > 0) {
                 if (isXmasSlot) {
-                    // Xmas No 1 is the person with rank 1 at the end of Week 17
-                    const winner = autoList.find(u => u.historyRank === 1);
-                    if (winner) winners = [{ ...winner, prize: 10 }];
+                    // Logic fix: pick the actual leader at the snapshot week.
+                    // If multiple have same points, everyone who has the max score gets listed.
+                    const maxScore = Math.max(...autoList.map(u => u.score));
+                    const topTier = autoList.filter(u => u.score === maxScore);
+                    const winPrize = 10 / topTier.length;
+                    winners = topTier.map(w => ({ ...w, prize: winPrize }));
                 } else {
                     autoList.sort((a, b) => b.improvement - a.improvement || b.score - a.score || a.name.localeCompare(b.name));
                     const maxVal = autoList[0].improvement;

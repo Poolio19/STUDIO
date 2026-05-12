@@ -103,12 +103,21 @@ export async function recalculateAllDataClientSide(
 
       const prevSeasonRankMap = new Map(prevSeasonData.map(s => [s.teamId, Number(s.rank)]));
       const cumulativeTStats: { [tId: string]: any } = {};
-      teams.forEach(t => cumulativeTStats[t.id] = { points: 0, goalDifference: 0, goalsFor: 0, goalsAgainst: 0, wins: 0, draws: 0, losses: 0, gamesPlayed: 0 });
+      teams.forEach(t => cumulativeTStats[t.id] = { 
+          points: 0, 
+          goalDifference: 0, 
+          goalsFor: 0, 
+          goalsAgainst: 0, 
+          wins: 0, 
+          draws: 0, 
+          losses: 0, 
+          gamesPlayed: 0 
+      });
 
       const weekResultsByTeamAndWeek = new Map<string, string>();
 
       // 3. Full Week-by-Week Standings & History Engine
-      for (let w = 0; w <= latestAbsoluteWeek; w++) {
+      for (let w = 0; w <= 38; w++) {
           let weekRanks = new Map<string, number>();
 
           if (w === 0) {
@@ -124,8 +133,13 @@ export async function recalculateAllDataClientSide(
                   const h = cumulativeTStats[m.homeTeamId]; const a = cumulativeTStats[m.awayTeamId];
                   const hS = Number(m.homeScore); const aS = Number(m.awayScore);
                   
-                  h.goalsFor += hS; h.goalsAgainst += aS; h.gamesPlayed += 1;
-                  a.goalsFor += aS; a.goalsAgainst += hS; a.gamesPlayed += 1;
+                  h.goalsFor = Number(h.goalsFor) + hS; 
+                  h.goalsAgainst = Number(h.goalsAgainst) + aS; 
+                  h.gamesPlayed = Number(h.gamesPlayed) + 1;
+
+                  a.goalsFor = Number(a.goalsFor) + aS; 
+                  a.goalsAgainst = Number(a.goalsAgainst) + hS; 
+                  a.gamesPlayed = Number(a.gamesPlayed) + 1;
                   
                   let hRes = 'D'; let aRes = 'D';
                   if (hS > aS) { h.points += 3; h.wins += 1; a.losses += 1; hRes = 'W'; aRes = 'L'; }
@@ -148,7 +162,18 @@ export async function recalculateAllDataClientSide(
 
               if (w === latestAbsoluteWeek) {
                   teams.forEach(t => {
-                      addOp(b => b.set(doc(firestore, 'standings', t.id), { teamId: t.id, rank: weekRanks.get(t.id) || 20, ...cumulativeTStats[t.id] }));
+                      addOp(b => b.set(doc(firestore, 'standings', t.id), { 
+                          teamId: t.id, 
+                          rank: Number(weekRanks.get(t.id) || 20), 
+                          points: Number(cumulativeTStats[t.id].points),
+                          goalDifference: Number(cumulativeTStats[t.id].goalDifference),
+                          goalsFor: Number(cumulativeTStats[t.id].goalsFor),
+                          goalsAgainst: Number(cumulativeTStats[t.id].goalsAgainst),
+                          wins: Number(cumulativeTStats[t.id].wins),
+                          draws: Number(cumulativeTStats[t.id].draws),
+                          losses: Number(cumulativeTStats[t.id].losses),
+                          gamesPlayed: Number(cumulativeTStats[t.id].gamesPlayed),
+                      }));
                       const form: string[] = [];
                       for (let i = latestAbsoluteWeek; i > Math.max(-1, latestAbsoluteWeek - 6); i--) {
                           const res = weekResultsByTeamAndWeek.get(`${i}-${t.id}`) || 'NG';
