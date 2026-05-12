@@ -83,7 +83,7 @@ export default function MostImprovedPage() {
   const currentWeek = useMemo(() => {
     if (!matchesData || matchesData.length === 0) return 0;
     const played = matchesData.filter(m => Number(m.homeScore) >= 0);
-    return played.length > 0 ? Math.max(...played.map(m => getCompetitionWeek(m.matchDatePlay || m.matchDateOrig))) : 0;
+    return played.length > 0 ? Math.max(...played.map(m => Number(m.week))) : 0;
   }, [matchesData]);
 
   const activeUserIds = useMemo(() => {
@@ -102,7 +102,7 @@ export default function MostImprovedPage() {
         if (!h) return false;
         const currentS = h.weeklyScores.find(ws => Number(ws.week) === currentWeek)?.score ?? 0;
         const startS = h.weeklyScores.find(ws => Number(ws.week) === rawPeriod.startWeek)?.score ?? 0;
-        return currentS !== startS;
+        return currentS > startS;
     });
 
     const isTransition = !hasProgress && currentWeek >= rawPeriod.startWeek && currentWeek > 0;
@@ -217,7 +217,7 @@ export default function MostImprovedPage() {
         
         const isFuture = !isPast && !isCurrentAwardPeriod && period.startWeek > currentWeek;
         
-        return { id: period.id, label: period.special || period.abbreviation, isCurrent: isCurrentAwardPeriod, isFuture, winners, runnersUp };
+        return { id: period.id, label: period.special || period.month || period.abbreviation, isCurrent: isCurrentAwardPeriod, isFuture, winners, runnersUp };
     });
   }, [users, monthlyMimoMAwards, currentWeek, transitionContext, userHistories, activeUserIds]);
 

@@ -18,22 +18,21 @@ export const specialAwards = [
 
 // Chronological sort for the Hall of Fame display
 export const allAwardPeriods = [
-    awardPeriods[0], // Aug
-    awardPeriods[1], // Sep
-    awardPeriods[2], // Oct
-    awardPeriods[3], // Nov
-    specialAwards[0], // Xmas
-    awardPeriods[4], // Dec
-    awardPeriods[5], // Jan
-    awardPeriods[6], // Feb
-    awardPeriods[7], // Mar
-    awardPeriods[8], // Apr
-    awardPeriods[9], // May
+    awardPeriods[0], // Aug (0-4)
+    awardPeriods[1], // Sep (4-7)
+    awardPeriods[2], // Oct (7-10)
+    awardPeriods[3], // Nov (10-14)
+    specialAwards[0], // Xmas (14-17)
+    awardPeriods[4], // Dec (14-19)
+    awardPeriods[5], // Jan (19-24)
+    awardPeriods[6], // Feb (24-28)
+    awardPeriods[7], // Mar (28-32)
+    awardPeriods[8], // Apr (32-35)
+    awardPeriods[9], // May (35-38)
 ];
 
 /**
  * Anchor dates for competition weeks.
- * Based on: 11 Aug, 14 Sep, 05 Oct, 03 Nov, 04 Dec, 01 Jan, 02 Feb, 01 Mar, 13 Apr
  */
 export const weekStarts = [
     { week: 0, date: "2025-08-11T00:00:00Z" },

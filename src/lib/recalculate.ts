@@ -16,9 +16,6 @@ import prevSeasonData from './previous-season-standings-24-25.json';
 
 /**
  * The Master Recalculation Engine
- * 1. Reconciles Firestore 'matches' with the local JSON Blueprint.
- * 2. Calculates 'Week 0' baseline (25-26 predictions vs 24-25 actuals).
- * 3. Computes weekly league standings and player scores based on chronological dates.
  */
 export async function recalculateAllDataClientSide(
   firestore: Firestore,
@@ -48,7 +45,6 @@ export async function recalculateAllDataClientSide(
       const finalPlayedMatches: any[] = [];
       const jsonMatchIds = new Set(localFixtures.map(m => m.id));
 
-      // 1. Blueprint Sync: Prioritize manual UI entries over JSON unplayed games
       localFixtures.forEach((localMatch: any) => {
           const dbMatch: any = dbMatchesMap.get(localMatch.id);
           let hS = Number(localMatch.homeScore ?? -1);
@@ -70,7 +66,6 @@ export async function recalculateAllDataClientSide(
           if (hS >= 0 && aS >= 0) finalPlayedMatches.push(finalMatch);
       });
 
-      // 2. Orphan Cleanup: Delete legacy/phantom matches in Firestore
       existingMatchesSnap.docs.forEach(d => {
           if (!jsonMatchIds.has(d.id)) {
               matchSyncBatch.delete(d.ref);
@@ -78,7 +73,6 @@ export async function recalculateAllDataClientSide(
       });
       await matchSyncBatch.commit();
 
-      // Wipe derived statistical tables
       const derivedCollections = ['standings', 'playerTeamScores', 'teamRecentResults', 'weeklyTeamStandings', 'userHistories'];
       for (const colName of derivedCollections) {
           const snap = await getDocs(collection(firestore, colName));
@@ -100,12 +94,10 @@ export async function recalculateAllDataClientSide(
           if (opCount >= 499) { mainBatches.push(writeBatch(firestore)); bIdx++; opCount = 0; }
       };
 
-      const sortedPlayed = [...finalPlayedMatches].sort((a,b) => new Date(a.matchDatePlay).getTime() - new Date(b.matchDatePlay).getTime());
-      const latestAbsoluteWeek = sortedPlayed.length > 0 ? Math.max(...sortedPlayed.map(m => getCompetitionWeek(m.matchDatePlay))) : 0;
+      const sortedPlayed = [...finalPlayedMatches].sort((a,b) => Number(a.week) - Number(b.week));
+      const latestAbsoluteWeek = sortedPlayed.length > 0 ? Math.max(...sortedPlayed.map(m => Number(m.week))) : 0;
 
-      // Previous Season (Week 0) Ranks
-      const prevSeasonRankMap = new Map(prevSeasonData.map(s => [s.teamId, s.rank]));
-
+      const prevSeasonRankMap = new Map(prevSeasonData.map(s => [s.teamId, Number(s.rank)]));
       const cumulativeTStats: { [tId: string]: any } = {};
       teams.forEach(t => cumulativeTStats[t.id] = { points: 0, goalDifference: 0, goalsFor: 0, goalsAgainst: 0, wins: 0, draws: 0, losses: 0, gamesPlayed: 0 });
 
@@ -121,7 +113,7 @@ export async function recalculateAllDataClientSide(
                   addOp(b => b.set(doc(firestore, 'weeklyTeamStandings', `wk0-${t.id}`), { week: 0, teamId: t.id, rank: r }));
               });
           } else {
-              const weekMatches = sortedPlayed.filter(m => getCompetitionWeek(m.matchDatePlay) === w);
+              const weekMatches = sortedPlayed.filter(m => Number(m.week) === w);
               
               weekMatches.forEach(m => {
                   const h = cumulativeTStats[m.homeTeamId]; const a = cumulativeTStats[m.awayTeamId];
@@ -163,7 +155,7 @@ export async function recalculateAllDataClientSide(
           }
 
           const uScores: { [uId: string]: number } = {};
-          allUsers.forEach(u => {
+          activeUsersForRankings.forEach(u => {
               const pred = predictions.find(p => (p.userId || p.id) === u.id);
               let score = 0;
               pred?.rankings.forEach((tId, idx) => {
@@ -193,13 +185,13 @@ export async function recalculateAllDataClientSide(
 
       allUsers.forEach(u => {
           const h = allHistories[u.id];
-          const latest = h.weeklyScores.find(s => Number(s.week) === latestAbsoluteWeek) || { score: 0, rank: 0 };
-          const prev = h.weeklyScores.find(s => Number(s.week) === latestAbsoluteWeek - 1) || { score: 0, rank: 0 };
+          const latest = h?.weeklyScores.find(s => Number(s.week) === latestAbsoluteWeek) || { score: 0, rank: 0 };
+          const prev = h?.weeklyScores.find(s => Number(s.week) === latestAbsoluteWeek - 1) || { score: 0, rank: 0 };
           addOp(b => b.set(doc(firestore, 'users', u.id), {
               score: Number(latest.score), rank: latest.rank, previousScore: Number(prev.score), previousRank: prev.rank,
               scoreChange: Number(latest.score - prev.score), rankChange: (prev.rank > 0 && latest.rank > 0) ? prev.rank - latest.rank : 0
           }, { merge: true }));
-          addOp(b => b.set(doc(firestore, 'userHistories', u.id), h));
+          if (h) addOp(b => b.set(doc(firestore, 'userHistories', u.id), h));
       });
 
       await Promise.all(mainBatches.map(b => b.commit()));
