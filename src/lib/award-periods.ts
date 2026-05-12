@@ -13,17 +13,30 @@ export const awardPeriods = [
 ];
       
 export const specialAwards = [
-    { id: 'xmas', special: 'Christmas No. 1', year: 2025, startWeek: 14, endWeek: 17, abbreviation: 'XMAS'},
+    { id: 'xmas', special: 'Xmas No 1', year: 2025, startWeek: 14, endWeek: 17, abbreviation: 'XMAS'},
 ];
 
-export const allAwardPeriods = [...awardPeriods, ...specialAwards];
+// Chronological sort for the Hall of Fame display
+export const allAwardPeriods = [
+    awardPeriods[0], // Aug
+    awardPeriods[1], // Sep
+    awardPeriods[2], // Oct
+    awardPeriods[3], // Nov
+    specialAwards[0], // Xmas
+    awardPeriods[4], // Dec
+    awardPeriods[5], // Jan
+    awardPeriods[6], // Feb
+    awardPeriods[7], // Mar
+    awardPeriods[8], // Apr
+    awardPeriods[9], // May
+];
 
 /**
- * Anchor dates for competition weeks as requested.
- * We use these to bucket matches based on matchDatePlay.
+ * Anchor dates for competition weeks.
+ * Based on: 11 Aug, 14 Sep, 05 Oct, 03 Nov, 04 Dec, 01 Jan, 02 Feb, 01 Mar, 13 Apr
  */
 export const weekStarts = [
-    { week: 1, date: "2025-08-11T00:00:00Z" },
+    { week: 0, date: "2025-08-11T00:00:00Z" },
     { week: 4, date: "2025-09-14T00:00:00Z" },
     { week: 7, date: "2025-10-05T00:00:00Z" },
     { week: 10, date: "2025-11-03T00:00:00Z" },

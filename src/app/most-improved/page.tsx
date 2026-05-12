@@ -108,7 +108,7 @@ export default function MostImprovedPage() {
     const isTransition = !hasProgress && currentWeek >= rawPeriod.startWeek && currentWeek > 0;
     
     if (isTransition) {
-        const prevPeriod = allAwardPeriods.filter(p => p.endWeek <= currentWeek).sort((a,b) => b.endWeek - a.endWeek)[0];
+        const prevPeriod = allAwardPeriods.filter(p => p.endWeek <= currentWeek && p.id !== 'xmas').sort((a,b) => b.endWeek - a.endWeek)[0];
         if (prevPeriod) return { period: prevPeriod, isFinal: true };
     }
     
