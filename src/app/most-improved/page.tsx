@@ -102,7 +102,7 @@ export default function MostImprovedPage() {
         if (!h) return false;
         const curS = h.weeklyScores.find(ws => Number(ws.week) === currentWeek)?.score ?? 0;
         const startS = h.weeklyScores.find(ws => Number(ws.week) === rawPeriod.startWeek)?.score ?? 0;
-        return curS > startS;
+        return curS > startScore;
     });
     const isTransition = !hasProgress && currentWeek >= rawPeriod.startWeek && currentWeek > 0;
     if (isTransition) {
@@ -145,22 +145,26 @@ export default function MostImprovedPage() {
   }, [users, userHistories, transitionContext, currentWeek, activeUserIds]);
   
   const hallOfFameData = useMemo(() => {
-    if (!users) return [];
-    const userMap = new Map(users.map(u => [u.id, u]));
+    if (!users || !userHistories) return [];
+    
     return allAwardPeriods.map(period => {
         const isCurrentAwardPeriod = (transitionContext?.period?.id === period.id && !transitionContext?.isFinal);
         const isPast = period.endWeek <= currentWeek;
         const isXmasSlot = period.id === 'xmas';
-        let winners: any[] = []; let runnersUp: any[] = [];
+        let winners: any[] = []; 
+        let runnersUp: any[] = [];
 
         const players = users.filter(u => !u.isPro && u.name && activeUserIds.has(u.id));
         const autoList: any[] = [];
+
         players.forEach(user => {
-            const history = userHistories?.find(h => h.userId === user.id);
+            const history = userHistories.find(h => h.userId === user.id);
             if (history) {
                 const sData = history.weeklyScores.find(ws => Number(ws.week) === period.startWeek);
-                const eData = history.weeklyScores.find(ws => Number(ws.week) === period.endWeek);
-                if (eData) {
+                // Lenient end week fetch to pick up all players who have at least one score in the period
+                const eData = history.weeklyScores.filter(ws => Number(ws.week) <= period.endWeek).reverse()[0];
+                
+                if (eData && (isXmasSlot || eData.week >= period.startWeek)) {
                     const val = isXmasSlot ? Number(eData.score) : (Number(eData.score) - Number(sData?.score ?? 0));
                     autoList.push({ ...user, id: user.id, score: Number(eData.score), improvement: val, historyRank: eData.rank });
                 }
@@ -171,13 +175,13 @@ export default function MostImprovedPage() {
             const maxScore = Math.max(...autoList.map(u => u.score));
             const topTier = autoList.filter(u => u.score === maxScore);
             
-            // XMAS tiered logic: 1:10, 2:5, 3:5, 4:2.5
+            // XMAS tiered logic: 1: £10, 2: £5 ea, 3: £5 ea, 4+: £10 shared
             let prize = 0;
             const count = topTier.length;
             if (count === 1) prize = 10;
             else if (count === 2) prize = 5;
             else if (count === 3) prize = 5;
-            else if (count >= 4) prize = 10 / count;
+            else prize = 10 / count;
 
             winners = topTier.map(w => ({ ...w, prize }));
         } 
@@ -204,9 +208,16 @@ export default function MostImprovedPage() {
             winners = topTier.map(w => ({ ...w, prize: winPrize }));
         }
 
-        return { id: period.id, label: period.special || period.month || period.abbreviation, isCurrent: isCurrentAwardPeriod, isFuture: !isPast && !isCurrentAwardPeriod && period.startWeek > currentWeek, winners, runnersUp };
+        return { 
+          id: period.id, 
+          label: period.special || period.month || period.abbreviation, 
+          isCurrent: isCurrentAwardPeriod, 
+          isFuture: !isPast && !isCurrentAwardPeriod && period.startWeek > currentWeek, 
+          winners, 
+          runnersUp 
+        };
     });
-  }, [users, monthlyMimoMAwards, currentWeek, transitionContext, userHistories, activeUserIds]);
+  }, [users, userHistories, currentWeek, transitionContext, activeUserIds]);
 
   const getWinnerRowStyle = (rank: number, improvement: number) => {
       if (improvement === 0 && ladderData.topImp === 0) return {};

@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -305,8 +306,14 @@ export default function ProfilePage() {
                           <h3 className="text-sm font-bold mb-4 flex items-center justify-center gap-2 text-primary border-b pb-2"><ShieldCheck className="size-4" /> This Season's Stats</h3>
                           <div className="grid grid-cols-4 gap-x-2 text-center text-xs">
                               <div /><div className="font-semibold text-muted-foreground text-[10px] uppercase">High</div><div className="font-semibold text-muted-foreground text-[10px] uppercase">Low</div><div className="font-semibold text-muted-foreground text-[10px] uppercase">Now</div>
-                              <div className="font-bold text-muted-foreground text-left py-2 border-b">Pos</div><div className="font-bold text-green-600 py-2 border-b">{profile?.minRank || '-'}</div><div className="font-bold text-red-600 py-2 border-b">{profile?.maxRank || '-'}</div><div className="font-extrabold py-2 border-b text-base">{profile?.rank || '-'}</div>
-                              <div className="font-bold text-muted-foreground text-left py-2">Pts</div><div className="font-bold text-green-600 py-2">{profile?.maxScore || '-'}</div><div className="font-bold text-red-600 py-2">{profile?.minScore || '-'}</div><div className="font-extrabold py-2 text-base">{profile?.score || '-'}</div>
+                              <div className="font-bold text-muted-foreground text-left py-2 border-b">Pos</div>
+                              <div className="font-bold text-green-600 py-2 border-b">{profile?.minRank || '-'}</div>
+                              <div className="font-bold text-red-600 py-2 border-b">{profile?.maxRank || '-'}</div>
+                              <div className="font-extrabold py-2 border-b text-base">{profile?.rank || '-'}</div>
+                              <div className="font-bold text-muted-foreground text-left py-2">Pts</div>
+                              <div className="font-bold text-green-600 py-2">{profile?.maxScore || '-'}</div>
+                              <div className="font-bold text-red-600 py-2">{profile?.minScore || '-'}</div>
+                              <div className="font-extrabold py-2 text-base">{profile?.score || '-'}</div>
                           </div>
                       </div>
                   </div>

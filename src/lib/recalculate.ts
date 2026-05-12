@@ -45,13 +45,11 @@ export async function recalculateAllDataClientSide(
       const finalPlayedMatches: any[] = [];
       const jsonMatchIds = new Set(localFixtures.map(m => m.id));
 
-      // 1. Sync and Identify played matches
       localFixtures.forEach((localMatch: any) => {
           const dbMatch: any = dbMatchesMap.get(localMatch.id);
           let hS = Number(localMatch.homeScore ?? -1);
           let aS = Number(localMatch.awayScore ?? -1);
 
-          // If JSON says unplayed (-1) but DB has a score, respect the manual entry
           if (hS === -1 && dbMatch && Number(dbMatch.homeScore) >= 0) {
               hS = Number(dbMatch.homeScore);
               aS = Number(dbMatch.awayScore);
@@ -68,7 +66,6 @@ export async function recalculateAllDataClientSide(
           if (hS >= 0 && aS >= 0) finalPlayedMatches.push(finalMatch);
       });
 
-      // 2. Delete Orphan Matches (Master Sync Blueprint enforcement)
       existingMatchesSnap.docs.forEach(d => {
           if (!jsonMatchIds.has(d.id)) {
               matchSyncBatch.delete(d.ref);
@@ -89,7 +86,11 @@ export async function recalculateAllDataClientSide(
       }
       
       const allHistories: { [uId: string]: UserHistory } = {};
-      allUsers.forEach(u => allHistories[u.id] = { userId: u.id, weeklyScores: [] });
+      const userSeasonStats: { [uId: string]: { minR: number, maxR: number, minS: number, maxS: number } } = {};
+      allUsers.forEach(u => {
+          allHistories[u.id] = { userId: u.id, weeklyScores: [] };
+          userSeasonStats[u.id] = { minR: 999, maxR: 0, minS: 9999, maxS: -9999 };
+      });
 
       let mainBatches: WriteBatch[] = [writeBatch(firestore)];
       let bIdx = 0; let opCount = 0;
@@ -104,19 +105,11 @@ export async function recalculateAllDataClientSide(
       const prevSeasonRankMap = new Map(prevSeasonData.map(s => [s.teamId, Number(s.rank)]));
       const cumulativeTStats: { [tId: string]: any } = {};
       teams.forEach(t => cumulativeTStats[t.id] = { 
-          points: 0, 
-          goalDifference: 0, 
-          goalsFor: 0, 
-          goalsAgainst: 0, 
-          wins: 0, 
-          draws: 0, 
-          losses: 0, 
-          gamesPlayed: 0 
+          points: 0, goalDifference: 0, goalsFor: 0, goalsAgainst: 0, wins: 0, draws: 0, losses: 0, gamesPlayed: 0 
       });
 
       const weekResultsByTeamAndWeek = new Map<string, string>();
 
-      // 3. Full Week-by-Week Standings & History Engine
       for (let w = 0; w <= 38; w++) {
           let weekRanks = new Map<string, number>();
 
@@ -128,34 +121,24 @@ export async function recalculateAllDataClientSide(
               });
           } else {
               const weekMatches = sortedPlayed.filter(m => Number(m.week) === w);
-              
               weekMatches.forEach(m => {
                   const h = cumulativeTStats[m.homeTeamId]; const a = cumulativeTStats[m.awayTeamId];
                   const hS = Number(m.homeScore); const aS = Number(m.awayScore);
-                  
-                  h.goalsFor = Number(h.goalsFor) + hS; 
-                  h.goalsAgainst = Number(h.goalsAgainst) + aS; 
-                  h.gamesPlayed = Number(h.gamesPlayed) + 1;
-
-                  a.goalsFor = Number(a.goalsFor) + aS; 
-                  a.goalsAgainst = Number(a.goalsAgainst) + hS; 
-                  a.gamesPlayed = Number(a.gamesPlayed) + 1;
-                  
+                  h.goalsFor += hS; h.goalsAgainst += aS; h.gamesPlayed += 1;
+                  a.goalsFor += aS; a.goalsAgainst += hS; a.gamesPlayed += 1;
                   let hRes = 'D'; let aRes = 'D';
                   if (hS > aS) { h.points += 3; h.wins += 1; a.losses += 1; hRes = 'W'; aRes = 'L'; }
                   else if (hS < aS) { a.points += 3; a.wins += 1; h.losses += 1; hRes = 'L'; aRes = 'W'; }
                   else { h.points += 1; h.draws += 1; a.points += 1; a.draws += 1; }
-                  
-                  h.goalDifference = Number(h.goalsFor) - Number(h.goalsAgainst);
-                  a.goalDifference = Number(a.goalsFor) - Number(a.goalsAgainst);
-
+                  h.goalDifference = h.goalsFor - h.goalsAgainst;
+                  a.goalDifference = a.goalsFor - a.goalsAgainst;
                   const hKey = `${w}-${m.homeTeamId}`; const aKey = `${w}-${m.awayTeamId}`;
                   weekResultsByTeamAndWeek.set(hKey, (weekResultsByTeamAndWeek.get(hKey) || '') + hRes);
                   weekResultsByTeamAndWeek.set(aKey, (weekResultsByTeamAndWeek.get(aKey) || '') + aRes);
               });
 
               const tRanked = Object.entries(cumulativeTStats).map(([teamId, s]) => ({ teamId, ...s, name: teamMap.get(teamId)?.name || '' }))
-                  .sort((a,b) => Number(b.points) - Number(a.points) || Number(b.goalDifference) - Number(a.goalDifference) || Number(b.goalsFor) - Number(a.goalsFor) || a.name.localeCompare(b.name));
+                  .sort((a,b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.name.localeCompare(b.name));
               
               weekRanks = new Map(tRanked.map((s, i) => [s.teamId, i + 1]));
               tRanked.forEach((s, idx) => addOp(b => b.set(doc(firestore, 'weeklyTeamStandings', `wk${w}-${s.teamId}`), { week: Number(w), teamId: s.teamId, rank: idx + 1 })));
@@ -163,21 +146,14 @@ export async function recalculateAllDataClientSide(
               if (w === latestAbsoluteWeek) {
                   teams.forEach(t => {
                       addOp(b => b.set(doc(firestore, 'standings', t.id), { 
-                          teamId: t.id, 
-                          rank: Number(weekRanks.get(t.id) || 20), 
-                          points: Number(cumulativeTStats[t.id].points),
-                          goalDifference: Number(cumulativeTStats[t.id].goalDifference),
-                          goalsFor: Number(cumulativeTStats[t.id].goalsFor),
-                          goalsAgainst: Number(cumulativeTStats[t.id].goalsAgainst),
-                          wins: Number(cumulativeTStats[t.id].wins),
-                          draws: Number(cumulativeTStats[t.id].draws),
-                          losses: Number(cumulativeTStats[t.id].losses),
-                          gamesPlayed: Number(cumulativeTStats[t.id].gamesPlayed),
+                          teamId: t.id, rank: weekRanks.get(t.id) || 20, points: cumulativeTStats[t.id].points,
+                          goalDifference: cumulativeTStats[t.id].goalDifference, goalsFor: cumulativeTStats[t.id].goalsFor,
+                          goalsAgainst: cumulativeTStats[t.id].goalsAgainst, wins: cumulativeTStats[t.id].wins,
+                          draws: cumulativeTStats[t.id].draws, losses: cumulativeTStats[t.id].losses, gamesPlayed: cumulativeTStats[t.id].gamesPlayed,
                       }));
                       const form: string[] = [];
                       for (let i = latestAbsoluteWeek; i > Math.max(-1, latestAbsoluteWeek - 6); i--) {
-                          const res = weekResultsByTeamAndWeek.get(`${i}-${t.id}`) || 'NG';
-                          form.unshift(res);
+                          form.unshift(weekResultsByTeamAndWeek.get(`${i}-${t.id}`) || 'NG');
                       }
                       addOp(b => b.set(doc(firestore, 'teamRecentResults', t.id), { teamId: t.id, results: form }));
                   });
@@ -193,7 +169,6 @@ export async function recalculateAllDataClientSide(
                   if (actual) score += (5 - Math.abs((idx + 1) - actual));
               });
               uScores[u.id] = score;
-              
               if (w === latestAbsoluteWeek && w > 0) {
                   pred?.rankings.forEach((tId, idx) => {
                       const actual = weekRanks.get(tId);
@@ -203,26 +178,27 @@ export async function recalculateAllDataClientSide(
           });
           
           const uRanked = activeUsersForRankings.map(u => ({...u, score: uScores[u.id]}))
-              .sort((a, b) => Number(b.score) - Number(a.score) || (a.isPro ? -1 : 1) || (a.name || '').localeCompare(b.name || ''));
+              .sort((a, b) => b.score - a.score || (a.isPro ? -1 : 1) || (a.name || '').localeCompare(b.name || ''));
           
           uRanked.forEach((u, idx) => {
-              if (allHistories[u.id]) {
-                  allHistories[u.id].weeklyScores.push({ 
-                    week: Number(w), 
-                    score: Number(u.score), 
-                    rank: idx + 1
-                  });
+              const rank = idx + 1;
+              if (allHistories[u.id]) allHistories[u.id].weeklyScores.push({ week: w, score: u.score, rank });
+              if (w > 0 && w <= latestAbsoluteWeek) {
+                  const s = userSeasonStats[u.id];
+                  s.minR = Math.min(s.minR, rank); s.maxR = Math.max(s.maxR, rank);
+                  s.minS = Math.min(s.minS, u.score); s.maxS = Math.max(s.maxS, u.score);
               }
           });
       }
 
       allUsers.forEach(u => {
-          const h = allHistories[u.id];
-          const latest = h?.weeklyScores.find(s => Number(s.week) === latestAbsoluteWeek) || { score: 0, rank: 0 };
-          const prev = h?.weeklyScores.find(s => Number(s.week) === latestAbsoluteWeek - 1) || { score: 0, rank: 0 };
+          const h = allHistories[u.id]; const s = userSeasonStats[u.id];
+          const latest = h?.weeklyScores.find(s => s.week === latestAbsoluteWeek) || { score: 0, rank: 0 };
+          const prev = h?.weeklyScores.find(s => s.week === latestAbsoluteWeek - 1) || { score: 0, rank: 0 };
           addOp(b => b.set(doc(firestore, 'users', u.id), {
-              score: Number(latest.score), rank: Number(latest.rank), previousScore: Number(prev.score), previousRank: Number(prev.rank),
-              scoreChange: Number(latest.score - prev.score), rankChange: (prev.rank > 0 && latest.rank > 0) ? Number(prev.rank - latest.rank) : 0
+              score: latest.score, rank: latest.rank, previousScore: prev.score, previousRank: prev.rank,
+              scoreChange: latest.score - prev.score, rankChange: (prev.rank > 0 && latest.rank > 0) ? prev.rank - latest.rank : 0,
+              minRank: s.minR === 999 ? 0 : s.minR, maxRank: s.maxR, minScore: s.minS === 9999 ? 0 : s.minS, maxScore: s.maxS
           }, { merge: true }));
           if (h) addOp(b => b.set(doc(firestore, 'userHistories', u.id), h));
       });
