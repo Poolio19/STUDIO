@@ -1,4 +1,3 @@
-
 export const awardPeriods = [
     { id: 'aug', month: 'August', year: 2025, startWeek: 0, endWeek: 4, abbreviation: 'AUG' },
     { id: 'sep', month: 'September', year: 2025, startWeek: 4, endWeek: 7, abbreviation: 'SEPT' },
@@ -13,7 +12,7 @@ export const awardPeriods = [
 ];
       
 export const specialAwards = [
-    { id: 'xmas', special: 'Xmas No 1', year: 2025, startWeek: 14, endWeek: 16, abbreviation: 'XMAS'},
+    { id: 'xmas', special: 'Xmas No 1', year: 2025, startWeek: 14, endWeek: 17, abbreviation: 'XMAS'},
 ];
 
 // Chronological sort for the Hall of Fame display
@@ -22,7 +21,7 @@ export const allAwardPeriods = [
     awardPeriods[1], // Sep (W4-W7)
     awardPeriods[2], // Oct (W7-W10)
     awardPeriods[3], // Nov (W10-W14)
-    specialAwards[0], // Xmas (Rank 1 at W16 snapshot)
+    specialAwards[0], // Xmas (Rank 1 at W17 snapshot)
     awardPeriods[4], // Dec (W14-W19)
     awardPeriods[5], // Jan (W19-W24)
     awardPeriods[6], // Feb (W24-W28)
@@ -40,7 +39,7 @@ export const weekStarts = [
     { week: 7, date: "2025-10-05T00:00:00Z" },
     { week: 10, date: "2025-11-03T00:00:00Z" },
     { week: 14, date: "2025-12-04T00:00:00Z" },
-    { week: 16, date: "2025-12-24T00:00:00Z" },
+    { week: 17, date: "2025-12-24T00:00:00Z" },
     { week: 19, date: "2026-01-01T00:00:00Z" },
     { week: 24, date: "2026-02-02T00:00:00Z" },
     { week: 28, date: "2026-03-01T00:00:00Z" },

@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -189,10 +188,8 @@ export default function MostImprovedPage() {
             });
             if (autoList.length > 0) {
                 if (isXmasSlot) {
-                    // Logic fix: pick the actual leader at the snapshot week.
-                    // If multiple have same points, everyone who has the max score gets listed.
-                    const maxScore = Math.max(...autoList.map(u => u.score));
-                    const topTier = autoList.filter(u => u.score === maxScore);
+                    // Christmas No 1 is strictly the person at Rank 1 (Ordinal)
+                    const topTier = autoList.filter(u => u.historyRank === 1);
                     const winPrize = 10 / topTier.length;
                     winners = topTier.map(w => ({ ...w, prize: winPrize }));
                 } else {

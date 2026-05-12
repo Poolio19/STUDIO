@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -9,7 +8,7 @@ import {
   type Firestore,
   type WriteBatch,
 } from 'firebase/firestore';
-import type { Team, Prediction, User as UserProfile, UserHistory, Match } from '@/lib/types';
+import type { Team, Prediction, User as UserProfile, UserHistory } from '@/lib/types';
 import localFixtures from './past-fixtures.json';
 import prevSeasonData from './previous-season-standings-24-25.json';
 
@@ -146,8 +145,8 @@ export async function recalculateAllDataClientSide(
                   else if (hS < aS) { a.points += 3; a.wins += 1; h.losses += 1; hRes = 'L'; aRes = 'W'; }
                   else { h.points += 1; h.draws += 1; a.points += 1; a.draws += 1; }
                   
-                  h.goalDifference = Number(h.goalsFor - h.goalsAgainst);
-                  a.goalDifference = Number(a.goalsFor - a.goalsAgainst);
+                  h.goalDifference = Number(h.goalsFor) - Number(h.goalsAgainst);
+                  a.goalDifference = Number(a.goalsFor) - Number(a.goalsAgainst);
 
                   const hKey = `${w}-${m.homeTeamId}`; const aKey = `${w}-${m.awayTeamId}`;
                   weekResultsByTeamAndWeek.set(hKey, (weekResultsByTeamAndWeek.get(hKey) || '') + hRes);
@@ -210,7 +209,7 @@ export async function recalculateAllDataClientSide(
                   allHistories[u.id].weeklyScores.push({ 
                     week: Number(w), 
                     score: Number(u.score), 
-                    rank: idx + 1 // Ordinal rank for stable history
+                    rank: idx + 1
                   });
               }
           });
