@@ -183,22 +183,27 @@ export default function MostImprovedPage() {
                     const eData = history.weeklyScores.find(ws => Number(ws.week) === period.endWeek);
                     if (eData) {
                         const val = isXmasSlot ? Number(eData.score) : (Number(eData.score) - Number(sData?.score ?? 0));
-                        autoList.push({ ...user, id: user.id, improvement: val });
+                        autoList.push({ ...user, id: user.id, improvement: val, historyRank: eData.rank });
                     }
                 }
             });
             if (autoList.length > 0) {
-                // Strict sorting for Xmas sole leader where possible
-                autoList.sort((a, b) => b.improvement - a.improvement || b.score - a.score || a.name.localeCompare(b.name));
-                const maxVal = autoList[0].improvement;
-                const topTier = autoList.filter(u => u.improvement === maxVal);
-                const winPrize = 10 / topTier.length;
-                winners = topTier.map(w => ({ ...w, prize: winPrize }));
-                if (topTier.length === 1 && !isXmasSlot) {
-                    const secondVal = autoList.find(u => u.improvement < maxVal)?.improvement;
-                    if (secondVal !== undefined) {
-                        const secondTier = autoList.filter(u => u.improvement === secondVal);
-                        runnersUp = secondTier.map(r => ({ ...r, prize: 5 / secondTier.length }));
+                if (isXmasSlot) {
+                    // Xmas No 1 is the person with rank 1 at the end of Week 17
+                    const winner = autoList.find(u => u.historyRank === 1);
+                    if (winner) winners = [{ ...winner, prize: 10 }];
+                } else {
+                    autoList.sort((a, b) => b.improvement - a.improvement || b.score - a.score || a.name.localeCompare(b.name));
+                    const maxVal = autoList[0].improvement;
+                    const topTier = autoList.filter(u => u.improvement === maxVal);
+                    const winPrize = 10 / topTier.length;
+                    winners = topTier.map(w => ({ ...w, prize: winPrize }));
+                    if (topTier.length === 1) {
+                        const secondVal = autoList.find(u => u.improvement < maxVal)?.improvement;
+                        if (secondVal !== undefined) {
+                            const secondTier = autoList.filter(u => u.improvement === secondVal);
+                            runnersUp = secondTier.map(r => ({ ...r, prize: 5 / secondTier.length }));
+                        }
                     }
                 }
             }

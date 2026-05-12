@@ -180,10 +180,13 @@ export async function recalculateAllDataClientSide(
           const uRanked = activeUsersForRankings.map(u => ({...u, score: uScores[u.id]}))
               .sort((a, b) => b.score - a.score || (a.isPro ? -1 : 1) || (a.name || '').localeCompare(b.name || ''));
           
-          const scoresOnly = uRanked.map(u => u.score);
-          uRanked.forEach((u) => {
+          uRanked.forEach((u, idx) => {
               if (allHistories[u.id]) {
-                  allHistories[u.id].weeklyScores.push({ week: Number(w), score: Number(u.score), rank: scoresOnly.indexOf(u.score) + 1 });
+                  allHistories[u.id].weeklyScores.push({ 
+                    week: Number(w), 
+                    score: Number(u.score), 
+                    rank: idx + 1 // Ordinal rank for stable history
+                  });
               }
           });
       }
